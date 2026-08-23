@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components.block
 
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -9,12 +13,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Note
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,18 +33,15 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Block 工具栏
- * 提供快速插入不同类型 Block 的按钮
+ * 提供快速插入不同类型 Block 的按钮.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BlockToolbar(
-    onInsertBlock: (ContentBlock) -> Unit,
-    modifier: Modifier = Modifier
-) {
+fun BlockToolbar(onInsertBlock: (ContentBlock) -> Unit, modifier: Modifier = Modifier) {
     var showAddMenu by remember { mutableStateOf(false) }
 
     FlowRow(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         // 文本格式按钮
         TextAddButton(onInsertBlock)
@@ -74,7 +73,7 @@ fun BlockToolbar(
 private fun DividerAddButton(onInsertBlock: (ContentBlock) -> Unit) {
     IconButton(onClick = {
         onInsertBlock(
-            ContentBlock.Divider(id = generateBlockId())
+            ContentBlock.Divider(id = generateBlockId()),
         )
     }) {
         Icon(Icons.Default.HorizontalRule, "Divider", modifier = Modifier.size(20.dp))
@@ -88,8 +87,8 @@ private fun MathAddButton(onInsertBlock: (ContentBlock) -> Unit) {
             ContentBlock.MathBlock(
                 id = generateBlockId(),
                 content = "",
-                inline = false
-            )
+                inline = false,
+            ),
         )
     }) {
         Icon(Icons.AutoMirrored.Filled.Note, "Math Formula", modifier = Modifier.size(20.dp))
@@ -103,8 +102,8 @@ private fun CodeBlockAddButton(onInsertBlock: (ContentBlock) -> Unit) {
             ContentBlock.CodeBlock(
                 id = generateBlockId(),
                 content = "",
-                language = ""
-            )
+                language = "",
+            ),
         )
     }) {
         Icon(Icons.Default.Code, "Code Block", modifier = Modifier.size(20.dp))
@@ -117,8 +116,8 @@ private fun QuotaAddButton(onInsertBlock: (ContentBlock) -> Unit) {
         onInsertBlock(
             ContentBlock.Quote(
                 id = generateBlockId(),
-                content = ""
-            )
+                content = "",
+            ),
         )
     }) {
         Icon(Icons.Default.FormatQuote, "Quote", modifier = Modifier.size(20.dp))
@@ -132,8 +131,8 @@ private fun NumberListAddButton(onInsertBlock: (ContentBlock) -> Unit) {
             ContentBlock.ListItem(
                 id = generateBlockId(),
                 content = "",
-                ordered = true
-            )
+                ordered = true,
+            ),
         )
     }) {
         Icon(Icons.Default.FormatListNumbered, "Numbered List", modifier = Modifier.size(20.dp))
@@ -147,14 +146,14 @@ private fun ListAddButton(onInsertBlock: (ContentBlock) -> Unit) {
             ContentBlock.ListItem(
                 id = generateBlockId(),
                 content = "",
-                ordered = false
-            )
+                ordered = false,
+            ),
         )
     }) {
         Icon(
             Icons.AutoMirrored.Filled.FormatListBulleted,
             "Bullet List",
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(20.dp),
         )
     }
 }
@@ -166,8 +165,8 @@ private fun TextAddButton(onInsertBlock: (ContentBlock) -> Unit) {
             ContentBlock.Paragraph(
                 id = generateBlockId(),
                 content = "",
-                level = 1
-            )
+                level = 1,
+            ),
         )
     }) {
         Icon(Icons.Default.Title, "Heading", modifier = Modifier.size(20.dp))
@@ -175,23 +174,19 @@ private fun TextAddButton(onInsertBlock: (ContentBlock) -> Unit) {
 }
 
 @Composable
-private fun BlockToolBarMenu(
-    showAddMenu: Boolean,
-    onInsertBlock: (ContentBlock) -> Unit,
-    update: (Boolean) -> Unit
-) {
+private fun BlockToolBarMenu(showAddMenu: Boolean, onInsertBlock: (ContentBlock) -> Unit, update: (Boolean) -> Unit) {
     DropdownMenu(
         expanded = showAddMenu,
-        onDismissRequest = { update(false) }
+        onDismissRequest = { update(false) },
     ) {
         DropdownMenuItem(
             text = { Text("Image") },
             onClick = {
                 onInsertBlock(
-                    ContentBlock.ImageBlock(id = generateBlockId(), name = "", url = "", alt = "")
+                    ContentBlock.ImageBlock(id = generateBlockId(), name = "", url = "", alt = ""),
                 )
                 update(false)
-            }
+            },
         )
         DropdownMenuItem(
             text = { Text("Reference (CSA)") },
@@ -199,11 +194,11 @@ private fun BlockToolBarMenu(
                 onInsertBlock(
                     ContentBlock.RefBlock(
                         id = generateBlockId(),
-                        refPath = "/topic/"
-                    )
+                        refPath = "/topic/",
+                    ),
                 )
                 update(false)
-            }
+            },
         )
     }
 }

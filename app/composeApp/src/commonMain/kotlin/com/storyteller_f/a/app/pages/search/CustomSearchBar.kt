@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.search
 
 import androidx.compose.foundation.layout.Arrangement
@@ -60,6 +64,7 @@ import com.storyteller_f.a.app.common.createTopicSearchInRoomViewModel
 import com.storyteller_f.a.app.common.createTopicSearchInTopicViewModel
 import com.storyteller_f.a.app.common.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.common.createTopicSearchViewModel
+import com.storyteller_f.a.app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.common.getUserOverviewViewModel
 import com.storyteller_f.a.app.input_search_community
 import com.storyteller_f.a.app.input_search_files
@@ -73,6 +78,7 @@ import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.file.FileCell
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.title.ComposeMenu
+import com.storyteller_f.a.app.pages.title.TitleList
 import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.pages.user.MemberList
 import com.storyteller_f.a.app.pages.user.SelfUserIconWithDialog
@@ -83,6 +89,7 @@ import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -152,10 +159,10 @@ fun CustomSearchBar(scope: SearchScope, showSelfIcon: Boolean = true, leadingIco
             ObjectType.COMMUNITY -> appNavFactory.newAppNav().gotoCommunityCompose()
             ObjectType.ROOM -> appNavFactory.newAppNav().gotoRoomCompose()
             ObjectType.TOPIC -> Unit
-            ObjectType.USER -> TODO()
+            ObjectType.USER -> Unit
             ObjectType.TITLE -> appNavFactory.newAppNav().gotoTitleCompose()
-            ObjectType.FILE -> TODO()
-            ObjectType.PANEL_ACCOUNT -> TODO()
+            ObjectType.FILE -> Unit
+            ObjectType.PANEL_ACCOUNT -> Unit
         }
     }
 }
@@ -226,11 +233,7 @@ private fun SelfIcon(onClickCreate: () -> Unit) {
 }
 
 @Composable
-private fun MergedLeadingIcon(
-    leadingIcon: @Composable () -> Unit,
-    active: Boolean,
-    update: (Boolean) -> Unit
-) {
+private fun MergedLeadingIcon(leadingIcon: @Composable () -> Unit, active: Boolean, update: (Boolean) -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     if (appPlatform.hasNativeBack) {
         leadingIcon()
@@ -245,7 +248,8 @@ private fun MergedLeadingIcon(
             }
             IconButton(
                 onClick = navigateBack,
-                modifier = Modifier.appiumSemantics(
+                modifier =
+                Modifier.appiumSemantics(
                     description = "back",
                     onClick = navigateBack,
                 ),
@@ -277,16 +281,13 @@ private fun SearchPlaceholder(scope: SearchScope) {
                 is SearchScope.UserReceivedTitle -> Res.string.input_search_user_received_titles
                 is SearchScope.UserCreatedTitle -> Res.string.input_search_user_created_titles
                 is SearchScope.UploadedFiles -> Res.string.input_search_files
-            }
-        )
+            },
+        ),
     )
 }
 
 @Composable
-private fun SearchContent(
-    scope: SearchScope,
-    searchQuery: String
-) {
+private fun SearchContent(scope: SearchScope, searchQuery: String) {
     val current = searchQuery.trim()
     when (scope) {
         SearchScope.World -> WorldSearchContent(current)
@@ -307,16 +308,18 @@ private fun SearchContent(
     }
 }
 
-@Suppress("unused")
 @Composable
-fun UserCreatedTitleSearchContent(x0: String, x1: SearchScope.UserCreatedTitle) {
-    TODO("Not yet implemented")
+fun UserCreatedTitleSearchContent(current: String, scope: SearchScope.UserCreatedTitle) {
+    if (current.isNotBlank()) {
+        TitleList(createUserTitlesViewModel(scope.userId, TitleSearchType.CREATOR))
+    }
 }
 
-@Suppress("unused")
 @Composable
-fun UserReceivedTitleSearchContent(x0: String, x1: SearchScope.UserReceivedTitle) {
-    TODO("Not yet implemented")
+fun UserReceivedTitleSearchContent(current: String, scope: SearchScope.UserReceivedTitle) {
+    if (current.isNotBlank()) {
+        TitleList(createUserTitlesViewModel(scope.userId, TitleSearchType.RECEIVER))
+    }
 }
 
 @Composable
@@ -406,7 +409,7 @@ private fun MyRoomSearchContent(current: String) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 SingleChoiceSegmentedButtonRow {
                     options.forEachIndexed { i, e ->
@@ -415,7 +418,7 @@ private fun MyRoomSearchContent(current: String) {
                             {
                                 currentOption = e
                             },
-                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)
+                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size),
                         ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
@@ -444,7 +447,7 @@ private fun MyCommunitySearchContent(query: String) {
             val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 SingleChoiceSegmentedButtonRow {
                     options.forEachIndexed { i, e ->
@@ -453,7 +456,7 @@ private fun MyCommunitySearchContent(query: String) {
                             {
                                 currentOption = e
                             },
-                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size)
+                            shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size),
                         ) {
                             Text(e.name.lowercase().replace("_", " "))
                         }
@@ -472,9 +475,10 @@ private fun MyCommunitySearchContent(query: String) {
 @OptIn(ExperimentalMaterial3Api::class)
 private fun WorldSearchContent(current: String) {
     if (current.isNotBlank()) {
-        val pagerState = rememberPagerState {
-            2
-        }
+        val pagerState =
+            rememberPagerState {
+                2
+            }
         var selected by remember {
             mutableIntStateOf(0)
         }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.ContentResolver
@@ -20,15 +24,16 @@ fun getClipFile(context: Context, uri: Uri): ClipFile? {
     if (query == null) {
         return null
     }
-    val (name, size) = query.use { cursor ->
-        if (cursor.moveToFirst()) {
-            val name = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
-            val size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
-            name to size
-        } else {
-            null
-        }
-    } ?: return null
+    val (name, size) =
+        query.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val name = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
+                val size = cursor.getLong(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE))
+                name to size
+            } else {
+                null
+            }
+        } ?: return null
     val type = contentResolver.getType(uri) ?: "*/*"
     return ClipFile(context, name, ContentType.parse(type), size, uri.toString())
 }
@@ -38,7 +43,7 @@ class ClipFile(
     override val name: String,
     override val contentType: ContentType,
     override val size: Long,
-    override val path: String
+    override val path: String,
 ) : ClientFile {
     private val contentResolver: ContentResolver = context.contentResolver
 

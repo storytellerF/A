@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 import android.content.Intent
@@ -12,7 +16,9 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 
-class UploadActivity : ComponentActivity(), ClientFileServiceContainer {
+class UploadActivity :
+    ComponentActivity(),
+    ClientFileServiceContainer {
     override var binder: FileBinder? = null
     override var isConnecting: Boolean = false
     val receiver = CustomClientFileProvider(this)
@@ -24,7 +30,7 @@ class UploadActivity : ComponentActivity(), ClientFileServiceContainer {
         setContent {
             CompositionLocalProvider(
                 LocalClientFileProvider provides receiver,
-                LocalUiViewModel provides uiViewModel
+                LocalUiViewModel provides uiViewModel,
             ) {
                 UploadPage()
             }

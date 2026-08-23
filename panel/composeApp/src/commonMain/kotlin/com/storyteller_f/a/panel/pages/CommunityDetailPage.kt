@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -51,7 +55,6 @@ import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.stringResource
 
@@ -63,10 +66,11 @@ fun CommunityDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { CommunityTopBar(id) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.Group, "Info"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.Group, "Info"),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -91,11 +95,12 @@ private fun CommunityTopBar(id: PrimaryKey) {
     val info by vm.handler.data.collectAsState(null)
     val name = info?.name
     val aid = info?.aid
-    val title = if (name != null && aid != null) {
-        stringResource(Res.string.community_detail_title_with_info, name, aid)
-    } else {
-        stringResource(Res.string.community_detail_title)
-    }
+    val title =
+        if (name != null && aid != null) {
+            stringResource(Res.string.community_detail_title_with_info, name, aid)
+        } else {
+            stringResource(Res.string.community_detail_title)
+        }
     val nav = LocalPanelNav.current
     TopAppBar(
         title = {
@@ -105,13 +110,13 @@ private fun CommunityTopBar(id: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
 @Composable
 private fun CommunityInfoTabs(id: PrimaryKey) {
-    val tabs = listOf(stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members),)
+    val tabs = listOf(stringResource(Res.string.tab_basic_info), stringResource(Res.string.tab_members))
     val pagerState = rememberPagerState { tabs.size }
     val scope = rememberCoroutineScope()
     Column {
@@ -139,26 +144,31 @@ private fun CommunityBasicInfoSection(id: PrimaryKey) {
     val dialogController = LocalPanelGlobalDialog.current
     val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        val items = buildList {
-            add("id" to info.id.toString())
-            add("name" to info.name)
-            add("aid" to info.aid)
-            add("owner" to info.owner.toString())
-            add("createdTime" to info.createdTime.toString())
-            add("memberCount" to info.memberCount.toString())
-            add("memberPolicy" to info.memberPolicy.name)
-            add("icon" to (info.icon?.name ?: "null"))
-            add("poster" to (info.poster?.name ?: "null"))
-            add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
-            add("hasPoster" to info.hasPoster.toString())
-            add("fontSettings" to (info.fontSettings?.let {
-                compactJson.encodeToString(
-                    com.storyteller_f.shared.model.FontSettings.serializer(),
-                    it.settings
+        val items =
+            buildList {
+                add("id" to info.id.toString())
+                add("name" to info.name)
+                add("aid" to info.aid)
+                add("owner" to info.owner.toString())
+                add("createdTime" to info.createdTime.toString())
+                add("memberCount" to info.memberCount.toString())
+                add("memberPolicy" to info.memberPolicy.name)
+                add("icon" to (info.icon?.name ?: "null"))
+                add("poster" to (info.poster?.name ?: "null"))
+                add("latestTopic" to (info.latestTopic?.toString() ?: "null"))
+                add("hasPoster" to info.hasPoster.toString())
+                add(
+                    "fontSettings" to (
+                        info.fontSettings?.let { fontSettings ->
+                            compactJson.encodeToString(
+                                com.storyteller_f.shared.model.FontSettings.serializer(),
+                                fontSettings.settings,
+                            )
+                        } ?: "null"
+                        ),
                 )
-            } ?: "null"))
-            add("readOnly" to info.readOnly.toString())
-        }
+                add("readOnly" to info.readOnly.toString())
+            }
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {
@@ -190,17 +200,17 @@ private fun CommunityMembersTab(id: PrimaryKey) {
     val vm = createPanelCommunityMembersViewModel(id)
     StateView(vm, modifier = Modifier.fillMaxSize()) { items ->
         LazyColumn {
-            pagingItems(items, key = { it.userInfo.id }) {
-                val m = items[it]
+            pagingItems(items, key = { it.userInfo.id }) { index ->
+                val m = items[index]
                 if (m != null) {
                     ListItem(
                         modifier = Modifier.clickable { nav.gotoUserDetail(m.userInfo.id) },
                         headlineContent = { Text(m.userInfo.nickname) },
                         supportingContent = {
-                            val joined = m.joinedTime.toString()
+                            val joined = m.joinedTime?.toString().orEmpty()
                             val status = m.status.name
                             Text(listOf(joined, status).joinToString(" • "))
-                        }
+                        },
                     )
                     HorizontalDivider()
                 }

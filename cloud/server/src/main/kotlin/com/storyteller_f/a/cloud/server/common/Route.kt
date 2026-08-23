@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.common
 
 import io.ktor.http.*
@@ -6,29 +10,29 @@ import io.ktor.server.util.*
 
 inline fun <reified T : Any, reified R : Any> RoutingContext.checkParameter(
     name: String,
-    block: (T) -> Result<R?>
-): Result<R?> {
-    return call.parameters.checkParameter<R, T>(name, block)
-}
+    block: (T) -> Result<R?>,
+): Result<R?> = call.parameters.checkParameter<R, T>(name, block)
 
 inline fun <reified R : Any, reified T : Any> Parameters.checkParameter(
     name: String,
-    block: (T) -> Result<R?>
+    block: (T) -> Result<R?>,
 ): Result<R?> {
-    val v = runCatching {
-        getOrFailCompact<T>(name)
-    }
+    val v =
+        runCatching {
+            getOrFailCompact<T>(name)
+        }
     return when {
         v.isSuccess -> block(v.getOrThrow())
-        else -> Result.failure(v.exceptionOrNull()!!)
+        else -> Result.failure(checkNotNull(v.exceptionOrNull()) { "Failed route Result must contain an exception" })
     }
 }
 
 inline fun <reified T : Any> Parameters.getOrFailCompact(name: String): T {
-    val value = if (T::class == ULong::class) {
-        getOrFail<String>(name).toULong() as T
-    } else {
-        getOrFail<T>(name)
-    }
+    val value =
+        if (T::class == ULong::class) {
+            getOrFail<String>(name).toULong() as T
+        } else {
+            getOrFail<T>(name)
+        }
     return value
 }

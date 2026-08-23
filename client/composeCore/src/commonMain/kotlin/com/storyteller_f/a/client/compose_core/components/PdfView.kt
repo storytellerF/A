@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -34,12 +38,13 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
     val url = fileInfo.url
     val shape = RoundedCornerShape(20.dp)
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
             .clickable { onClick(fileInfo) }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Default.PictureAsPdf, "pdf")
@@ -47,7 +52,7 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
                 fileInfo.name,
                 maxLines = 1,
                 overflow = TextOverflow.MiddleEllipsis,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             )
             IconButton({
                 onClick(fileInfo)

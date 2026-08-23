@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.EncryptedKey
@@ -15,8 +19,7 @@ object EncryptedKeys : Table() {
     }
 }
 
-fun EncryptedKey.Companion.wrapRow(row: ResultRow): EncryptedKey {
-    return with(EncryptedKeys) {
-        EncryptedKey(row[topicId], row[uid], row[encryptedAes].bytes)
-    }
+fun EncryptedKey.Companion.wrapRow(row: ResultRow): EncryptedKey =
+    with(EncryptedKeys) {
+    EncryptedKey(row[topicId], row[uid], row[encryptedAes].bytes)
 }

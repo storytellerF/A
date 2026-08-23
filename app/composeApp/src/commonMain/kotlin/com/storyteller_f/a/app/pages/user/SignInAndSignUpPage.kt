@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.animation.slideInHorizontally
@@ -42,20 +46,23 @@ data object SignInInput : NavKey
 
 @Composable
 fun SignInAndSignUpPage() {
-    val config = SavedStateConfiguration {
-        serializersModule = SerializersModule {
-            polymorphic(NavKey::class) {
-                subclass(SignIn::class, SignIn.serializer())
-                subclass(SignUp::class, SignUp.serializer())
-                subclass(SignUpInput::class, SignUpInput.serializer())
-                subclass(SignInInput::class, SignInInput.serializer())
-            }
+    val config =
+        SavedStateConfiguration {
+            serializersModule =
+                SerializersModule {
+                    polymorphic(NavKey::class) {
+                        subclass(SignIn::class, SignIn.serializer())
+                        subclass(SignUp::class, SignUp.serializer())
+                        subclass(SignUpInput::class, SignUpInput.serializer())
+                        subclass(SignInInput::class, SignInInput.serializer())
+                    }
+                }
         }
-    }
     val backStack = rememberNavBackStack(config, SignIn)
-    val nav = remember {
-        buildSignInAndSignUpNav(backStack)
-    }
+    val nav =
+        remember {
+            buildSignInAndSignUpNav(backStack)
+        }
     val appNavFactory = LocalAppNavFactory.current
     Surface {
         Column {
@@ -77,9 +84,10 @@ fun SignInAndSignUpPage() {
 private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSignUpNav) {
     NavDisplay(
         backStack,
-        entryDecorators = listOf(
+        entryDecorators =
+        listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator()
+            rememberViewModelStoreNavEntryDecorator(),
         ),
         transitionSpec = {
             slideInHorizontally(initialOffsetX = { it }) togetherWith
@@ -93,7 +101,8 @@ private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSign
             slideInHorizontally(initialOffsetX = { -it }) togetherWith
                 slideOutHorizontally(targetOffsetX = { it })
         },
-        entryProvider = entryProvider {
+        entryProvider =
+        entryProvider {
             entry<SignIn> {
                 SignInPage(nav)
             }
@@ -106,11 +115,12 @@ private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSign
             entry<SignInInput> {
                 PrivateKeyAuthSignInPage()
             }
-        }
+        },
     )
 }
 
-private fun buildSignInAndSignUpNav(backStack: NavBackStack<NavKey>) = object : SignInAndSignUpNav {
+private fun buildSignInAndSignUpNav(backStack: NavBackStack<NavKey>) =
+    object : SignInAndSignUpNav {
     override fun gotoPrivateKey(isSignUp: Boolean) {
         val target = if (isSignUp) SignUpInput else SignInInput
         val i = backStack.indexOf(target)

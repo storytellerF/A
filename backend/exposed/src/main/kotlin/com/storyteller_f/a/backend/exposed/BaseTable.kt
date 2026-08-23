@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.AdminDatabase
@@ -14,6 +18,7 @@ import com.storyteller_f.a.backend.core.SubscriptionDatabase
 import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
+import com.storyteller_f.a.backend.core.WorkerTaskDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedAdminDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
@@ -26,15 +31,13 @@ import com.storyteller_f.a.backend.exposed.database.ExposedSubscriptionDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTitleDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
+import com.storyteller_f.a.backend.exposed.database.ExposedWorkerTaskDatabase
 import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
-import com.storyteller_f.a.backend.exposed.tables.TaskConfigs
-import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
@@ -44,7 +47,6 @@ import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
 import io.github.aakira.napier.Napier
 import io.r2dbc.spi.R2dbcDataIntegrityViolationException
-import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.datetime.datetime
@@ -53,7 +55,7 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.upsert
 import java.sql.SQLIntegrityConstraintViolationException
 
-abstract class BaseTable : Table() {
+open class BaseTable : Table() {
     val id = customPrimaryKey("id")
     val createdTime = datetime("created_time")
 
@@ -99,14 +101,14 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         get() = ExposedTopicDatabase(databaseSession, this)
     override val title: TitleDatabase
         get() = ExposedTitleDatabase(databaseSession)
+    override val container: ContainerDatabase
+        get() = ExposedContainerDatabase(databaseSession, this)
     override val community: CommunityDatabase
         get() = ExposedCommunityDatabase(databaseSession, container)
     override val room: RoomDatabase
         get() = ExposedRoomDatabase(databaseSession, container)
     override val file: FileDatabase
         get() = ExposedFileDatabase(databaseSession)
-    override val container: ContainerDatabase
-        get() = ExposedContainerDatabase(databaseSession, this)
     override val admin: AdminDatabase
         get() = ExposedAdminDatabase(databaseSession)
     override val panelAccount: PanelAccountDatabase
@@ -121,42 +123,14 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     override val subscription: SubscriptionDatabase
         get() = ExposedSubscriptionDatabase(databaseSession)
 
-    override val getTaskConfig: suspend (TaskRecordType) -> Result<TaskConfig?> = { type ->
-        databaseSession.dbSearch {
-            search {
-                TaskConfigs.selectAll().where { TaskConfigs.type eq type }
-            }
-            first(TaskConfig::wrapRow)
-        }
-    }
+    override val workerTask: WorkerTaskDatabase
+        get() = ExposedWorkerTaskDatabase(databaseSession)
 
-    override val getTaskConfigs: suspend () -> Result<List<TaskConfig>> = {
-        databaseSession.dbSearch {
-            search {
-                TaskConfigs.selectAll().orderBy(TaskConfigs.type, SortOrder.ASC)
-            }
-            map(TaskConfig::wrapRow)
-        }
-    }
-
-    override val upsertTaskConfigs: suspend (List<TaskConfig>) -> Result<Unit> = { configs ->
-        databaseSession.dbQuery {
-            configs.forEach { config ->
-                TaskConfigs.upsert(TaskConfigs.type) { statement ->
-                    statement[TaskConfigs.type] = config.type
-                    statement[TaskConfigs.enabled] = config.isEnabled
-                    statement[TaskConfigs.fetchSize] = config.fetchSize
-                    statement[TaskConfigs.waitDurationMillis] = config.waitDurationMillis
-                }
-            }
-        }
-    }
-
-    override val init: suspend () -> Unit = {
+    override suspend fun init() {
         ExposedDatabaseFactory.init(databaseSession.database)
     }
 
-    override val clean: suspend () -> Unit = {
+    override suspend fun clean() {
         ExposedDatabaseFactory.clean(databaseSession.database)
     }
 
@@ -186,9 +160,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         ExposedDatabaseFactory.migration(databaseSession.database)
     }
 
-    override fun isDup(throwable: Throwable): Boolean {
-        return throwable.cause?.isDup() ?: false
-    }
+    override fun isDup(throwable: Throwable): Boolean = throwable.cause?.isDup() == true
 }
 
 fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {

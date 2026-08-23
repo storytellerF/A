@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app
 
 fun getDesktopServerUrl(): String = System.getProperty("appium.server.url") ?: AppConfig.SERVER_URL

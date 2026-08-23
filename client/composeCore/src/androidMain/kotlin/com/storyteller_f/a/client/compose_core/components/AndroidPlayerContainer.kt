@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import android.app.PictureInPictureParams
@@ -30,15 +34,16 @@ fun EnablePipPre31(enablePip: Boolean, localMediaPlaySession: LocalMediaPlaySess
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         val context = LocalContext.current
         DisposableEffect(context) {
-            val onUserLeaveBehavior = Runnable {
-                Napier.d(tag = "MediaPlayer") {
-                    "EnablePipPre31 ${localMediaPlaySession.uuid} $enablePip"
+            val onUserLeaveBehavior =
+                Runnable {
+                    Napier.d(tag = "MediaPlayer") {
+                        "EnablePipPre31 ${localMediaPlaySession.uuid} $enablePip"
+                    }
+                    if (enablePip) {
+                        context.findActivity()
+                            .enterPictureInPictureMode(PictureInPictureParams.Builder().build())
+                    }
                 }
-                if (enablePip) {
-                    context.findActivity()
-                        .enterPictureInPictureMode(PictureInPictureParams.Builder().build())
-                }
-            }
             context.findActivity().addOnUserLeaveHintListener(onUserLeaveBehavior)
             onDispose {
                 context.findActivity().removeOnUserLeaveHintListener(onUserLeaveBehavior)
@@ -55,12 +60,9 @@ fun BoxScope.AndroidPlayerContainer(player: MediaController, block: @Composable 
 }
 
 @Composable
-fun Modifier.androidPipMode(
-    enable: Boolean,
-    ratio: Rational,
-): Modifier {
+fun Modifier.androidPipMode(enable: Boolean, ratio: Rational): Modifier {
     val mediaPlayerService = LocalMediaPlayerService.current
-    if (!(mediaPlayerService.enablePip)) return this
+    if (!mediaPlayerService.enablePip) return this
     val context = LocalContext.current
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         return this
@@ -76,7 +78,7 @@ fun Modifier.androidPipMode(
         // 12 之后引入
         builder.setSourceRectHint(sourceRect)
         builder.setAutoEnterEnabled(true)
-        builder.setActions(listOf())
+        builder.setActions(emptyList())
         builder.setAspectRatio(ratio)
         context.findActivity().setPictureInPictureParams(builder.build())
     }
@@ -98,23 +100,24 @@ fun PipBroadcastReceiver(player: Player) {
     val context = LocalContext.current
 
     DisposableEffect(player) {
-        val broadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if ((intent == null) || (intent.action != ACTION_BROADCAST_CONTROL)) {
-                    return
-                }
+        val broadcastReceiver: BroadcastReceiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent == null || intent.action != ACTION_BROADCAST_CONTROL) {
+                        return
+                    }
 
-                when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
-                    EXTRA_CONTROL_PAUSE -> player.pause()
-                    EXTRA_CONTROL_PLAY -> player.play()
+                    when (intent.getIntExtra(EXTRA_CONTROL_TYPE, 0)) {
+                        EXTRA_CONTROL_PAUSE -> player.pause()
+                        EXTRA_CONTROL_PLAY -> player.play()
+                    }
                 }
             }
-        }
         ContextCompat.registerReceiver(
             context,
             broadcastReceiver,
             IntentFilter(ACTION_BROADCAST_CONTROL),
-            ContextCompat.RECEIVER_NOT_EXPORTED
+            ContextCompat.RECEIVER_NOT_EXPORTED,
         )
         onDispose {
             context.unregisterReceiver(broadcastReceiver)

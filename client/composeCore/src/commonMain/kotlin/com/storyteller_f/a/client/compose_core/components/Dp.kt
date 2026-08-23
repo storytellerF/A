@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.runtime.Composable
@@ -35,12 +39,11 @@ fun textUnitToPx(textUnit: TextUnit): Float {
     return textUnitToPx(textUnit, density)
 }
 
-fun textUnitToPx(textUnit: TextUnit, density: Density): Float {
-    return if (textUnit.isSp) {
-        with(density) {
-            textUnit.toPx()
-        }
-    } else {
-        0f
+fun textUnitToPx(textUnit: TextUnit, density: Density): Float =
+    if (textUnit.isSp) {
+    with(density) {
+        textUnit.toPx()
     }
+} else {
+    0f
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.background
@@ -35,14 +39,15 @@ fun CommunityRefCell(communityAid: String, onClick: ((CommunityInfo) -> Unit)? =
 @Composable
 private fun CommunityRefCellInternal(
     handler: LoadingHandler<CommunityInfo>,
-    onClick: ((CommunityInfo) -> Unit)? = null
+    onClick: ((CommunityInfo) -> Unit)? = null,
 ) {
     val communityInfo by handler.data.collectAsState()
     val shape = RoundedCornerShape(10.dp)
     val appNavFactory = LocalAppNavFactory.current
     RefCellStateView(
         handler,
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .height(70.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
@@ -50,7 +55,7 @@ private fun CommunityRefCellInternal(
             .clickable {
                 communityInfo?.let { onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoCommunity(it.id, false) }
             }
-            .padding(10.dp)
+            .padding(10.dp),
     ) {
         CommunityCell(it, true, onClick)
     }

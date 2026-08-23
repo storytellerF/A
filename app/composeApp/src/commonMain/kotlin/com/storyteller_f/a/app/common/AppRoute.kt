@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.storyteller_f.a.app.common
@@ -92,39 +96,26 @@ data object AboutScreen : NavKey
 data class UserScreen(val uid: PrimaryKey) : NavKey
 
 @Serializable
-data class TopicComposePublicRoomScreen(
-    val roomId: PrimaryKey,
-    val communityId: PrimaryKey,
-) : NavKey
+data class TopicComposePublicRoomScreen(val roomId: PrimaryKey, val communityId: PrimaryKey) : NavKey
 
 @Serializable
 data class TopicComposePublicRoomTopicScreen(
     val roomId: PrimaryKey,
     val communityId: PrimaryKey,
-    val topicId: PrimaryKey
+    val topicId: PrimaryKey,
 ) : NavKey
 
 @Serializable
-data class TopicComposePrivateRoomScreen(
-    val roomId: PrimaryKey,
-) : NavKey
+data class TopicComposePrivateRoomScreen(val roomId: PrimaryKey) : NavKey
 
 @Serializable
-data class TopicComposePrivateRoomTopicScreen(
-    val roomId: PrimaryKey,
-    val topicId: PrimaryKey
-) : NavKey
+data class TopicComposePrivateRoomTopicScreen(val roomId: PrimaryKey, val topicId: PrimaryKey) : NavKey
 
 @Serializable
-data class TopicComposeUserScreen(
-    val uid: PrimaryKey,
-) : NavKey
+data class TopicComposeUserScreen(val uid: PrimaryKey) : NavKey
 
 @Serializable
-data class TopicComposeUserTopicScreen(
-    val uid: PrimaryKey,
-    val topicId: PrimaryKey
-) : NavKey
+data class TopicComposeUserTopicScreen(val uid: PrimaryKey, val topicId: PrimaryKey) : NavKey
 
 @Serializable
 data class TopicComposeCommunityScreen(val communityId: PrimaryKey) : NavKey
@@ -207,48 +198,49 @@ inline fun <reified T : NavKey> AppNav.toRoute(): T? {
     return last
 }
 
-val appNavSerializersModule = SerializersModule {
-    polymorphic(NavKey::class) {
-        subclass(HomeScreen::class)
-        subclass(CommunityScreen::class)
-        subclass(RoomScreen::class)
-        subclass(SignSessionScreen::class)
-        subclass(TopicScreen::class)
-        subclass(AboutScreen::class)
-        subclass(UserScreen::class)
-        subclass(TopicComposePublicRoomScreen::class)
-        subclass(TopicComposePublicRoomTopicScreen::class)
-        subclass(TopicComposePrivateRoomScreen::class)
-        subclass(TopicComposePrivateRoomTopicScreen::class)
-        subclass(TopicComposeUserScreen::class)
-        subclass(TopicComposeUserTopicScreen::class)
-        subclass(TopicComposeCommunityScreen::class)
-        subclass(TopicComposeCommunityTopicScreen::class)
-        subclass(RoomMemberScreen::class)
-        subclass(CommunityMemberScreen::class)
-        subclass(UserSettingScreen::class)
-        subclass(PreferenceScreen::class)
-        subclass(LocalImageScreen::class)
-        subclass(FileInfoScreen::class)
-        subclass(TitleComposeScreen::class)
-        subclass(CommunityTitleComposeScreen::class)
-        subclass(RoomTitleComposeScreen::class)
-        subclass(CommunityComposeScreen::class)
-        subclass(RoomComposeScreen::class)
-        subclass(CommunitySettingScreen::class)
-        subclass(FontSettingsScreen::class)
-        subclass(RoomSettingScreen::class)
-        subclass(ReactionListScreen::class)
-        subclass(FavoriteScreen::class)
-        subclass(SubscriptionScreen::class)
-        subclass(UserReactionRecordsScreen::class)
-        subclass(UserCommentsScreen::class)
-        subclass(FileExplorerScreen::class)
-        subclass(RoomFileExplorerScreen::class)
-        subclass(CommunityFileExplorerScreen::class)
-        subclass(FileRefsScreen::class)
+val appNavSerializersModule =
+    SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(HomeScreen::class)
+            subclass(CommunityScreen::class)
+            subclass(RoomScreen::class)
+            subclass(SignSessionScreen::class)
+            subclass(TopicScreen::class)
+            subclass(AboutScreen::class)
+            subclass(UserScreen::class)
+            subclass(TopicComposePublicRoomScreen::class)
+            subclass(TopicComposePublicRoomTopicScreen::class)
+            subclass(TopicComposePrivateRoomScreen::class)
+            subclass(TopicComposePrivateRoomTopicScreen::class)
+            subclass(TopicComposeUserScreen::class)
+            subclass(TopicComposeUserTopicScreen::class)
+            subclass(TopicComposeCommunityScreen::class)
+            subclass(TopicComposeCommunityTopicScreen::class)
+            subclass(RoomMemberScreen::class)
+            subclass(CommunityMemberScreen::class)
+            subclass(UserSettingScreen::class)
+            subclass(PreferenceScreen::class)
+            subclass(LocalImageScreen::class)
+            subclass(FileInfoScreen::class)
+            subclass(TitleComposeScreen::class)
+            subclass(CommunityTitleComposeScreen::class)
+            subclass(RoomTitleComposeScreen::class)
+            subclass(CommunityComposeScreen::class)
+            subclass(RoomComposeScreen::class)
+            subclass(CommunitySettingScreen::class)
+            subclass(FontSettingsScreen::class)
+            subclass(RoomSettingScreen::class)
+            subclass(ReactionListScreen::class)
+            subclass(FavoriteScreen::class)
+            subclass(SubscriptionScreen::class)
+            subclass(UserReactionRecordsScreen::class)
+            subclass(UserCommentsScreen::class)
+            subclass(FileExplorerScreen::class)
+            subclass(RoomFileExplorerScreen::class)
+            subclass(CommunityFileExplorerScreen::class)
+            subclass(FileRefsScreen::class)
+        }
     }
-}
 
 @Composable
 inline fun <reified T : NavKey> AppNavFactory.hasRouteFlow(crossinline block: (T) -> Boolean = { true }): Boolean {
@@ -316,19 +308,18 @@ interface AppNav {
     fun gotoFileRefs(fileId: PrimaryKey)
 }
 
-inline fun <reified T : NavKey> AppNav.hasRoute(): Boolean {
-    return backStack.last() is T
-}
+inline fun <reified T : NavKey> AppNav.hasRoute(): Boolean = backStack.last() is T
 
 interface AppNavFactory {
     fun newAppNav(): AppNav
 
     companion object {
-        val EMPTY = object : AppNavFactory {
-            override fun newAppNav(): AppNav {
-                error("no app nav")
+        val EMPTY =
+            object : AppNavFactory {
+                override fun newAppNav(): AppNav {
+                    error("no app nav")
+                }
             }
-        }
     }
 }
 
@@ -537,9 +528,8 @@ internal fun createListPaneAppNavFactory(nav: AppNav): AppNavFactory {
 }
 
 @OptIn(ExperimentalResourceApi::class)
-fun rootEntryProvider(
-    nav: AppNav,
-) = entryProvider {
+fun rootEntryProvider(nav: AppNav) =
+    entryProvider {
     handleMainScreen(createListPaneAppNavFactory(nav))
     handleSettingsScreen()
     handleComposeScreen(nav)
@@ -552,7 +542,7 @@ fun rootEntryProvider(
             LibrariesContainer(
                 libraries,
                 Modifier.fillMaxSize().statusBarsPadding(),
-                colors = LibraryDefaults.libraryColors()
+                colors = LibraryDefaults.libraryColors(),
             )
         }
     }
@@ -695,12 +685,13 @@ private fun EntryProviderScope<NavKey>.handleTopicComposeRoomScreen(backPrePage:
         val composeData = TopicComposeData.PublicRoom(it.roomId, it.communityId, it.roomId ob ObjectType.ROOM)
         TopicComposePage(composeData, backPrePage)
     }
-    entry<TopicComposePublicRoomTopicScreen> {
-        val composeData = TopicComposeData.PublicRoom(
-            it.roomId,
-            it.communityId,
-            it.topicId ob ObjectType.TOPIC
-        )
+    entry<TopicComposePublicRoomTopicScreen> { screen ->
+        val composeData =
+            TopicComposeData.PublicRoom(
+                screen.roomId,
+                screen.communityId,
+                screen.topicId ob ObjectType.TOPIC,
+            )
         TopicComposePage(composeData, backPrePage)
     }
     entry<TopicComposePrivateRoomScreen> {
@@ -756,6 +747,4 @@ object ExternalUriHandler {
     }
 }
 
-fun getDeepLink(path: String): String {
-    return "${getDeepLinkScheme()}://${getDeepLinkHost()}$path"
-}
+fun getDeepLink(path: String): String = "${getDeepLinkScheme()}://${getDeepLinkHost()}$path"

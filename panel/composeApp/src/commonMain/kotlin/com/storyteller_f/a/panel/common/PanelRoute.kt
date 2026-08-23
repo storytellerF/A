@@ -1,8 +1,11 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi::class)
 
 package com.storyteller_f.a.panel.common
 
-import PanelFilePreviewPage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +51,7 @@ import com.storyteller_f.a.panel.pages.AllUsersPage
 import com.storyteller_f.a.panel.pages.CommunityDetailPage
 import com.storyteller_f.a.panel.pages.FileDetailPage
 import com.storyteller_f.a.panel.pages.OverviewPage
+import com.storyteller_f.a.panel.pages.PanelFilePreviewPage
 import com.storyteller_f.a.panel.pages.PanelInputPage
 import com.storyteller_f.a.panel.pages.RoomDetailPage
 import com.storyteller_f.a.panel.pages.TaskRecordsPage
@@ -58,7 +62,7 @@ import com.storyteller_f.a.panel.panelListDetailDestination
 import com.storyteller_f.a.panel.select_an_item
 import com.storyteller_f.a.panel.sign_in
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storytellerf.a.panel.pages.TaskConfigsPage
+import com.storytellerf.a.panel.pages.WorkerTasksPage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -126,7 +130,7 @@ data object PanelTaskRecordsScreen : NavKey
 
 /** Opens the worker task configuration editor. */
 @Serializable
-data object PanelTaskConfigsScreen : NavKey
+data object PanelWorkerTasksScreen : NavKey
 
 @Serializable
 internal class PanelTaskRecordDetailScreen(val type: TaskRecordType) : NavKey
@@ -152,7 +156,7 @@ val panelNavSerializersModule: SerializersModule =
             subclass(PanelAllFilesScreen::class)
             subclass(PanelAllTitlesScreen::class)
             subclass(PanelTaskRecordsScreen::class)
-            subclass(PanelTaskConfigsScreen::class)
+            subclass(PanelWorkerTasksScreen::class)
             subclass(PanelTaskRecordDetailScreen::class)
         }
     }
@@ -179,7 +183,7 @@ interface PanelNav {
     fun gotoTaskRecords()
 
     /** Opens the worker task configuration editor. */
-    fun gotoTaskConfigs()
+    fun gotoWorkerTasks()
 
     /** Opens execution history for one task type. */
     fun gotoTaskRecordDetail(type: TaskRecordType)
@@ -193,11 +197,12 @@ interface PanelNavFactory {
     fun newPanelNav(): PanelNav
 
     companion object {
-        val EMPTY = object : PanelNavFactory {
-            override fun newPanelNav(): PanelNav {
-                error("no panel nav")
+        val EMPTY =
+            object : PanelNavFactory {
+                override fun newPanelNav(): PanelNav {
+                    error("no panel nav")
+                }
             }
-        }
     }
 }
 
@@ -272,8 +277,8 @@ private class DefaultPanelNav(
         backStack.add(PanelTaskRecordsScreen)
     }
 
-    override fun gotoTaskConfigs() {
-        backStack.add(PanelTaskConfigsScreen)
+    override fun gotoWorkerTasks() {
+        backStack.add(PanelWorkerTasksScreen)
     }
 
     override fun gotoTaskRecordDetail(type: TaskRecordType) {
@@ -334,8 +339,8 @@ private fun EntryProviderScope<NavKey>.addStandaloneEntries(nav: PanelNav) {
     entry<PanelTaskRecordsScreen> {
         TaskRecordsPage()
     }
-    entry<PanelTaskConfigsScreen> {
-        TaskConfigsPage()
+    entry<PanelWorkerTasksScreen> {
+        WorkerTasksPage()
     }
     entry<PanelTaskRecordDetailScreen> {
         TaskRecordsPage(it.type)
@@ -418,31 +423,34 @@ private fun PanelHost(content: @Composable () -> Unit) {
 
 @Composable
 fun PanelLoginPage(back: () -> Unit) {
-    val module = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
-            subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+    val module =
+        SerializersModule {
+            polymorphic(NavKey::class) {
+                subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
+                subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+            }
         }
-    }
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = module
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule = module
+            }
         }
-    }
     val backStack = rememberNavBackStack(config, LoginSelectScreen)
-    Scaffold {
+    Scaffold { paddingValues ->
         val direction = LocalLayoutDirection.current
-        Box(Modifier.safeArea(it, direction)) {
+        Box(Modifier.safeArea(paddingValues, direction)) {
             NavDisplay(
                 backStack,
-                entryProvider = entryProvider {
+                entryProvider =
+                entryProvider {
                     entry<LoginSelectScreen> {
                         PanelSelectLoginPage { backStack.add(LoginInputScreen) }
                     }
                     entry<LoginInputScreen> {
                         PanelInputPage(back)
                     }
-                }
+                },
             )
         }
     }
@@ -453,16 +461,16 @@ private fun PanelSelectLoginPage(gotoInput: () -> Unit) {
     CenterBox {
         Column(
             verticalArrangement = Arrangement.spacedBy(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringResource(Res.string.sign_in), style = MaterialTheme.typography.headlineMedium)
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 OutlinedButton(
                     gotoInput,
-                    shape = ButtonDefaults.outlinedShape
+                    shape = ButtonDefaults.outlinedShape,
                 ) {
                     Text(stringResource(Res.string.input))
                 }

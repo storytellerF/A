@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -19,12 +23,7 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 
 @Composable
-fun RoomIcon(
-    roomInfo: RoomInfo?,
-    width: Dp,
-    setClickEvent: Boolean,
-    updateDialog: (Boolean) -> Unit
-) {
+fun RoomIcon(roomInfo: RoomInfo?, width: Dp, setClickEvent: Boolean, updateDialog: (Boolean) -> Unit) {
     val height = width * 3 / 4
     val iconUrl = roomInfo?.icon?.url
     val radius = 8.dp
@@ -33,7 +32,8 @@ fun RoomIcon(
         CommonImage(
             iconUrl,
             contentDescription = "${roomInfo.name}'s icon",
-            modifier = Modifier.size(width, height).clip(shape).let {
+            modifier =
+            Modifier.size(width, height).clip(shape).let {
                 if (setClickEvent) {
                     it.clickable {
                         updateDialog(true)
@@ -41,11 +41,12 @@ fun RoomIcon(
                 } else {
                     it
                 }
-            }.border(1.dp, Color.Gray, shape)
+            }.border(1.dp, Color.Gray, shape),
         )
     } else {
         Box(
-            modifier = Modifier.size(width, height)
+            modifier =
+            Modifier.size(width, height)
                 .background(MaterialTheme.colorScheme.tertiaryContainer, shape)
                 .clip(shape)
                 .let {
@@ -57,9 +58,9 @@ fun RoomIcon(
                         it
                     }
                 }.border(1.dp, Color.Gray, shape),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.Center,
         ) {
-            Text(roomInfo?.name?.let { safeFirstUnicode(it) } ?: "")
+            Text(roomInfo?.name?.let { safeFirstUnicode(it) }.orEmpty())
         }
     }
 }

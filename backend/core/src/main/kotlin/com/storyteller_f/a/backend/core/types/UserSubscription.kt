@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.UserSubscriptionInfo
@@ -18,17 +22,22 @@ class UserSubscription(
     companion object
 }
 
-fun UserSubscription.toUserSubscriptionInfo(): UserSubscriptionInfo {
-    return UserSubscriptionInfo(id, uid, objectId, objectType, createdTime)
-}
+fun UserSubscription.toUserSubscriptionInfo(): UserSubscriptionInfo =
+    UserSubscriptionInfo(
+    id,
+    uid,
+    objectId,
+    objectType,
+    createdTime,
+)
 
-class SubscriptionSentLog(
+data class SubscriptionSentLog(
     val id: PrimaryKey,
     val uid: PrimaryKey,
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val subscriptionId: PrimaryKey,
-    val createdTime: LocalDateTime
+    val createdTime: LocalDateTime,
 ) {
     companion object
 }

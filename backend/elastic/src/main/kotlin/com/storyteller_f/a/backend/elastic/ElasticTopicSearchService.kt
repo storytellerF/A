@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch._types.FieldValue
@@ -16,9 +20,9 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 
-class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connection),
+class ElasticTopicSearchService(connection: ElasticConnection) :
+    Elastic(connection),
     TopicSearchService {
-
     companion object {
         private const val INDEX_NAME = "topics"
     }
@@ -37,14 +41,13 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         }
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useElasticClient {
-            cleanAll(INDEX_NAME)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useElasticClient {
+        cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
-        topicDocumentSearch: TopicDocumentSearch
+        topicDocumentSearch: TopicDocumentSearch,
     ): Result<PaginationResult<TopicDocument>> {
         if (topicDocumentSearch is TopicDocumentSearch.AllCommunityRoot && topicDocumentSearch.word.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -64,31 +67,28 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
         }
     }
 
-    private fun buildSearchRequest(
-        topicDocumentSearch: TopicDocumentSearch
-    ): SearchRequest {
-        return SearchRequest.of { s ->
-            s.index(INDEX_NAME).apply {
-                when (topicDocumentSearch) {
-                    is TopicDocumentSearch.Recommend -> {
-                        buildTopicRecommendSearchRequest(topicDocumentSearch)
-                    }
+    private fun buildSearchRequest(topicDocumentSearch: TopicDocumentSearch): SearchRequest =
+        SearchRequest.of { s ->
+        s.index(INDEX_NAME).apply {
+            when (topicDocumentSearch) {
+                is TopicDocumentSearch.Recommend -> {
+                    buildTopicRecommendSearchRequest(topicDocumentSearch)
+                }
 
-                    is TopicDocumentSearch.RecommendNotLogin -> {
-                        buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch)
-                    }
+                is TopicDocumentSearch.RecommendNotLogin -> {
+                    buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch)
+                }
 
-                    is TopicDocumentSearch.AllCommunityRoot -> {
-                        buildCommunityRootSearchRequest(topicDocumentSearch)
-                    }
+                is TopicDocumentSearch.AllCommunityRoot -> {
+                    buildCommunityRootSearchRequest(topicDocumentSearch)
+                }
 
-                    is TopicDocumentSearch.Topics -> {
-                        buildTopicSearchRequest(topicDocumentSearch)
-                    }
+                is TopicDocumentSearch.Topics -> {
+                    buildTopicSearchRequest(topicDocumentSearch)
+                }
 
-                    is TopicDocumentSearch.All -> {
-                        buildAllTopicSearchRequest(topicDocumentSearch)
-                    }
+                is TopicDocumentSearch.All -> {
+                    buildAllTopicSearchRequest(topicDocumentSearch)
                 }
             }
         }
@@ -126,7 +126,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
     }
 
     private fun SearchRequest.Builder.buildCommunityRootSearchRequest(
-        topicDocumentSearch: TopicDocumentSearch.AllCommunityRoot
+        topicDocumentSearch: TopicDocumentSearch.AllCommunityRoot,
     ) {
         val fetch = topicDocumentSearch.fetch
         from(fetch.cursor?.value ?: 0)
@@ -146,7 +146,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
     }
 
     private fun SearchRequest.Builder.buildTopicRecommendNotLoginSearchRequest(
-        topicDocumentSearch: TopicDocumentSearch.RecommendNotLogin
+        topicDocumentSearch: TopicDocumentSearch.RecommendNotLogin,
     ) {
         val fetch = topicDocumentSearch.fetch
         from(fetch.cursor?.value ?: 0)
@@ -159,7 +159,7 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
     }
 
     private fun SearchRequest.Builder.buildTopicRecommendSearchRequest(
-        topicDocumentSearch: TopicDocumentSearch.Recommend
+        topicDocumentSearch: TopicDocumentSearch.Recommend,
     ) {
         val fetch = topicDocumentSearch.fetch
         from(fetch.cursor?.value ?: 0)
@@ -169,9 +169,11 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
                 b.filter { f ->
                     f.terms { t ->
                         t.field("parentId").terms { builder ->
-                            builder.value(topicDocumentSearch.communities.map { id ->
-                                FieldValue.of(id)
-                            })
+                            builder.value(
+                                topicDocumentSearch.communities.map { id ->
+                                    FieldValue.of(id)
+                                },
+                            )
                         }
                     }
                 }.filter { f ->
@@ -190,13 +192,10 @@ class ElasticTopicSearchService(connection: ElasticConnection) : Elastic(connect
 }
 
 class ElasticTopicSearchServiceFactory : TopicSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "elastic"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "elastic"
 
-    override fun build(env: MergedEnv): TopicSearchService {
-        return buildElasticSearchService(env) {
-            ElasticTopicSearchService(it)
-        }
+    override fun build(env: MergedEnv): TopicSearchService =
+        buildElasticSearchService(env) {
+        ElasticTopicSearchService(it)
     }
 }

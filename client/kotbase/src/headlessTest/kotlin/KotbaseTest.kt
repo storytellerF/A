@@ -37,7 +37,6 @@ class KotbaseTest : PlatformHeadlessTest() {
         val loadResult = observeData.load(PagingSource.LoadParams.Refresh(null, 10, false))
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         loadResult.data.forEach {
-            println("${it.hasPoster} ${it.id}")
         }
     }
 }

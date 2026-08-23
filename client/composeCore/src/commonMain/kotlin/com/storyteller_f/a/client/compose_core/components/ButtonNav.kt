@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.clickable
@@ -32,20 +36,22 @@ fun ButtonNav(
     title: String,
     suffix: @Composable () -> Unit = {},
     semanticDescription: String? = null,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
 ) {
     val shape = RoundedCornerShape(8.dp)
-    val semanticsModifier = Modifier.appiumSemantics(
-        description = semanticDescription,
-        text = title,
-        onClick = onClick,
-    )
+    val semanticsModifier =
+        Modifier.appiumSemantics(
+            description = semanticDescription,
+            text = title,
+            onClick = onClick,
+        )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth().then(semanticsModifier).clip(shape).clickable {
+        modifier =
+        Modifier.fillMaxWidth().then(semanticsModifier).clip(shape).clickable {
             onClick()
-        }.padding(horizontal = 8.dp, vertical = 12.dp)
+        }.padding(horizontal = 8.dp, vertical = 12.dp),
     ) {
         CustomIcon(icon)
         Text(title)

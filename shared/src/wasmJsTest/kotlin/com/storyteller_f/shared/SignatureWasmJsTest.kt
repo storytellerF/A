@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared
 
 import com.storyteller_f.shared.utils.md5
@@ -8,20 +12,21 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class SignatureWasmJsTest {
-
     @Test
     fun md5UsesWasmImplementation() {
         assertEquals("5d41402abc4b2a76b9719d911017c592", md5("hello"))
     }
 
     @Test
-    fun p256CanReadJvmGeneratedPrivateKey() = runTest {
-        val privatePem = """
+    fun p256CanReadJvmGeneratedPrivateKey() =
+        runTest {
+        val privatePem =
+            """
             -----BEGIN PRIVATE KEY-----
             MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCAeAx1tytf8DDzj7hXF
             3Yj/nWmeQ/PivDcglFiGezFIPQ==
             -----END PRIVATE KEY-----
-        """.trimIndent()
+            """.trimIndent()
 
         val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow()
         val publicDer = AlgoP256.getDerPublicKeyFromPrivateKey(privatePem).getOrThrow()
@@ -32,7 +37,8 @@ class SignatureWasmJsTest {
     }
 
     @Test
-    fun p256CanSignEncryptAndDerivePublicKey() = runTest {
+    fun p256CanSignEncryptAndDerivePublicKey() =
+        runTest {
         val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow()
         val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow()
         val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow()
@@ -48,12 +54,13 @@ class SignatureWasmJsTest {
         val encryptedAesKey = AlgoP256.encryptionAlgo.kemEncrypt(publicDer, aesKey).getOrThrow()
         assertContentEquals(
             aesKey,
-            AlgoP256.encryptionAlgo.kemDecrypt(privateDer, encryptedAesKey).getOrThrow()
+            AlgoP256.encryptionAlgo.kemDecrypt(privateDer, encryptedAesKey).getOrThrow(),
         )
     }
 
     @Test
-    fun mlDsaAndMlKemCanSignAndEncrypt() = runTest {
+    fun mlDsaAndMlKemCanSignAndEncrypt() =
+        runTest {
         val (privatePem, publicPem) = AlgoDilithium.generatePemKeyPair().getOrThrow()
         val privateKey = AlgoDilithium.getDerPrivateKey(privatePem).getOrThrow()
         val publicKey = AlgoDilithium.getDerPublicKeyFromPem(publicPem).getOrThrow()

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import io.ktor.client.HttpClient
@@ -65,9 +69,11 @@ fun HttpClientConfig<*>.defaultClientConfigure(
         }
     }
     install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-        })
+        json(
+            Json {
+                ignoreUnknownKeys = true
+            },
+        )
     }
     install(CallId) {
         generate { Uuid.random().toString() }
@@ -127,9 +133,11 @@ fun HttpClientConfig<*>.defaultClientConfigureForPanel(
         }
     }
     install(ContentNegotiation) {
-        json(Json {
-            ignoreUnknownKeys = true
-        })
+        json(
+            Json {
+                ignoreUnknownKeys = true
+            },
+        )
     }
     install(CallId) {
         generate { Uuid.random().toString() }

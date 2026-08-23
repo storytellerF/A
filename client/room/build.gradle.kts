@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -48,12 +52,13 @@ kotlin {
         }
         // jvm 与 android 共享：BundledSQLiteDriver 及其日志包装器（这些在 wasm 上不可用，
         // 因为 sqlite-web 把 SQLiteDriver 的 open/prepare/step 变成了 suspend）。
-        val jvmAndroidMain = create("jvmAndroidMain") {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(libs.androidx.sqlite.bundled)
+        val jvmAndroidMain =
+            create("jvmAndroidMain") {
+                dependsOn(commonMain.get())
+                dependencies {
+                    implementation(libs.androidx.sqlite.bundled)
+                }
             }
-        }
         jvmMain.get().dependsOn(jvmAndroidMain)
         androidMain.get().dependsOn(jvmAndroidMain)
         getByName("wasmJsMain") {

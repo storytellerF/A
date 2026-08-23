@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Arrangement
@@ -70,16 +74,17 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
                 navigationIcon = {
                     IconButton(
                         { panelNav.open() },
-                        modifier = Modifier.appiumSemantics(
+                        modifier =
+                        Modifier.appiumSemantics(
                             description = stringResource(Res.string.menu),
                             onClick = panelNav::open,
                         ),
                     ) {
                         Icon(Icons.Default.Menu, stringResource(Res.string.menu))
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).padding(16.dp)) {
             StateView(viewModel.handler) {
@@ -91,9 +96,10 @@ fun OverviewPageInternal(viewModel: OverviewViewModel) {
 
 class OverviewFlowPreviewProvider : PreviewParameterProvider<PanelOverview> {
     override val values: Sequence<PanelOverview>
-        get() = sequenceOf(
-            PanelOverview(1, 2, 3, 4, 5, 6, 7000, 8000,)
-        )
+        get() =
+            sequenceOf(
+                PanelOverview(1, 2, 3, 4, 5, 6, 7000, 8000),
+            )
 }
 
 @Preview
@@ -102,7 +108,7 @@ private fun OverviewFlow(@PreviewParameter(OverviewFlowPreviewProvider::class) p
     Column(modifier = Modifier.fillMaxSize()) {
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             UserCountOverviewCell(panelOverview)
             CommunityCountOverviewCell(panelOverview)
@@ -123,15 +129,16 @@ fun UserCountOverviewCell(panelOverview: PanelOverview) {
     }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_user_count)
-            val text = remember(panelOverview.userCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.userCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.userCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.userCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -143,15 +150,16 @@ fun CommunityCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllCommunities() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_community_count)
-            val text = remember(panelOverview.communityCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.communityCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.communityCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.communityCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -163,15 +171,16 @@ fun TopicCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllTopics() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_topic_count)
-            val text = remember(panelOverview.topicCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.topicCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.topicCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.topicCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -183,15 +192,16 @@ fun TitleCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllTitles() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_title_count)
-            val text = remember(panelOverview.titleCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.titleCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.titleCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.titleCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -203,15 +213,16 @@ fun PrivateRoomCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllPrivateRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_private_room_count)
-            val text = remember(panelOverview.privateRoomCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.privateRoomCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.privateRoomCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.privateRoomCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -223,15 +234,16 @@ fun CommunityRoomCountOverviewCell(panelOverview: PanelOverview) {
     Card(onClick = { panelNav.gotoAllPublicRooms() }) {
         Box(modifier = Modifier.padding(16.dp)) {
             val raw = stringResource(Res.string.overview_public_room_count)
-            val text = remember(panelOverview.communityRoomCount, raw) {
-                buildAnnotatedString {
-                    val start = raw.indexOf($$"%1$d")
-                    val s = panelOverview.communityRoomCount.toString()
-                    val end = start + s.length
-                    append(raw.replace($$"%1$d", s))
-                    addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+            val text =
+                remember(panelOverview.communityRoomCount, raw) {
+                    buildAnnotatedString {
+                        val start = raw.indexOf($$"%1$d")
+                        val s = panelOverview.communityRoomCount.toString()
+                        val end = start + s.length
+                        append(raw.replace($$"%1$d", s))
+                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
+                    }
                 }
-            }
             Text(text)
         }
     }
@@ -244,28 +256,32 @@ fun FileCountOverviewCell(panelOverview: PanelOverview) {
         Box(modifier = Modifier.padding(16.dp)) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Bottom
+                verticalAlignment = Alignment.Bottom,
             ) {
                 val raw = stringResource(Res.string.overview_file_count)
-                Text(remember(panelOverview.fileCount, raw) {
-                    buildAnnotatedString {
-                        val start = raw.indexOf($$"%1$d")
-                        val s = panelOverview.fileCount.toString()
-                        val end = start + s.length
-                        append(raw.replace($$"%1$d", s))
-                        addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
-                    }
-                })
-
-                Text(remember(panelOverview.fileVolume) {
-                    buildAnnotatedString {
-                        withStyle(
-                            style = SpanStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold)
-                        ) {
-                            append(HumanReadable.fileSize(panelOverview.fileVolume))
+                Text(
+                    remember(panelOverview.fileCount, raw) {
+                        buildAnnotatedString {
+                            val start = raw.indexOf($$"%1$d")
+                            val s = panelOverview.fileCount.toString()
+                            val end = start + s.length
+                            append(raw.replace($$"%1$d", s))
+                            addStyle(SpanStyle(fontSize = 40.sp, fontWeight = FontWeight.Bold), start, end)
                         }
-                    }
-                })
+                    },
+                )
+
+                Text(
+                    remember(panelOverview.fileVolume) {
+                        buildAnnotatedString {
+                            withStyle(
+                                style = SpanStyle(fontSize = 30.sp, fontWeight = FontWeight.Bold),
+                            ) {
+                                append(HumanReadable.fileSize(panelOverview.fileVolume))
+                            }
+                        }
+                    },
+                )
             }
         }
     }

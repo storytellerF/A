@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.shared.obj.ReactionCursorKey
@@ -41,14 +45,12 @@ data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, overri
 
 data class OffsetFetch(override val cursor: Cursor<Int>?, override val size: Int) : GenericFetch<Int>
 
-fun<T> fixedSort(
-    infos: List<T>,
-    ids: List<PrimaryKey>,
-    key: (T) -> PrimaryKey
-): List<T> {
+/** Returns [infos] in the order specified by [ids], omitting identifiers without a matching item. */
+fun <T> fixedSort(infos: List<T>, ids: List<PrimaryKey>, key: (T) -> PrimaryKey): List<T> {
     val groupBy = infos.associateBy { key(it) }
-    val processedTopics = ids.mapNotNull {
-        groupBy[it]
-    }
+    val processedTopics =
+        ids.mapNotNull {
+            groupBy[it]
+        }
     return processedTopics
 }

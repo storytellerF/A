@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import android.graphics.Bitmap
@@ -14,37 +18,30 @@ import kotlinx.io.buffered
 import kotlinx.io.files.Path
 import kotlinx.io.files.SystemTemporaryDirectory
 
-actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> {
-    return runCatching { toBitmap().asImageBitmap() }
-}
+actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> = runCatching { toBitmap().asImageBitmap() }
 
-actual fun saveImageBitmap(
-    imageBitmap: ImageBitmap,
-    path: String,
-    format: ImageFormat,
-    quality: Int,
-): Result<Path> {
-    return runCatching {
+actual fun saveImageBitmap(imageBitmap: ImageBitmap, path: String, format: ImageFormat, quality: Int): Result<Path> =
+    runCatching {
         val path = Path(SystemTemporaryDirectory, path)
-        path.safeSink().buffered().asOutputStream().use {
+        path.safeSink().buffered().asOutputStream().use { outputStream ->
             imageBitmap.asAndroidBitmap().compress(
                 when (format) {
                     ImageFormat.PNG -> Bitmap.CompressFormat.PNG
+
                     ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
-                    ImageFormat.WEBP -> if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Bitmap.CompressFormat.WEBP_LOSSY
-                    } else {
-                        Bitmap.CompressFormat.PNG
-                    }
+
+                    ImageFormat.WEBP ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Bitmap.CompressFormat.WEBP_LOSSY
+                        } else {
+                            Bitmap.CompressFormat.PNG
+                        }
                 },
                 quality,
-                it
+                outputStream,
             )
         }
         path
     }
-}
 
-actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder {
-    return allowHardware(b)
-}
+actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder = allowHardware(b)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -20,44 +24,42 @@ import com.storyteller_f.shared.utils.recoverIfDup
 import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.github.aakira.napier.Napier
 
-suspend fun Backend.addReaction(
-    userId: PrimaryKey,
-    topicId: PrimaryKey,
-    emojiText: String
-) = checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
-    checkTopicWritePermission(topicId, userId)
-}.mapResultIfNotNull {
-    database.reaction.getReactionInfo(userId, topicId, emojiText)
-        .mapResult { oldReaction ->
-            if (oldReaction != null && oldReaction.hasReacted) {
-                Result.success(oldReaction)
-            } else {
-                val newId = SnowflakeFactory.nextId()
-                val reactionRecord = ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
-                val reactionInfo = ReactionInfo(
-                    reactionRecord.emoji,
-                    reactionRecord.objectId,
-                    (oldReaction?.count ?: 0) + 1,
-                    true,
-                    reactionRecord.id
-                )
-                database.reaction.insertReaction(reactionRecord).map {
-                    database.reaction.statsReactionRecord(
-                        reactionRecord.objectId,
-                        reactionRecord.emoji,
-                        reactionRecord.objectType
-                    ).onFailure { throwable ->
-                        Napier.e(throwable = throwable) {
-                            "addReaction"
+suspend fun Backend.addReaction(userId: PrimaryKey, topicId: PrimaryKey, emojiText: String) =
+    checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
+        checkTopicWritePermission(topicId, userId)
+    }.mapResultIfNotNull {
+        database.reaction.getReactionInfo(userId, topicId, emojiText)
+            .mapResult { oldReaction ->
+                if (oldReaction != null && oldReaction.hasReacted) {
+                    Result.success(oldReaction)
+                } else {
+                    val newId = SnowflakeFactory.nextId()
+                    val reactionRecord = ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
+                    val reactionInfo =
+                        ReactionInfo(
+                            reactionRecord.emoji,
+                            reactionRecord.objectId,
+                            (oldReaction?.count ?: 0) + 1,
+                            true,
+                            reactionRecord.id,
+                        )
+                    database.reaction.insertReaction(reactionRecord).map {
+                        database.reaction.statsReactionRecord(
+                            reactionRecord.objectId,
+                            reactionRecord.emoji,
+                            reactionRecord.objectType,
+                        ).onFailure { throwable ->
+                            Napier.e(throwable = throwable) {
+                                "addReaction"
+                            }
                         }
+                        reactionInfo
+                    }.recoverIfDup(database::isDup) {
+                        Result.success(reactionInfo)
                     }
-                    reactionInfo
-                }.recoverIfDup(database::isDup) {
-                    Result.success(reactionInfo)
                 }
             }
-        }
-}
+    }
 
 suspend fun Backend.reactionList(
     objectId: PrimaryKey,
@@ -69,22 +71,18 @@ suspend fun Backend.reactionList(
     return database.reaction.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
 }
 
-suspend fun addReaction(
-    emoji: String,
-    backend: Backend,
-    uid: PrimaryKey,
-    p: CommonPath
-): Result<ReactionInfo?> = if (isEmoji(emoji)) {
-    backend.addReaction(uid, p.id, emoji)
-} else {
-    Result.failure(CustomBadRequestException("invalid emoji"))
-}
+suspend fun addReaction(emoji: String, backend: Backend, uid: PrimaryKey, p: CommonPath): Result<ReactionInfo?> =
+    if (isEmoji(emoji)) {
+        backend.addReaction(uid, p.id, emoji)
+    } else {
+        Result.failure(CustomBadRequestException("invalid emoji"))
+    }
 
 suspend fun deleteReaction(
     deleteReaction: DeleteReaction,
     backend: Backend,
     uid: PrimaryKey,
-    p: CommonPath
+    p: CommonPath,
 ): Result<ReactionInfo?> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
@@ -107,6 +105,4 @@ suspend fun deleteReaction(
     }
 }
 
-private fun isEmoji(emoji: String): Boolean {
-    return safeFirstEmoji(emoji)?.length == emoji.length
-}
+private fun isEmoji(emoji: String): Boolean = safeFirstEmoji(emoji)?.length == emoji.length

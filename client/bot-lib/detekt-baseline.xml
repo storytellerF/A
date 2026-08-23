@@ -1,7 +1,0 @@
-<?xml version="1.0" ?>
-<SmellBaseline>
-  <ManuallySuppressedIssues/>
-  <CurrentIssues>
-    <ID>AbsentOrWrongFileLicense:build.gradle.kts:.build.gradle.kts</ID>
-  </CurrentIssues>
-</SmellBaseline>

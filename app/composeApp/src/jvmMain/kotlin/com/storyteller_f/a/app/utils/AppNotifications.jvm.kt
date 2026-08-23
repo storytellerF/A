@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import com.mmk.kmpnotifier.KMPNotifier
@@ -7,7 +11,8 @@ import com.mmk.kmpnotifier.notification.configuration.NotificationPlatformConfig
 internal actual fun initializePlatformAppNotifications() {
     if (!KMPNotifier.isInitialized) {
         KMPNotifier.initialize(
-            configuration = NotificationPlatformConfiguration.Desktop(
+            configuration =
+            NotificationPlatformConfiguration.Desktop(
                 showPushNotification = false,
                 notificationIconPath = null,
             ),

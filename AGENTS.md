@@ -5,7 +5,7 @@
 - Prefer KMP-shareable code. Handle platform differences with `expect`/`actual` or platform source directories.
 - Keep the Gradle configuration cache enabled (`org.gradle.configuration-cache=true`) and avoid side effects or IO during configuration.
 - Logging: use Napier in shared/app code. Initialize a logging tree only when needed for tests or debugging.
-- Static analysis: run Detekt with `config/detekt/detekt.yml`. Existing `detekt-baseline*.xml` files are immutable after creation: never edit, regenerate, add, remove, or migrate their entries. Fix every new or newly exposed issue in source code, and do not add or broaden suppressions to bypass it.
+- Static analysis: run Detekt with `config/detekt/detekt.yml`. Do not create or use Detekt baseline files; every active finding must be fixed in source code. Do not add or broaden suppressions to bypass findings. When Detekt rules conflict, disable only the conflicting rule or narrowly scoped configuration necessary to resolve the conflict.
 - Detekt permits public library entities and public data classes only in the configured `api` and `shared.model` protocol/model scopes and the `client/core` request boundary; keep these exceptions narrowly scoped in `config/detekt/detekt.yml`.
 - New Kotlin source files must start with the private-project license header configured by Detekt.
 - Coverage: generate Kover reports when needed.

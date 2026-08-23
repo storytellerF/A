@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.preview
 
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,7 +35,7 @@ fun SelfDialogPreview() {
             UserInfo.EMPTY.copy(nickname = "Nickname", aid = "aid"),
             true,
             FixedLoadingHandler(),
-            {}
+            {},
         ) { }
     }
 }

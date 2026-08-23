@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.CopyPack
@@ -15,10 +19,11 @@ import kotlin.test.assertTrue
 
 class ObjectStorageServiceTest {
     private fun createTempUploadPack(name: String, content: String): UploadPack {
-        val file = File.createTempFile("test-upload-", ".txt").apply {
-            writeText(content)
-            deleteOnExit()
-        }
+        val file =
+            File.createTempFile("test-upload-", ".txt").apply {
+                writeText(content)
+                deleteOnExit()
+            }
         return UploadPack(
             file = file,
             name = name,
@@ -62,10 +67,11 @@ class ObjectStorageServiceTest {
         val pack = createTempUploadPack("origin.txt", "copy me")
         service.upload(A_FILE_DEFAULT_BUCKET, listOf(pack)).getOrThrow()
 
-        val copyResult = service.copy(
-            A_FILE_DEFAULT_BUCKET,
-            listOf(CopyPack("test/origin.txt", "test/copied.txt"))
-        ).getOrThrow()
+        val copyResult =
+            service.copy(
+                A_FILE_DEFAULT_BUCKET,
+                listOf(CopyPack("test/origin.txt", "test/copied.txt")),
+            ).getOrThrow()
         assertEquals(1, copyResult.size)
 
         val getResult = service.get(A_FILE_DEFAULT_BUCKET, listOf("test/copied.txt")).getOrThrow()

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.cli
 
 import com.storyteller_f.shared.Type2Algo
@@ -13,42 +17,44 @@ import kotlinx.coroutines.runBlocking
 import java.io.BufferedOutputStream
 import java.io.File
 
-private val presetKeyNames = listOf(
-    "font-provider",
-    "robot1",
-    "robot2",
-    "system",
-    "user1",
-    "user2",
-    "user3",
-)
+private val presetKeyNames =
+    listOf(
+        "font-provider",
+        "robot1",
+        "robot2",
+        "system",
+        "user1",
+        "user2",
+        "user3",
+    )
 
 private const val DEFAULT_PRESET_KEYS_OUTPUT_DIR = "deploy/dev-data/secrets"
 
 @OptIn(ExperimentalCli::class)
-class GeneratePresetKeysCommand : Subcommand(
-    "generate-preset-keys",
-    "generate Dilithium preset user private keys"
-) {
+class GeneratePresetKeysCommand :
+    Subcommand(
+        "generate-preset-keys",
+        "generate Dilithium preset user private keys",
+    ) {
     private val outputDirPath by option(
         ArgType.String,
         fullName = "output-dir",
         shortName = "o",
-        description = "directory to write preset secret files"
+        description = "directory to write preset secret files",
     ).default(DEFAULT_PRESET_KEYS_OUTPUT_DIR)
 
-    private val overwrite by option(
+    private val isOverwriteEnabled by option(
         ArgType.Boolean,
         fullName = "overwrite",
         shortName = "f",
-        description = "overwrite existing key files"
+        description = "overwrite existing key files",
     ).default(false)
 
     override fun execute() {
         loadCryptoLibIfNeed()
         runBlocking {
             val outputDir = resolvePresetKeysOutputDir(outputDirPath)
-            val generatedFiles = generatePresetDilithiumKeys(outputDir, overwrite)
+            val generatedFiles = generatePresetDilithiumKeys(outputDir, isOverwriteEnabled)
             Napier.i(tag = "cli") {
                 "generated ${generatedFiles.size} preset key files in ${outputDir.canonicalPath}"
             }
@@ -56,10 +62,7 @@ class GeneratePresetKeysCommand : Subcommand(
     }
 }
 
-internal suspend fun generatePresetDilithiumKeys(
-    outputDir: File,
-    overwrite: Boolean
-): List<File> {
+internal suspend fun generatePresetDilithiumKeys(outputDir: File, overwrite: Boolean): List<File> {
     outputDir.mkdirs()
     require(outputDir.isDirectory) {
         "${outputDir.canonicalPath} is not a directory"

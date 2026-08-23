@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.lucene
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -18,8 +22,7 @@ import org.apache.lucene.search.Query
 import org.apache.lucene.search.Sort
 import java.nio.file.Path
 
-data class LuceneUserDocument(val userDocument: UserDocument) :
-    LuceneDocument {
+data class LuceneUserDocument(val userDocument: UserDocument) : LuceneDocument {
     override fun save(): Document {
         val id = userDocument.id
         return Document().apply {
@@ -33,33 +36,35 @@ data class LuceneUserDocument(val userDocument: UserDocument) :
     }
 
     companion object : LuceneDocumentCompanion<UserDocument> {
-        override fun restore(
-            id: PrimaryKey,
-            document: Document
-        ): UserDocument {
-            return UserDocument(id, document.get("nickname"), document.get("aid"))
-        }
+        override fun restore(id: PrimaryKey, document: Document): UserDocument =
+            UserDocument(
+            id,
+            document.get("nickname"),
+            document.get("aid"),
+        )
     }
 }
 
-class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(path, isInMemory),
+class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) :
+    Lucene(path, isInMemory),
     UserSearchService {
-    override suspend fun saveDocument(documents: List<UserDocument>): Result<Unit> {
-        return useLucene {
-            saveDocumentList(documents.map {
+    override suspend fun saveDocument(documents: List<UserDocument>): Result<Unit> =
+        useLucene {
+        saveDocumentList(
+            documents.map {
                 LuceneUserDocument(it)
-            }, analyzer)
-        }
+            },
+            analyzer,
+        )
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useLucene {
-            cleanAll(analyzer)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useLucene {
+        cleanAll(analyzer)
     }
 
     override suspend fun searchDocument(
-        userDocumentSearch: UserDocumentSearch
+        userDocumentSearch: UserDocumentSearch,
     ): Result<PaginationResult<UserDocument>> {
         if (userDocumentSearch is UserDocumentSearch.Keyword && userDocumentSearch.word.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -75,34 +80,28 @@ class LuceneUserSearchService(path: Path, isInMemory: Boolean = false) : Lucene(
                         combinedQuery,
                         userDocumentSearch.fetch,
                         Sort.RELEVANCE,
-                        LuceneUserDocument
+                        LuceneUserDocument,
                     )
                 }
             }
         }
     }
 
-    private fun buildQuery(
-        userDocumentSearch: UserDocumentSearch
-    ): Query {
-        return BooleanQuery.Builder().apply {
-            when (userDocumentSearch) {
-                is UserDocumentSearch.Keyword -> {
-                    addPrioritizedFieldsQuery(userDocumentSearch.word, "aid", "nickname")
-                }
+    private fun buildQuery(userDocumentSearch: UserDocumentSearch): Query =
+        BooleanQuery.Builder().apply {
+        when (userDocumentSearch) {
+            is UserDocumentSearch.Keyword -> {
+                addPrioritizedFieldsQuery(userDocumentSearch.word, "aid", "nickname")
             }
-        }.build()
-    }
+        }
+    }.build()
 }
 
 class LuceneUserSearchServiceFactory : UserSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "lucene"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
-    override fun build(env: MergedEnv): UserSearchService {
-        return buildLuceneSearchService(env) { path, isInMemory ->
-            LuceneUserSearchService(path.resolve("user"), isInMemory)
-        }
+    override fun build(env: MergedEnv): UserSearchService =
+        buildLuceneSearchService(env) { path, isInMemory ->
+        LuceneUserSearchService(path.resolve("user"), isInMemory)
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.CustomApi
@@ -39,10 +43,12 @@ import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
-    fun `test get community`() = test {
-        val newId = attachSession {
-            createCommunityForTest().id
-        }.custom
+    fun `test get community`() =
+        test {
+        val newId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
         noneSession {
             val community = getCommunityInfo(newId).getOrThrow()
             assertEquals(1, community.memberCount)
@@ -51,10 +57,12 @@ class CommunityTest {
     }
 
     @Test
-    fun `test join community`() = test {
-        val communityId = attachSession {
-            createCommunityForTest().id
-        }.custom
+    fun `test join community`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
         attachSession {
             assertFalse(getCommunityInfo(communityId).getOrThrow().isJoined)
             assertFails {
@@ -69,17 +77,20 @@ class CommunityTest {
     }
 
     @Test
-    fun `test create topic in community`() = test {
-        val communityId = attachSession {
-            createCommunityForTest().id
-        }.custom
+    fun `test create topic in community`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
         attachSession {
             joinCommunity(communityId).getOrThrow()
             createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             assertListSize(1, searchCommunityTopics(communityId, 10, "hello"))
             assertListSize(1, getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10)))
-            val topicId = searchCommunityTopics(communityId, 10, "hello")
-                .getOrThrow().data.first().id
+            val topicId =
+                searchCommunityTopics(communityId, 10, "hello")
+                    .getOrThrow().data.first().id
             val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
             assertEquals(ObjectType.COMMUNITY, new.rootType)
             assertEquals(communityId, new.rootId)
@@ -89,7 +100,8 @@ class CommunityTest {
     }
 
     @Test
-    fun `test create empty topic in community`() = test {
+    fun `test create empty topic in community`() =
+        test {
         attachSession {
             val communityId = createCommunityForTest().id
             assertFails {
@@ -102,14 +114,16 @@ class CommunityTest {
     }
 
     @Test
-    fun `test communities pagination`() = test {
-        val session = attachSession {
-            buildList {
-                repeat(10) {
-                    add(createCommunityForTest("c1", "aid$it").id)
+    fun `test communities pagination`() =
+        test {
+        val session =
+            attachSession {
+                buildList {
+                    repeat(10) {
+                        add(createCommunityForTest("c1", "aid$it").id)
+                    }
                 }
             }
-        }
         attachSession {
             session.custom.forEach {
                 joinCommunity(it).getOrThrow()
@@ -117,9 +131,13 @@ class CommunityTest {
             var lastCommunityId: String? = null
             var sum = 0L
             while (true) {
-                val res = getUserCommunities(
-                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(nextPageToken = lastCommunityId, size = 3)
-                ).getOrThrow()
+                val res =
+                    getUserCommunities(
+                        CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(
+                            nextPageToken = lastCommunityId,
+                            size = 3,
+                        ),
+                    ).getOrThrow()
                 val pagination = res.pagination!!
                 lastCommunityId = pagination.nextPageToken
                 sum += res.data.size
@@ -132,18 +150,21 @@ class CommunityTest {
     }
 
     @Test
-    fun `test get other user joined communities`() = test {
-        val id = attachSession {
-            repeat(10) {
-                val communityInfo = createCommunityForTest("c$it", "c$it").id
-                joinCommunity(communityInfo).getOrThrow()
-            }
-        }.uid
+    fun `test get other user joined communities`() =
+        test {
+        val id =
+            attachSession {
+                repeat(10) {
+                    val communityInfo = createCommunityForTest("c$it", "c$it").id
+                    joinCommunity(communityInfo).getOrThrow()
+                }
+            }.uid
         noneSession {
-            val response = getUserJoinedCommunities(
-                id,
-                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
-            ).getOrThrow()
+            val response =
+                getUserJoinedCommunities(
+                    id,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
+                ).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 assertFalse(it.isJoined)
@@ -151,18 +172,20 @@ class CommunityTest {
             }
         }
         attachSession {
-            val response = getUserJoinedCommunities(
-                id,
-                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
-            ).getOrThrow()
+            val response =
+                getUserJoinedCommunities(
+                    id,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
+                ).getOrThrow()
             assertEquals(10, response.data.size)
             response.data.forEach {
                 joinCommunity(it.id).getOrThrow()
             }
-            val response2 = getUserJoinedCommunities(
-                id,
-                CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10)
-            ).getOrThrow()
+            val response2 =
+                getUserJoinedCommunities(
+                    id,
+                    CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
+                ).getOrThrow()
             response2.data.forEach {
                 assertTrue(it.isJoined)
                 assertNotNull(it.extension?.targetMemberInfo)
@@ -171,19 +194,22 @@ class CommunityTest {
     }
 
     @Test
-    fun `test community invite only`() = test {
-        val firstTuple = attachSession {
-            createCommunityForTest("name1", "c1", memberPolicy = MemberPolicy.INVITE_ONLY)
-        }
-        val communityId = firstTuple.custom.id
-        val secondTuple = attachSession {
-            assertFails {
-                joinCommunity(communityId).getOrThrow()
+    fun `test community invite only`() =
+        test {
+        val firstTuple =
+            attachSession {
+                createCommunityForTest("name1", "c1", memberPolicy = MemberPolicy.INVITE_ONLY)
             }
-        }
+        val communityId = firstTuple.custom.id
+        val secondTuple =
+            attachSession {
+                assertFails {
+                    joinCommunity(communityId).getOrThrow()
+                }
+            }
         loginSession(firstTuple) {
             createTitle(
-                NewTitle("join", TitleType.JOIN, secondTuple.uid, communityId, ObjectType.COMMUNITY, "join")
+                NewTitle("join", TitleType.JOIN, secondTuple.uid, communityId, ObjectType.COMMUNITY, "join"),
             ).getOrThrow()
         }
         loginSession(secondTuple) {
@@ -192,16 +218,19 @@ class CommunityTest {
     }
 
     @Test
-    fun `test expired community invite title cannot join`() = test {
-        val firstTuple = attachSession {
-            createCommunityForTest("name-expired", "c-expired", memberPolicy = MemberPolicy.INVITE_ONLY)
-        }
-        val communityId = firstTuple.custom.id
-        val secondTuple = attachSession {
-            assertFails {
-                joinCommunity(communityId).getOrThrow()
+    fun `test expired community invite title cannot join`() =
+        test {
+        val firstTuple =
+            attachSession {
+                createCommunityForTest("name-expired", "c-expired", memberPolicy = MemberPolicy.INVITE_ONLY)
             }
-        }
+        val communityId = firstTuple.custom.id
+        val secondTuple =
+            attachSession {
+                assertFails {
+                    joinCommunity(communityId).getOrThrow()
+                }
+            }
         loginSession(firstTuple) {
             createTitle(
                 NewTitle(
@@ -211,8 +240,8 @@ class CommunityTest {
                     communityId,
                     ObjectType.COMMUNITY,
                     "join",
-                    LocalDateTime.parse("2000-01-01T00:00:00")
-                )
+                    LocalDateTime.parse("2000-01-01T00:00:00"),
+                ),
             ).getOrThrow()
         }
         loginSession(secondTuple) {
@@ -223,10 +252,12 @@ class CommunityTest {
     }
 
     @Test
-    fun `test get community rooms`() = test {
-        val communityId = attachSession {
-            createCommunityForTest().id
-        }.custom
+    fun `test get community rooms`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
 
         attachSession {
             // 测试获取社区中的所有房间
@@ -236,18 +267,21 @@ class CommunityTest {
     }
 
     @Test
-    fun `test update community font settings`() = test {
-        val firstTuple = attachSession {
-            createCommunityForTest().id
-        }
+    fun `test update community font settings`() =
+        test {
+        val firstTuple =
+            attachSession {
+                createCommunityForTest().id
+            }
         val communityId = firstTuple.custom
         loginSession(firstTuple) {
             // Test setting empty font settings
             val fontSettings = FontSettings()
-            val updatedInfo = updateCommunityInfo(
-                communityId,
-                com.storyteller_f.shared.obj.UpdateCommunityBody(fontSettings = fontSettings)
-            ).getOrThrow()
+            val updatedInfo =
+                updateCommunityInfo(
+                    communityId,
+                    com.storyteller_f.shared.obj.UpdateCommunityBody(fontSettings = fontSettings),
+                ).getOrThrow()
             assertNotNull(updatedInfo.fontSettings)
             assertEquals(fontSettings, updatedInfo.fontSettings!!.settings)
         }
@@ -257,5 +291,5 @@ class CommunityTest {
 suspend fun UserSessionManager.createCommunityForTest(
     name: String = "name1",
     id: String = "c1",
-    memberPolicy: MemberPolicy = MemberPolicy.OPEN
+    memberPolicy: MemberPolicy = MemberPolicy.OPEN,
 ): CommunityInfo = createCommunity(NewCommunity(name, id, memberPolicy = memberPolicy)).getOrThrow()

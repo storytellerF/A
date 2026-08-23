@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.PrimaryKey
@@ -10,7 +14,7 @@ data class AssetTransactionInfo(
     val type: AssetType,
     val createdTime: LocalDateTime,
     val before: Int,
-    val after: Int
+    val after: Int,
 )
 
 enum class AssetType {

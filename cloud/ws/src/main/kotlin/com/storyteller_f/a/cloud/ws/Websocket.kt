@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.ws
 
 import com.maxmind.geoip2.DatabaseReader
@@ -10,6 +14,7 @@ import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
@@ -56,38 +61,36 @@ interface NotificationDispatcher {
 }
 
 class WebsocketDispatcher(val session: DefaultWebSocketServerSession) : NotificationDispatcher {
-    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> {
-        return runCatching {
-            session.sendFrame(frame)
-        }
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> =
+        cancellableRunCatching {
+        session.sendFrame(frame)
     }
 }
 
 class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : NotificationDispatcher {
-    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> {
-        return runCatching {
-            val content = when (val content = frame.topicInfo.content) {
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> =
+        cancellableRunCatching {
+        val content =
+            when (val content = frame.topicInfo.content) {
                 is TopicContent.Plain -> content.plain
                 else -> ""
             }
-            client.post(endpointUrl) {
-                contentType(ContentType.Application.Json)
-                setBody(Notification("new topic", content))
-            }
+        client.post(endpointUrl) {
+            contentType(ContentType.Application.Json)
+            setBody(Notification("new topic", content))
         }
     }
 }
 
-suspend fun DefaultWebSocketServerSession.webSocketContent(
-    reader: DatabaseReader,
-    backend: Backend,
-) {
+suspend fun DefaultWebSocketServerSession.webSocketContent(reader: DatabaseReader, backend: Backend) {
     usePrincipal { uid ->
         useWebSocket(uid) {
             while (true) {
                 try {
                     val frame = receiveDeserialized<RoomFrame>()
                     processUserMessage(backend, frame, uid)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
                 } catch (e: Exception) {
                     printWsError(e, reader)
                     break
@@ -101,9 +104,7 @@ private fun DefaultWebSocketServerSession.printWsError(e: Exception, reader: Dat
     val log = call.application.log
     when (e) {
         is ClosedReceiveChannelException -> log.info("ws closed ${call.remoteIp(reader).first()}")
-
         is CancellationException -> log.info("ws cancel")
-
         else -> log.error("ws receive", e)
     }
 }
@@ -120,6 +121,8 @@ private suspend fun DefaultWebSocketServerSession.processUserMessage(
         } else {
             rtcChannel.send(RtcFrame(frame, uid, this))
         }
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
     } catch (e: Exception) {
         call.application.log.error("Catch exception in ws", e)
     }
@@ -174,33 +177,30 @@ suspend fun DefaultWebSocketServerSession.processNewMessage(
     }
 }
 
-private suspend fun dispatchNewMessage(
-    backend: Backend,
-    httpClient: HttpClient,
-): Nothing {
+private suspend fun dispatchNewMessage(backend: Backend, httpClient: HttpClient): Nothing {
     sharedFlow.collect { frame ->
         dispatchNewMessageFrame(backend, httpClient, frame)
     }
 }
 
-suspend fun dispatchNewMessageFrame(
-    backend: Backend,
-    httpClient: HttpClient,
-    frame: RoomFrame.NewTopicInfo,
-) {
+suspend fun dispatchNewMessageFrame(backend: Backend, httpClient: HttpClient, frame: RoomFrame.NewTopicInfo) {
     backend.database.container.getJoinedUserList(frame.topicInfo.rootId)
         .mapResult { list ->
-            val memberJoins = list.filter {
-                it.uid != frame.topicInfo.author
-            }
-            val dispatchers = memberJoins.mapNotNull {
-                userWebSocketSessionMap[it.uid]
-            }.flatten().map {
-                WebsocketDispatcher(it)
-            }
-            backend.database.user.getUserDevices(memberJoins.map {
-                it.uid
-            }).map { list ->
+            val memberJoins =
+                list.filter {
+                    it.uid != frame.topicInfo.author
+                }
+            val dispatchers =
+                memberJoins.mapNotNull {
+                    userWebSocketSessionMap[it.uid]
+                }.flatten().map {
+                    WebsocketDispatcher(it)
+                }
+            backend.database.user.getUserDevices(
+                memberJoins.map {
+                    it.uid
+                },
+            ).map { list ->
                 list.map {
                     ExternalDispatcher(httpClient, it.endpointUrl)
                 } + dispatchers
@@ -209,34 +209,38 @@ suspend fun dispatchNewMessageFrame(
             it.forEach { dispatcher ->
                 dispatcher.dispatch(frame).onFailure { throwable ->
                     Napier.e(throwable = throwable) {
-                        "send topic to room members failed: ${throwable.message}"
+                        "send topic to room members failed: ${throwable.message ?: "<none>"}"
                     }
                 }
             }
         }.onFailure {
             Napier.e(throwable = it) {
-                "send topic to room members failed: ${it.message}"
+                "send topic to room members failed: ${it.message ?: "<none>"}"
             }
         }
 }
 
 fun Application.startNewMessageTask(backend: Backend) {
-    val httpClient = HttpClient {
-        expectSuccess = true
-        install(Logging)
-        install(ContentNegotiation) {
-            json()
+    val httpClient =
+        HttpClient {
+            expectSuccess = true
+            install(Logging)
+            install(ContentNegotiation) {
+                json()
+            }
         }
-    }
-    val serverJob = launch {
-        dispatchNewMessage(backend, httpClient)
-    }
-    val rtcJob = launch {
-        listenerRoomRTC()
-    }
-    val rtcChannelJob = launch {
-        listenerRtcChannel(backend)
-    }
+    val serverJob =
+        launch {
+            dispatchNewMessage(backend, httpClient)
+        }
+    val rtcJob =
+        launch {
+            listenerRoomRTC()
+        }
+    val rtcChannelJob =
+        launch {
+            listenerRtcChannel(backend)
+        }
     monitor.subscribe(ApplicationStopping) {
         monitor.unsubscribe(ApplicationStopping) {}
         serverJob.cancel()

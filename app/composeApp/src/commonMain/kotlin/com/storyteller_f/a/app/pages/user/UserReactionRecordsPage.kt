@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.Column
@@ -31,7 +35,7 @@ fun UserReactionRecordsPageInternal(viewModel: UserReactionRecordsViewModel) {
         val layoutDirection = LocalLayoutDirection.current
         StateView(
             viewModel,
-            modifier = Modifier.safeArea(paddingValues, layoutDirection)
+            modifier = Modifier.safeArea(paddingValues, layoutDirection),
         ) { items ->
             LazyColumn {
                 pagingItems(items, {
@@ -50,7 +54,7 @@ fun UserReactionRecordCell(reactionRecordInfo: ReactionRecordInfo?) {
     if (reactionRecordInfo != null) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(reactionRecordInfo.emoji, modifier = Modifier.padding(end = 8.dp))
             Column {

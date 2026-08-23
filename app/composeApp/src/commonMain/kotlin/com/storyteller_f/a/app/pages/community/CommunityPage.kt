@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.background
@@ -104,10 +108,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
-fun CommunityPage(
-    communityId: PrimaryKey,
-    showDialog: Boolean,
-) {
+fun CommunityPage(communityId: PrimaryKey, showDialog: Boolean) {
     val size = calculateWindowSizeClass()
     val model = createCommunityViewModel(communityId)
     val typography = getCommunityFont(communityId)
@@ -115,7 +116,6 @@ fun CommunityPage(
     AppTheme(typography = typography) {
         when (size.widthSizeClass) {
             WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
-
             else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
         }
     }
@@ -129,7 +129,7 @@ fun getCommunityFont(communityId: PrimaryKey): Typography {
     return typography.copy(
         bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
         bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
-        bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily)
+        bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily),
     )
 }
 
@@ -175,20 +175,15 @@ sealed interface CommunityRoute : NavKey {
     }
 }
 
-private fun buildSearchScope(
-    pagerState: PagerState,
-    communityId: PrimaryKey,
-) = when (pagerState.currentPage) {
+private fun buildSearchScope(pagerState: PagerState, communityId: PrimaryKey) =
+    when (pagerState.currentPage) {
     0 -> SearchScope.CommunityTopic(communityId)
     else -> SearchScope.CommunityRoom(communityId)
 }
 
-private fun buildSearchScope(
-    currentRoute: NavKey?,
-    communityId: PrimaryKey,
-) = when (currentRoute) {
+private fun buildSearchScope(currentRoute: NavKey?, communityId: PrimaryKey) =
+    when (currentRoute) {
     CommunityRoute.Topics -> SearchScope.CommunityTopic(communityId)
-
     else -> SearchScope.CommunityRoom(communityId)
 }
 
@@ -201,16 +196,18 @@ private fun CommunityNonCompatPageInternal(
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.dialogShown.collectAsState()
     val navRoutes = communityNavRoutes()
-    val config = remember {
-        SavedStateConfiguration {
-            serializersModule = SerializersModule {
-                polymorphic(NavKey::class) {
-                    subclass(CommunityRoute.Topics::class)
-                    subclass(CommunityRoute.Rooms::class)
-                }
+    val config =
+        remember {
+            SavedStateConfiguration {
+                serializersModule =
+                    SerializersModule {
+                        polymorphic(NavKey::class) {
+                            subclass(CommunityRoute.Topics::class)
+                            subclass(CommunityRoute.Rooms::class)
+                        }
+                    }
             }
         }
-    }
     val backStack = rememberNavBackStack(config, CommunityRoute.Topics)
     val current = backStack.last()
     val searchScope = buildSearchScope(current, communityId)
@@ -224,23 +221,20 @@ private fun CommunityNonCompatPageInternal(
                 model,
                 community,
                 searchScope,
-                backStack
+                backStack,
             )
         }
     }
 }
 
 @Composable
-private fun CommunityRailNav(
-    backStack: NavBackStack<NavKey>,
-    current: NavKey,
-    navRoutes: List<NavRoute>,
-) {
+private fun CommunityRailNav(backStack: NavBackStack<NavKey>, current: NavKey, navRoutes: List<NavRoute>) {
     CustomRailNav(current.toString(), navRoutes) { path ->
-        val target = when (path) {
-            "/rooms" -> CommunityRoute.Rooms
-            else -> CommunityRoute.Topics
-        }
+        val target =
+            when (path) {
+                "/rooms" -> CommunityRoute.Rooms
+                else -> CommunityRoute.Topics
+            }
         if (backStack.last() != target) {
             val i = backStack.indexOf(target)
             if (i >= 0) {
@@ -280,7 +274,7 @@ private fun CommunityNonCompatContent(
             }
             CommunityIconWithDialog(
                 community,
-                showDialog
+                showDialog,
             ) {
                 showDialog = it
             }
@@ -288,11 +282,13 @@ private fun CommunityNonCompatContent(
 
         NavDisplay(
             backStack,
-            entryDecorators = listOf(
+            entryDecorators =
+            listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
+                rememberViewModelStoreNavEntryDecorator(),
             ),
-            entryProvider = entryProvider {
+            entryProvider =
+            entryProvider {
                 entry<CommunityRoute.Topics> {
                     val viewModel = createCommunityTopicsViewModel(communityId)
                     TopicList(viewModel)
@@ -301,23 +297,20 @@ private fun CommunityNonCompatContent(
                     val viewModel = createCommunityRoomsViewModel(communityId)
                     RoomList(viewModel)
                 }
-            }
+            },
         )
     }
 }
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-private fun CommunityCompatPageInternal(
-    communityId: PrimaryKey,
-    needShowDialog: Boolean,
-    model: CommunityViewModel,
-) {
+private fun CommunityCompatPageInternal(communityId: PrimaryKey, needShowDialog: Boolean, model: CommunityViewModel) {
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.dialogShown.collectAsState()
-    val pagerState = rememberPagerState {
-        2
-    }
+    val pagerState =
+        rememberPagerState {
+            2
+        }
     val searchScope = buildSearchScope(pagerState, communityId)
     val navRoutes = communityNavRoutes()
     var showDialog by remember {
@@ -336,7 +329,7 @@ private fun CommunityCompatPageInternal(
                 }
                 CommunityIconWithDialog(
                     community,
-                    showDialog
+                    showDialog,
                 ) {
                     showDialog = it
                 }
@@ -348,28 +341,24 @@ private fun CommunityCompatPageInternal(
 }
 
 @Composable
-private fun CommunityBottomNav(
-    navRoutes: List<NavRoute>,
-    pagerState: PagerState,
-) {
+private fun CommunityBottomNav(navRoutes: List<NavRoute>, pagerState: PagerState) {
     val scope = rememberCoroutineScope()
     CustomBottomNav(
         navRoutes[pagerState.currentPage].path,
-        navRoutes
+        navRoutes,
     ) { path ->
         scope.launch {
-            pagerState.animateScrollToPage(navRoutes.indexOfFirst {
-                it.path == path
-            })
+            pagerState.animateScrollToPage(
+                navRoutes.indexOfFirst {
+                    it.path == path
+                },
+            )
         }
     }
 }
 
 @Composable
-private fun CommunityPageInternal(
-    pagerState: PagerState,
-    communityId: PrimaryKey,
-) {
+private fun CommunityPageInternal(pagerState: PagerState, communityId: PrimaryKey) {
     HorizontalPager(pagerState) {
         when (it) {
             0 -> {
@@ -386,20 +375,15 @@ private fun CommunityPageInternal(
 }
 
 @Composable
-fun communityNavRoutes(): List<NavRoute> {
-    return listOf(
-        NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-        NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms))
-    )
-}
+fun communityNavRoutes(): List<NavRoute> =
+    listOf(
+    NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
+    NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommunityDialog(
-    communityInfo: CommunityInfo?,
-    showDialog: Boolean,
-    dismiss: () -> Unit,
-) {
+fun CommunityDialog(communityInfo: CommunityInfo?, showDialog: Boolean, dismiss: () -> Unit) {
     if (communityInfo != null && showDialog) {
         BasicAlertDialog(
             {
@@ -417,15 +401,16 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
     val communityId = communityInfo.id
     DialogContainer {
         Row(
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
+            modifier =
+            Modifier.background(MaterialTheme.colorScheme.surfaceDim, RoundedCornerShape(8.dp))
                 .padding(8.dp).fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             CommunityIconWithDialog(
                 communityInfo,
                 showDialog = false,
                 50.dp,
-                setClickEvent = false
+                setClickEvent = false,
             ) {}
             Column {
                 Text(communityInfo.name)
@@ -445,11 +430,7 @@ fun CommunityDialogInternal(communityInfo: CommunityInfo, dismiss: () -> Unit) {
 }
 
 @Composable
-private fun CommunityMenus(
-    communityId: PrimaryKey,
-    communityInfo: CommunityInfo,
-    dismiss: () -> Unit,
-) {
+private fun CommunityMenus(communityId: PrimaryKey, communityInfo: CommunityInfo, dismiss: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     val globalDialogController = LocalGlobalDialog.current
     Column {
@@ -459,7 +440,7 @@ private fun CommunityMenus(
             {
                 ButtonBadgeSuffix(communityInfo.memberCount)
             },
-            semanticDescription = "all-members-action"
+            semanticDescription = "all-members-action",
         ) {
             dismiss()
             appNavFactory.newAppNav().gotoMemberPage(communityId, ObjectType.COMMUNITY)
@@ -481,7 +462,7 @@ private fun CommunityAdminButtons(
     communityInfo: CommunityInfo,
     dismiss: () -> Unit,
     appNavFactory: AppNavFactory,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) {
     val myInfo = LocalUserInfo.current
     if (myInfo?.id == communityInfo.owner) {
@@ -503,15 +484,11 @@ private fun CommunityAdminButtons(
 }
 
 @Composable
-private fun CommunityCreateButton(
-    dismiss: () -> Unit,
-    appNavFactory: AppNavFactory,
-    communityId: PrimaryKey
-) {
+private fun CommunityCreateButton(dismiss: () -> Unit, appNavFactory: AppNavFactory, communityId: PrimaryKey) {
     ButtonNav(Icons.Default.Add, "Add", semanticDescription = "community-add-topic-action") {
         dismiss()
         appNavFactory.newAppNav().gotoTopicCompose(
-            TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY)
+            TopicComposeData.Community(communityId, communityId ob ObjectType.COMMUNITY),
         )
     }
 }
@@ -520,7 +497,7 @@ private fun CommunityCreateButton(
 private fun CommunityMemberStatusButton(
     communityInfo: CommunityInfo,
     globalDialogController: AppGlobalDialogController,
-    communityId: PrimaryKey
+    communityId: PrimaryKey,
 ) {
     val scope = rememberCoroutineScope()
     if (communityInfo.isJoined) {

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.components
 
 import androidx.compose.runtime.Composable
@@ -20,12 +24,11 @@ fun AppTopicContentView(topicInfo: TopicInfo, isEmbed: Boolean = false) {
 }
 
 @Composable
-fun RefBlock(
-    modal: MarkdownComponentModel
-) {
-    val (first, second) = remember(modal.node, modal.content) {
-        val textInNode = readCodeFence(modal.node, modal.content)
-        TopicRoute.parseRefUri(textInNode)
-    }
+fun RefBlock(modal: MarkdownComponentModel) {
+    val (first, second) =
+        remember(modal.node, modal.content) {
+            val textInNode = readCodeFence(modal.node, modal.content)
+            TopicRoute.parseRefUri(textInNode)
+        }
     first?.let { it1 -> it1(second) }
 }

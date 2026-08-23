@@ -1,13 +1,14 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.app
+
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.storyteller_f.a.app.AppListDetailDestination
-import com.storyteller_f.a.app.AppListDetailPane
-import com.storyteller_f.a.app.AppListDetailScene
-import com.storyteller_f.a.app.appListDetailDestination
-import com.storyteller_f.a.app.calculateAppPaneDirective
 import com.storyteller_f.a.app.common.AboutScreen
 import com.storyteller_f.a.app.common.CommunityScreen
 import com.storyteller_f.a.app.common.HomeScreen
@@ -22,7 +23,6 @@ import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_WORLD
 import com.storyteller_f.a.app.pages.HomeRoute
 import com.storyteller_f.a.app.pages.homePageFromPreference
 import com.storyteller_f.a.app.pages.homeRouteFromPreference
-import com.storyteller_f.a.app.selectAppDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

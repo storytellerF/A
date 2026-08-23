@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.clickable
@@ -44,7 +48,7 @@ fun CustomMarkdown(
     isEmbed: Boolean,
     imageTransformer: ImageTransformer,
     dimensionMap: ImmutableMap<String, Dimension?>,
-    codeFence: MarkdownComponent
+    codeFence: MarkdownComponent,
 ) {
     val inlineContentMap = remember { mutableMapOf<String, InlineTextContent>() }
     val density = LocalDensity.current
@@ -76,10 +80,11 @@ fun CustomMarkdown(
                 colors = colors,
                 typography = typography,
                 imageTransformer = imageTransformer,
-                components = markdownComponents(codeFence = codeFence, codeBlock = highlightedCodeBlock,),
+                components = markdownComponents(codeFence = codeFence, codeBlock = highlightedCodeBlock),
                 annotator = annotator,
                 inlineContent = markdownInlineContent(inlineContentMap),
-                extendedSpans = markdownExtendedSpans {
+                extendedSpans =
+                markdownExtendedSpans {
                     val animator = rememberSquigglyUnderlineAnimator()
                     remember {
                         ExtendedSpans(RoundedCornerSpanPainter(), SquigglyUnderlineSpanPainter(animator = animator))
@@ -90,36 +95,31 @@ fun CustomMarkdown(
     }
 }
 
-class CustomCoil3ImageTransformerImpl(
-    private val mediaMap: Map<String, FileInfo>,
-    val onClick: (FileInfo) -> Unit
-) :
+class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo>, val onClick: (FileInfo) -> Unit) :
     ImageTransformer {
     @OptIn(ExperimentalRichTextApi::class)
     @Composable
-    override fun transform(link: String): ImageData {
-        return if (link.startsWith("file:///")) {
-            val model = link.substring(7)
-            val painter = rememberAsyncImagePainter(model = model)
-            ImageData(painter)
-        } else {
-            val info = mediaMap[link]
-            val model = imageRequestInMarkdown(info)
-            val painter = rememberAsyncImagePainter(model = model)
-            ImageData(
-                painter,
-                modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                    info?.let { it1 -> onClick(it1) }
-                }
-            )
-        }
+    override fun transform(link: String): ImageData =
+        if (link.startsWith("file:///")) {
+        val model = link.substring(7)
+        val painter = rememberAsyncImagePainter(model = model)
+        ImageData(painter)
+    } else {
+        val info = mediaMap[link]
+        val model = imageRequestInMarkdown(info)
+        val painter = rememberAsyncImagePainter(model = model)
+        ImageData(
+            painter,
+            modifier =
+            Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                info?.let { it1 -> onClick(it1) }
+            },
+        )
     }
 }
 
 @Composable
-fun imageRequestInMarkdown(
-    info: FileInfo?
-): ImageRequest {
+fun imageRequestInMarkdown(info: FileInfo?): ImageRequest {
     val client = LocalClient.current
     val context = LocalPlatformContext.current
     return imageRequest(context, client, info).build()

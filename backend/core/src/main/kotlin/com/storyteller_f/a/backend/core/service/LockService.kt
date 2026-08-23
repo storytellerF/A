@@ -1,9 +1,14 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
 
 interface LockService {
-    suspend fun<T> withLock(key: String, block: suspend () -> Result<T>): Result<T>
+    /** Runs [block] while holding the lock identified by [key]. */
+    suspend fun <T> withLock(key: String, block: suspend () -> Result<T>): Result<T>
 }
 
 interface LockServiceFactory {

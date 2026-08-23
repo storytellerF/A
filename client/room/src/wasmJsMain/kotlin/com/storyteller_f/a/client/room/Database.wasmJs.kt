@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.room
 
 import androidx.room3.Room
@@ -19,9 +23,10 @@ actual fun getRoomDatabase(scope: String): AppDatabase {
         .build()
 }
 
-fun getDatabaseBuilder(scope: String): RoomDatabase.Builder<AppDatabase> {
-    return Room.databaseBuilder<AppDatabase>(name = "$scope.db")
-}
+fun getDatabaseBuilder(scope: String): RoomDatabase.Builder<AppDatabase> =
+    Room.databaseBuilder<AppDatabase>(
+    name = "$scope.db",
+)
 
 // 由本地 npm 包 sqlite-web-worker 提供，实现 WebWorkerSQLiteDriver 协议（SQLite WASM + OPFS）。
 // worker 是 ES module，需以 { type: "module" } 创建；URL 由 webpack 解析并单独打包。

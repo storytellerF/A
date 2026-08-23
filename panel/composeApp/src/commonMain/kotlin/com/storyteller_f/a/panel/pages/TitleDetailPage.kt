@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.layout.Column
@@ -51,10 +55,11 @@ fun TitleDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 2 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { TitleTopBar(id) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.Title, "Info"),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.Title, "Info"),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, "Logs"),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -77,11 +82,12 @@ fun TitleDetailPage(id: PrimaryKey) {
 private fun TitleTopBar(id: PrimaryKey) {
     val vm = createPanelTitleViewModel(id)
     val info by vm.handler.data.collectAsState(null)
-    val title = if (info?.name != null) {
-        stringResource(Res.string.title_detail_title_with_info, id)
-    } else {
-        stringResource(Res.string.title_detail_title)
-    }
+    val title =
+        if (info?.name != null) {
+            stringResource(Res.string.title_detail_title_with_info, id)
+        } else {
+            stringResource(Res.string.title_detail_title)
+        }
     val nav = com.storyteller_f.a.panel.LocalPanelNav.current
     TopAppBar(
         title = {
@@ -91,7 +97,7 @@ private fun TitleTopBar(id: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
@@ -122,18 +128,19 @@ private fun TitleBasicInfoSection(id: PrimaryKey) {
     val dialogController = LocalPanelGlobalDialog.current
     val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        val items = buildList {
-            add("id" to info.id.toString())
-            add("name" to info.name)
-            add("createdTime" to info.createdTime.toString())
-            add("type" to info.type.name)
-            add("creator" to info.creator.toString())
-            add("receiver" to info.receiver.toString())
-            add("scopeId" to info.scopeId.toString())
-            add("scopeType" to info.scopeType.name)
-            add("descriptionTopicId" to info.descriptionTopicId.toString())
-            add("readOnly" to info.readOnly.toString())
-        }
+        val items =
+            buildList {
+                add("id" to info.id.toString())
+                add("name" to info.name)
+                add("createdTime" to info.createdTime.toString())
+                add("type" to info.type.name)
+                add("creator" to info.creator.toString())
+                add("receiver" to info.receiver.toString())
+                add("scopeId" to info.scopeId.toString())
+                add("scopeType" to info.scopeType.name)
+                add("descriptionTopicId" to info.descriptionTopicId.toString())
+                add("readOnly" to info.readOnly.toString())
+            }
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {

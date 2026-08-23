@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.createTopic
@@ -12,15 +16,16 @@ import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 class UserStatusTest {
-
     @Test
-    fun `test ReadOnly user cannot create topic`() = test(mapOf("DISABLE_TEST_WS" to "true")) {
+    fun `test ReadOnly user cannot create topic`() =
+        test(mapOf("DISABLE_TEST_WS" to "true")) {
         val adminTuple = attachPanelSession()
-        val userTuple = attachSession {
-            // As NORMAL (default), creation should work
-            val response1 = createTopic(ObjectType.USER, it.uid, "Test topic").getOrThrow()
-            assertNotNull(response1)
-        }
+        val userTuple =
+            attachSession {
+                // As NORMAL (default), creation should work
+                val response1 = createTopic(ObjectType.USER, it.uid, "Test topic").getOrThrow()
+                assertNotNull(response1)
+            }
 
         // Set to READ_ONLY via Admin
         loginPanelSession(adminTuple) {

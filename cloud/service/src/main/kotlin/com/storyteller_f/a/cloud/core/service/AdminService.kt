@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.core.service
 
 import com.perraco.utils.SnowflakeFactory
@@ -23,9 +27,11 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 
-suspend fun Backend.getOverview() = runCatching {
+suspend fun Backend.getOverview() =
+    cancellableRunCatching {
     val userCount = database.user.getUserCount().getOrThrow()
     val topicCount = database.topic.getTopicCount().getOrThrow()
     val communityCount = database.community.getCommunityCount().getOrThrow()
@@ -58,17 +64,19 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
     }.exceptionOrNull()?.let {
         return Result.failure(it)
     }
-    return runCatching {
+    return cancellableRunCatching {
         val authKey = newUser.authKey
         val algoType = authKey.algo
-        val (address, pemPubKey) = getAlgo(algoType).run {
-            val address = calcAddress(authKey.derPublicKey).getOrThrow()
-            address to authKey.derPublicKey
-        }
-        val encPubKey = when (authKey) {
-            is TransferAuthKey.Dilithium -> authKey.derEncryptionPublicKey
-            is TransferAuthKey.P256 -> null
-        }
+        val (address, pemPubKey) =
+            getAlgo(algoType).run {
+                val address = calcAddress(authKey.derPublicKey).getOrThrow()
+                address to authKey.derPublicKey
+            }
+        val encPubKey =
+            when (authKey) {
+                is TransferAuthKey.Dilithium -> authKey.derEncryptionPublicKey
+                is TransferAuthKey.P256 -> null
+            }
 
         val id = SnowflakeFactory.nextId()
         val notificationId = SnowflakeFactory.nextId()
@@ -85,8 +93,8 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
                 0,
                 PassType.RAW,
                 algoType,
-                notificationId
-            )
+                notificationId,
+            ),
         ).getOrThrow().toUserInfo()
     }
 }
@@ -94,7 +102,7 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
 suspend fun Backend.updateUserStatus(
     uid: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateUserStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.user.updateUserStatus(uid, body.status).map {
@@ -106,8 +114,8 @@ suspend fun Backend.updateUserStatus(
                 targetId = uid,
                 objectType = ObjectType.USER,
                 action = "Update user status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -115,7 +123,7 @@ suspend fun Backend.updateUserStatus(
 suspend fun Backend.updateCommunityStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.community.updateCommunityStatus(id, body.status).map {
@@ -127,8 +135,8 @@ suspend fun Backend.updateCommunityStatus(
                 targetId = id,
                 objectType = ObjectType.COMMUNITY,
                 action = "Update community status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -136,7 +144,7 @@ suspend fun Backend.updateCommunityStatus(
 suspend fun Backend.updateRoomStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.room.updateRoomStatus(id, body.status).map {
@@ -148,8 +156,8 @@ suspend fun Backend.updateRoomStatus(
                 targetId = id,
                 objectType = ObjectType.ROOM,
                 action = "Update room status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -157,7 +165,7 @@ suspend fun Backend.updateRoomStatus(
 suspend fun Backend.updateTopicStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.topic.updateTopicStatus(id, body.status).map {
@@ -169,8 +177,8 @@ suspend fun Backend.updateTopicStatus(
                 targetId = id,
                 objectType = ObjectType.TOPIC,
                 action = "Update topic status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -178,7 +186,7 @@ suspend fun Backend.updateTopicStatus(
 suspend fun Backend.updateTitleStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.title.updateTitleStatus(id, body.status).map {
@@ -190,8 +198,8 @@ suspend fun Backend.updateTitleStatus(
                 targetId = id,
                 objectType = ObjectType.TITLE,
                 action = "Update title status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -199,7 +207,7 @@ suspend fun Backend.updateTitleStatus(
 suspend fun Backend.updateFileStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
-    adminId: com.storyteller_f.shared.type.PrimaryKey?
+    adminId: com.storyteller_f.shared.type.PrimaryKey?,
 ): Result<Unit> {
     if (adminId == null) return Result.failure(UnauthorizedException())
     return database.file.updateFileStatus(id, body.status).map {
@@ -211,8 +219,8 @@ suspend fun Backend.updateFileStatus(
                 targetId = id,
                 objectType = ObjectType.FILE,
                 action = "Update file status to ${body.status}",
-                createdTime = now()
-            )
+                createdTime = now(),
+            ),
         )
     }
 }
@@ -220,11 +228,10 @@ suspend fun Backend.updateFileStatus(
 suspend fun Backend.getPanelLogs(
     targetId: com.storyteller_f.shared.type.PrimaryKey,
     objectType: ObjectType,
-    fetch: PrimaryKeyFetch
-): Result<PaginationResult<PanelLogInfo>> {
-    return database.admin.getPanelLogs(targetId, objectType, fetch).map { result ->
-        PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
-    }
+    fetch: PrimaryKeyFetch,
+): Result<PaginationResult<PanelLogInfo>> =
+    database.admin.getPanelLogs(targetId, objectType, fetch).map { result ->
+    PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
 }
 
 suspend fun Backend.getTaskRecords(

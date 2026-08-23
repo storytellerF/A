@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
@@ -25,86 +29,102 @@ import kotlin.test.assertTrue
 
 class TitleTest {
     @Test
-    fun `test title`() = test {
-        attachSession {
+    fun `test title`() =
+        test {
+        attachSession { session ->
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
             val cId = c.id
-            assertListSize(0, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
-            createTitle(NewTitle("c KOL", TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "hello")).getOrThrow()
-            assertListTotalSize(1, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
-            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.RECEIVER))
-            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR))
-            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR, scopeId = cId))
-            assertListSize(1, userTitles(it.uid, 10, TitleSearchType.CREATOR, type = TitleType.REGULAR, scopeId = cId))
+            assertListSize(0, userTitles(session.uid, 10, TitleSearchType.RECEIVER))
+            createTitle(
+                NewTitle("c KOL", TitleType.REGULAR, session.uid, cId, ObjectType.COMMUNITY, "hello"),
+            ).getOrThrow()
+            assertListTotalSize(1, userTitles(session.uid, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, userTitles(session.uid, 10, TitleSearchType.RECEIVER))
+            assertListSize(1, userTitles(session.uid, 10, TitleSearchType.CREATOR))
+            assertListSize(1, userTitles(session.uid, 10, TitleSearchType.CREATOR, scopeId = cId))
+            assertListSize(
+                1,
+                userTitles(session.uid, 10, TitleSearchType.CREATOR, type = TitleType.REGULAR, scopeId = cId),
+            )
         }
     }
 
     @Test
-    fun `test title expired filter`() = test {
-        attachSession {
+    fun `test title expired filter`() =
+        test {
+        attachSession { session ->
             val c = createCommunity(NewCommunity("c-expired", "c-expired")).getOrThrow()
             val cId = c.id
             createTitle(
                 NewTitle(
                     "active-title",
                     TitleType.REGULAR,
-                    it.uid,
+                    session.uid,
                     cId,
                     ObjectType.COMMUNITY,
                     "active",
-                    LocalDateTime.parse("2099-01-01T00:00:00")
-                )
+                    LocalDateTime.parse("2099-01-01T00:00:00"),
+                ),
             ).getOrThrow()
             createTitle(
                 NewTitle(
                     "expired-title",
                     TitleType.REGULAR,
-                    it.uid,
+                    session.uid,
                     cId,
                     ObjectType.COMMUNITY,
                     "expired",
-                    LocalDateTime.parse("2000-01-01T00:00:00")
-                )
+                    LocalDateTime.parse("2000-01-01T00:00:00"),
+                ),
             ).getOrThrow()
 
-            val okTitles = userTitles(it.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.OK)
-                .getOrThrow().data
-            assertTrue(okTitles.any { title ->
-                title.name == "active-title" && title.titleStatus == TitleWorkStatus.OK
-            })
+            val okTitles =
+                userTitles(session.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.OK)
+                    .getOrThrow().data
+            assertTrue(
+                okTitles.any { title ->
+                    title.name == "active-title" && title.titleStatus == TitleWorkStatus.OK
+                },
+            )
             assertTrue(okTitles.none { title -> title.name == "expired-title" })
 
-            val expiredTitles = userTitles(it.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.EXPIRED)
-                .getOrThrow().data
-            assertTrue(expiredTitles.any { title ->
-                title.name == "expired-title" && title.titleStatus == TitleWorkStatus.EXPIRED
-            })
+            val expiredTitles =
+                userTitles(session.uid, 10, TitleSearchType.RECEIVER, status = TitleWorkStatus.EXPIRED)
+                    .getOrThrow().data
+            assertTrue(
+                expiredTitles.any { title ->
+                    title.name == "expired-title" && title.titleStatus == TitleWorkStatus.EXPIRED
+                },
+            )
         }
     }
 
     @Test
-    fun `test add title favorite`() = test {
-        attachSession {
+    fun `test add title favorite`() =
+        test {
+        attachSession { session ->
             val c = createCommunity(NewCommunity("fav1", "fav1")).getOrThrow()
             val cId = c.id
             createTitle(
-                NewTitle("c KOL fav", TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "hello fav")
+                NewTitle("c KOL fav", TitleType.REGULAR, session.uid, cId, ObjectType.COMMUNITY, "hello fav"),
             ).getOrThrow()
 
-            val titleId = userTitles(
-                it.uid,
-                10,
-                TitleSearchType.RECEIVER
-            ).getOrThrow().data.first { t -> t.name == "c KOL fav" }.id
+            val titleId =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.name == "c KOL fav" }.id
 
             addFavorite(NewFavorite(ObjectType.TITLE, titleId)).getOrThrow()
             assertListTotalSize(1, getFavorites(PaginationQuery()))
 
-            val titleInfo = userTitles(
-                it.uid,
-                10,
-                TitleSearchType.RECEIVER
-            ).getOrThrow().data.first { t -> t.id == titleId }
+            val titleInfo =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.id == titleId }
             assertNotNull(titleInfo.favoriteId)
 
             removeFavorite(titleId, ObjectType.TITLE).getOrThrow()
@@ -113,28 +133,31 @@ class TitleTest {
     }
 
     @Test
-    fun `test add title subscription`() = test {
-        attachSession {
+    fun `test add title subscription`() =
+        test {
+        attachSession { session ->
             val c = createCommunity(NewCommunity("sub1", "sub1")).getOrThrow()
             val cId = c.id
             createTitle(
-                NewTitle("c KOL sub", TitleType.REGULAR, it.uid, cId, ObjectType.COMMUNITY, "hello sub")
+                NewTitle("c KOL sub", TitleType.REGULAR, session.uid, cId, ObjectType.COMMUNITY, "hello sub"),
             ).getOrThrow()
 
-            val titleId = userTitles(
-                it.uid,
-                10,
-                TitleSearchType.RECEIVER
-            ).getOrThrow().data.first { t -> t.name == "c KOL sub" }.id
+            val titleId =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.name == "c KOL sub" }.id
 
             addSubscription(NewSubscription(titleId, ObjectType.TITLE)).getOrThrow()
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))
 
-            val titleInfo = userTitles(
-                it.uid,
-                10,
-                TitleSearchType.RECEIVER
-            ).getOrThrow().data.first { t -> t.id == titleId }
+            val titleInfo =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.id == titleId }
             assertNotNull(titleInfo.subscriptionId)
 
             removeSubscription(titleId, ObjectType.TITLE).getOrThrow()

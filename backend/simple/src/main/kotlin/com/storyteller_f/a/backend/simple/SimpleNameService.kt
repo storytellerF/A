@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.simple
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -30,9 +34,7 @@ class SimpleNameService : NameService {
         }
     }
 
-    override fun parse(id: Long): String {
-        return numberToCustomCharset(id)
-    }
+    override fun parse(id: Long): String = numberToCustomCharset(id)
 
     // 将数字转换为自定义字符集表示的字符串
     private fun numberToCustomCharset(num: PrimaryKey): String {
@@ -45,10 +47,11 @@ class SimpleNameService : NameService {
         val result = StringBuilder()
         while (number > DEFAULT_PRIMARY_KEY) {
             val remainder = (number % base).toInt()
-            val i = countList.indexOfFirst {
-                it > remainder
-            }
-            val leftRange = nameMap[countList[i]]!!
+            val i =
+                countList.indexOfFirst {
+                    it > remainder
+                }
+            val leftRange = nameMap.getValue(countList[i])
             val toChar = (leftRange + remainder - countList.getOrElse(i - 1) { 0 }).toChar()
             result.append(toChar)
             number /= base
@@ -60,11 +63,7 @@ class SimpleNameService : NameService {
 }
 
 class SimpleNameServiceFactory : NameServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return true
-    }
+    override fun match(env: MergedEnv): Boolean = true
 
-    override fun build(env: MergedEnv): NameService {
-        return SimpleNameService()
-    }
+    override fun build(env: MergedEnv): NameService = SimpleNameService()
 }

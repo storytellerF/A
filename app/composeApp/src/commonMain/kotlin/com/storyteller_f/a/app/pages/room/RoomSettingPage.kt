@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.room
 
 import androidx.compose.foundation.layout.Column
@@ -72,17 +76,13 @@ fun RoomSettingPage(roomId: PrimaryKey) {
                 scope.launch {
                     globalDialogController.updateRoom(roomId, it, currentOption, closeDialog)
                 }
-            }
+            },
         )
     }
 }
 
 @Composable
-private fun RoomSettingInternal(
-    values: PaddingValues,
-    showDialog: (SettingOption) -> Unit,
-    roomInfo: RoomInfo,
-) {
+private fun RoomSettingInternal(values: PaddingValues, showDialog: (SettingOption) -> Unit, roomInfo: RoomInfo) {
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
@@ -90,8 +90,8 @@ private fun RoomSettingInternal(
         SettingOptionResettableView(
             "Icon",
             roomInfo.icon != null,
-            {
-                if (it) {
+            { shouldReset ->
+                if (shouldReset) {
                     scope.launch {
                         globalDialogController.useResult {
                             val body = UpdateRoomBody(icon = 0)
@@ -104,14 +104,14 @@ private fun RoomSettingInternal(
                     showDialog(
                         SettingOption.RoomIcon(
                             roomInfo.icon?.fullName,
-                            roomInfo.id.takeIf { roomInfo.isPrivate }
-                        )
+                            roomInfo.id.takeIf { roomInfo.isPrivate },
+                        ),
                     )
                 }
             },
             {
                 RoomIconWithDialog(roomInfo, showDialog = false, setClickEvent = false) {}
-            }
+            },
         )
         SettingOptionView("Name", {
             showDialog(SettingOption.Name(roomInfo.name))
@@ -133,15 +133,16 @@ private suspend fun AppGlobalDialogController.updateRoom(
     showInputDialog: SettingOption?,
     closeDialog: () -> Unit,
 ) {
-    val body = when (showInputDialog) {
-        is SettingOption.Name -> {
-            UpdateRoomBody(name = string)
-        }
+    val body =
+        when (showInputDialog) {
+            is SettingOption.Name -> {
+                UpdateRoomBody(name = string)
+            }
 
-        else -> {
-            null
-        }
-    } ?: return
+            else -> {
+                null
+            }
+        } ?: return
     useResult {
         request { updateRoomInfo(roomId, body) }
     }.onSuccess { newInfo ->

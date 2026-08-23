@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.NewCommunity
@@ -46,7 +50,8 @@ import kotlin.test.assertTrue
 
 class UserTest {
     @Test
-    fun `test get user`() = test {
+    fun `test get user`() =
+        test {
         attachSession {
             val uid = it.uid
             assertNotNull(uid)
@@ -56,7 +61,8 @@ class UserTest {
     }
 
     @Test
-    fun `test update user nickname and aid`() = test {
+    fun `test update user nickname and aid`() =
+        test {
         attachSession {
             val updateRow = updateUserInfo(UpdateUserBody(aid = "aid")).getOrThrow()
             assertEquals(updateRow.aid, "aid")
@@ -66,7 +72,8 @@ class UserTest {
     }
 
     @Test
-    fun `test update user avatar`() = test {
+    fun `test update user avatar`() =
+        test {
         attachSession {
             val stream = ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
             val bytes = stream.readBytes()
@@ -76,7 +83,8 @@ class UserTest {
     }
 
     @Test
-    fun `test login`() = test {
+    fun `test login`() =
+        test {
         val session = attachSession()
         loginSession(session) {
             assertEquals(session.uid, it.uid)
@@ -84,49 +92,51 @@ class UserTest {
     }
 
     @Test
-    fun `test add alternative account`() = test {
+    fun `test add alternative account`() =
+        test {
         testChildAccount(1, com.storyteller_f.shared.model.AlgoType.P256, com.storyteller_f.shared.model.AlgoType.P256)
         testChildAccount(
             2,
             com.storyteller_f.shared.model.AlgoType.P256,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
         )
         testChildAccount(
             3,
             com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-            com.storyteller_f.shared.model.AlgoType.P256
+            com.storyteller_f.shared.model.AlgoType.P256,
         )
         testChildAccount(
             4,
             com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM
+            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
         )
     }
 
     private suspend fun TestMate.testChildAccount(
         index: Int,
         hostAlgo: com.storyteller_f.shared.model.AlgoType,
-        childAlgo: com.storyteller_f.shared.model.AlgoType
+        childAlgo: com.storyteller_f.shared.model.AlgoType,
     ) {
-        val outerTuple = attachSession(hostAlgo) {
-            val childAccountInfo = addChildAccount(childAlgo).getOrThrow()
-            assertEquals(it.uid, childAccountInfo.hostId)
-            val response = getChildAccounts(null, 10).getOrThrow()
-            assertEquals(1, response.pagination?.total)
-            assertEquals(childAccountInfo.id, response.data.first().id)
-            assertFalse(response.data.first().hasUnreadRoomMessage)
-            assertFalse(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
-            childAccountInfo
-        }
+        val outerTuple =
+            attachSession(hostAlgo) {
+                val childAccountInfo = addChildAccount(childAlgo).getOrThrow()
+                assertEquals(it.uid, childAccountInfo.hostId)
+                val response = getChildAccounts(null, 10).getOrThrow()
+                assertEquals(1, response.pagination?.total)
+                assertEquals(childAccountInfo.id, response.data.first().id)
+                assertFalse(response.data.first().hasUnreadRoomMessage)
+                assertFalse(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
+                childAccountInfo
+            }
 
         val childAccountInfo = outerTuple.custom
         val childAuthKey = buildChildAuthKey(hostAlgo, outerTuple.authKey, childAccountInfo)
         val receivedFrame = mutableListOf<com.storyteller_f.shared.obj.RoomFrame>()
         loginSession(
             SessionOuterTuple(childAuthKey, childAccountInfo.id, Unit),
-            onReceive = { roomFrame, _, _ -> receivedFrame.add(roomFrame) }
-        ) {
-            createTopic(ObjectType.USER, it.uid, "user topic $index").getOrThrow()
+            onReceive = { roomFrame, _, _ -> receivedFrame.add(roomFrame) },
+        ) { childSession ->
+            createTopic(ObjectType.USER, childSession.uid, "user topic $index").getOrThrow()
 
             val community = createCommunity(NewCommunity("test com $index", "test_com_$index")).getOrThrow()
             createTopic(ObjectType.COMMUNITY, community.id, "community topic $index").getOrThrow()
@@ -136,14 +146,14 @@ class UserTest {
                 roomAid = "test_com_room_$index",
                 topicName = "com room topic $index",
                 communityId = community.id,
-                receivedFrame = receivedFrame
+                receivedFrame = receivedFrame,
             )
             createRoomTopic(
                 roomName = "prv room $index",
                 roomAid = "test_prv_room_$index",
                 topicName = "private room topic $index",
                 communityId = null,
-                receivedFrame = receivedFrame
+                receivedFrame = receivedFrame,
             )
         }
 
@@ -157,25 +167,28 @@ class UserTest {
     private suspend fun buildChildAuthKey(
         hostAlgo: com.storyteller_f.shared.model.AlgoType,
         hostAuthKey: com.storyteller_f.a.client.core.AuthKey,
-        childAccountInfo: com.storyteller_f.shared.model.ChildAccountInfo
+        childAccountInfo: com.storyteller_f.shared.model.ChildAccountInfo,
     ): com.storyteller_f.a.client.core.AuthKey {
-        val hostAddress = com.storyteller_f.shared.getAlgo(hostAlgo).calcAddress(
-            if (hostAuthKey is com.storyteller_f.a.client.core.AuthKey.Dilithium) {
-                hostAuthKey.derPublicKey
-            } else {
-                (hostAuthKey as com.storyteller_f.a.client.core.AuthKey.P256).derPublicKey
-            }
-        ).getOrThrow()
+        val hostAddress =
+            com.storyteller_f.shared.getAlgo(hostAlgo).calcAddress(
+                if (hostAuthKey is com.storyteller_f.a.client.core.AuthKey.Dilithium) {
+                    hostAuthKey.derPublicKey
+                } else {
+                    (hostAuthKey as com.storyteller_f.a.client.core.AuthKey.P256).derPublicKey
+                },
+            ).getOrThrow()
 
-        val hostUserPass = com.storyteller_f.a.client.core.RawUserPass(
-            com.storyteller_f.a.client.core.RawUserPassInfo(hostAddress, hostAuthKey)
-        )
-        val (decrypted, decryptedEnc) = hostUserPass.decryptChildAccount(
-            childAccountInfo.encryptedPrivateKey,
-            childAccountInfo.encryptedAesKey,
-            childAccountInfo.algoType,
-            childAccountInfo.encryptedEncryptionPrivateKey
-        ).getOrThrow()
+        val hostUserPass =
+            com.storyteller_f.a.client.core.RawUserPass(
+                com.storyteller_f.a.client.core.RawUserPassInfo(hostAddress, hostAuthKey),
+            )
+        val (decrypted, decryptedEnc) =
+            hostUserPass.decryptChildAccount(
+                childAccountInfo.encryptedPrivateKey,
+                childAccountInfo.encryptedAesKey,
+                childAccountInfo.algoType,
+                childAccountInfo.encryptedEncryptionPrivateKey,
+            ).getOrThrow()
 
         val algoImpl = com.storyteller_f.shared.getAlgo(childAccountInfo.algoType)
         val pem = algoImpl.getPemPrivateKeyFromDer(decrypted).getOrThrow()
@@ -186,14 +199,14 @@ class UserTest {
                 derPrivateKey = decrypted,
                 derPublicKey = publicKey,
                 pemEncryptionPrivateKey = "",
-                derEncryptionPrivateKey = decryptedEnc ?: "",
-                derEncryptionPublicKey = ""
+                derEncryptionPrivateKey = decryptedEnc.orEmpty(),
+                derEncryptionPublicKey = "",
             )
         } else {
             com.storyteller_f.a.client.core.AuthKey.P256(
                 pemPrivateKey = pem,
                 derPrivateKey = decrypted,
-                derPublicKey = publicKey
+                derPublicKey = publicKey,
             )
         }
     }
@@ -203,31 +216,35 @@ class UserTest {
         roomAid: String,
         topicName: String,
         communityId: Long?,
-        receivedFrame: MutableList<com.storyteller_f.shared.obj.RoomFrame>
+        receivedFrame: MutableList<com.storyteller_f.shared.obj.RoomFrame>,
     ) {
-        val roomId = createRoom(
-            NewRoom(name = roomName, aid = roomAid, communityId = communityId)
-        ).getOrThrow().id
+        val roomId =
+            createRoom(
+                NewRoom(name = roomName, aid = roomAid, communityId = communityId),
+            ).getOrThrow().id
         val roomInfo = getRoomInfo(roomId).getOrThrow()
-        val keys = getRoomMembersPublicKeys(
-            roomId,
-            com.storyteller_f.a.api.PaginationQuery(null, size = 10)
-        ).getOrThrow().data
+        val keys =
+            getRoomMembersPublicKeys(
+                roomId,
+                com.storyteller_f.a.api.PaginationQuery(null, size = 10),
+            ).getOrThrow().data
         createTopicInRoomAndWait(receivedFrame) {
             sendMessage(
                 com.storyteller_f.shared.obj.ObjectTuple(roomInfo.id, ObjectType.ROOM),
                 roomInfo.isPrivate,
                 topicName,
-                keys
+                keys,
             )
         }
     }
 
     @Test
-    fun `test add favorite`() = test {
-        val outerTuple = attachSession {
-            createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
-        }
+    fun `test add favorite`() =
+        test {
+        val outerTuple =
+            attachSession {
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            }
         attachSession {
             val topicId = outerTuple.custom.id
             addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
@@ -243,10 +260,12 @@ class UserTest {
     }
 
     @Test
-    fun `test add subscription`() = test {
-        val outerTuple = attachSession {
-            createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
-        }
+    fun `test add subscription`() =
+        test {
+        val outerTuple =
+            attachSession {
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            }
         attachSession {
             val topicId = outerTuple.custom.id
             addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
@@ -262,7 +281,8 @@ class UserTest {
     }
 
     @Test
-    fun `test add user favorite`() = test {
+    fun `test add user favorite`() =
+        test {
         val targetUid = attachSession {}.uid
         attachSession {
             addFavorite(NewFavorite(ObjectType.USER, targetUid)).getOrThrow()
@@ -277,10 +297,12 @@ class UserTest {
     }
 
     @Test
-    fun `test add community favorite`() = test {
-        val communityId = attachSession {
-            createCommunity(NewCommunity("test", "test")).getOrThrow().id
-        }.custom
+    fun `test add community favorite`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunity(NewCommunity("test", "test")).getOrThrow().id
+            }.custom
         attachSession {
             addFavorite(NewFavorite(ObjectType.COMMUNITY, communityId)).getOrThrow()
             assertListTotalSize(1, getFavorites(PaginationQuery()))
@@ -294,10 +316,12 @@ class UserTest {
     }
 
     @Test
-    fun `test add room favorite`() = test {
-        val roomId = attachSession {
-            createRoom(NewRoom("test", "test")).getOrThrow().id
-        }.custom
+    fun `test add room favorite`() =
+        test {
+        val roomId =
+            attachSession {
+                createRoom(NewRoom("test", "test")).getOrThrow().id
+            }.custom
         attachSession {
             addFavorite(NewFavorite(ObjectType.ROOM, roomId)).getOrThrow()
             assertListTotalSize(1, getFavorites(PaginationQuery()))
@@ -311,7 +335,8 @@ class UserTest {
     }
 
     @Test
-    fun `test add user subscription`() = test {
+    fun `test add user subscription`() =
+        test {
         val targetUid = attachSession {}.uid
         attachSession {
             addSubscription(NewSubscription(targetUid, ObjectType.USER)).getOrThrow()
@@ -326,10 +351,12 @@ class UserTest {
     }
 
     @Test
-    fun `test add community subscription`() = test {
-        val communityId = attachSession {
-            createCommunity(NewCommunity("test", "test")).getOrThrow().id
-        }.custom
+    fun `test add community subscription`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunity(NewCommunity("test", "test")).getOrThrow().id
+            }.custom
         attachSession {
             addSubscription(NewSubscription(communityId, ObjectType.COMMUNITY)).getOrThrow()
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))
@@ -343,10 +370,12 @@ class UserTest {
     }
 
     @Test
-    fun `test add room subscription`() = test {
-        val roomId = attachSession {
-            createRoom(NewRoom("test", "test")).getOrThrow().id
-        }.custom
+    fun `test add room subscription`() =
+        test {
+        val roomId =
+            attachSession {
+                createRoom(NewRoom("test", "test")).getOrThrow().id
+            }.custom
         attachSession {
             addSubscription(NewSubscription(roomId, ObjectType.ROOM)).getOrThrow()
             assertListTotalSize(1, getSubscriptions(PaginationQuery()))
@@ -360,7 +389,8 @@ class UserTest {
     }
 
     @Test
-    fun `test has unread rooms`() = test {
+    fun `test has unread rooms`() =
+        test {
         val receivedFrame = mutableListOf<RoomFrame>()
         attachSession(onReceive = { roomFrame, _, _ ->
             receivedFrame.add(roomFrame)
@@ -385,14 +415,15 @@ class UserTest {
     }
 }
 
-suspend fun getUploadDataFromBytes(bytes: ByteArray) = UploadData(
+suspend fun getUploadDataFromBytes(bytes: ByteArray) =
+    UploadData(
     bytes.size.toLong(),
     "avatar1.png",
     ContentType.parse("image/png"),
     sha256(
         Buffer().apply {
             write(bytes)
-        }.peek()
+        }.peek(),
     ),
 ) {
     Buffer().apply {

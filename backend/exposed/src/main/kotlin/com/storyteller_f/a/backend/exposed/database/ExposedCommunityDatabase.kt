@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.CommunityDatabase
@@ -30,7 +34,6 @@ import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -45,17 +48,14 @@ import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 import org.jetbrains.exposed.v1.r2dbc.update
 
-class ExposedCommunityDatabase(
-    val databaseSession: ExposedDatabaseSession,
-    val containerDatabase: ContainerDatabase
-) : CommunityDatabase {
-
+class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val containerDatabase: ContainerDatabase) :
+    CommunityDatabase {
     private val json = Json { ignoreUnknownKeys = true }
 
     override suspend fun getRawCommunity(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean?,
-        uid: PrimaryKey?
+        uid: PrimaryKey?,
     ): Result<RawCommunity?> {
         if (uid == null && fillJoinInfo == true) {
             return Result.failure(UnauthorizedException())
@@ -75,7 +75,8 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun getJoinedCommunityIds(uid: PrimaryKey) = databaseSession.dbSearch {
+    override suspend fun getJoinedCommunityIds(uid: PrimaryKey) =
+        databaseSession.dbSearch {
         search {
             Communities
                 .join(Members, JoinType.INNER, Communities.id, Members.objectId) {
@@ -90,88 +91,94 @@ class ExposedCommunityDatabase(
     override suspend fun getCommunityPaginationResult(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
-        joinSearch: JoinSearch
-    ) = paginationFromResults(getCommunityListByPredicate {
-        buildCommunitySearchQuery(joinSearch, hasPosterSearch)
-            .bindPaginationQuery(Communities, primaryKeyFetch)
-    }, getCommunityCountByPredicate {
-        buildCommunitySearchQuery(joinSearch, hasPosterSearch)
-    }).mapPagingResultNotNull { list ->
+        joinSearch: JoinSearch,
+    ) = paginationFromResults(
+        getCommunityListByPredicate {
+            buildCommunitySearchQuery(joinSearch, hasPosterSearch)
+                .bindPaginationQuery(Communities, primaryKeyFetch)
+        },
+        getCommunityCountByPredicate {
+            buildCommunitySearchQuery(joinSearch, hasPosterSearch)
+        },
+    ).mapPagingResultNotNull { list ->
         processCommunityToRawCommunity(
             when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
                 is JoinSearch.Unspecified -> joinSearch.uid
             },
-            list
+            list,
         )
     }
 
-    suspend fun processCommunityToRawCommunity(
-        uid: PrimaryKey?,
-        communities: List<Community>
-    ) = containerDatabase.getContainerInfo(communities.map { it.id }, uid).map { map ->
-        communities.map {
-            val containerInfo = map[it.id]
-            RawCommunity(
-                it,
-                containerInfo?.member,
-                containerInfo?.userTopicRead?.topicId,
-                containerInfo?.memberCount,
-                containerInfo?.latestTopicId,
-                containerInfo?.favoriteId,
-                containerInfo?.subscriptionId,
-            )
+    suspend fun processCommunityToRawCommunity(uid: PrimaryKey?, communities: List<Community>) =
+        containerDatabase.getContainerInfo(communities.map { it.id }, uid).map { map ->
+            communities.map {
+                val containerInfo = map[it.id]
+                RawCommunity(
+                    it,
+                    containerInfo?.member,
+                    containerInfo?.userTopicRead?.topicId,
+                    containerInfo?.memberCount,
+                    containerInfo?.latestTopicId,
+                    containerInfo?.favoriteId,
+                    containerInfo?.subscriptionId,
+                )
+            }
         }
-    }
 
     override suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>> =
         databaseSession.dbQuery {
-            check(Communities.insert {
-                it[Communities.id] = community.id
-                it[Communities.name] = community.name
-                it[Communities.owner] = community.owner
-                it[Communities.createdTime] = community.createdTime
-                it[Communities.memberPolicy] = community.memberPolicy
-                community.fontSettings?.let { fs ->
-                    it[Communities.fontSettings] = json.encodeToString(fs)
-                }
-            }.insertedCount > 0) {
+            check(
+                Communities.insert {
+                    it[Communities.id] = community.id
+                    it[Communities.name] = community.name
+                    it[Communities.owner] = community.owner
+                    it[Communities.createdTime] = community.createdTime
+                    it[Communities.memberPolicy] = community.memberPolicy
+                    community.fontSettings?.let { fs ->
+                        it[Communities.fontSettings] = json.encodeToString(fs)
+                    }
+                }.insertedCount > 0,
+            ) {
                 "insert community failed"
             }
-            check(Aids.insert {
-                it[value] = community.aid
-                it[objectId] = community.id
-                it[objectType] = ObjectType.COMMUNITY
-            }.insertedCount > 0) {
+            check(
+                Aids.insert {
+                    it[value] = community.aid
+                    it[objectId] = community.id
+                    it[objectType] = ObjectType.COMMUNITY
+                }.insertedCount > 0,
+            ) {
                 "insert aid failed"
             }
-            val member = Member(
-                memberId,
-                community.owner,
-                community.id,
-                ObjectType.COMMUNITY,
-                community.createdTime,
-                MemberStatus.JOINED,
-                community.createdTime
-            )
-            check(Members.insert {
-                it[id] = member.id
-                it[createdTime] = member.createdTime
-                it[joinedTime] = member.joinedTime
-                it[invitedTime] = member.invitedTime
-                it[uid] = member.uid
-                it[objectId] = member.objectId
-                it[objectType] = member.objectType
-                it[status] = member.status
-            }.insertedCount > 0) {
+            val member =
+                Member(
+                    memberId,
+                    community.owner,
+                    community.id,
+                    ObjectType.COMMUNITY,
+                    community.createdTime,
+                    MemberStatus.JOINED,
+                    community.createdTime,
+                )
+            check(
+                Members.insert {
+                    it[id] = member.id
+                    it[createdTime] = member.createdTime
+                    it[joinedTime] = member.joinedTime
+                    it[invitedTime] = member.invitedTime
+                    it[uid] = member.uid
+                    it[objectId] = member.objectId
+                    it[objectType] = member.objectType
+                    it[status] = member.status
+                }.insertedCount > 0,
+            ) {
                 "join failed"
             }
             community to member
         }
 
-    override suspend fun getRawCommunities(
-        objectListFetch: ObjectListFetch
-    ): Result<List<RawCommunity>> {
+    override suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
             return Result.success(emptyList())
         }
@@ -190,10 +197,8 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun updateCommunity(
-        id: PrimaryKey,
-        body: UpdateCommunityBody
-    ) = databaseSession.dbQuery {
+    override suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody) =
+        databaseSession.dbQuery {
         val newIcon = body.icon
         val newName = body.name
         val newPoster = body.poster
@@ -220,34 +225,34 @@ class ExposedCommunityDatabase(
         }
     }
 
-    override suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus) = databaseSession.dbQuery {
+    override suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus) =
+        databaseSession.dbQuery {
         Communities.update({ Communities.id eq id }) {
             it[Communities.status] = status
         } > 0
     }
 
-    override suspend fun getCommunityCount() = databaseSession.dbSearch {
+    override suspend fun getCommunityCount() =
+        databaseSession.dbSearch {
         search {
             Communities.selectAll()
         }
         count()
     }
 
-    private suspend fun getCommunityListByPredicate(
-        queryBuilder: Query.() -> Query = { this }
-    ) = databaseSession.dbSearch {
-        search {
-            Communities
-                .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                .select(Communities.fields + Aids.value)
-                .queryBuilder()
+    private suspend fun getCommunityListByPredicate(queryBuilder: Query.() -> Query = { this }) =
+        databaseSession.dbSearch {
+            search {
+                Communities
+                    .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                    .select(Communities.fields + Aids.value)
+                    .queryBuilder()
+            }
+            map(Community::wrapRow)
         }
-        map(Community::wrapRow)
-    }
 
-    private suspend fun getCommunityByPredicate(
-        queryBuilder: Query.() -> Query = { this }
-    ) = databaseSession.dbSearch {
+    private suspend fun getCommunityByPredicate(queryBuilder: Query.() -> Query = { this }) =
+        databaseSession.dbSearch {
         search {
             Communities
                 .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
@@ -257,37 +262,32 @@ class ExposedCommunityDatabase(
         first(Community::wrapRow)
     }
 
-    private suspend fun getCommunityCountByPredicate(
-        queryBuilder: Query.() -> Query = { this }
-    ) = databaseSession.dbSearch {
-        search {
-            Communities.select(Communities.id).queryBuilder()
+    private suspend fun getCommunityCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
+        databaseSession.dbSearch {
+            search {
+                Communities.select(Communities.id).queryBuilder()
+            }
+            count()
         }
-        count()
-    }
 
-    fun Query.bindPosterSearch(
-        hasPosterSearch: PosterSearch?
-    ): Query {
-        return when (hasPosterSearch) {
-            PosterSearch.HAS_POSTER -> andWhere {
+    fun Query.bindPosterSearch(hasPosterSearch: PosterSearch?): Query =
+        when (hasPosterSearch) {
+        PosterSearch.HAS_POSTER ->
+            andWhere {
                 Communities.poster.isNotNull()
             }
 
-            PosterSearch.NO_POSTER -> andWhere {
+        PosterSearch.NO_POSTER ->
+            andWhere {
                 Communities.poster.isNull()
             }
 
-            else -> {
-                orderBy(Communities.poster.isNull(), SortOrder.ASC)
-            }
+        else -> {
+            orderBy(Communities.poster.isNull(), SortOrder.ASC)
         }
     }
 
-    fun Query.buildCommunitySearchQuery(
-        joinSearch: JoinSearch,
-        hasPosterSearch: PosterSearch?
-    ): Query {
+    fun Query.buildCommunitySearchQuery(joinSearch: JoinSearch, hasPosterSearch: PosterSearch?): Query {
         when (joinSearch) {
             is JoinSearch.Joined -> {
                 adjustColumnSet {

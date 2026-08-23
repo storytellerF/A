@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -47,9 +51,9 @@ fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
                     IconButton({ panelNav.open() }) {
                         Icon(Icons.Default.Menu, null)
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         val direction = LocalLayoutDirection.current
         Box(Modifier.safeArea(paddingValues, direction)) {
@@ -71,8 +75,8 @@ fun AllPublicRoomsPageInternal(viewModel: AllPublicRoomsViewModel) {
                                     Text(
                                         listOf(
                                             members,
-                                            stringResource(Res.string.room_public)
-                                        ).filter { it.isNotEmpty() }.joinToString(" • ")
+                                            stringResource(Res.string.room_public),
+                                        ).filter { it.isNotEmpty() }.joinToString(" • "),
                                     )
                                 },
                             )

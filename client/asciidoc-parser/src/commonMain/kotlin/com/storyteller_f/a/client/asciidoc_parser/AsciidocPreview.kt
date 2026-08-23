@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.asciidoc_parser
 
 suspend fun buildAsciidocPreviewHtml(source: String): String {
@@ -33,12 +37,13 @@ suspend fun buildAsciidocPreviewHtml(source: String): String {
           <main id="preview">$documentHtml</main>
         </body>
         </html>
-    """.trimIndent()
+        """.trimIndent()
 }
 
 expect suspend fun convertAsciidoc(source: String): String
 
-internal fun String.toJsStringLiteral(): String = buildString {
+internal fun String.toJsStringLiteral(): String =
+    buildString {
     append('"')
     for (char in this@toJsStringLiteral) {
         when (char) {

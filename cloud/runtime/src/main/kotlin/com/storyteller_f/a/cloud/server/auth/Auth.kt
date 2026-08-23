@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.Backend
@@ -10,7 +14,10 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.type.toPrimaryKey
-import com.storyteller_f.shared.utils.*
+import com.storyteller_f.shared.utils.checkTsIsValid
+import com.storyteller_f.shared.utils.mapIfNotNull
+import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -30,9 +37,10 @@ sealed class CustomCredential(open val sig: String) {
 
 private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     if (parameters.size > 2) return null
-    val listMap = parameters.associate {
-        it.name to it.value
-    }
+    val listMap =
+        parameters.associate {
+            it.name to it.value
+        }
     val sig = listMap["sig"] ?: return null
     return listMap["id"]?.toLongOrNull()?.let {
         CustomCredential.IdCredential(it, sig)
@@ -45,10 +53,7 @@ private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
 
 data class CustomPrincipal(val uid: PrimaryKey)
 
-inline fun AuthenticationConfig.custom(
-    name: String? = null,
-    configure: CustomAuthProvider.Config.() -> Unit
-) {
+inline fun AuthenticationConfig.custom(name: String? = null, configure: CustomAuthProvider.Config.() -> Unit) {
     val provider = CustomAuthProvider(CustomAuthProvider.Config(name).apply(configure))
     register(provider)
 }
@@ -57,9 +62,7 @@ typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredent
 typealias CustomChallenge = suspend (UserSession, ApplicationCall) -> Unit
 
 class CustomAuthProvider(private val config: Config) : AuthenticationProvider(config) {
-
     class Config(name: String?) : AuthenticationProvider.Config(name) {
-
         lateinit var validateFunction: CustomValidator
         lateinit var challengeFunction: CustomChallenge
 
@@ -82,13 +85,14 @@ class CustomAuthProvider(private val config: Config) : AuthenticationProvider(co
         if (principal != null) {
             context.principal(name, principal)
         } else {
-            val cause = if (credential == null) {
-                AuthenticationFailedCause.NoCredentials
-            } else if (err != null) {
-                AuthenticationFailedCause.Error(err.message.toString())
-            } else {
-                AuthenticationFailedCause.InvalidCredentials
-            }
+            val cause =
+                if (credential == null) {
+                    AuthenticationFailedCause.NoCredentials
+                } else if (err != null) {
+                    AuthenticationFailedCause.Error(err.message?.toString().orEmpty())
+                } else {
+                    AuthenticationFailedCause.InvalidCredentials
+                }
 
             @Suppress("NAME_SHADOWING")
             context.challenge("CustomChallengeKey", cause) { challenge, call ->
@@ -115,23 +119,15 @@ suspend fun ApplicationCall.respondUnauthorizedResponse() {
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-fun ApplicationCall.saveSuccessSession(
-    session: UserSession.Pending,
-    id: PrimaryKey
-) {
+fun ApplicationCall.saveSuccessSession(session: UserSession.Pending, id: PrimaryKey) {
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id, session.label))
 }
 
-fun ApplicationCall.saveTwoFactorPendingSession(
-    session: UserSession.Pending,
-    id: PrimaryKey
-) {
+fun ApplicationCall.saveTwoFactorPendingSession(session: UserSession.Pending, id: PrimaryKey) {
     sessions.set<UserSession>(UserSession.TwoFactorPending(session.data, session.remote, id, session.label))
 }
 
-fun ApplicationCall.saveSuccessSession(
-    session: UserSession.TwoFactorPending
-) {
+fun ApplicationCall.saveSuccessSession(session: UserSession.TwoFactorPending) {
     sessions.set<UserSession>(UserSession.Success(session.data, session.remote, session.id, session.label))
 }
 
@@ -147,9 +143,7 @@ private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<Custom
     }
 }
 
-fun ApplicationCall.getData(): String {
-    return getSession().data
-}
+fun ApplicationCall.getData(): String = getSession().data
 
 fun ApplicationCall.getSession(): UserSession {
     val remote = request.origin.remoteAddress
@@ -195,10 +189,11 @@ fun ApplicationCall.getSession(): UserSession {
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pending {
     val aTs = request.header("a-ts")?.toLongOrNull()
-    val data = when {
-        aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()
-        else -> Uuid.random().toString()
-    }
+    val data =
+        when {
+            aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()
+            else -> Uuid.random().toString()
+        }
     val type = if (request.path().startsWith("/admin")) "panel" else "user"
     val value = UserSession.Pending(data, remote, type)
     return value
@@ -219,7 +214,9 @@ fun Application.configureAuth(backend: Backend) {
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+
                     is UserSession.TwoFactorPending -> Result.success(null)
+
                     is UserSession.Pending -> {
                         when {
                             credential != null -> call.checkApiRequest(backend, credential, session)
@@ -246,7 +243,9 @@ fun Application.configureAuth(backend: Backend) {
             validate { session, call, credential ->
                 when (session) {
                     is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+
                     is UserSession.TwoFactorPending -> Result.success(null)
+
                     is UserSession.Pending -> {
                         if (credential != null) {
                             call.checkAdminApiRequest(backend, credential, session)
@@ -263,15 +262,11 @@ fun Application.configureAuth(backend: Backend) {
     }
 }
 
-suspend fun Backend.getUserAuthData(
-    credential: CustomCredential
-): Result<UserAuthData?> {
+suspend fun Backend.getUserAuthData(credential: CustomCredential): Result<UserAuthData?> {
     val userDatabase = database.user
     return when (credential) {
         is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
-
         is CustomCredential.IdCredential -> userDatabase.getUserAuthDataById(credential.id)
-
         is CustomCredential.AddressCredential -> userDatabase.getUserAuthDataByAddress(credential.ad)
     }
 }
@@ -279,7 +274,7 @@ suspend fun Backend.getUserAuthData(
 suspend fun ApplicationCall.checkApiRequest(
     backend: Backend,
     credential: CustomCredential,
-    session: UserSession.Pending
+    session: UserSession.Pending,
 ): Result<CustomPrincipal?> {
     if (session.label != "user") return Result.success(null)
     val sig = credential.sig
@@ -299,7 +294,7 @@ suspend fun ApplicationCall.checkApiRequest(
                 getAlgo(algo).verify(
                     pubKey,
                     sig,
-                    finalData(session.data)
+                    finalData(session.data),
                 ).mapResult { isVerified ->
                     if (!isVerified) {
                         Result.success(null)
@@ -323,22 +318,17 @@ suspend fun ApplicationCall.checkApiRequest(
     }
 }
 
-suspend fun Backend.getAdminAuthData(
-    credential: CustomCredential
-): Result<UserAuthData?> {
-    return when (credential) {
-        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
-
-        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
-
-        else -> Result.failure(ForbiddenException())
-    }
+suspend fun Backend.getAdminAuthData(credential: CustomCredential): Result<UserAuthData?> =
+    when (credential) {
+    is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
+    is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
+    else -> Result.failure(ForbiddenException())
 }
 
 suspend fun ApplicationCall.checkAdminApiRequest(
     backend: Backend,
     credential: CustomCredential,
-    session: UserSession.Pending
+    session: UserSession.Pending,
 ): Result<CustomPrincipal?> {
     if (session.label != "panel") return Result.success(null)
     val sig = credential.sig
@@ -349,7 +339,7 @@ suspend fun ApplicationCall.checkAdminApiRequest(
         getAlgo(algo).verify(
             pubKey,
             sig,
-            finalData(session.data)
+            finalData(session.data),
         ).mapIfNotNull {
             saveSuccessSession(session, id)
             CustomPrincipal(id)

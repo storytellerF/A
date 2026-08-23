@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.layout.Column
@@ -44,7 +48,6 @@ import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
 import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -69,7 +72,7 @@ fun FontSettingsPage(communityId: PrimaryKey) {
                 IconButton(onClick = { appNavFactory.newAppNav().back() }) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                 }
-            }
+            },
         )
     }) { paddingValues ->
         communityInfo?.let { info ->
@@ -77,8 +80,7 @@ fun FontSettingsPage(communityId: PrimaryKey) {
                 paddingValues,
                 info,
                 communityId,
-                { opt -> currentOption = opt },
-            )
+            ) { opt -> currentOption = opt }
         }
     }
 
@@ -91,12 +93,13 @@ fun FontSettingsPage(communityId: PrimaryKey) {
             scope.launch {
                 val option = currentOption ?: return@launch
                 val fontSettings = communityInfo?.fontSettings?.settings ?: FontSettings()
-                val newFontSettings = when (option) {
-                    is SettingOption.ContentFont -> fontSettings.copy(contentFontId = media.id)
-                    is SettingOption.CodeFont -> fontSettings.copy(codeFontId = media.id)
-                    is SettingOption.FallbackFont -> fontSettings.copy(fallbackFontId = media.id)
-                    else -> return@launch
-                }
+                val newFontSettings =
+                    when (option) {
+                        is SettingOption.ContentFont -> fontSettings.copy(contentFontId = media.id)
+                        is SettingOption.CodeFont -> fontSettings.copy(codeFontId = media.id)
+                        is SettingOption.FallbackFont -> fontSettings.copy(fallbackFontId = media.id)
+                        else -> return@launch
+                    }
                 val body = UpdateCommunityBody(fontSettings = newFontSettings)
                 globalDialogController.useResult {
                     request { updateCommunityInfo(communityId, body) }
@@ -106,7 +109,7 @@ fun FontSettingsPage(communityId: PrimaryKey) {
                 }
             }
         },
-        {}
+        {},
     )
 }
 
@@ -126,11 +129,12 @@ private fun FontSettingsInternal(
     val fallbackFont = communityInfo.fontSettings?.fallbackFont
 
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(paddingValues)
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 20.dp),
     ) {
         // Content Font
         FontSettingRow(
@@ -146,7 +150,7 @@ private fun FontSettingsInternal(
                     }
                 }
             },
-            onSet = { showDialog(SettingOption.ContentFont(contentFont?.fullName)) }
+            onSet = { showDialog(SettingOption.ContentFont(contentFont?.fullName)) },
         )
 
         // Code Font
@@ -163,7 +167,7 @@ private fun FontSettingsInternal(
                     }
                 }
             },
-            onSet = { showDialog(SettingOption.CodeFont(codeFont?.fullName)) }
+            onSet = { showDialog(SettingOption.CodeFont(codeFont?.fullName)) },
         )
 
         // Fallback Font
@@ -180,7 +184,7 @@ private fun FontSettingsInternal(
                     }
                 }
             },
-            onSet = { showDialog(SettingOption.FallbackFont(fallbackFont?.fullName)) }
+            onSet = { showDialog(SettingOption.FallbackFont(fallbackFont?.fullName)) },
         )
 
         // Preview JSON
@@ -189,8 +193,9 @@ private fun FontSettingsInternal(
         }) {
             Text(
                 commonJson.encodeToString(FontSettings.serializer(), fontSettings),
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                style =
+                MaterialTheme.typography.bodySmall.copy(
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                 ),
             )
         }
@@ -198,12 +203,7 @@ private fun FontSettingsInternal(
 }
 
 @Composable
-private fun FontSettingRow(
-    label: String,
-    fontFile: FileInfo?,
-    onReset: () -> Unit,
-    onSet: () -> Unit,
-) {
+private fun FontSettingRow(label: String, fontFile: FileInfo?, onReset: () -> Unit, onSet: () -> Unit) {
     SettingOptionResettableView(
         label,
         fontFile != null,
@@ -220,6 +220,6 @@ private fun FontSettingRow(
             } else {
                 Text("Not set", style = MaterialTheme.typography.bodyMedium)
             }
-        }
+        },
     )
 }

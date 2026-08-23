@@ -2,6 +2,8 @@
  * This is a private project. All rights reserved.
  */
 
+package com.storyteller_f.a.dev.appium
+
 import org.openqa.selenium.By
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.firefox.FirefoxOptions

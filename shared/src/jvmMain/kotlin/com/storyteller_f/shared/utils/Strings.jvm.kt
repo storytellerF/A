@@ -1,20 +1,26 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.utils
 
 import com.ibm.icu.text.UnicodeSet
 import java.text.BreakIterator
 
 actual fun checkContent(text: String): Result<Unit> {
-    val regexp = "^[\\p{L}\\p{N}\\p{P}\\p{Z}\\p{S}\n]+$"
+    val regexp = """^[\p{L}\p{N}\p{P}\p{Z}\p{S}\n]+$"""
     val emojiSet = UnicodeSet("[[:RGI_Emoji:]]").freeze()
-    val nerdFontSet = UnicodeSet(
-        "[\\uE000-\\uE0FF \\uE5FA-\\uE6B7 \\uE700-\\uE8EF " +
-            "\\uEA60-\\uEC1E \\uED00-\\uEFCE \\uF000-\\uF2FF " +
-            "\\uF300-\\uF381 \\uF400-\\uFD46 " +
-            "\\U000F0001-\\U000F1AF0]"
-    ).freeze()
-    val breakIterator = BreakIterator.getCharacterInstance().apply {
-        setText(text)
-    }
+    val nerdFontSet =
+        UnicodeSet(
+            """[\uE000-\uE0FF \uE5FA-\uE6B7 \uE700-\uE8EF """ +
+                """\uEA60-\uEC1E \uED00-\uEFCE \uF000-\uF2FF """ +
+                """\uF300-\uF381 \uF400-\uFD46 """ +
+                """\U000F0001-\U000F1AF0]""",
+        ).freeze()
+    val breakIterator =
+        BreakIterator.getCharacterInstance().apply {
+            setText(text)
+        }
     var start = breakIterator.first()
     var end = breakIterator.next()
     while (end != BreakIterator.DONE) {
@@ -29,9 +35,10 @@ actual fun checkContent(text: String): Result<Unit> {
 }
 
 actual fun safeFirstUnicode(text: String): String? {
-    val breakIterator = BreakIterator.getCharacterInstance().apply {
-        setText(text)
-    }
+    val breakIterator =
+        BreakIterator.getCharacterInstance().apply {
+            setText(text)
+        }
     val first = breakIterator.first()
     val next = breakIterator.next()
     val sub = text.substring(first, next)
@@ -39,9 +46,10 @@ actual fun safeFirstUnicode(text: String): String? {
 }
 
 actual fun safeFirstEmoji(text: String): String? {
-    val breakIterator = BreakIterator.getCharacterInstance().apply {
-        setText(text)
-    }
+    val breakIterator =
+        BreakIterator.getCharacterInstance().apply {
+            setText(text)
+        }
     val emojiSet = UnicodeSet("[[:RGI_Emoji:]]").freeze()
     val first = breakIterator.first()
     val next = breakIterator.next()

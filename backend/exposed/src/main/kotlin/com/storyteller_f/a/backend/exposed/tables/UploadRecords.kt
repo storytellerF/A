@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.UploadRecord
@@ -18,19 +22,18 @@ object UploadRecords : BaseTable() {
     val sha256 = varchar("sha256", 64).nullable()
 }
 
-fun UploadRecord.Companion.wrapRow(resultRow: ResultRow): UploadRecord {
-    return with(UploadRecords) {
-        UploadRecord(
-            resultRow[id],
-            resultRow[createdTime],
-            resultRow[objectId],
-            resultRow[objectType],
-            resultRow[status],
-            resultRow[total],
-            resultRow[progress],
-            resultRow[name],
-            resultRow[chunkSize],
-            resultRow[sha256],
-        )
-    }
+fun UploadRecord.Companion.wrapRow(resultRow: ResultRow): UploadRecord =
+    with(UploadRecords) {
+    UploadRecord(
+        resultRow[id],
+        resultRow[createdTime],
+        resultRow[objectId],
+        resultRow[objectType],
+        resultRow[status],
+        resultRow[total],
+        resultRow[progress],
+        resultRow[name],
+        resultRow[chunkSize],
+        resultRow[sha256],
+    )
 }

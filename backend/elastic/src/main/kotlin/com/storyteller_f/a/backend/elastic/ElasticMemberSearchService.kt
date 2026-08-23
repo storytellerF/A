@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders
@@ -15,20 +19,22 @@ import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.future.await
 
-class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connection), MemberSearchService {
+class ElasticMemberSearchService(connection: ElasticConnection) :
+    Elastic(connection),
+    MemberSearchService {
     companion object {
         const val INDEX_NAME = "members"
     }
 
-    override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> {
-        return useElasticClient {
-            saveDocumentList(connection, documents, INDEX_NAME)
-        }
+    override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> =
+        useElasticClient {
+        saveDocumentList(connection, documents, INDEX_NAME)
     }
 
-    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit> {
-        return useElasticClient {
-            val query = QueryBuilders.bool { b ->
+    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit> =
+        useElasticClient {
+        val query =
+            QueryBuilders.bool { b ->
                 b.must { m ->
                     m.term { t ->
                         t.field("uid").value(uid.toString())
@@ -40,24 +46,23 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
                 }
             }
 
-            val response = deleteByQuery { d ->
+        val response =
+            deleteByQuery { d ->
                 d.index(INDEX_NAME).query(query).refresh(connection.refresh)
             }.await()
 
-            Napier.d {
-                "elastic delete member document: query=$query, deleted=${response.deleted()}"
-            }
+        Napier.d {
+            "elastic delete member document: query=$query, deleted=${response.deleted() ?: "<none>"}"
         }
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useElasticClient {
-            cleanAll(INDEX_NAME)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useElasticClient {
+        cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
-        memberDocumentSearch: MemberDocumentSearch
+        memberDocumentSearch: MemberDocumentSearch,
     ): Result<PaginationResult<MemberDocument>> {
         if (memberDocumentSearch is MemberDocumentSearch.Keyword && memberDocumentSearch.nickname.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -79,30 +84,27 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
         }
     }
 
-    private fun buildSearchRequest(
-        memberDocumentSearch: MemberDocumentSearch
-    ): SearchRequest {
-        return SearchRequest.of { s ->
-            s.index(INDEX_NAME).apply {
-                when (memberDocumentSearch) {
-                    is MemberDocumentSearch.Keyword -> {
-                        buildMemberSearchRequest(memberDocumentSearch)
-                    }
+    private fun buildSearchRequest(memberDocumentSearch: MemberDocumentSearch): SearchRequest =
+        SearchRequest.of { s ->
+        s.index(INDEX_NAME).apply {
+            when (memberDocumentSearch) {
+                is MemberDocumentSearch.Keyword -> {
+                    buildMemberSearchRequest(memberDocumentSearch)
+                }
 
-                    is MemberDocumentSearch.CommunityMembers -> {
-                        buildCommunityMemberSearchRequest(memberDocumentSearch)
-                    }
+                is MemberDocumentSearch.CommunityMembers -> {
+                    buildCommunityMemberSearchRequest(memberDocumentSearch)
+                }
 
-                    is MemberDocumentSearch.RoomMembers -> {
-                        buildRoomMemberSearchRequest(memberDocumentSearch)
-                    }
+                is MemberDocumentSearch.RoomMembers -> {
+                    buildRoomMemberSearchRequest(memberDocumentSearch)
                 }
             }
         }
     }
 
     private fun SearchRequest.Builder.buildRoomMemberSearchRequest(
-        memberDocumentSearch: MemberDocumentSearch.RoomMembers
+        memberDocumentSearch: MemberDocumentSearch.RoomMembers,
     ) {
         val fetch = memberDocumentSearch.fetch
         from(fetch.cursor?.value ?: 0)
@@ -137,7 +139,7 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
     }
 
     private fun SearchRequest.Builder.buildCommunityMemberSearchRequest(
-        memberDocumentSearch: MemberDocumentSearch.CommunityMembers
+        memberDocumentSearch: MemberDocumentSearch.CommunityMembers,
     ) {
         val fetch = memberDocumentSearch.fetch
         from(fetch.cursor?.value ?: 0)
@@ -186,13 +188,10 @@ class ElasticMemberSearchService(connection: ElasticConnection) : Elastic(connec
 }
 
 class ElasticMemberSearchServiceFactory : MemberSearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "elastic"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "elastic"
 
-    override fun build(env: MergedEnv): MemberSearchService {
-        return buildElasticSearchService(env) {
-            ElasticMemberSearchService(it)
-        }
+    override fun build(env: MergedEnv): MemberSearchService =
+        buildElasticSearchService(env) {
+        ElasticMemberSearchService(it)
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.elastic
 
 import co.elastic.clients.elasticsearch.core.SearchRequest
@@ -13,7 +17,8 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 
 class ElasticCommunitySearchService(connection: ElasticConnection) :
-    Elastic(connection), CommunitySearchService {
+    Elastic(connection),
+    CommunitySearchService {
     companion object {
         private const val INDEX_NAME = "topics"
     }
@@ -25,14 +30,13 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
         }
     }
 
-    override suspend fun clean(): Result<Unit> {
-        return useElasticClient {
-            cleanAll(INDEX_NAME)
-        }
+    override suspend fun clean(): Result<Unit> =
+        useElasticClient {
+        cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
-        communityDocumentSearch: CommunityDocumentSearch
+        communityDocumentSearch: CommunityDocumentSearch,
     ): Result<PaginationResult<CommunityDocument>> {
         if (communityDocumentSearch is CommunityDocumentSearch.Keyword && communityDocumentSearch.keyword.isEmpty()) {
             return Result.success(PaginationResult(emptyList(), 0))
@@ -46,10 +50,8 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
         }
     }
 
-    private fun buildSearchRequest(
-        communityDocumentSearch: CommunityDocumentSearch
-    ): SearchRequest {
-        return SearchRequest.of { s ->
+    private fun buildSearchRequest(communityDocumentSearch: CommunityDocumentSearch): SearchRequest =
+        SearchRequest.of { s ->
             s.index(INDEX_NAME).apply {
                 when (communityDocumentSearch) {
                     is CommunityDocumentSearch.Keyword -> {
@@ -67,17 +69,13 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
                 }
             }
         }
-    }
 }
 
 class ElasticCommunitySearchServiceFactory : CommunitySearchServiceFactory {
-    override fun match(env: MergedEnv): Boolean {
-        return env["SEARCH_SERVICE"] == "elastic"
-    }
+    override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "elastic"
 
-    override fun build(env: MergedEnv): CommunitySearchService {
-        return buildElasticSearchService(env) {
-            ElasticCommunitySearchService(it)
-        }
+    override fun build(env: MergedEnv): CommunitySearchService =
+        buildElasticSearchService(env) {
+        ElasticCommunitySearchService(it)
     }
 }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.perraco.utils.SnowflakeFactory
@@ -238,20 +242,22 @@ class WorkerTest {
     fun `test all worker tasks run without error`() {
         test {
             // 创建测试数据（这会初始化 Backend）
-            attachSession {
+            attachSession { session ->
                 val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
                 val cId = c.id
                 createTopic(ObjectType.COMMUNITY, cId, "Test topic").getOrThrow()
 
                 // 创建 title
-                createTitle(com.storyteller_f.a.api.NewTitle(
-                    "Test Title",
-                    com.storyteller_f.shared.model.TitleType.REGULAR,
-                    it.uid,
-                    cId,
-                    ObjectType.COMMUNITY,
-                    "Test title description"
-                )).getOrThrow()
+                createTitle(
+                    com.storyteller_f.a.api.NewTitle(
+                        "Test Title",
+                        com.storyteller_f.shared.model.TitleType.REGULAR,
+                        session.uid,
+                        cId,
+                        ObjectType.COMMUNITY,
+                        "Test title description",
+                    ),
+                ).getOrThrow()
             }
 
             // 依次执行所有 worker 任务

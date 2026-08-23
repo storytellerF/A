@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.components
 
 import androidx.compose.foundation.clickable
@@ -44,7 +48,8 @@ internal fun StringListPreference(
         headlineContent = {
             Text(title)
         },
-        modifier = Modifier.fillMaxWidth().clickable {
+        modifier =
+        Modifier.fillMaxWidth().clickable {
             showOptions = true
         },
         supportingContent = {
@@ -58,7 +63,7 @@ internal fun StringListPreference(
         ModalBottomSheet(
             onDismissRequest = {
                 showOptions = false
-            }
+            },
         ) {
             Column {
                 items.forEach { (label, value) ->
@@ -72,7 +77,8 @@ internal fun StringListPreference(
                                 onClick = null,
                             )
                         },
-                        modifier = Modifier.fillMaxWidth().clickable {
+                        modifier =
+                        Modifier.fillMaxWidth().clickable {
                             showOptions = false
                             scope.launch {
                                 preferences.setString(key, value)

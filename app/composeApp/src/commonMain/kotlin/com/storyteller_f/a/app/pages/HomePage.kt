@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages
 
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -98,11 +102,16 @@ fun HomePage() {
     )
     val defaultHomeRoute = homeRouteFromPreference(homeStartDestination)
     val defaultHomePage = homePageFromPreference(homeStartDestination)
-    val homeNavRoutes = listOf(
-        NavRoute(HOME_START_DESTINATION_WORLD, Icons.Default.Public, stringResource(Res.string.world)),
-        NavRoute(HOME_START_DESTINATION_COMMUNITIES, Icons.Default.Diversity3, stringResource(Res.string.communities)),
-        NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
-    )
+    val homeNavRoutes =
+        listOf(
+            NavRoute(HOME_START_DESTINATION_WORLD, Icons.Default.Public, stringResource(Res.string.world)),
+            NavRoute(
+                HOME_START_DESTINATION_COMMUNITIES,
+                Icons.Default.Diversity3,
+                stringResource(Res.string.communities),
+            ),
+            NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
+        )
     val modifier = Modifier.testTag("home")
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> {
@@ -117,38 +126,37 @@ fun HomePage() {
 
 @Suppress("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-private fun HomeNonCompatPage(
-    modifier: Modifier,
-    homeNavRoutes: List<NavRoute>,
-    defaultHomeRoute: HomeRoute,
-) {
+private fun HomeNonCompatPage(modifier: Modifier, homeNavRoutes: List<NavRoute>, defaultHomeRoute: HomeRoute) {
     val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
     val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
     Scaffold(modifier = modifier) {
         Row(Modifier) {
-            val config = remember {
-                SavedStateConfiguration {
-                    serializersModule = SerializersModule {
-                        polymorphic(NavKey::class) {
-                            subclass(HomeRoute.World::class)
-                            subclass(HomeRoute.Communities::class)
-                            subclass(HomeRoute.Rooms::class)
-                        }
+            val config =
+                remember {
+                    SavedStateConfiguration {
+                        serializersModule =
+                            SerializersModule {
+                                polymorphic(NavKey::class) {
+                                    subclass(HomeRoute.World::class)
+                                    subclass(HomeRoute.Communities::class)
+                                    subclass(HomeRoute.Rooms::class)
+                                }
+                            }
                     }
                 }
-            }
             val backStack = rememberNavBackStack(config, defaultHomeRoute)
             val currentEntry = backStack.last()
             CustomRailNav(
                 currentEntry = currentEntry.toString(),
                 navRoutes = homeNavRoutes,
-                unreadRoomsBadge = hasUnread ?: false
+                unreadRoomsBadge = hasUnread == true,
             ) { path ->
-                val targetRoute = when (path) {
-                    HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
-                    HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
-                    else -> HomeRoute.World
-                }
+                val targetRoute =
+                    when (path) {
+                        HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
+                        HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
+                        else -> HomeRoute.World
+                    }
                 if (backStack.last() != targetRoute) {
                     val i = backStack.indexOf(targetRoute)
                     if (i >= 0) {
@@ -188,34 +196,34 @@ internal const val HOME_START_DESTINATION_WORLD = "/world"
 internal const val HOME_START_DESTINATION_COMMUNITIES = "/communities"
 internal const val HOME_START_DESTINATION_ROOMS = "/rooms"
 
-internal fun homeRouteFromPreference(value: String?): HomeRoute = when (value) {
+internal fun homeRouteFromPreference(value: String?): HomeRoute =
+    when (value) {
     HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
     HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
     else -> HomeRoute.World
 }
 
-internal fun homePageFromPreference(value: String?): Int = when (value) {
+internal fun homePageFromPreference(value: String?): Int =
+    when (value) {
     HOME_START_DESTINATION_COMMUNITIES -> 1
     HOME_START_DESTINATION_ROOMS -> 2
     else -> 0
 }
 
 @Composable
-internal fun homeStartDestinationLabel(value: String?): String = when (value) {
+internal fun homeStartDestinationLabel(value: String?): String =
+    when (value) {
     HOME_START_DESTINATION_COMMUNITIES -> stringResource(Res.string.home_start_destination_communities)
     HOME_START_DESTINATION_ROOMS -> stringResource(Res.string.home_start_destination_rooms)
     else -> stringResource(Res.string.home_start_destination_world)
 }
 
 @Composable
-private fun HomeCompatPage(
-    homeNavRoutes: List<NavRoute>,
-    modifier: Modifier,
-    defaultHomePage: Int,
-) {
-    val pagerState = rememberPagerState(initialPage = defaultHomePage) {
-        3
-    }
+private fun HomeCompatPage(homeNavRoutes: List<NavRoute>, modifier: Modifier, defaultHomePage: Int) {
+    val pagerState =
+        rememberPagerState(initialPage = defaultHomePage) {
+            3
+        }
     val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
     val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
     Scaffold(bottomBar = {
@@ -223,29 +231,32 @@ private fun HomeCompatPage(
         CustomBottomNav(
             path = homeNavRoutes[pagerState.currentPage].path,
             navRoutes = homeNavRoutes,
-            unreadRoomsBadge = hasUnread ?: false
+            unreadRoomsBadge = hasUnread == true,
         ) { path ->
             scope.launch {
-                pagerState.animateScrollToPage(homeNavRoutes.indexOfFirst {
-                    it.path == path
-                })
+                pagerState.animateScrollToPage(
+                    homeNavRoutes.indexOfFirst {
+                        it.path == path
+                    },
+                )
             }
         }
-    }, modifier = modifier) {
+    }, modifier = modifier) { paddingValues ->
         Column(
             Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val scope = when (pagerState.currentPage) {
-                1 -> SearchScope.MyCommunity
-                2 -> SearchScope.MyRoom
-                else -> SearchScope.World
-            }
+            val scope =
+                when (pagerState.currentPage) {
+                    1 -> SearchScope.MyCommunity
+                    2 -> SearchScope.MyRoom
+                    else -> SearchScope.World
+                }
             CustomSearchBar(scope) {
                 ProjectIcon()
             }
             Spacer(modifier = Modifier.height(10.dp))
-            HomePager(Modifier.weight(1f).padding(bottom = it.calculateBottomPadding()), pagerState)
+            HomePager(Modifier.weight(1f).padding(bottom = paddingValues.calculateBottomPadding()), pagerState)
         }
     }
 }
@@ -257,13 +268,14 @@ private fun ProjectIcon() {
         mutableStateOf(false)
     }
     Box(
-        modifier = Modifier.size(40.dp)
+        modifier =
+        Modifier.size(40.dp)
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .clip(CircleShape)
             .clickable {
                 showDialog = true
             },
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         Text("A", color = MaterialTheme.colorScheme.onPrimaryContainer)
     }
@@ -279,28 +291,28 @@ private fun ProjectIcon() {
 }
 
 @Composable
-private fun HomeNavDisplay(
-    backStack: NavBackStack<NavKey>,
-    modifier: Modifier
-) {
+private fun HomeNavDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier) {
     Column(modifier = modifier) {
         val current = backStack.last()
-        val scope = when (current) {
-            HomeRoute.Communities -> SearchScope.MyCommunity
-            HomeRoute.Rooms -> SearchScope.MyRoom
-            else -> SearchScope.World
-        }
+        val scope =
+            when (current) {
+                HomeRoute.Communities -> SearchScope.MyCommunity
+                HomeRoute.Rooms -> SearchScope.MyRoom
+                else -> SearchScope.World
+            }
         CustomSearchBar(scope) {
             ProjectIcon()
         }
         Spacer(modifier = Modifier.height(10.dp))
         NavDisplay(
             backStack,
-            entryDecorators = listOf(
+            entryDecorators =
+            listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator()
+                rememberViewModelStoreNavEntryDecorator(),
             ),
-            entryProvider = entryProvider {
+            entryProvider =
+            entryProvider {
                 entry<HomeRoute.World> {
                     WorldPage()
                 }
@@ -314,27 +326,27 @@ private fun HomeNavDisplay(
                         MyRoomsPage()
                     }
                 }
-            }
+            },
         )
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun HomePager(
-    modifier: Modifier,
-    pagerState: PagerState
-) {
+private fun HomePager(modifier: Modifier, pagerState: PagerState) {
     HorizontalPager(pagerState, modifier) {
         when (it) {
             0 -> WorldPage()
-            1 -> UserHost {
-                MyCommunitiesPage()
-            }
 
-            else -> UserHost {
-                MyRoomsPage()
-            }
+            1 ->
+                UserHost {
+                    MyCommunitiesPage()
+                }
+
+            else ->
+                UserHost {
+                    MyRoomsPage()
+                }
         }
     }
 }
@@ -361,30 +373,30 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
     Surface(shape = RoundedCornerShape(8.dp)) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             val appNavFactory = LocalAppNavFactory.current
             Column {
                 ButtonNav(
                     Icons.Default.DesignServices,
-                    stringResource(Res.string.design_spec)
+                    stringResource(Res.string.design_spec),
                 ) {
                     uriHandler.openUri("https://storytellerf.github.io/aspec/")
                 }
                 ButtonNav(
                     Icons.Default.Code,
-                    stringResource(Res.string.open_source_libraries)
+                    stringResource(Res.string.open_source_libraries),
                 ) {
                     dismiss()
                     appNavFactory.newAppNav().gotoAbout()
                 }
                 ButtonNav(
                     Icons.Default.Download,
-                    stringResource(Res.string.download_latest_app)
+                    stringResource(Res.string.download_latest_app),
                 ) {
                     dismiss()
                     uriHandler.openUri(
-                        "https://nightly.link/storytellerF/A/workflows/alpha/alpha/Signed%20A%20Bundle.zip"
+                        "https://nightly.link/storytellerF/A/workflows/alpha/alpha/Signed%20A%20Bundle.zip",
                     )
                 }
             }

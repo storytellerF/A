@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
@@ -76,7 +80,7 @@ private fun Route.bindSearchTopicRoute(backend: Backend) {
                     uid,
                     q.fillHasCommented,
                     f,
-                    q.pinType
+                    q.pinType,
                 )
             }
         }
@@ -136,9 +140,10 @@ fun Route.bindProtectedTopicRoute(backend: Backend) {
     CustomApi.Topics.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             backend.createPlainTopic(uid, api.receiveBody()).also { result ->
-                result.getOrNull()?.let {
+                val topic = result.getOrNull()
+                if (topic != null) {
                     call.application.launch {
-                        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+                        GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(topic))
                     }
                 }
             }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.panel.pages
 
 import androidx.compose.foundation.clickable
@@ -63,11 +67,12 @@ fun TopicDetailPage(id: PrimaryKey) {
     val pagerState = rememberPagerState { 3 }
     val scope = rememberCoroutineScope()
     Scaffold(topBar = { TopicTopBar(id) }, bottomBar = {
-        val navRoutes = listOf(
-            NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)),
-            NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)),
-            NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
-        )
+        val navRoutes =
+            listOf(
+                NavRoute("/info", Icons.Default.Topic, stringResource(Res.string.tab_basic_info)),
+                NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.tab_topics)),
+                NavRoute("/logs", Icons.AutoMirrored.Filled.Article, stringResource(Res.string.tab_logs)),
+            )
         CustomBottomNav(navRoutes[pagerState.currentPage].path, navRoutes) { path ->
             scope.launch {
                 pagerState.animateScrollToPage(navRoutes.indexOfFirst { it.path == path })
@@ -99,7 +104,7 @@ private fun TopicTopBar(id: PrimaryKey) {
             IconButton(onClick = { nav.open() }) {
                 Icon(Icons.Default.Menu, null)
             }
-        }
+        },
     )
 }
 
@@ -130,24 +135,25 @@ private fun TopicBasicInfoSection(id: PrimaryKey) {
     val dialogController = LocalPanelGlobalDialog.current
     val scope = rememberCoroutineScope()
     StateView(vm.handler, modifier = Modifier.fillMaxSize()) { info ->
-        val items = buildList {
-            add("id" to info.id.toString())
-            add("author" to info.author.toString())
-            add("rootId" to info.rootId.toString())
-            add("rootType" to info.rootType.name)
-            add("parentId" to info.parentId.toString())
-            add("parentType" to info.parentType.name)
-            add("createdTime" to info.createdTime.toString())
-            add("commentCount" to info.commentCount.toString())
-            add("reactionCount" to info.reactionCount.toString())
-            add("hasComment" to info.hasComment.toString())
-            add("isEncrypted" to info.isEncrypted.toString())
-            add("level" to info.level.toString())
-            add("isPin" to info.isPin.toString())
-            add("lastModifiedTime" to (info.lastModifiedTime?.toString() ?: "null"))
-            add("aid" to (info.aid ?: "null"))
-            add("readOnly" to info.readOnly.toString())
-        }
+        val items =
+            buildList {
+                add("id" to info.id.toString())
+                add("author" to info.author.toString())
+                add("rootId" to info.rootId.toString())
+                add("rootType" to info.rootType.name)
+                add("parentId" to info.parentId.toString())
+                add("parentType" to info.parentType.name)
+                add("createdTime" to info.createdTime.toString())
+                add("commentCount" to info.commentCount.toString())
+                add("reactionCount" to info.reactionCount.toString())
+                add("hasComment" to info.hasComment.toString())
+                add("isEncrypted" to info.isEncrypted.toString())
+                add("level" to info.level.toString())
+                add("isPin" to info.isPin.toString())
+                add("lastModifiedTime" to (info.lastModifiedTime?.toString() ?: "null"))
+                add("aid" to (info.aid ?: "null"))
+                add("readOnly" to info.readOnly.toString())
+            }
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
             Button(onClick = {
@@ -194,32 +200,33 @@ private fun TopicTopicsTab(id: PrimaryKey) {
 }
 
 @Composable
-private fun TopicCell(
-    info: TopicInfo,
-    panelNav: PanelNav
-) {
-    val text = when (val content = info.content) {
-        is TopicContent.Plain -> content.plain
-        is TopicContent.Extracted -> content.plain
-        else -> ""
-    }
+private fun TopicCell(info: TopicInfo, panelNav: PanelNav) {
+    val text =
+        when (val content = info.content) {
+            is TopicContent.Plain -> content.plain
+            is TopicContent.Extracted -> content.plain
+            else -> ""
+        }
     val author = info.extension?.authorInfo?.nickname ?: info.author.toString()
-    val room = info.extension?.roomInfo?.name ?: ""
+    val room = info.extension?.roomInfo?.name.orEmpty()
     val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
-    val counts = if (info.commentCount > 0 || info.reactionCount > 0) {
-        stringResource(Res.string.interaction, info.commentCount, info.reactionCount)
-    } else {
-        ""
-    }
-    val flags = listOfNotNull(
-        if (info.isEncrypted) stringResource(Res.string.encrypted) else null,
-        if (info.isPin) stringResource(Res.string.pinned) else null
-    ).joinToString(" • ")
-    val supporting = listOf(
-        info.createdTime.toString(),
-        counts,
-        flags
-    ).filter { it.isNotEmpty() }.joinToString(" • ")
+    val counts =
+        if (info.commentCount > 0 || info.reactionCount > 0) {
+            stringResource(Res.string.interaction, info.commentCount, info.reactionCount)
+        } else {
+            ""
+        }
+    val flags =
+        listOfNotNull(
+            if (info.isEncrypted) stringResource(Res.string.encrypted) else null,
+            if (info.isPin) stringResource(Res.string.pinned) else null,
+        ).joinToString(" • ")
+    val supporting =
+        listOf(
+            info.createdTime.toString(),
+            counts,
+            flags,
+        ).filter { it.isNotEmpty() }.joinToString(" • ")
 
     ListItem(
         modifier = Modifier.clickable { panelNav.gotoTopicDetail(info.id) },

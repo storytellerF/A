@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.layout.Box
@@ -55,9 +59,9 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
     val closeDialog = {
         currentOption = null
     }
-    Scaffold {
+    Scaffold { paddingValues ->
         communityInfo?.let { it1 ->
-            CommunitySettingInternal(it, { opt ->
+            CommunitySettingInternal(paddingValues, { opt ->
                 currentOption = opt
             }, it1)
         }
@@ -86,7 +90,7 @@ fun CommunitySettingPage(communityId: PrimaryKey) {
                 scope.launch {
                     globalDialogController.updateCommunity(communityId, input, currentOption, closeDialog)
                 }
-            }
+            },
         )
     }
 }
@@ -119,9 +123,9 @@ private fun CommunitySettingInternal(
                 CommunityIconWithDialog(
                     communityInfo,
                     showDialog = false,
-                    setClickEvent = false
+                    setClickEvent = false,
                 ) {}
-            }
+            },
         )
         val globalDialogController = LocalGlobalDialog.current
         SettingOptionResettableView(
@@ -140,7 +144,7 @@ private fun CommunitySettingInternal(
                 Box(modifier = Modifier.width(100.dp).aspectRatio(3 / 4f)) {
                     CommunityPoster(communityInfo)
                 }
-            }
+            },
         )
         SettingOptionView("Name", {
             showDialog(SettingOption.Name(communityInfo.name))
@@ -179,15 +183,16 @@ private suspend fun AppGlobalDialogController.updateCommunity(
     showInputDialog: SettingOption?,
     closeDialog: () -> Unit,
 ) {
-    val body = when (showInputDialog) {
-        is SettingOption.Name -> {
-            UpdateCommunityBody(name = string)
-        }
+    val body =
+        when (showInputDialog) {
+            is SettingOption.Name -> {
+                UpdateCommunityBody(name = string)
+            }
 
-        else -> {
-            null
-        }
-    } ?: return
+            else -> {
+                null
+            }
+        } ?: return
     useResult {
         request { updateCommunityInfo(communityId, body) }
     }.onSuccess { newInfo ->

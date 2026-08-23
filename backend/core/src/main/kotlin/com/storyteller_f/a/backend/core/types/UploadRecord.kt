@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.UploadRecordInfo
@@ -21,6 +25,5 @@ data class UploadRecord(
     companion object
 }
 
-fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo {
-    return UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)
-}
+fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo =
+    UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)

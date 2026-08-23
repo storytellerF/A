@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.api.CustomApi
@@ -58,10 +62,12 @@ import kotlin.test.assertEquals
 
 class AdminTest {
     @Test
-    fun `test panel login`() = test {
-        val panelTuple = attachPanelSession {
-            assertListSize(0, getAllUsers(PaginationQuery()))
-        }
+    fun `test panel login`() =
+        test {
+        val panelTuple =
+            attachPanelSession {
+                assertListSize(0, getAllUsers(PaginationQuery()))
+            }
         attachSession()
         loginPanelSession(panelTuple) {
             assertListSize(1, getAllUsers(PaginationQuery()))
@@ -69,10 +75,12 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview user count`() = test {
-        val outerTuple = attachPanelSession {
-            assertEquals(0, overview().getOrThrow().userCount)
-        }
+    fun `test overview user count`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                assertEquals(0, overview().getOrThrow().userCount)
+            }
         attachSession()
         loginPanelSession(outerTuple) {
             assertEquals(1, overview().getOrThrow().userCount)
@@ -80,10 +88,12 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview community count`() = test {
-        val outerTuple = attachPanelSession {
-            assertEquals(0, overview().getOrThrow().communityCount)
-        }
+    fun `test overview community count`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                assertEquals(0, overview().getOrThrow().communityCount)
+            }
         attachSession {
             createCommunity(NewCommunity("test", "test")).getOrThrow()
         }
@@ -93,10 +103,12 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview topic count`() = test {
-        val outerTuple = attachPanelSession {
-            assertEquals(0, overview().getOrThrow().topicCount)
-        }
+    fun `test overview topic count`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                assertEquals(0, overview().getOrThrow().topicCount)
+            }
         attachSession {
             createTopic(ObjectType.USER, it.uid, "test").getOrThrow()
         }
@@ -106,10 +118,12 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview private room count`() = test {
-        val outerTuple = attachPanelSession {
-            assertEquals(0, overview().getOrThrow().privateRoomCount)
-        }
+    fun `test overview private room count`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                assertEquals(0, overview().getOrThrow().privateRoomCount)
+            }
         attachSession {
             createRoom(NewRoom("test", "test")).getOrThrow()
         }
@@ -119,10 +133,12 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview public room count`() = test {
-        val outerTuple = attachPanelSession {
-            assertEquals(0, overview().getOrThrow().communityRoomCount)
-        }
+    fun `test overview public room count`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                assertEquals(0, overview().getOrThrow().communityRoomCount)
+            }
         attachSession {
             val communityInfo = createCommunity(NewCommunity("test", "test")).getOrThrow()
             val communityId = communityInfo.id
@@ -134,12 +150,14 @@ class AdminTest {
     }
 
     @Test
-    fun `test overview file`() = test {
-        val outerTuple = attachPanelSession {
-            val panelOverview = overview().getOrThrow()
-            assertEquals(0, panelOverview.fileCount)
-            assertEquals(0, panelOverview.fileVolume)
-        }
+    fun `test overview file`() =
+        test {
+        val outerTuple =
+            attachPanelSession {
+                val panelOverview = overview().getOrThrow()
+                assertEquals(0, panelOverview.fileCount)
+                assertEquals(0, panelOverview.fileVolume)
+            }
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
         }
@@ -151,32 +169,40 @@ class AdminTest {
     }
 
     @Test
-    fun `test add user`() = test {
-        val (privateKey, derPrivateKey, publicKey) = getAlgo(AlgoType.P256).run {
-            val privateKey = generatePemKeyPair().getOrThrow().first
-            val derPriKey = getDerPrivateKey(privateKey).getOrThrow()
-            val derPubKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
-            Triple(privateKey, derPriKey, derPubKey)
-        }
-        val userInfo = attachPanelSession {
-            addUser(NewUser(authKey = TransferAuthKey.P256(publicKey))).getOrThrow()
-        }.custom
-        getAppSignInSession(com.storyteller_f.a.client.core.AuthKey.P256(
-            privateKey,
-            derPrivateKey,
-            publicKey
-        ), onReceive = { _, _, _ ->
-        }) {
+    fun `test add user`() =
+        test {
+        val (privateKey, derPrivateKey, publicKey) =
+            getAlgo(AlgoType.P256).run {
+                val privateKey = generatePemKeyPair().getOrThrow().first
+                val derPriKey = getDerPrivateKey(privateKey).getOrThrow()
+                val derPubKey = getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+                Triple(privateKey, derPriKey, derPubKey)
+            }
+        val userInfo =
+            attachPanelSession {
+                addUser(NewUser(authKey = TransferAuthKey.P256(publicKey))).getOrThrow()
+            }.custom
+        getAppSignInSession(
+            com.storyteller_f.a.client.core.AuthKey.P256(
+                privateKey,
+                derPrivateKey,
+                publicKey,
+            ),
+            onReceive = { _, _, _ ->
+            },
+        ) {
             val info = getUserInfo(it.uid).getOrThrow()
             assertEquals(info.id, userInfo.id)
         }
     }
 
     @Test
-    fun `admin list communities`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllCommunities(PaginationQuery()))
-        }
+    fun `admin list communities`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllCommunities(PaginationQuery()))
+            }
         attachSession {
             createCommunity(NewCommunity("c1", "c1")).getOrThrow()
         }
@@ -186,11 +212,13 @@ class AdminTest {
     }
 
     @Test
-    fun `admin list public rooms`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllPublicRooms(PaginationQuery()))
-        }
-        attachSession {
+    fun `admin list public rooms`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllPublicRooms(PaginationQuery()))
+            }
+        attachSession { session ->
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
             createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
         }
@@ -200,10 +228,12 @@ class AdminTest {
     }
 
     @Test
-    fun `admin list private rooms`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllPrivateRooms(PaginationQuery()))
-        }
+    fun `admin list private rooms`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllPrivateRooms(PaginationQuery()))
+            }
         attachSession {
             createRoom(NewRoom("r1", "desc")).getOrThrow()
         }
@@ -213,10 +243,12 @@ class AdminTest {
     }
 
     @Test
-    fun `admin list topics`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllTopics(PaginationQuery()))
-        }
+    fun `admin list topics`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllTopics(PaginationQuery()))
+            }
         attachSession {
             createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
         }
@@ -226,21 +258,23 @@ class AdminTest {
     }
 
     @Test
-    fun `admin list titles`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllTitles(PaginationQuery()))
-        }
-        attachSession {
+    fun `admin list titles`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllTitles(PaginationQuery()))
+            }
+        attachSession { session ->
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
             createTitle(
                 NewTitle(
                     "c KOL",
                     com.storyteller_f.shared.model.TitleType.REGULAR,
-                    it.uid,
+                    session.uid,
                     c.id,
                     ObjectType.COMMUNITY,
-                    "hello"
-                )
+                    "hello",
+                ),
             ).getOrThrow()
         }
         loginPanelSession(outer) {
@@ -249,10 +283,12 @@ class AdminTest {
     }
 
     @Test
-    fun `admin list files`() = test {
-        val outer = attachPanelSession {
-            assertListSize(0, getAllFiles(PaginationQuery()))
-        }
+    fun `admin list files`() =
+        test {
+        val outer =
+            attachPanelSession {
+                assertListSize(0, getAllFiles(PaginationQuery()))
+            }
         attachSession {
             upload(it.uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
         }
@@ -262,10 +298,12 @@ class AdminTest {
     }
 
     @Test
-    fun `admin user detail by id`() = test {
+    fun `admin user detail by id`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-        }.uid
+        val uid =
+            attachSession {
+            }.uid
         loginPanelSession(outer) {
             val info = getUserById(uid).getOrThrow()
             assertEquals(uid, info.id)
@@ -273,33 +311,39 @@ class AdminTest {
     }
 
     @Test
-    fun `admin user joined communities`() = test {
+    fun `admin user joined communities`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            }.uid
         loginPanelSession(outer) {
             assertListSize(1, getUserJoinedCommunities(uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery()))
         }
     }
 
     @Test
-    fun `admin user joined rooms`() = test {
+    fun `admin user joined rooms`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            createRoom(NewRoom("r1", "desc")).getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                createRoom(NewRoom("r1", "desc")).getOrThrow()
+            }.uid
         loginPanelSession(outer) {
             assertListSize(1, getUserJoinedRooms(uid, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin user received titles`() = test {
+    fun `admin user received titles`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+            }.uid
         attachSession {
             val c = createCommunity(NewCommunity("c1", "c2")).getOrThrow()
             createTitle(
@@ -309,105 +353,119 @@ class AdminTest {
                     uid,
                     c.id,
                     ObjectType.COMMUNITY,
-                    "hello"
-                )
+                    "hello",
+                ),
             ).getOrThrow()
         }
         loginPanelSession(outer) {
             assertListSize(
                 1,
-                getUserReceivedTitles(uid, CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER))
+                getUserReceivedTitles(uid, CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER)),
             )
         }
     }
 
     @Test
-    fun `admin user files`() = test {
+    fun `admin user files`() =
+        test {
         val outer = attachPanelSession {}
-        val uid = attachSession {
-            val uid = it.uid
-            upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                val uid = it.uid
+                upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+            }.uid
         loginPanelSession(outer) {
             assertListSize(1, getUserFiles(uid, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin user logs after join community`() = test {
+    fun `admin user logs after join community`() =
+        test {
         val outer = attachPanelSession {}
-        val outerTuple = attachSession {
-            val c = createCommunity(NewCommunity("lc1", "lc1")).getOrThrow()
-            val communityId = c.id
-            joinCommunity(communityId).getOrThrow().id
-        }
+        val outerTuple =
+            attachSession {
+                val c = createCommunity(NewCommunity("lc1", "lc1")).getOrThrow()
+                val communityId = c.id
+                joinCommunity(communityId).getOrThrow().id
+            }
         val uid = outerTuple.uid
         val communityId = outerTuple.custom
         loginPanelSession(outer) {
             val logs = getUserLogs(uid, PaginationQuery()).getOrThrow().data
             kotlin.test.assertTrue(
                 logs.any { it.objectType == ObjectType.COMMUNITY && it.objectId == communityId },
-                "Expect community-related log for user $uid"
+                "Expect community-related log for user $uid",
             )
         }
     }
 
     @Test
-    fun `admin community members`() = test {
+    fun `admin community members`() =
+        test {
         val outer = attachPanelSession {}
-        val communityId = attachSession {
-            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            joinCommunity(c.id).getOrThrow()
-            c.id
-        }.custom
+        val communityId =
+            attachSession {
+                val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+                joinCommunity(c.id).getOrThrow()
+                c.id
+            }.custom
         loginPanelSession(outer) {
             assertListSize(1, getCommunityMembers(communityId, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin room members`() = test {
+    fun `admin room members`() =
+        test {
         val outer = attachPanelSession {}
-        val roomId = attachSession {
-            val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
-            r.id
-        }.custom
+        val roomId =
+            attachSession {
+                val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
+                r.id
+            }.custom
         loginPanelSession(outer) {
             assertListSize(1, getRoomMembers(roomId, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin room files`() = test {
+    fun `admin room files`() =
+        test {
         val outer = attachPanelSession {}
-        val roomId = attachSession {
-            val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
-            upload(r.id ob ObjectType.ROOM, getUploadDataFromText("hello room file")).getOrThrow()
-            r.id
-        }.custom
+        val roomId =
+            attachSession {
+                val r = createRoom(NewRoom("r1", "desc")).getOrThrow()
+                upload(r.id ob ObjectType.ROOM, getUploadDataFromText("hello room file")).getOrThrow()
+                r.id
+            }.custom
         loginPanelSession(outer) {
             assertListSize(1, getRoomFiles(roomId, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin user upload records`() = test {
+    fun `admin user upload records`() =
+        test {
         val outer = attachPanelSession {}
-        val uid = attachSession {
-            val uid = it.uid
-            upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                val uid = it.uid
+                upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+            }.uid
         loginPanelSession(outer) {
             assertListSize(1, getUserUploadRecords(uid, PaginationQuery()))
         }
     }
 
     @Test
-    fun `admin get user topics`() = test {
+    fun `admin get user topics`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
-        }.uid
+        val uid =
+            attachSession {
+                createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
+            }.uid
         loginPanelSession(outer) {
             val topics = getAllTopics(PaginationQuery()).getOrThrow().data
             assertEquals(1, topics.size)
@@ -417,13 +475,15 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get community topics`() = test {
+    fun `admin get community topics`() =
+        test {
         val outer = attachPanelSession()
-        val communityId = attachSession {
-            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
-            c.id
-        }.custom
+        val communityId =
+            attachSession {
+                val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+                createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+                c.id
+            }.custom
         loginPanelSession(outer) {
             val topics = getAllTopics(PaginationQuery()).getOrThrow().data
             assertEquals(1, topics.size)
@@ -433,25 +493,27 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get room topics`() = test {
+    fun `admin get room topics`() =
+        test {
         val outer = attachPanelSession()
         val receivedFrame = mutableListOf<RoomFrame>()
-        val roomId = attachSession(onReceive = { frame, _, _ ->
-            receivedFrame.add(frame)
-        }) {
-            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            joinCommunity(c.id).getOrThrow()
-            val r = createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
-            createTopicInRoomAndWait(receivedFrame) {
-                sendMessage(
-                    ObjectTuple(r.id, ObjectType.ROOM),
-                    r.isPrivate,
-                    "hello",
-                    getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data
-                )
-            }
-            r.id
-        }.custom
+        val roomId =
+            attachSession(onReceive = { frame, _, _ ->
+                receivedFrame.add(frame)
+            }) {
+                val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+                joinCommunity(c.id).getOrThrow()
+                val r = createRoom(NewRoom("r1", "desc", communityId = c.id)).getOrThrow()
+                createTopicInRoomAndWait(receivedFrame) {
+                    sendMessage(
+                        ObjectTuple(r.id, ObjectType.ROOM),
+                        r.isPrivate,
+                        "hello",
+                        getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data,
+                    )
+                }
+                r.id
+            }.custom
         loginPanelSession(outer) {
             val topics = getAllTopics(PaginationQuery()).getOrThrow().data
             assertEquals(1, topics.size)
@@ -461,14 +523,16 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get topic sub topics`() = test {
+    fun `admin get topic sub topics`() =
+        test {
         val outer = attachPanelSession()
-        val topicId = attachSession {
-            val parentTopic = createTopic(ObjectType.USER, it.uid, "parent topic").getOrThrow()
-            createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 1").getOrThrow()
-            createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 2").getOrThrow()
-            parentTopic.id
-        }.custom
+        val topicId =
+            attachSession {
+                val parentTopic = createTopic(ObjectType.USER, it.uid, "parent topic").getOrThrow()
+                createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 1").getOrThrow()
+                createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic 2").getOrThrow()
+                parentTopic.id
+            }.custom
         loginPanelSession(outer) {
             val subTopics = getTopicTopics(topicId, TopicPinSearch.UNSPECIFIED, PaginationQuery()).getOrThrow().data
             assertEquals(2, subTopics.size)
@@ -483,14 +547,15 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get all topic types`() = test {
+    fun `admin get all topic types`() =
+        test {
         val outer = attachPanelSession()
         val receivedFrame = mutableListOf<RoomFrame>()
         attachSession(onReceive = { frame, _, _ ->
             receivedFrame.add(frame)
-        }) {
+        }) { session ->
             // Create user topic
-            createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
+            createTopic(ObjectType.USER, session.uid, "user topic").getOrThrow()
 
             // Create community topic
             val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
@@ -504,12 +569,12 @@ class AdminTest {
                     ObjectTuple(r.id, ObjectType.ROOM),
                     r.isPrivate,
                     "hello",
-                    getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data
+                    getRoomMembersPublicKeys(r.id, PaginationQuery(null, size = 10)).getOrThrow().data,
                 )
             }
 
             // Create topic sub topic
-            val parentTopic = createTopic(ObjectType.USER, it.uid, "parent topic").getOrThrow()
+            val parentTopic = createTopic(ObjectType.USER, session.uid, "parent topic").getOrThrow()
             createTopic(ObjectType.TOPIC, parentTopic.id, "sub topic").getOrThrow()
         }
         loginPanelSession(outer) {
@@ -529,19 +594,21 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get user reactions`() = test {
+    fun `admin get user reactions`() =
+        test {
         val outer = attachPanelSession()
         val emoji1 = "😀"
         val emoji2 = "👍"
-        val userTuple = attachSession {
-            // Create topics and add reactions
-            val topic1 = createTopic(ObjectType.USER, it.uid, "topic 1").getOrThrow()
-            val topic2 = createTopic(ObjectType.USER, it.uid, "topic 2").getOrThrow()
+        val userTuple =
+            attachSession { session ->
+                // Create topics and add reactions
+                val topic1 = createTopic(ObjectType.USER, session.uid, "topic 1").getOrThrow()
+                val topic2 = createTopic(ObjectType.USER, session.uid, "topic 2").getOrThrow()
 
-            // Add reactions to different topics
-            addReaction(topic1.id, emoji1).getOrThrow()
-            addReaction(topic2.id, emoji2).getOrThrow()
-        }
+                // Add reactions to different topics
+                addReaction(topic1.id, emoji1).getOrThrow()
+                addReaction(topic2.id, emoji2).getOrThrow()
+            }
 
         loginPanelSession(outer) {
             val reactions = getUserReactions(userTuple.uid, PaginationQuery()).getOrThrow().data
@@ -558,21 +625,25 @@ class AdminTest {
             }
         }
     }
+}
 
+internal class AdminUserActivityTest {
     @Test
-    fun `admin get user comments`() = test {
+    fun `admin get user comments`() =
+        test {
         val outer = attachPanelSession()
-        val userTuple = attachSession {
-            // Create parent topics
-            val userTopic = createTopic(ObjectType.USER, it.uid, "user topic").getOrThrow()
-            val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
-            val communityTopic = createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
+        val userTuple =
+            attachSession { session ->
+                // Create parent topics
+                val userTopic = createTopic(ObjectType.USER, session.uid, "user topic").getOrThrow()
+                val c = createCommunity(NewCommunity("c1", "c1")).getOrThrow()
+                val communityTopic = createTopic(ObjectType.COMMUNITY, c.id, "community topic").getOrThrow()
 
-            // Create sub topics (comments/replies to other topics)
-            createTopic(ObjectType.TOPIC, userTopic.id, "reply to user topic").getOrThrow()
-            createTopic(ObjectType.TOPIC, communityTopic.id, "reply to community topic").getOrThrow()
-            createTopic(ObjectType.TOPIC, userTopic.id, "another reply to user topic").getOrThrow()
-        }
+                // Create sub topics (comments/replies to other topics)
+                createTopic(ObjectType.TOPIC, userTopic.id, "reply to user topic").getOrThrow()
+                createTopic(ObjectType.TOPIC, communityTopic.id, "reply to community topic").getOrThrow()
+                createTopic(ObjectType.TOPIC, userTopic.id, "another reply to user topic").getOrThrow()
+            }
 
         loginPanelSession(outer) {
             val comments = getUserComments(userTuple.uid, PaginationQuery()).getOrThrow().data
@@ -589,22 +660,24 @@ class AdminTest {
             }
 
             // Verify different root types exist
-            val rootTypes = comments.map { it.rootType }.toSet()
+            val rootTypes = comments.map { comment -> comment.rootType }.toSet()
             kotlin.test.assertTrue(rootTypes.contains(ObjectType.USER))
             kotlin.test.assertTrue(rootTypes.contains(ObjectType.COMMUNITY))
         }
     }
 
     @Test
-    fun `admin user overview counts`() = test {
+    fun `admin user overview counts`() =
+        test {
         val outer = attachPanelSession()
-        val userTuple = attachSession {
-            val t1 = createTopic(ObjectType.USER, it.uid, "topic for counts").getOrThrow()
-            addReaction(t1.id, "😀").getOrThrow()
-            addReaction(t1.id, "👍").getOrThrow()
-            createTopic(ObjectType.TOPIC, t1.id, "reply 1").getOrThrow()
-            createTopic(ObjectType.TOPIC, t1.id, "reply 2").getOrThrow()
-        }
+        val userTuple =
+            attachSession { session ->
+                val t1 = createTopic(ObjectType.USER, session.uid, "topic for counts").getOrThrow()
+                addReaction(t1.id, "😀").getOrThrow()
+                addReaction(t1.id, "👍").getOrThrow()
+                createTopic(ObjectType.TOPIC, t1.id, "reply 1").getOrThrow()
+                createTopic(ObjectType.TOPIC, t1.id, "reply 2").getOrThrow()
+            }
         loginPanelSession(outer) {
             val overview = getUserOverview(userTuple.uid).getOrThrow()
             assertEquals(2, overview.reactionRecordCount)
@@ -613,22 +686,25 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get file refs for topic with media`() = test {
+    fun `admin get file refs for topic with media`() =
+        test {
         val outer = attachPanelSession()
-        val result = attachSession {
-            // Upload a file to user
-            val fileInfo =
-                upload(it.uid ob ObjectType.USER, getUploadDataFromText("test file")).getOrThrow().data.first()
+        val result =
+            attachSession { session ->
+                // Upload a file to user
+                val fileInfo =
+                    upload(session.uid ob ObjectType.USER, getUploadDataFromText("test file")).getOrThrow().data.first()
 
-            // Create a topic that references the file
-            val topic = createTopic(
-                ObjectType.USER,
-                it.uid,
-                "Topic with media: ![image](${fileInfo.name})"
-            ).getOrThrow()
+                // Create a topic that references the file
+                val topic =
+                    createTopic(
+                        ObjectType.USER,
+                        session.uid,
+                        "Topic with media: ![image](${fileInfo.name})",
+                    ).getOrThrow()
 
-            fileInfo.id to topic.id
-        }.custom
+                fileInfo.id to topic.id
+            }.custom
 
         val (fileId, topicId) = result
 
@@ -645,14 +721,19 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get file refs for file with no references`() = test {
+    fun `admin get file refs for file with no references`() =
+        test {
         val outer = attachPanelSession()
-        val fileId = attachSession {
-            // Upload a file without any references
-            val fileInfo =
-                upload(it.uid ob ObjectType.USER, getUploadDataFromText("unused file")).getOrThrow().data.first()
-            fileInfo.id
-        }.custom
+        val fileId =
+            attachSession { session ->
+                // Upload a file without any references
+                val fileInfo =
+                    upload(
+                        session.uid ob ObjectType.USER,
+                        getUploadDataFromText("unused file"),
+                    ).getOrThrow().data.first()
+                fileInfo.id
+            }.custom
 
         loginPanelSession(outer) {
             val refs = getFileRefs(fileId, PaginationQuery()).getOrThrow().data
@@ -661,30 +742,35 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get file refs for file with multiple references`() = test {
+    fun `admin gets multiple refs for one file`() =
+        test {
         val outer = attachPanelSession()
-        val result = attachSession {
-            // Upload a file
-            val fileInfo = upload(
-                it.uid ob ObjectType.USER,
-                getUploadDataFromText("shared file")
-            ).getOrThrow().data.first()
+        val result =
+            attachSession { session ->
+                // Upload a file
+                val fileInfo =
+                    upload(
+                        session.uid ob ObjectType.USER,
+                        getUploadDataFromText("shared file"),
+                    ).getOrThrow().data.first()
 
-            // Create multiple topics that reference the same file
-            val topic1 = createTopic(
-                ObjectType.USER,
-                it.uid,
-                "Topic 1 with media: ![image](${fileInfo.name})"
-            ).getOrThrow()
+                // Create multiple topics that reference the same file
+                val topic1 =
+                    createTopic(
+                        ObjectType.USER,
+                        session.uid,
+                        "Topic 1 with media: ![image](${fileInfo.name})",
+                    ).getOrThrow()
 
-            val topic2 = createTopic(
-                ObjectType.USER,
-                it.uid,
-                "Topic 2 also uses: ![image](${fileInfo.name})"
-            ).getOrThrow()
+                val topic2 =
+                    createTopic(
+                        ObjectType.USER,
+                        session.uid,
+                        "Topic 2 also uses: ![image](${fileInfo.name})",
+                    ).getOrThrow()
 
-            Triple(fileInfo.id, topic1.id, topic2.id)
-        }.custom
+                Triple(fileInfo.id, topic1.id, topic2.id)
+            }.custom
 
         val (fileId, topic1Id, topic2Id) = result
 
@@ -698,7 +784,7 @@ class AdminTest {
             }
 
             // Verify both topics reference the file
-            val objectIds = refs.map { it.objectId }.toSet()
+            val objectIds = refs.map { ref -> ref.objectId }.toSet()
             kotlin.test.assertTrue(objectIds.contains(topic1Id))
             kotlin.test.assertTrue(objectIds.contains(topic2Id))
 
@@ -711,13 +797,15 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get user favorites`() = test {
+    fun `admin get user favorites`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            val topic = createTopic(ObjectType.USER, it.uid, "favorite topic").getOrThrow()
-            addFavorite(com.storyteller_f.a.api.NewFavorite(ObjectType.TOPIC, topic.id)).getOrThrow()
-            it.uid
-        }.custom
+        val uid =
+            attachSession { session ->
+                val topic = createTopic(ObjectType.USER, session.uid, "favorite topic").getOrThrow()
+                addFavorite(com.storyteller_f.a.api.NewFavorite(ObjectType.TOPIC, topic.id)).getOrThrow()
+                session.uid
+            }.custom
 
         loginPanelSession(outer) {
             val favorites = getUserFavorites(uid, PaginationQuery()).getOrThrow().data
@@ -728,13 +816,15 @@ class AdminTest {
     }
 
     @Test
-    fun `admin get user subscriptions`() = test {
+    fun `admin get user subscriptions`() =
+        test {
         val outer = attachPanelSession()
-        val uid = attachSession {
-            val topic = createTopic(ObjectType.USER, it.uid, "subscription topic").getOrThrow()
-            addSubscription(com.storyteller_f.a.api.NewSubscription(topic.id, ObjectType.TOPIC)).getOrThrow()
-            it.uid
-        }.custom
+        val uid =
+            attachSession { session ->
+                val topic = createTopic(ObjectType.USER, session.uid, "subscription topic").getOrThrow()
+                addSubscription(com.storyteller_f.a.api.NewSubscription(topic.id, ObjectType.TOPIC)).getOrThrow()
+                session.uid
+            }.custom
 
         loginPanelSession(outer) {
             val subscriptions = getUserSubscriptions(uid, PaginationQuery()).getOrThrow().data

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.utils
 
 import androidx.datastore.core.DataStore
@@ -11,16 +15,18 @@ import dev.jordond.connectivity.ConnectivityProvider
 import kotlinx.coroutines.flow.flowOf
 
 actual val appPlatform: AppPlatform
-    get() = AppPlatform(
-        hasNativeBack = false,
-        debug = false,
-    )
+    get() =
+        AppPlatform(
+            hasNativeBack = false,
+            debug = false,
+        )
 
 actual fun initEnvironment(context: Any) = Unit
 
-actual fun createConnectivity(): Connectivity {
-    return Connectivity(ConnectivityProvider(flowOf(Connectivity.Status.Connected(metered = false))))
-}
+actual fun createConnectivity(): Connectivity =
+    Connectivity(
+    ConnectivityProvider(flowOf(Connectivity.Status.Connected(metered = false))),
+)
 
 actual fun getClientFile(path: String): ClientFile? = null
 
@@ -28,7 +34,8 @@ private const val APP_PREFERENCES_STORE_NAME = "main.preferences_pb"
 
 private val appPreferencesDataStore by lazy {
     DataStoreFactory.create(
-        storage = WebLocalStorage(
+        storage =
+        WebLocalStorage(
             serializer = PreferencesSerializer,
             name = APP_PREFERENCES_STORE_NAME,
         ),

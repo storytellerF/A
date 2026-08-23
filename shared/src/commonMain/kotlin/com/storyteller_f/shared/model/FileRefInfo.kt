@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
@@ -11,5 +15,5 @@ data class FileRefInfo(
     val objectType: ObjectType,
     val author: PrimaryKey,
     val mediaName: String,
-    val fileId: PrimaryKey
+    val fileId: PrimaryKey,
 ) : PrimaryKeyIdentifiable

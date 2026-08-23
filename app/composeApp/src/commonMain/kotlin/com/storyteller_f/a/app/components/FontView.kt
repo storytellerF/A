@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.components
 
 import androidx.compose.foundation.clickable
@@ -42,13 +46,14 @@ fun FontView(info: FileInfo) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .clickable {
                 showSheet = true
             }
-            .padding(horizontal = 8.dp, vertical = 12.dp)
+            .padding(horizontal = 8.dp, vertical = 12.dp),
     ) {
         FontIcon(MaterialSymbolsOutlined.FontDownload, "font")
         val scrollState = rememberScrollState()
@@ -73,10 +78,11 @@ fun DownloadStatusViewInternal(data: DownloadInfo?) {
     when {
         data == null ||
             downloadStatus == DownloadStatus.NOT_DOWNLOADED ||
-            downloadStatus == DownloadStatus.DOWNLOADING -> CircularProgressIndicator(
-            modifier = Modifier.size(20.dp),
-            strokeWidth = 2.dp
-        )
+            downloadStatus == DownloadStatus.DOWNLOADING ->
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                strokeWidth = 2.dp,
+            )
 
         downloadStatus == DownloadStatus.DOWNLOADED -> FontIcon(MaterialSymbolsOutlined.DownloadDone, "download done")
 

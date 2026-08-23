@@ -1,8 +1,12 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.obj
 
 import com.storyteller_f.shared.model.LlmConfig
-import com.storyteller_f.shared.model.TaskConfig
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.serialization.Serializable
@@ -17,9 +21,7 @@ data class PresetCommunity(
     val tag: List<String>? = null,
     val font: String? = null,
 ) {
-    fun getSafeAdmin(): String {
-        return admin ?: "System"
-    }
+    fun getSafeAdmin(): String = admin ?: "System"
 }
 
 @Serializable
@@ -54,14 +56,11 @@ data class PresetRoom(
     val users: List<String>,
     val icon: String? = null,
     val id: String,
-    val admin: String
+    val admin: String,
 )
 
 @Serializable
-data class PresetFile(
-    val owner: String,
-    val paths: List<String>,
-)
+data class PresetFile(val owner: String, val paths: List<String>)
 
 @Serializable
 data class PresetTitle(
@@ -87,8 +86,8 @@ data class PresetValue(
     val fileData: List<PresetFile>? = null,
     val titleData: List<PresetTitle>? = null,
     val panelAccountData: List<PresetPanelAccount>? = null,
-    /** Worker task configurations initialized by a `taskConfig` preset. */
-    val taskConfigData: List<TaskConfig>? = null,
+    /** Worker task configurations initialized by a `workerTask` preset. */
+    val workerTaskData: List<WorkerTask>? = null,
     /** LLM configuration initialized by a `llmConfig` preset. */
     val llmConfigData: LlmConfig? = null,
 )

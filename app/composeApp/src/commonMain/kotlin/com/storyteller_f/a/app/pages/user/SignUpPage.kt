@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.user
 
 import androidx.compose.foundation.layout.Column
@@ -33,16 +37,17 @@ fun SignUpPage(signInAndSignUpNav: SignInAndSignUpNav) {
             ) {
                 Text(stringResource(Res.string.go_to_sign_in))
             }
-        }
+        },
     ) {
         Column {
             Button(
                 onClick = { signInAndSignUpNav.gotoPrivateKey(true) },
-                modifier = Modifier.fillMaxWidth().appiumSemantics(
+                modifier =
+                Modifier.fillMaxWidth().appiumSemantics(
                     testTag = "private_key",
                     text = stringResource(Res.string.private_key),
                 ),
-                shape = ButtonDefaults.shape
+                shape = ButtonDefaults.shape,
             ) {
                 Icon(Icons.Default.PersonAdd, contentDescription = null)
                 Text(stringResource(Res.string.private_key), modifier = Modifier.padding(start = 8.dp))

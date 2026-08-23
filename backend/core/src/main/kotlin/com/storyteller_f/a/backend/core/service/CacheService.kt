@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -15,16 +19,15 @@ interface CacheServiceFactory {
     fun <K, T : Any> build(env: MergedEnv, vClass: KClass<T>): CacheService<K, T>
 }
 
-class WrapCacheService<K, V : Any>(
-    val cacheService: CacheService<String, String>,
-    val vClass: KClass<V>
-) : CacheService<K, V> {
+class WrapCacheService<K, V : Any>(val cacheService: CacheService<String, String>, val vClass: KClass<V>) :
+    CacheService<K, V> {
     @OptIn(InternalSerializationApi::class)
     override suspend fun get(key: K, block: suspend () -> V): V {
-        val k = key.toString()
-        val v = cacheService.get(k) {
-            Json.encodeToString(vClass.serializer(), block())
-        }
+        val k = key?.toString().orEmpty()
+        val v =
+            cacheService.get(k) {
+                Json.encodeToString(vClass.serializer(), block())
+            }
         return Json.decodeFromString(vClass.serializer(), v)
     }
 }

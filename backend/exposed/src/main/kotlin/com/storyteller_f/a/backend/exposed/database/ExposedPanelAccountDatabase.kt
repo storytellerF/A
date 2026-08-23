@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.PanelAccountDatabase
@@ -18,9 +22,9 @@ import org.jetbrains.exposed.v1.r2dbc.insert
 import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
 
-class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
-    PanelAccountDatabase {
-    override suspend fun getPanelAccount(id: PrimaryKey) = databaseSession.dbSearch {
+class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) : PanelAccountDatabase {
+    override suspend fun getPanelAccount(id: PrimaryKey) =
+        databaseSession.dbSearch {
         search {
             PanelAccounts.selectAll().where {
                 PanelAccounts.id eq id
@@ -29,27 +33,29 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
         first(PanelAccount::wrapRow)
     }
 
-    override suspend fun addPanelAccount(panelAccount: PanelAccount) = databaseSession.dbQuery {
-        check(PanelAccounts.insert {
-            it[id] = panelAccount.id
-            it[name] = panelAccount.name
-            it[createdTime] = now()
-            it[passType] = panelAccount.passType
-            it[algoType] = panelAccount.algoType
-            it[publicKey] = panelAccount.publicKey
-            it[publicKeyMd5] = md5(panelAccount.publicKey)
-            it[address] = panelAccount.address
-        }.insertedCount > 0) {
+    override suspend fun addPanelAccount(panelAccount: PanelAccount) =
+        databaseSession.dbQuery {
+        check(
+            PanelAccounts.insert {
+                it[id] = panelAccount.id
+                it[name] = panelAccount.name
+                it[createdTime] = now()
+                it[passType] = panelAccount.passType
+                it[algoType] = panelAccount.algoType
+                it[publicKey] = panelAccount.publicKey
+                it[publicKeyMd5] = md5(panelAccount.publicKey)
+                it[address] = panelAccount.address
+            }.insertedCount > 0,
+        ) {
             "Failed to add panel account"
         }
     }
 
-    private suspend fun getUserAuthDataBy(
-        predicate: () -> Op<Boolean>,
-    ) = databaseSession.dbSearch {
+    private suspend fun getUserAuthDataBy(predicate: () -> Op<Boolean>) =
+        databaseSession.dbSearch {
         search {
             PanelAccounts.select(
-                listOf(PanelAccounts.publicKey, PanelAccounts.id, PanelAccounts.algoType)
+                listOf(PanelAccounts.publicKey, PanelAccounts.id, PanelAccounts.algoType),
             ).where(predicate)
         }
         first {
@@ -57,17 +63,18 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun getUserAuthDataById(id: PrimaryKey) = getUserAuthDataBy {
+    override suspend fun getUserAuthDataById(id: PrimaryKey) =
+        getUserAuthDataBy {
         PanelAccounts.id eq id
     }
 
-    override suspend fun getUserAuthDataByAddress(address: String) = getUserAuthDataBy {
+    override suspend fun getUserAuthDataByAddress(address: String) =
+        getUserAuthDataBy {
         PanelAccounts.address eq address
     }
 
-    override suspend fun getRawUserAndPublicKeyByAddress(
-        ad: String,
-    ) = databaseSession.dbSearch {
+    override suspend fun getRawUserAndPublicKeyByAddress(ad: String) =
+        databaseSession.dbSearch {
         search {
             PanelAccounts
                 .selectAll()
@@ -81,7 +88,8 @@ class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) :
         }
     }
 
-    override suspend fun isUserNotExistsByPublicKey(pk: String) = databaseSession.dbSearch {
+    override suspend fun isUserNotExistsByPublicKey(pk: String) =
+        databaseSession.dbSearch {
         search {
             val publicKeyMd5 = md5(pk)
             PanelAccounts.selectAll().where {

@@ -1,9 +1,13 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:Suppress(
     "UnusedReceiverParameter",
     "Unused",
     "ObjectPropertyName",
     "SpellCheckingInspection",
-    "ConstPropertyName"
+    "ConstPropertyName",
 )
 
 package com.storyteller_f.a.app.ui
@@ -26,7 +30,8 @@ object MaterialSymbolsOutlined {
     fun rememberIconFont(fill: Boolean = false, grade: Int = 0, fontFeatureSettings: String? = null): VariableIconFont =
         rememberVariableIconFont(
             fontResource = Res.font.material_symbols_outlined,
-            weights = arrayOf(
+            weights =
+            arrayOf(
                 FontWeight.Thin,
                 FontWeight.ExtraLight,
                 FontWeight.Light,
@@ -37,11 +42,12 @@ object MaterialSymbolsOutlined {
                 FontWeight.ExtraBold,
                 FontWeight.Black,
             ),
-            fontVariationSettings = FontVariation.Settings(
+            fontVariationSettings =
+            FontVariation.Settings(
                 FontVariation.Setting("FILL", if (fill) 1f else 0f),
-                FontVariation.Setting("GRAD", grade.toFloat())
+                FontVariation.Setting("GRAD", grade.toFloat()),
             ),
-            fontFeatureSettings = fontFeatureSettings
+            fontFeatureSettings = fontFeatureSettings,
         )
 
     const val Space: Char = '\u0020'

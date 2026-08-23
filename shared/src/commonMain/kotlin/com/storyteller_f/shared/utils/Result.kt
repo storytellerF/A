@@ -1,8 +1,30 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.utils
 
 import kotlin.coroutines.cancellation.CancellationException
 
 val UNIT_RESULT = Result.success(Unit)
+
+inline fun <T> cancellableRunCatching(block: () -> T): Result<T> =
+    try {
+    Result.success(block())
+} catch (cancellation: CancellationException) {
+    throw cancellation
+} catch (expected: Exception) {
+    Result.failure(expected)
+}
+
+inline fun <T, R> T.cancellableRunCatching(block: T.() -> R): Result<R> =
+    try {
+    Result.success(block())
+} catch (cancellation: CancellationException) {
+    throw cancellation
+} catch (expected: Exception) {
+    Result.failure(expected)
+}
 
 suspend fun <T, R> Result<T>.mapResult(block: suspend (T) -> Result<R>): Result<R> {
     rethrowCancellation()
@@ -15,17 +37,16 @@ suspend fun <T, R> Result<T>.mapResult(block: suspend (T) -> Result<R>): Result<
             Result.failure(e)
         }
     } else {
-        Result.failure(exceptionOrNull()!!)
+        Result.failure(checkNotNull(exceptionOrNull()) { "Failed Result must contain an exception" })
     }
 }
 
-suspend fun <T, R> Result<T?>.mapResultIfNotNull(block: suspend (T) -> Result<R?>): Result<R?> {
-    return mapResult { t ->
-        if (t == null) {
-            Result.success(null)
-        } else {
-            block(t)
-        }
+suspend fun <T, R> Result<T?>.mapResultIfNotNull(block: suspend (T) -> Result<R?>): Result<R?> =
+    mapResult { t ->
+    if (t == null) {
+        Result.success(null)
+    } else {
+        block(t)
     }
 }
 
@@ -61,7 +82,7 @@ suspend fun <T> Result<T?>.filterNotNull(block: suspend () -> Throwable): Result
             Result.success(t)
         }
     } else {
-        Result.failure(exceptionOrNull()!!)
+        Result.failure(checkNotNull(exceptionOrNull()) { "Failed Result must contain an exception" })
     }
 }
 
@@ -70,48 +91,48 @@ suspend fun <T> Result<T>.recoverResult(block: suspend (Throwable) -> Result<T>)
     return if (isSuccess) {
         this
     } else {
-        block(exceptionOrNull()!!).rethrowCancellation()
+        block(checkNotNull(exceptionOrNull()) { "Failed Result must contain an exception" }).rethrowCancellation()
     }
 }
 
-suspend fun <T> Result<T>.recoverIfDup(isDup: (Throwable) -> Boolean, block: suspend () -> Result<T>): Result<T> {
-    return recoverResult { e ->
+suspend fun <T> Result<T>.recoverIfDup(isDup: (Throwable) -> Boolean, block: suspend () -> Result<T>): Result<T> =
+    recoverResult { e ->
         if (isDup(e)) {
             block()
         } else {
             Result.failure(e)
         }
     }
-}
 
 suspend fun <T> Result<T>.transformThrowable(block: suspend (Throwable) -> Throwable): Result<T> {
     rethrowCancellation()
     return if (isSuccess) {
         this
     } else {
-        Result.failure(block(exceptionOrNull()!!).rethrowCancellation())
+        Result.failure(
+            block(checkNotNull(exceptionOrNull()) { "Failed Result must contain an exception" }).rethrowCancellation(),
+        )
     }
 }
 
-suspend fun Result<Boolean>.errorIfFalse(error: () -> Exception): Result<Unit> {
-    return mapResult {
-        if (it) {
-            UNIT_RESULT
-        } else {
-            Result.failure(error())
-        }
+suspend fun Result<Boolean>.errorIfFalse(error: () -> Exception): Result<Unit> =
+    mapResult {
+    if (it) {
+        UNIT_RESULT
+    } else {
+        Result.failure(error())
     }
 }
 
 suspend fun <T> Result<T?>.ifNotNull(block: suspend (T) -> Unit) =
     rethrowCancellation().onSuccess { value ->
-        if (value != null) {
-            block(value)
-        }
+    if (value != null) {
+        block(value)
     }
+}
 
 /**
- * 获取列表中第一个
+ * 获取列表中第一个.
  */
 fun <T> Result<List<T>?>.firstOrNull(): Result<T?> {
     rethrowCancellation()

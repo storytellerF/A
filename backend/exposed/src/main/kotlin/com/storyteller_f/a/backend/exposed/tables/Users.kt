@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.ADDRESS_LENGTH
@@ -32,33 +36,28 @@ object Users : BaseTable() {
     val status = enumerationByName<UserStatus>("status", 20).default(UserStatus.NORMAL)
 }
 
-fun User.Companion.wrapRow(row: ResultRow): User {
-    return with(Users) {
-        User(
-            row[Aids.value],
-            row[encryptionPublicKey],
-            row[publicKey],
-            row[address],
-            row[icon],
-            row[nickname],
-            row[id],
-            row[createdTime],
-            row[acgAmount],
-            row[passType],
-            row[algoType],
-            row[notificationId],
-            row[status],
-        )
-    }
+fun User.Companion.wrapRow(row: ResultRow): User =
+    with(Users) {
+    User(
+        row[Aids.value],
+        row[encryptionPublicKey],
+        row[publicKey],
+        row[address],
+        row[icon],
+        row[nickname],
+        row[id],
+        row[createdTime],
+        row[acgAmount],
+        row[passType],
+        row[algoType],
+        row[notificationId],
+        row[status],
+    )
 }
 
-fun User.Companion.find(function: () -> Op<Boolean>): Query {
-    return Users.selectAll().where(function)
-}
+fun User.Companion.find(function: () -> Op<Boolean>): Query = Users.selectAll().where(function)
 
-fun mapUserInfo(it: ResultRow): RawUser {
-    return RawUser(User.wrapRow(it))
-}
+fun mapUserInfo(it: ResultRow): RawUser = RawUser(User.wrapRow(it))
 
 object ChildAccounts : Table() {
     val uid = customPrimaryKey("uid")
@@ -75,15 +74,14 @@ object ChildAccounts : Table() {
     }
 }
 
-fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount {
-    return with(ChildAccounts) {
-        ChildAccount(
-            row[uid],
-            row[encryptedPrivateKey],
-            row[encryptedAesKey],
-            row[hostId],
-            row[remark],
-            row[encryptedEncryptionPrivateKey]
-        )
-    }
+fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount =
+    with(ChildAccounts) {
+    ChildAccount(
+        row[uid],
+        row[encryptedPrivateKey],
+        row[encryptedAesKey],
+        row[hostId],
+        row[remark],
+        row[encryptedEncryptionPrivateKey],
+    )
 }

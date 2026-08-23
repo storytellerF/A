@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:Suppress("unused", "LongMethod")
 
 package com.storyteller_f.a.app
@@ -91,7 +95,7 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
             Modifier
                 .fillMaxWidth()
                 .padding(bottom = padding.calculateBottomPadding()),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val localVideoTrack = localStream?.videoTracks?.firstOrNull()
 
@@ -100,7 +104,8 @@ fun WebRTCPage(rtcContainer: RTCContainer, roomId: PrimaryKey) {
             }?.let {
                 Video(videoTrack = it, modifier = Modifier.weight(1f).fillMaxWidth())
             } ?: Box(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .weight(1f)
                     .fillMaxWidth(),
                 contentAlignment = Alignment.Center,
@@ -159,7 +164,8 @@ private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
     val remotePeers by rtcContainer.remotePeers.collectAsState()
     if (remotePeers.isEmpty()) {
         Box(
-            modifier = Modifier
+            modifier =
+            Modifier
                 .weight(1f)
                 .fillMaxWidth(),
             contentAlignment = Alignment.Center,
@@ -170,21 +176,24 @@ private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
     }
 
     Column(
-        modifier = Modifier
+        modifier =
+        Modifier
             .weight(1f)
             .fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         remotePeers.take(4).chunked(2).forEach { rowPeers ->
             Row(
-                modifier = Modifier
+                modifier =
+                Modifier
                     .weight(1f)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 rowPeers.forEach { peer ->
                     Box(
-                        modifier = Modifier
+                        modifier =
+                        Modifier
                             .weight(1f)
                             .fillMaxHeight(),
                         contentAlignment = Alignment.Center,
@@ -205,7 +214,8 @@ private fun ColumnScope.RemoteStreamView(rtcContainer: RTCContainer) {
                 }
                 repeat(2 - rowPeers.size) {
                     Spacer(
-                        modifier = Modifier
+                        modifier =
+                        Modifier
                             .weight(1f)
                             .fillMaxHeight(),
                     )
@@ -234,11 +244,12 @@ suspend fun makeCallByOffer(
             .onEach { candidate ->
                 Napier.d(tag = "web_rtc") { "Caller onIceCandidate: $candidate" }
                 instance.sessionManager.webSocketClient.useWebSocket {
-                    val customCandidate = CustomCandidate(
-                        candidate.sdpMid,
-                        candidate.sdpMLineIndex,
-                        candidate.candidate,
-                    )
+                    val customCandidate =
+                        CustomCandidate(
+                            candidate.sdpMid,
+                            candidate.sdpMLineIndex,
+                            candidate.candidate,
+                        )
                     val sendCandidate = RoomFrame.SendCandidate(customCandidate, roomId, targetUid)
                     sendFrame(sendCandidate)
                 }
@@ -248,7 +259,7 @@ suspend fun makeCallByOffer(
         // 远端 Track
         pc.onTrack
             .onEach { event ->
-                Napier.d(tag = "web_rtc") { "Caller onTrack: ${event.track?.kind}" }
+                Napier.d(tag = "web_rtc") { "Caller onTrack: ${event.track?.kind ?: "<none>"}" }
                 event.track?.let {
                     when (it.kind) {
                         MediaStreamTrackKind.Audio -> onRemoteAudioTrack(it as AudioTrack)
@@ -259,12 +270,13 @@ suspend fun makeCallByOffer(
             .launchIn(this)
 
         // 创建 Offer
-        val offer = pc.createOffer(
-            OfferAnswerOptions(
-                offerToReceiveVideo = true,
-                offerToReceiveAudio = true
+        val offer =
+            pc.createOffer(
+                OfferAnswerOptions(
+                    offerToReceiveVideo = true,
+                    offerToReceiveAudio = true,
+                ),
             )
-        )
         pc.setLocalDescription(offer)
 
         // 通过信令发送给 Callee
@@ -315,11 +327,12 @@ suspend fun makeCallByAnswer(
             .onEach { candidate ->
                 Napier.d(tag = "web_rtc") { "Callee onIceCandidate: $candidate" }
                 instance.sessionManager.webSocketClient.useWebSocket {
-                    val customCandidate = CustomCandidate(
-                        candidate.sdpMid,
-                        candidate.sdpMLineIndex,
-                        candidate.candidate
-                    )
+                    val customCandidate =
+                        CustomCandidate(
+                            candidate.sdpMid,
+                            candidate.sdpMLineIndex,
+                            candidate.candidate,
+                        )
                     val f = RoomFrame.SendCandidate(customCandidate, roomId, targetUid)
                     sendFrame(f)
                 }
@@ -329,7 +342,7 @@ suspend fun makeCallByAnswer(
         // 远端 Track
         pc.onTrack
             .onEach { event ->
-                Napier.d(tag = "web_rtc") { "Callee onTrack: ${event.track?.kind}" }
+                Napier.d(tag = "web_rtc") { "Callee onTrack: ${event.track?.kind ?: "<none>"}" }
                 event.track?.let {
                     when (it.kind) {
                         MediaStreamTrackKind.Audio -> onRemoteAudioTrack(it as AudioTrack)
@@ -375,19 +388,20 @@ private suspend fun PeerConnection.addCustomIceCandidate(candidate: CustomCandid
         IceCandidate(
             candidate.sdpMid,
             candidate.sdpMLineIndex,
-            candidate.candidate
-        )
+            candidate.candidate,
+        ),
     )
 }
 
 private fun createRTCPeerConnection(): PeerConnection {
-    val urls = listOf(
-        "stun.l.google.com:19302",
-        "stun1.l.google.com:19302",
-        "stun2.l.google.com:19302",
-        "stun3.l.google.com:19302",
-        "stun4.l.google.com:19302",
-    )
+    val urls =
+        listOf(
+            "stun.l.google.com:19302",
+            "stun1.l.google.com:19302",
+            "stun2.l.google.com:19302",
+            "stun3.l.google.com:19302",
+            "stun4.l.google.com:19302",
+        )
     return PeerConnection(RtcConfiguration(iceServers = listOf(IceServer(urls))))
 }
 
@@ -396,13 +410,14 @@ private fun createRTCPeerConnection(): PeerConnection {
 fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     val context = LocalContext.current
 
-    val permissions = rememberMultiplePermissionsState(
-        listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
-    ) {
-        if (it.all { (_, granted) -> granted }) {
-            onClick()
+    val permissions =
+        rememberMultiplePermissionsState(
+            listOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
+        ) {
+            if (it.all { (_, granted) -> granted }) {
+                onClick()
+            }
         }
-    }
 
     Button(onClick = {
         if (permissions.allPermissionsGranted) {
@@ -424,15 +439,16 @@ fun StartButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
 }
 
 private fun Context.navigateToAppSettings() {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.fromParts("package", packageName, null)
-        addCategory(Intent.CATEGORY_DEFAULT)
-        addFlags(
-            Intent.FLAG_ACTIVITY_NEW_TASK or
-                Intent.FLAG_ACTIVITY_NO_HISTORY or
-                Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
-        )
-    }
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", packageName, null)
+            addCategory(Intent.CATEGORY_DEFAULT)
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_NO_HISTORY or
+                    Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS,
+            )
+        }
     startActivity(intent)
 }
 
@@ -440,27 +456,28 @@ private fun Context.navigateToAppSettings() {
 fun Video(videoTrack: VideoTrack, modifier: Modifier, audioTrack: AudioTrack? = null) {
     var renderer by remember { mutableStateOf<SurfaceViewRenderer?>(null) }
 
-    val lifecycleEventObserver = remember(renderer, videoTrack) {
-        LifecycleEventObserver { _, event ->
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    renderer?.also {
-                        it.init(WebRtc.rootEglBase.eglBaseContext, null)
-                        videoTrack.addSinkCatching(it)
+    val lifecycleEventObserver =
+        remember(renderer, videoTrack) {
+            LifecycleEventObserver { _, event ->
+                when (event) {
+                    Lifecycle.Event.ON_RESUME -> {
+                        renderer?.also {
+                            it.init(WebRtc.rootEglBase.eglBaseContext, null)
+                            videoTrack.addSinkCatching(it)
+                        }
                     }
-                }
 
-                Lifecycle.Event.ON_PAUSE -> {
-                    renderer?.also { videoTrack.removeSinkCatching(it) }
-                    renderer?.release()
-                }
+                    Lifecycle.Event.ON_PAUSE -> {
+                        renderer?.also { videoTrack.removeSinkCatching(it) }
+                        renderer?.release()
+                    }
 
-                else -> {
-                    // ignore other events
+                    else -> {
+                        // ignore other events
+                    }
                 }
             }
         }
-    }
 
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle, lifecycleEventObserver) {
@@ -479,7 +496,7 @@ fun Video(videoTrack: VideoTrack, modifier: Modifier, audioTrack: AudioTrack? = 
             SurfaceViewRenderer(context).apply {
                 setScalingType(
                     RendererCommon.ScalingType.SCALE_ASPECT_BALANCED,
-                    RendererCommon.ScalingType.SCALE_ASPECT_FIT
+                    RendererCommon.ScalingType.SCALE_ASPECT_FIT,
                 )
                 renderer = this
             }
@@ -519,22 +536,14 @@ private fun SwitchCameraButton(modifier: Modifier = Modifier, onClick: () -> Uni
 }
 
 @Composable
-private fun AudioToggleButton(
-    isMuted: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
+private fun AudioToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(onClick = onClick, modifier = modifier) {
         Text(if (isMuted) "Unmute" else "Mute")
     }
 }
 
 @Composable
-private fun VideoToggleButton(
-    isMuted: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
+private fun VideoToggleButton(isMuted: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Button(onClick = onClick, modifier = modifier) {
         Text(if (isMuted) "Show Video" else "Hide Video")
     }

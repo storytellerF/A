@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -35,9 +39,10 @@ actual fun AudioViewFullScreen(remoteMediaItem: RemoteMediaItem) = Unit
 
 @Composable
 fun AudioPlayerInternal(url: String, block: @Composable (AudioPlayerComponent) -> Unit) {
-    val component = remember {
-        AudioPlayerComponent(url)
-    }
+    val component =
+        remember {
+            AudioPlayerComponent(url)
+        }
     block(component)
 }
 
@@ -46,10 +51,11 @@ fun AudioPlayer(component: AudioPlayerComponent) {
     val currentPlaying by component.isPlaying
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier =
+        Modifier
             .height(100.dp)
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .background(MaterialTheme.colorScheme.surfaceContainer),
     ) {
         IconButton(
             {
@@ -63,7 +69,6 @@ fun AudioPlayer(component: AudioPlayerComponent) {
         ) {
             when {
                 currentPlaying -> Icon(Icons.Default.PauseCircle, "pause", modifier = Modifier.size(40.dp))
-
                 else -> Icon(Icons.Default.PlayCircle, "play", modifier = Modifier.size(40.dp))
             }
         }
@@ -85,7 +90,8 @@ class AudioPlayerComponent(url: String) {
     }
 }
 
-private fun createPlayer(url: String): jlp? = try {
+private fun createPlayer(url: String): jlp? =
+    try {
     jlp.createInstance(arrayOf("-url", url)).apply {
         setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory::class.java))
     }

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package device_based
 
 import androidx.compose.material3.Button
@@ -17,14 +21,15 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
- * 由于Compose 测试存在问题，全部忽略，禁止执行
+ * 由于Compose 测试存在问题，全部忽略，禁止执行.
  */
 @Ignore
 class AppTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
     @Ignore
-    fun myTest() = runComposeUiTest {
+    fun myTest() =
+        runComposeUiTest {
         // Declares a mock UI to demonstrate API calls
         //
         // Replace with your own declarations to test the code of your project
@@ -33,7 +38,7 @@ class AppTest {
             Text(text = text, modifier = Modifier.testTag("text"))
             Button(
                 onClick = { text = "Compose" },
-                modifier = Modifier.testTag("button")
+                modifier = Modifier.testTag("button"),
             ) {
                 Text("Click me")
             }

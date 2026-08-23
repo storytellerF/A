@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.layout.Arrangement
@@ -10,18 +14,15 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.shared.model.AlgoType
 
 @Composable
-fun AlgoTypeSelector(
-    selected: AlgoType,
-    onSelected: (AlgoType) -> Unit
-) {
+fun AlgoTypeSelector(selected: AlgoType, onSelected: (AlgoType) -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        AlgoType.entries.forEach {
-            val isSelected = it == selected
+        AlgoType.entries.forEach { algoType ->
+            val isSelected = algoType == selected
             Button(
-                onClick = { onSelected(it) },
-                colors = if (isSelected) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors()
+                onClick = { onSelected(algoType) },
+                colors = if (isSelected) ButtonDefaults.buttonColors() else ButtonDefaults.filledTonalButtonColors(),
             ) {
-                Text(it.name)
+                Text(algoType.name)
             }
         }
     }

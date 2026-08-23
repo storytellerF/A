@@ -1,8 +1,13 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.core
 
 import com.storyteller_f.shared.finalData
 import io.github.aakira.napier.Napier
 import io.ktor.client.call.HttpClientCall
+import io.ktor.client.plugins.api.ClientPlugin
 import io.ktor.client.plugins.api.Send
 import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.request.HttpRequestBuilder
@@ -29,56 +34,58 @@ class SingleFlightCustomAuthConfig {
     }
 }
 
-val SingleFlightCustomAuthPlugin = createClientPlugin(
-    "SingleFlightCustomAuthPlugin",
-    ::SingleFlightCustomAuthConfig
-) {
-    val addRequestHeaders = pluginConfig.addRequestHeaders
-    val refreshSignature = pluginConfig.refreshSignature
-    val refreshGate = AuthRefreshGate()
+/** Authentication plugin that coalesces concurrent signature refreshes. */
+val SingleFlightCustomAuthPlugin: ClientPlugin<SingleFlightCustomAuthConfig> =
+    createClientPlugin(
+        "SingleFlightCustomAuthPlugin",
+        ::SingleFlightCustomAuthConfig,
+    ) {
+        val addRequestHeaders = pluginConfig.addRequestHeaders
+        val refreshSignature = pluginConfig.refreshSignature
+        val refreshGate = AuthRefreshGate()
 
-    on(Send) { originalRequest ->
-        val origin = proceed(originalRequest)
-        if (origin.response.status != HttpStatusCode.Unauthorized) return@on origin
-        if (origin.request.attributes.contains(CustomAuthRetryAttribute)) return@on origin
+        on(Send) { originalRequest ->
+            val origin = proceed(originalRequest)
+            if (origin.response.status != HttpStatusCode.Unauthorized) return@on origin
+            if (origin.request.attributes.contains(CustomAuthRetryAttribute)) return@on origin
 
-        val challengeData = origin.response.customChallengeData() ?: return@on origin
-        when (val turn = refreshGate.enter()) {
-            is AuthRefreshTurn.Leader -> {
-                var success = false
-                try {
-                    if (!refreshSignature(challengeData)) {
+            val challengeData = origin.response.customChallengeData() ?: return@on origin
+            when (val turn = refreshGate.enter()) {
+                is AuthRefreshTurn.Leader -> {
+                    var success = false
+                    try {
+                        if (!refreshSignature(challengeData)) {
+                            Napier.i(tag = "SingleFlight") {
+                                "Leader failed because refresh signature failed"
+                            }
+                            return@on origin
+                        }
+                        val retriedCall = executeWithCustomAuth(originalRequest, addRequestHeaders)
+                        if (retriedCall.response.status == HttpStatusCode.Unauthorized) {
+                            Napier.i(tag = "SingleFlight") {
+                                "Leader retry failed"
+                            }
+                            return@on retriedCall
+                        }
+                        success = true
+                        retriedCall
+                    } finally {
+                        refreshGate.complete(turn, success)
+                    }
+                }
+
+                is AuthRefreshTurn.Waiter -> {
+                    if (!turn.result.await()) {
                         Napier.i(tag = "SingleFlight") {
-                            "Leader failed because refresh signature failed"
+                            "Waiter failed because of Leader failed"
                         }
                         return@on origin
                     }
-                    val retriedCall = executeWithCustomAuth(originalRequest, addRequestHeaders)
-                    if (retriedCall.response.status == HttpStatusCode.Unauthorized) {
-                        Napier.i(tag = "SingleFlight") {
-                            "Leader retry failed"
-                        }
-                        return@on retriedCall
-                    }
-                    success = true
-                    retriedCall
-                } finally {
-                    refreshGate.complete(turn, success)
+                    executeWithCustomAuth(originalRequest, addRequestHeaders)
                 }
-            }
-
-            is AuthRefreshTurn.Waiter -> {
-                if (!turn.result.await()) {
-                    Napier.i(tag = "SingleFlight") {
-                        "Waiter failed because of Leader failed"
-                    }
-                    return@on origin
-                }
-                executeWithCustomAuth(originalRequest, addRequestHeaders)
             }
         }
     }
-}
 
 private suspend fun AuthRefreshGate.complete(turn: AuthRefreshTurn.Leader, success: Boolean) {
     complete(turn.result, success)
@@ -87,7 +94,7 @@ private suspend fun AuthRefreshGate.complete(turn: AuthRefreshTurn.Leader, succe
 @OptIn(io.ktor.utils.io.InternalAPI::class)
 private suspend fun Send.Sender.executeWithCustomAuth(
     originalRequest: HttpRequestBuilder,
-    addRequestHeaders: suspend (HttpRequestBuilder) -> Unit
+    addRequestHeaders: suspend (HttpRequestBuilder) -> Unit,
 ): HttpClientCall {
     val request = HttpRequestBuilder()
     request.takeFromWithExecutionContext(originalRequest)
@@ -115,16 +122,17 @@ private fun HttpResponse.customChallengeData(): String? {
     }
 }
 
-private sealed class AuthRefreshTurn {
-    data class Leader(val result: CompletableDeferred<Boolean>) : AuthRefreshTurn()
-    data class Waiter(val result: CompletableDeferred<Boolean>) : AuthRefreshTurn()
+private sealed interface AuthRefreshTurn {
+    data class Leader(val result: CompletableDeferred<Boolean>) : AuthRefreshTurn
+    data class Waiter(val result: CompletableDeferred<Boolean>) : AuthRefreshTurn
 }
 
 private class AuthRefreshGate {
     private val mutex = Mutex()
     private var current: CompletableDeferred<Boolean>? = null
 
-    suspend fun enter(): AuthRefreshTurn = mutex.withLock {
+    suspend fun enter(): AuthRefreshTurn =
+        mutex.withLock {
         current?.let { AuthRefreshTurn.Waiter(it) } ?: CompletableDeferred<Boolean>().also {
             current = it
         }.let { AuthRefreshTurn.Leader(it) }
@@ -147,7 +155,7 @@ private class AuthRefreshGate {
 fun <U> SingleFlightCustomAuthConfig.configClientAuth(
     manager: SessionModel<U>,
     passHolder: PassHolder,
-    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit
+    addRequestHeader: HttpRequestBuilder.(U, String) -> Unit,
 ) {
     addRequestHeaders { request ->
         request.addRequestHeaders(manager, passHolder, addRequestHeader)

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -16,18 +20,21 @@ import io.ktor.client.HttpClient
 suspend fun getRemoteImageBitmap(
     sessionManager: UserSessionManager,
     context: PlatformContext,
-    info: FileInfo
+    info: FileInfo,
 ): Result<ImageBitmap>? {
-    val imageRequest = imageRequest(context, sessionManager.client, info)
-        .androidAllowHardware(false)
-        .build()
-    val image = SingletonImageLoader.get(context)
-        .execute(imageRequest)
-        .image
+    val imageRequest =
+        imageRequest(context, sessionManager.client, info)
+            .androidAllowHardware(false)
+            .build()
+    val image =
+        SingletonImageLoader.get(context)
+            .execute(imageRequest)
+            .image
     return image?.coilImageToImageBitmap()
 }
 
 @OptIn(ExperimentalCoilApi::class)
-fun imageRequest(context: PlatformContext, client: HttpClient, info: FileInfo?) = ImageRequest.Builder(context)
+fun imageRequest(context: PlatformContext, client: HttpClient, info: FileInfo?) =
+    ImageRequest.Builder(context)
     .fetcherFactory(KtorNetworkFetcherFactory(client))
     .data(info?.url)

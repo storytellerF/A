@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.query
 
 import com.storyteller_f.a.backend.core.Cursor
@@ -10,26 +14,24 @@ import org.jetbrains.exposed.v1.core.less
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
 
-fun Query.bindPaginationQuery(
-    table: BaseTable,
-    primaryKeyFetch: PrimaryKeyFetch
-): Query {
-    val order = when (val cursor = primaryKeyFetch.cursor) {
-        is Cursor.DescCursor<PrimaryKey> -> {
-            andWhere {
-                table.id less cursor.value
+fun Query.bindPaginationQuery(table: BaseTable, primaryKeyFetch: PrimaryKeyFetch): Query {
+    val order =
+        when (val cursor = primaryKeyFetch.cursor) {
+            is Cursor.DescCursor<PrimaryKey> -> {
+                andWhere {
+                    table.id less cursor.value
+                }
+                SortOrder.DESC
             }
-            SortOrder.DESC
-        }
 
-        is Cursor.AscCursor<PrimaryKey> -> {
-            andWhere {
-                table.id greater cursor.value
+            is Cursor.AscCursor<PrimaryKey> -> {
+                andWhere {
+                    table.id greater cursor.value
+                }
+                SortOrder.ASC
             }
-            SortOrder.ASC
-        }
 
-        null -> null
-    }
-    return orderBy(table.id, (order ?: SortOrder.DESC)).limit(primaryKeyFetch.size)
+            null -> null
+        }
+    return orderBy(table.id, order ?: SortOrder.DESC).limit(primaryKeyFetch.size)
 }

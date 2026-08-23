@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.MergedEnv
@@ -8,10 +12,7 @@ import io.ktor.server.sessions.cookie
 import java.security.MessageDigest
 import java.security.SecureRandom
 
-private data class SessionKeys(
-    val encryptKey: ByteArray,
-    val signKey: ByteArray,
-)
+private data class SessionKeys(val encryptKey: ByteArray, val signKey: ByteArray)
 
 fun SessionsConfig.setupUserSessions(env: MergedEnv) {
     val keys = sessionKeys(env)
@@ -33,12 +34,11 @@ private fun sessionKeys(env: MergedEnv): SessionKeys {
     return randomSessionKeys()
 }
 
-private fun deriveSessionKeys(secret: String): SessionKeys {
-    return SessionKeys(
-        encryptKey = sha256("encrypt:$secret").copyOf(16),
-        signKey = sha256("sign:$secret"),
-    )
-}
+private fun deriveSessionKeys(secret: String): SessionKeys =
+    SessionKeys(
+    encryptKey = sha256("encrypt:$secret").copyOf(16),
+    signKey = sha256("sign:$secret"),
+)
 
 private fun randomSessionKeys(): SessionKeys {
     val secureRandom = SecureRandom()
@@ -48,6 +48,7 @@ private fun randomSessionKeys(): SessionKeys {
     )
 }
 
-private fun sha256(value: String): ByteArray {
-    return MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))
-}
+private fun sha256(value: String): ByteArray =
+    MessageDigest.getInstance(
+    "SHA-256",
+).digest(value.toByteArray(Charsets.UTF_8))

@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.ui.graphics.ImageBitmap
@@ -12,29 +16,18 @@ import com.storyteller_f.a.client.compose_core.utils.ImageFormat.WEBP
 import kotlinx.io.files.Path
 import org.jetbrains.skia.EncodedImageFormat
 
-actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> {
-    return runCatching {
-        toBitmap().asComposeImageBitmap()
-    }
+actual fun Image.coilImageToImageBitmap(): Result<ImageBitmap> =
+    runCatching {
+    toBitmap().asComposeImageBitmap()
 }
 
-actual fun saveImageBitmap(
-    imageBitmap: ImageBitmap,
-    path: String,
-    format: ImageFormat,
-    quality: Int,
-): Result<Path> {
-    return runCatching {
+actual fun saveImageBitmap(imageBitmap: ImageBitmap, path: String, format: ImageFormat, quality: Int): Result<Path> =
+    runCatching {
         val data = imageBitmapToByteArray(imageBitmap, format, quality)
         writeImageFile(path, data)
     }
-}
 
-fun imageBitmapToByteArray(
-    imageBitmap: ImageBitmap,
-    format: ImageFormat = PNG,
-    quality: Int = 100,
-): ByteArray {
+fun imageBitmapToByteArray(imageBitmap: ImageBitmap, format: ImageFormat = PNG, quality: Int = 100): ByteArray {
     // format.skiaEncodedFormat
     val skiaImage = org.jetbrains.skia.Image.makeFromBitmap(imageBitmap.asSkiaBitmap())
     return skiaImage.encodeToData(
@@ -42,10 +35,9 @@ fun imageBitmapToByteArray(
             PNG -> EncodedImageFormat.PNG
             JPEG -> EncodedImageFormat.JPEG
             WEBP -> EncodedImageFormat.WEBP
-        }, quality
+        },
+        quality,
     )?.bytes ?: ByteArray(0)
 }
 
-actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder {
-    return this
-}
+actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder = this

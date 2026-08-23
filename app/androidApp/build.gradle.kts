@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 @file:OptIn(ExperimentalKotlinGradlePluginApi::class)
 
 import com.google.common.base.CaseFormat
@@ -22,17 +26,19 @@ val flavorStr = project.findProperty("server.flavor") as String
 val flavorId = CaseFormat.LOWER_HYPHEN.converterTo(CaseFormat.LOWER_UNDERSCORE).convert(flavorStr)!!
 val buildType = project.findProperty("server.buildType") as String
 
-val properties = Properties().apply {
-    val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
-    if (file.exists()) {
-        FileInputStream(file).use {
-            load(it)
+val properties =
+    Properties().apply {
+        val file = layout.projectDirectory.file("../../deploy/$flavorStr.env").asFile
+        if (file.exists()) {
+            FileInputStream(file).use {
+                load(it)
+            }
         }
     }
-}
-val deepLinkHost = (properties["SERVER_URL"] as? String)?.let {
-    URI.create(it).host
-} ?: "storyteller_f.com"
+val deepLinkHost =
+    (properties["SERVER_URL"] as? String)?.let {
+        URI.create(it).host
+    } ?: "storyteller_f.com"
 val deepLinkSchemePrefix = "a-$flavorStr"
 android {
     namespace = "com.storyteller_f.a.app"
@@ -46,16 +52,16 @@ android {
             manifestPlaceholders.putAll(
                 mapOf(
                     "deepLinkScheme" to "$deepLinkSchemePrefix-debug",
-                    "deepLinkHost" to deepLinkHost
-                )
+                    "deepLinkHost" to deepLinkHost,
+                ),
             )
         }
         release {
             manifestPlaceholders.putAll(
                 mapOf(
                     "deepLinkScheme" to deepLinkSchemePrefix,
-                    "deepLinkHost" to deepLinkHost
-                )
+                    "deepLinkHost" to deepLinkHost,
+                ),
             )
         }
         create("benchmark") {

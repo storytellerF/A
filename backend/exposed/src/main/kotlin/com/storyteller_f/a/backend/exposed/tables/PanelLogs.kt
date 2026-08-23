@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.types.PanelLog
@@ -18,15 +22,14 @@ object PanelLogs : BaseTable() {
     }
 }
 
-fun PanelLog.Companion.wrapRow(row: ResultRow): PanelLog {
-    return with(PanelLogs) {
-        PanelLog(
-            row[id],
-            row[adminId],
-            row[targetId],
-            row[objectType],
-            row[action],
-            row[createdTime]
-        )
-    }
+fun PanelLog.Companion.wrapRow(row: ResultRow): PanelLog =
+    with(PanelLogs) {
+    PanelLog(
+        row[id],
+        row[adminId],
+        row[targetId],
+        row[objectType],
+        row[action],
+        row[createdTime],
+    )
 }

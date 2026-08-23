@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.compose.foundation.background
@@ -47,7 +51,7 @@ import kotlin.uuid.Uuid
 @Composable
 fun MediaPlayerFilled(
     remoteMediaItem: RemoteMediaItem,
-    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit)
+    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit),
 ) {
     MediaPlayerInternal(remoteMediaItem, true, block)
 }
@@ -55,7 +59,7 @@ fun MediaPlayerFilled(
 @Composable
 fun MediaPlayerEmbed(
     remoteMediaItem: RemoteMediaItem,
-    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit)
+    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit),
 ) {
     MediaPlayerInternal(remoteMediaItem, false) { session, localSession ->
         EmbedMediaPlayerContainer(session, localSession, block)
@@ -65,7 +69,7 @@ fun MediaPlayerEmbed(
 @Composable
 fun MediaPlayerFullScreen(
     remoteMediaItem: RemoteMediaItem,
-    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit)
+    block: @Composable ((MediaPlaySession?, LocalMediaPlaySession) -> Unit),
 ) {
     MediaPlayerInternal(remoteMediaItem, true, block)
 }
@@ -75,14 +79,16 @@ fun MediaPlayerFullScreen(
 fun MediaPlayerInternal(
     remoteMediaItem: RemoteMediaItem,
     isSingleton: Boolean,
-    block: @Composable (MediaPlaySession?, LocalMediaPlaySession) -> Unit
+    block: @Composable (MediaPlaySession?, LocalMediaPlaySession) -> Unit,
 ) {
-    val uuid = rememberSaveable {
-        Uuid.random()
-    }
-    val localMediaPlaySession = remember(remoteMediaItem, uuid) {
-        LocalMediaPlaySession(remoteMediaItem.url, uuid)
-    }
+    val uuid =
+        rememberSaveable {
+            Uuid.random()
+        }
+    val localMediaPlaySession =
+        remember(remoteMediaItem, uuid) {
+            LocalMediaPlaySession(remoteMediaItem.url, uuid)
+        }
 
     Napier.i(tag = "MediaPlayer") {
         "MediaPlayerInternal $uuid recomposing"
@@ -91,7 +97,7 @@ fun MediaPlayerInternal(
     val playingSession by mediaPlayerService.state.collectAsState()
     LaunchedEffect(playingSession, localMediaPlaySession, isSingleton) {
         Napier.i(tag = "MediaPlayer") {
-            "MediaPlayerInternal $uuid switch uuids: ${playingSession?.uuids}, isSingleton: $isSingleton"
+            "MediaPlayerInternal $uuid switch uuids: ${playingSession?.uuids ?: "<none>"}, isSingleton: $isSingleton"
         }
         playingSession?.let { session ->
             if (session.id == localMediaPlaySession.id && (session.lastUuid == null || isSingleton)) {
@@ -143,7 +149,7 @@ fun EmbedMediaPlayerContainer(
             {
                 showSheet = false
             },
-            playingSession.playList
+            playingSession.playList,
         ) { _, i ->
             switchPlaylist(i, mediaPlayerService)
         }
@@ -171,10 +177,7 @@ fun BoxScope.PlayerOccupy(localMediaPlaySession: LocalMediaPlaySession) {
 }
 
 @Composable
-fun BoxScope.PlayerWaiting(
-    localMediaPlaySession: LocalMediaPlaySession,
-    remoteMediaItem: RemoteMediaItem
-) {
+fun BoxScope.PlayerWaiting(localMediaPlaySession: LocalMediaPlaySession, remoteMediaItem: RemoteMediaItem) {
     val playListHandler = LocalMediaPlayListHandlerProvider.current.playListHandler(remoteMediaItem)
     val playList by playListHandler.data.collectAsState()
     val loadingState by playListHandler.state.collectAsState()
@@ -200,49 +203,42 @@ fun BoxScope.PlayerWaiting(
     }
     Text(
         remoteMediaItem.title ?: remoteMediaItem.name,
-        modifier = Modifier
+        modifier =
+        Modifier
             .align(Alignment.BottomStart)
             .padding(10.dp),
-        maxLines = 2
+        maxLines = 2,
     )
 }
 
 @Composable
-private fun BoxScope.PlayerWaitingState(
-    loadingState: LoadingState?,
-    refresh: () -> Unit
-) {
-    when (loadingState) {
-        is LoadingState.Error -> {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                ExceptionCell(loadingState.e, refresh)
-            }
+private fun BoxScope.PlayerWaitingState(loadingState: LoadingState?, refresh: () -> Unit) {
+    if (loadingState is LoadingState.Error) {
+        Box(
+            modifier =
+            Modifier
+                .align(Alignment.Center)
+                .padding(16.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            ExceptionCell(loadingState.e, refresh)
         }
-
-        LoadingState.Loading -> {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        }
-
-        else -> Unit
+    } else if (loadingState == LoadingState.Loading) {
+        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
     }
 }
 
 data class MediaPlayerState(
     val currentLoading: Boolean,
     val currentIsPlaying: Boolean,
-    val currentPlayingItem: MediaItem?
+    val currentPlayingItem: MediaItem?,
 )
 
 @OptIn(ExperimentalUuidApi::class)
 @Composable
 fun rememberPlayerState(
     player: MediaController?,
-    localMediaPlaySession: LocalMediaPlaySession
+    localMediaPlaySession: LocalMediaPlaySession,
 ): State<MediaPlayerState> {
     player ?: return remember {
         mutableStateOf(MediaPlayerState(currentLoading = false, currentIsPlaying = false, currentPlayingItem = null))
@@ -259,34 +255,38 @@ fun rememberPlayerState(
     val mediaPlayerService = LocalMediaPlayerService.current
     DisposableEffect(localMediaPlaySession, player) {
         val customListener =
-            buildListener(player, object :
-                VideoListener {
-                override fun onPlayStateChange(isPlaying: Boolean) {
-                    Napier.d(tag = "MediaPlayer") {
-                        "rememberPlayerState ${localMediaPlaySession.uuid} playStateChange $isPlaying"
+            buildListener(
+                player,
+                object :
+                    VideoListener {
+                    override fun onPlayStateChange(isPlaying: Boolean) {
+                        Napier.d(tag = "MediaPlayer") {
+                            "rememberPlayerState ${localMediaPlaySession.uuid} playStateChange $isPlaying"
+                        }
+                        currentIsPlaying = isPlaying
                     }
-                    currentIsPlaying = isPlaying
-                }
 
-                override fun onUpdateSize(size: CustomVideoSize) {
-                    Napier.d(tag = "MediaPlayer") {
-                        "rememberPlayerState ${localMediaPlaySession.uuid} updateSize $size"
+                    override fun onUpdateSize(size: CustomVideoSize) {
+                        Napier.d(tag = "MediaPlayer") {
+                            "rememberPlayerState ${localMediaPlaySession.uuid} updateSize $size"
+                        }
+                        mediaPlayerService.update(localMediaPlaySession, size)
                     }
-                    mediaPlayerService.update(localMediaPlaySession, size)
-                }
 
-                override fun onUpdateLoading(isLoading: Boolean) {
-                    currentLoading = isLoading
-                }
-
-                override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
-                    currentPlaying = if (currentMediaItemIndex < player.mediaItemCount) {
-                        player.getMediaItemAt(currentMediaItemIndex)
-                    } else {
-                        null
+                    override fun onUpdateLoading(isLoading: Boolean) {
+                        currentLoading = isLoading
                     }
-                }
-            })
+
+                    override fun onMediaItemChanged(mediaId: String?, currentMediaItemIndex: Int) {
+                        currentPlaying =
+                            if (currentMediaItemIndex < player.mediaItemCount) {
+                                player.getMediaItemAt(currentMediaItemIndex)
+                            } else {
+                                null
+                            }
+                    }
+                },
+            )
         player.addListener(customListener)
         onDispose {
             Napier.d(tag = "MediaPlayer") {
@@ -320,29 +320,25 @@ fun MediaController.playNewMedia(playList: List<ConstPlayItem>) {
     play()
 }
 
-private fun buildListener(
-    player: Player,
-    listener: VideoListener
-): Player.Listener {
-    return object : Player.Listener {
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            super.onVideoSizeChanged(videoSize)
-            listener.onUpdateSize(CustomVideoSize(videoSize.width, videoSize.height))
-        }
+private fun buildListener(player: Player, listener: VideoListener): Player.Listener =
+    object : Player.Listener {
+    override fun onVideoSizeChanged(videoSize: VideoSize) {
+        super.onVideoSizeChanged(videoSize)
+        listener.onUpdateSize(CustomVideoSize(videoSize.width, videoSize.height))
+    }
 
-        override fun onIsLoadingChanged(isLoading: Boolean) {
-            super.onIsLoadingChanged(isLoading)
-            listener.onUpdateLoading(isLoading)
-        }
+    override fun onIsLoadingChanged(isLoading: Boolean) {
+        super.onIsLoadingChanged(isLoading)
+        listener.onUpdateLoading(isLoading)
+    }
 
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
-            super.onIsPlayingChanged(isPlaying)
-            listener.onPlayStateChange(isPlaying)
-        }
+    override fun onIsPlayingChanged(isPlaying: Boolean) {
+        super.onIsPlayingChanged(isPlaying)
+        listener.onPlayStateChange(isPlaying)
+    }
 
-        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            super.onMediaItemTransition(mediaItem, reason)
-            listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
-        }
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+        super.onMediaItemTransition(mediaItem, reason)
+        listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
     }
 }

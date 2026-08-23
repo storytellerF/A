@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.background
@@ -42,7 +46,8 @@ fun TopicRefCellInternal(handler: LoadingHandler<TopicInfo>) {
     val shape = RoundedCornerShape(4.dp)
     RefCellStateView(
         handler,
-        modifier = Modifier
+        modifier =
+        Modifier
             .fillMaxWidth()
             .height(120.dp)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
@@ -57,18 +62,17 @@ fun TopicRefCellInternal(handler: LoadingHandler<TopicInfo>) {
 }
 
 @Composable
-fun TopicRefCellContent(
-    topicInfo: TopicInfo,
-) {
+fun TopicRefCellContent(topicInfo: TopicInfo) {
     val authorInfo = topicInfo.extension?.authorInfo
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         UserIconWithDialog(authorInfo)
-        val text = (topicInfo.content as? TopicContent.Plain)?.plain.toString()
-        val plain = remember(text) {
-            extractMarkdownHeadline(text)
-        }
+        val text = (topicInfo.content as? TopicContent.Plain)?.plain?.toString().orEmpty()
+        val plain =
+            remember(text) {
+                extractMarkdownHeadline(text)
+            }
         Text(plain, color = MaterialTheme.colorScheme.onSurface, maxLines = 4)
     }
 }

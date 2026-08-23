@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.CustomImmutableList
@@ -40,26 +44,27 @@ data class TopicInfo(
         get() = ObjectType.TOPIC
 
     companion object {
-        val EMPTY = TopicInfo(
-            id = DEFAULT_PRIMARY_KEY,
-            content = TopicContent.Nil,
-            author = DEFAULT_PRIMARY_KEY,
-            rootId = DEFAULT_PRIMARY_KEY,
-            rootType = ObjectType.TOPIC,
-            parentId = DEFAULT_PRIMARY_KEY,
-            parentType = ObjectType.TOPIC,
-            hasJoined = false,
-            createdTime = now(),
-            commentCount = 0,
-            reactionCount = 0,
-            hasComment = false,
-            isEncrypted = false,
-            level = 0,
-            isPin = false,
-            lastModifiedTime = now(),
-            extension = Extension(),
-            status = ObjectStatus.NORMAL,
-        )
+        val EMPTY =
+            TopicInfo(
+                id = DEFAULT_PRIMARY_KEY,
+                content = TopicContent.Nil,
+                author = DEFAULT_PRIMARY_KEY,
+                rootId = DEFAULT_PRIMARY_KEY,
+                rootType = ObjectType.TOPIC,
+                parentId = DEFAULT_PRIMARY_KEY,
+                parentType = ObjectType.TOPIC,
+                hasJoined = false,
+                createdTime = now(),
+                commentCount = 0,
+                reactionCount = 0,
+                hasComment = false,
+                isEncrypted = false,
+                level = 0,
+                isPin = false,
+                lastModifiedTime = now(),
+                extension = Extension(),
+                status = ObjectStatus.NORMAL,
+            )
     }
 
     @Serializable
@@ -79,24 +84,19 @@ sealed interface TopicContent {
 
     @Serializable
     @SerialName("extracted")
-    data class Extracted(
-        val plain: String,
-        val fileInfos: List<FileInfo> = emptyList(),
-        val origin: String
-    ) : TopicContent
+    data class Extracted(val plain: String, val fileInfos: List<FileInfo> = emptyList(), val origin: String) :
+        TopicContent
 
     @Serializable
     @SerialName("plain")
-    data class Plain(val plain: String, val fileInfos: List<FileInfo> = emptyList()) :
-        TopicContent {
+    data class Plain(val plain: String, val fileInfos: List<FileInfo> = emptyList()) : TopicContent {
         val bytes: ByteArray
             get() = plain.encodeToByteArray()
     }
 
     @Serializable
     @SerialName("encrypted")
-    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) :
-        TopicContent {
+    data class Encrypted(val encrypted: String, val encryptedKey: Map<PrimaryKey, String>) : TopicContent {
         @OptIn(ExperimentalStdlibApi::class)
         val bytes: ByteArray
             get() = encrypted.hexToByteArray()
@@ -109,5 +109,5 @@ sealed interface TopicContent {
 enum class TopicPinSearch {
     PINNED,
     UNPINNED,
-    UNSPECIFIED
+    UNSPECIFIED,
 }

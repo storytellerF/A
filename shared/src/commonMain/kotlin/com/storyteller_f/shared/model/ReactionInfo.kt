@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.shared.model
 
 import com.storyteller_f.shared.type.ObjectType
@@ -11,7 +15,7 @@ data class ReactionInfo(
     val objectId: PrimaryKey,
     val count: Long,
     val hasReacted: Boolean,
-    val lastReactionId: PrimaryKey
+    val lastReactionId: PrimaryKey,
 )
 
 @Serializable
@@ -21,5 +25,5 @@ data class ReactionRecordInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
-    val uid: PrimaryKey
+    val uid: PrimaryKey,
 ) : PrimaryKeyIdentifiable

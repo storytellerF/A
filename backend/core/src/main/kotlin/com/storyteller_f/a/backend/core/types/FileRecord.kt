@@ -1,3 +1,7 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
 package com.storyteller_f.a.backend.core.types
 
 import com.storyteller_f.shared.model.Dimension
@@ -32,21 +36,20 @@ fun FileRecord.toFileInfo(
     url: String,
     lastModified: LocalDateTime,
     favoriteId: PrimaryKey? = null,
-    subscriptionId: PrimaryKey? = null
-): FileInfo {
-    return FileInfo(
-        id,
-        url,
-        fullName,
-        contentType,
-        size,
-        name,
-        owner,
-        ownerType,
-        lastModified,
-        dimension,
-        favoriteId,
-        subscriptionId,
-        status,
-    )
-}
+    subscriptionId: PrimaryKey? = null,
+): FileInfo =
+    FileInfo(
+    id,
+    url,
+    fullName,
+    contentType,
+    size,
+    name,
+    owner,
+    ownerType,
+    lastModified,
+    dimension,
+    favoriteId,
+    subscriptionId,
+    status,
+)
