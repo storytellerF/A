@@ -7,6 +7,7 @@ import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.ResponseMetaInfo
+import ai.koog.prompt.params.LLMParams
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -19,6 +20,10 @@ import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -70,6 +75,7 @@ internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMC
                     },
                     temperature = prompt.params.temperature,
                     maxTokens = prompt.params.maxTokens,
+                    responseFormat = prompt.params.schema.toOpenAIResponseFormat(),
                 )
 
             val requestBody =
@@ -128,7 +134,24 @@ private data class ChatCompletionRequest(
     val temperature: Double?,
     @SerialName("max_tokens")
     val maxTokens: Int?,
+    @SerialName("response_format")
+    val responseFormat: JsonObject?,
 )
+
+internal fun LLMParams.Schema?.toOpenAIResponseFormat(): JsonObject? {
+    val jsonSchema = this as? LLMParams.Schema.JSON ?: return null
+    return buildJsonObject {
+        put("type", "json_schema")
+        put(
+            "json_schema",
+            buildJsonObject {
+                put("name", jsonSchema.name)
+                put("strict", JsonPrimitive(true))
+                put("schema", jsonSchema.schema)
+            },
+        )
+    }
+}
 
 @Serializable
 private data class ChatMessage(val role: String, val content: String)

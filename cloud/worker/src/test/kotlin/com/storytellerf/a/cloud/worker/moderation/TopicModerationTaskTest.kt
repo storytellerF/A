@@ -7,10 +7,14 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.now
+import com.storytellerf.a.cloud.worker.llm.LlmResponseSchema
+import com.storytellerf.a.cloud.worker.llm.LlmService
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 internal class TopicModerationTaskTest {
@@ -40,6 +44,32 @@ internal class TopicModerationTaskTest {
         assertTrue(parseSafetyDecision("unsafe"))
         assertFailsWith<IllegalStateException> {
             parseSafetyDecision("UNSAFE because the topic is violent")
+        }
+    }
+
+    @Test
+    fun `structured moderation returns decision`() {
+        assertTrue(parseStructuredSafetyDecision("""{"is_harmful":true}"""))
+        assertFalse(parseStructuredSafetyDecision("""{"is_harmful":false}"""))
+    }
+
+    @Test
+    fun `structured moderation rejects free text`() {
+        assertFailsWith<UnexpectedTopicSafetyDecisionException> {
+            parseStructuredSafetyDecision("User Safety: safe")
+        }
+    }
+
+    @Test
+    fun `koog moderation requests response schema`() {
+        runTest {
+            val service = RecordingLlmService("""{"is_harmful":false}""")
+            val reviewer = KoogTopicSafetyReviewer(service)
+
+            assertFalse(reviewer.isHarmful("ordinary topic"))
+            val schema = assertNotNull(service.responseSchema)
+            assertEquals("topic_safety_decision", schema.name)
+            assertTrue(schema.schema.toString().contains("is_harmful"))
         }
     }
 
@@ -84,6 +114,19 @@ internal class TopicModerationTaskTest {
                 level = 1,
             )
         return topic
+    }
+
+    private class RecordingLlmService(private val response: String) : LlmService {
+        var responseSchema: LlmResponseSchema? = null
+
+        override suspend fun generateResponse(
+            prompt: String,
+            systemPrompt: String?,
+            responseSchema: LlmResponseSchema?,
+        ): String {
+            this.responseSchema = responseSchema
+            return response
+        }
     }
 
     private companion object {

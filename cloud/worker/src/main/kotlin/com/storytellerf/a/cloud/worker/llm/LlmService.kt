@@ -11,6 +11,7 @@ import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
+import kotlinx.serialization.json.JsonObject
 
 private const val LOG_PREVIEW_LENGTH = 100
 
@@ -20,19 +21,30 @@ internal interface LlmService : AutoCloseable {
      *
      * @param prompt The user prompt to send to the LLM
      * @param systemPrompt Optional system prompt to set the context
+     * @param responseSchema Optional JSON schema that constrains the model response
      * @return The generated response
      */
-    suspend fun generateResponse(prompt: String, systemPrompt: String? = null): String
+    suspend fun generateResponse(
+        prompt: String,
+        systemPrompt: String? = null,
+        responseSchema: LlmResponseSchema? = null,
+    ): String
 
     override fun close() {}
 }
+
+internal data class LlmResponseSchema(val name: String, val schema: JsonObject)
 
 internal class KoogLlmService(
     private val client: LLMClient,
     private val model: LLModel,
     private val config: LlmConfig,
 ) : LlmService {
-    override suspend fun generateResponse(prompt: String, systemPrompt: String?): String {
+    override suspend fun generateResponse(
+        prompt: String,
+        systemPrompt: String?,
+        responseSchema: LlmResponseSchema?,
+    ): String {
         val response =
             try {
                 Napier.d(tag = "llm") {
@@ -57,6 +69,13 @@ internal class KoogLlmService(
                             LLMParams(
                                 temperature = config.temperature,
                                 maxTokens = config.maxTokens,
+                                schema =
+                                responseSchema?.let { configuredSchema ->
+                                    LLMParams.Schema.JSON.Standard(
+                                        name = configuredSchema.name,
+                                        schema = configuredSchema.schema,
+                                    )
+                                },
                             ),
                         ),
                         model,

@@ -70,8 +70,14 @@ internal fun parseSafetyDecision(response: String): Boolean {
     }
 }
 
-internal class UnexpectedTopicSafetyDecisionException(val response: String) :
-    IllegalStateException("Topic safety model did not return SAFE or UNSAFE, response: $response")
+internal class UnexpectedTopicSafetyDecisionException(
+    response: String? = null,
+    cause: Throwable? = null,
+) : IllegalStateException(
+        response?.let { "Topic safety model did not return SAFE or UNSAFE, response: $it" }
+            ?: "Topic safety model did not return a valid decision",
+        cause,
+    )
 
 private const val MODEL_CONTEXT_SIZE = 4096
 private const val MODEL_CACHE_DIRECTORY = ".litertlm-cache"
