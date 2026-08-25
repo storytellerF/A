@@ -71,7 +71,10 @@ internal fun parseStructuredSafetyDecision(response: String): Boolean {
         try {
             Json.decodeFromString<TopicSafetyDecision>(response)
         } catch (exception: SerializationException) {
-            throw UnexpectedTopicSafetyDecisionException(exception)
+            throw UnexpectedTopicSafetyDecisionException(
+                response = response,
+                cause = exception,
+            )
         }
     return decision.isHarmful
 }
