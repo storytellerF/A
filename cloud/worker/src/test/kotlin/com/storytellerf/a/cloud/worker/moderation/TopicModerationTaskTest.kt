@@ -42,9 +42,15 @@ internal class TopicModerationTaskTest {
     fun `moderation response accepts only exact decisions`() {
         assertFalse(parseSafetyDecision(" SAFE\n"))
         assertTrue(parseSafetyDecision("unsafe"))
-        assertFailsWith<IllegalStateException> {
-            parseSafetyDecision("UNSAFE because the topic is violent")
-        }
+        val failure =
+            assertFailsWith<UnexpectedTopicSafetyDecisionException> {
+                parseSafetyDecision("UNSAFE because the topic is violent")
+            }
+        assertEquals(
+            "Topic safety model did not return SAFE or UNSAFE, " +
+                "response: UNSAFE because the topic is violent",
+            failure.message,
+        )
     }
 
     @Test
@@ -55,9 +61,15 @@ internal class TopicModerationTaskTest {
 
     @Test
     fun `structured moderation rejects free text`() {
-        assertFailsWith<UnexpectedTopicSafetyDecisionException> {
-            parseStructuredSafetyDecision("User Safety: safe")
-        }
+        val failure =
+            assertFailsWith<UnexpectedTopicSafetyDecisionException> {
+                parseStructuredSafetyDecision("User Safety: safe")
+            }
+        assertEquals(
+            "Topic safety model did not return valid JSON matching the topic safety schema, " +
+                "response: User Safety: safe",
+            failure.message,
+        )
     }
 
     @Test

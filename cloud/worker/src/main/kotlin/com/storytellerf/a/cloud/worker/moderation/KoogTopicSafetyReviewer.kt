@@ -73,6 +73,7 @@ internal fun parseStructuredSafetyDecision(response: String): Boolean {
         } catch (exception: SerializationException) {
             throw UnexpectedTopicSafetyDecisionException(
                 response = response,
+                expectedFormat = "valid JSON matching the topic safety schema",
                 cause = exception,
             )
         }
