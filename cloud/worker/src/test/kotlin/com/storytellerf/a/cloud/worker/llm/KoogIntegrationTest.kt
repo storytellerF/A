@@ -3,13 +3,19 @@
  */
 package com.storytellerf.a.cloud.worker.llm
 
+import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import java.io.File
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 internal class KoogIntegrationTest {
     @BeforeTest
@@ -96,5 +102,32 @@ internal class KoogIntegrationTest {
         val model = KoogClientFactory.resolveModel(config)
         assertNotNull(model)
         assertEquals("gpt-4", model.id)
+    }
+
+    @Test
+    fun `OpenAI format contains JSON schema`() {
+        val schema =
+            LLMParams.Schema.JSON.Standard(
+                name = "decision",
+                schema = buildJsonObject { put("type", "object") },
+            )
+
+        val responseFormat = assertNotNull(schema.toOpenAIResponseFormat())
+
+        val responseType = assertNotNull(responseFormat["type"])
+        val jsonSchema = assertNotNull(responseFormat["json_schema"]).jsonObject
+        val schemaName = assertNotNull(jsonSchema["name"])
+        val strict = assertNotNull(jsonSchema["strict"])
+        val schemaObject = assertNotNull(jsonSchema["schema"]).jsonObject
+        val schemaType = assertNotNull(schemaObject["type"])
+        assertEquals("json_schema", responseType.jsonPrimitive.content)
+        assertEquals("decision", schemaName.jsonPrimitive.content)
+        assertEquals("true", strict.jsonPrimitive.content)
+        assertEquals("object", schemaType.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `OpenAI format absent without schema`() {
+        assertNull(null.toOpenAIResponseFormat())
     }
 }
