@@ -65,13 +65,25 @@ internal fun parseSafetyDecision(response: String): Boolean {
     val normalizedResponse = response.trim().uppercase(Locale.ROOT)
     return when (normalizedResponse) {
         SAFE_DECISION -> false
+
         UNSAFE_DECISION -> true
-        else -> throw UnexpectedTopicSafetyDecisionException(response)
+
+        else ->
+            throw UnexpectedTopicSafetyDecisionException(
+                response = response,
+                expectedFormat = "SAFE or UNSAFE",
+            )
     }
 }
 
-internal class UnexpectedTopicSafetyDecisionException(val response: String) :
-    IllegalStateException("Topic safety model did not return SAFE or UNSAFE, response: $response")
+internal class UnexpectedTopicSafetyDecisionException(
+    response: String,
+    expectedFormat: String,
+    cause: Throwable? = null,
+) : IllegalStateException(
+    "Topic safety model did not return $expectedFormat, response: $response",
+    cause,
+)
 
 private const val MODEL_CONTEXT_SIZE = 4096
 private const val MODEL_CACHE_DIRECTORY = ".litertlm-cache"
