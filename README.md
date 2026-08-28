@@ -1,88 +1,11 @@
 # A
 
-[Download app](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
+A Kotlin Multiplatform application for Android, Desktop, CLI, and Web, with cloud services and an
+administration panel.
 
-## Project Overview
+[Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
-A is a Kotlin Multiplatform application framework that targets Android, Desktop, CLI, and Web. It uses a modular architecture and includes cloud services, backend storage, bot features, and other components needed for a full application stack.
-
-## Tech Stack
-
-- **Languages**: Java 21 (Eclipse Temurin), Kotlin
-- **Multiplatform architecture**: Android + Desktop + CLI + Web
-- **UI framework**: Compose Multiplatform
-- **Networking framework**: Ktor (JetBrains)
-- **Database / storage**: Exposed ORM, Redis, MinIO, Lucene, Elasticsearch, Filesystem
-- **PDF processing**: Apache PDFBox, OpenPDF
-
-## Project Structure
-
-### Core Modules
-
-- **App module** (`app/`) - Android/Desktop/CLI client applications
-  - `composeApp` - Shared Compose Multiplatform UI
-  - `androidApp` - Android app shell
-  - `desktopApp` - Desktop app entry point
-  - `cliApp` - Command-line app
-
-- **Cloud module** (`cloud/`) - Cloud server side
-  - `server` - Ktor HTTP server
-  - `runtime` - Runtime bootstrap and shared runtime utilities
-  - `ws` / `ws-api` - WebSocket service and API support
-  - `service` - Cloud services and TOTP implementation
-  - `worker` - Background task processing
-  - `pdf` / `pdfbox` / `openpdf` - PDF processing services
-  - `cli` - Cloud administration CLI
-
-- **Backend module** (`backend/`) - Data storage layer
-  - `core` - Backend storage interfaces and shared backend models
-  - `exposed` - SQL database ORM
-  - `redis` - Redis cache
-  - `minio` - S3-compatible object storage
-  - `lucene` / `elastic` - Search engines
-  - `filesystem` / `simple` - Filesystem and simple storage implementations
-
-- **Client module** (`client/`) - Client libraries
-  - `core` - Client core
-  - `composeCore` - Shared Compose UI components, media helpers, and cross-platform UI utilities
-  - `bot-lib` - Bot library
-  - `room` - Room features
-  - `model-storage` - Model storage
-  - `asciidoc-parser` - AsciiDoc parser
-
-- **Panel module** (`panel/`) - Administration panel
-  - `composeApp` - Administration UI
-  - `androidApp` / `desktopApp` / `cliApp` - Multiplatform entry points
-  - `benchmark` - Android benchmark module
-
-- **API module** (`api/`) - API definitions and service routes
-
-- **Bot module** (`bot/`) - Built-in bot features
-
-## Key Features
-
-### File Uploads
-
-- Standard uploads (`POST /files/upload`)
-- Chunked uploads (`POST /files/chunk/*`)
-- SHA256 integrity checks
-- Configurable storage backend: MinIO or local filesystem
-
-### User Authentication
-
-- Private-key signature sign-in (`/accounts/sign-in`)
-- TOTP two-factor authentication (2FA)
-- Authenticated WebSocket connections through `/ws`
-- User sign-up control through the `ENABLE_SIGN_UP` environment variable
-
-### Task Management
-
-- Worker execution record storage and querying
-- Paginated task records in the Panel administration UI
-- Filtering by task type
-- Persisted worker task switches, fetch sizes, and wait durations managed from the Panel
-- Local Gemma 3n topic safety review for communities, user spaces, and public community rooms
-- Automatic `READ_ONLY` status for authors of harmful non-private topics
+## Worker Configuration
 
 Worker task settings are stored per task type. A task without a persisted configuration does not run.
 The CLI `add` command accepts a `taskConfig` preset whose `taskConfigData` entries contain `type`,
@@ -90,43 +13,98 @@ The CLI `add` command accepts a `taskConfig` preset whose `taskConfigData` entri
 Administrators can edit the same values from the Panel's **Worker task configurations** page. Workers
 reload the setting before every iteration, so enabling, disabling, or tuning a task does not require a restart.
 
-### Worker Topic Moderation
+### Topic Moderation
 
-When the persisted `TOPIC_MODERATION` task configuration is enabled, the worker uses Google LiteRT-LM
-with `litert-community/gemma-4-E2B-it-litert-lm` and downloads then verifies
-`gemma-4-E2B-it.litertlm` in its home directory before the first moderation iteration. The worker verifies
-the cached model SHA-256 before loading it; a corrupt cache is downloaded again.
+When the persisted `TOPIC_MODERATION` task configuration is enabled, the worker loads the active LLM
+configuration from backend storage. Apply one of the `cloud/worker/llm-config.*-example.json` presets with
+the Cloud CLI `add` command. For LiteRT-LM, set `modelPath` in
+`cloud/worker/llm-config.litert-example.json` to an existing local `.litertlm` model before applying it;
+the worker does not download the model.
 
-The model is approximately 2.59 GB. A complete existing file is reused without another download.
-For offline deployment, place the model at `${HOME}/gemma-4-E2B-it.litertlm` before starting the
-worker. The Docker Compose worker persists `/home/app` in the `worker-home` volume.
+All providers return the same structured moderation decision. The LiteRT-LM client uses native JSON-schema
+constrained output, tries the GPU backend first, and falls back to CPU if GPU initialization fails. Set
+`cachePath` in the LiteRT-LM preset to a directory writable by the worker. Existing configurations without
+`cachePath` use a model-specific directory under the JVM temporary directory.
 
-LiteRT-LM's prebuilt Linux x86_64 library requires AVX. On a NAS or other host without AVX support,
-set `TOPIC_MODERATION_ENABLED=false` in the worker's `deploy/<flavor>.env` file. This hard override skips
-the model download and LiteRT initialization while continuing its other background tasks. Topic content
-is not reviewed and harmful-topic authors are not automatically marked `READ_ONLY` while moderation is disabled.
+LiteRT-LM's prebuilt Linux x86_64 library requires AVX. If the host cannot run the selected provider,
+disable the persisted `TOPIC_MODERATION` task configuration; topic content is then not reviewed and
+harmful-topic authors are not automatically marked `READ_ONLY`.
 
 Moderation covers topics and comments in communities, user spaces, and public rooms that belong to a
 community. Encrypted private and notification-room topics are excluded. Harmful content such as abusive
 profanity, threats or graphic violence, pornography, hate, self-harm, exploitation, or promoted illegal
 activity causes the author account to be marked `READ_ONLY`.
 
-### Media Playback
+### Configure Windows GPU DLLs for LiteRT-LM
 
-- Media playlist management
-- Cross-platform media player service
+Windows GPU inference requires 64-bit `dxil.dll` and `dxcompiler.dll` from Microsoft's
+[DirectX Shader Compiler](https://github.com/microsoft/DirectXShaderCompiler/releases). The
+`com.google.ai.edge.litertlm:litertlm-jvm` artifact does not include these DLLs. LiteRT-LM loads them
+through the native Direct3D 12 runtime, so adding their directory to `PATH` alone is not sufficient for
+the current worker. Put both DLLs beside the `java.exe` that actually starts the worker.
 
-### Markdown Rendering
+The following PowerShell example installs the DXC version currently pinned for worker deployment. Use an
+application-owned Java 21 runtime when possible instead of modifying a shared system JDK. Set
+`JAVA_HOME` to that runtime before running these commands.
 
-- Syntax-highlighted code fences and embedded media
-- LaTeX inline and block formulas with measured layout
-- Mermaid code fences rendered as SVG on Android, Desktop, and Web
+```powershell
+$dxcArchive = Join-Path $PWD "dxc_2026_07_29.zip"
+$dxcDirectory = Join-Path $PWD "dxc-v1.9.2607"
+$expectedDxcHash = "A1DFB116BA3EEAE6A1582291B53A8E7BF65AD760676BD3194685C8F7367CD241"
 
-### Cloud CLI
+if ([string]::IsNullOrWhiteSpace($env:JAVA_HOME)) {
+    throw "Set JAVA_HOME to the Java 21 runtime used by the worker"
+}
 
-- Preset account key generation
-- Dilithium signing key and Kyber encryption key management
-- Dev-data initialization tools
+$workerJavaDirectory = Join-Path $env:JAVA_HOME "bin"
+$workerJavaExecutable = Join-Path $workerJavaDirectory "java.exe"
+$dxilDestination = Join-Path $workerJavaDirectory "dxil.dll"
+$dxCompilerDestination = Join-Path $workerJavaDirectory "dxcompiler.dll"
+
+if (-not (Test-Path -LiteralPath $workerJavaExecutable)) {
+    throw "Worker Java executable not found: $workerJavaExecutable"
+}
+if (Test-Path -LiteralPath $dxcDirectory) {
+    throw "DXC extraction directory already exists: $dxcDirectory"
+}
+if ((Test-Path -LiteralPath $dxilDestination) -or (Test-Path -LiteralPath $dxCompilerDestination)) {
+    throw "DXC DLLs already exist in $workerJavaDirectory; verify or back them up before replacing them"
+}
+
+Invoke-WebRequest `
+    -Uri "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2607/dxc_2026_07_29.zip" `
+    -OutFile $dxcArchive
+
+$actualDxcHash = (Get-FileHash -LiteralPath $dxcArchive -Algorithm SHA256).Hash
+if ($actualDxcHash -ne $expectedDxcHash) {
+    throw "DXC SHA-256 mismatch: $actualDxcHash"
+}
+
+Expand-Archive -LiteralPath $dxcArchive -DestinationPath $dxcDirectory
+Copy-Item -LiteralPath (Join-Path $dxcDirectory "bin\x64\dxil.dll") -Destination $dxilDestination
+Copy-Item -LiteralPath (Join-Path $dxcDirectory "bin\x64\dxcompiler.dll") -Destination $dxCompilerDestination
+Get-Item -LiteralPath $workerJavaExecutable, $dxilDestination, $dxCompilerDestination
+```
+
+Restart the worker after installing the DLLs. A successful GPU startup logs both messages:
+
+```text
+Initializing LiteRT LLM client with GPU backend
+Initialized LiteRT LLM client with GPU backend
+```
+
+If GPU initialization fails, the worker remains available and logs the fallback before initializing a
+new CPU engine:
+
+```text
+LiteRT GPU initialization failed; falling back to CPU
+Initialized LiteRT LLM client with CPU backend
+```
+
+A warning about missing `libLiteRtTopKWebGpuSampler.dll` concerns LiteRT-LM's optional WebGPU sampler.
+Version `0.16.1` does not ship that DLL in its JVM artifact and uses its built-in C sampler instead; this
+warning does not by itself mean that the main model fell back from GPU. Use the backend initialization
+messages above as the source of truth.
 
 ## Build and Run
 
@@ -134,32 +112,24 @@ activity causes the author account to be marked `READ_ONLY`.
 
 - Java 21 (Eclipse Temurin)
 - The included Gradle wrapper (`./gradlew`)
+- Git Bash on Windows for repository shell scripts
+- Docker with Compose support for the local service stack
 - Desktop AsciiDoc previews use the system WebView engine: WebView2 on Windows, WKWebView on macOS, and WebKitGTK on Linux.
 
 ### Build Commands
 
 ```bash
 # Assemble included modules
-./gradlew assemble
+./gradlew assemble -Pserver.flavor=sample -Pserver.buildType=prod
 
 # Build the Cloud server
-./gradlew :cloud:server:assemble
+./gradlew :cloud:server:assemble -Pserver.flavor=sample -Pserver.buildType=prod
 
 # Build the Android app
-./gradlew :app:androidApp:assembleDebug
+./gradlew :app:androidApp:assembleDebug -Pserver.flavor=sample -Pserver.buildType=prod
 
 # Build the Desktop app
-./gradlew :app:desktopApp:packageDistributionForCurrentOS
-```
-
-### Docker Deployment
-
-```bash
-# Build the image
-docker build -t a-server .
-
-# Start the service
-sh ./bin/server
+./gradlew :app:desktopApp:packageDistributionForCurrentOS -Pserver.flavor=sample -Pserver.buildType=prod
 ```
 
 ### Compose Stack With Wasm Apps
@@ -172,64 +142,8 @@ Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin pan
 
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
-The Wasm distributions bundle Noto Sans SC so CJK text works in browsers such as Firefox without relying on installed fonts. On Chromium browsers that support Local Font Access, the app requests local-font permission after the first pointer or keyboard interaction and prefers an installed CJK font when permission is granted; otherwise it keeps using the bundled font.
-
-The user Wasm app uses native browser audio and video controls and supports AVIF images through its browser-backed Coil decoder. MinIO downloads override signed response types from file records without modifying object metadata.
-
-### Environment Variables
-
-- `HOST_TYPE`: Host type, such as `docker`
-- `BUILD_TYPE`: Build type
-- `FLAVOR`: Build flavor, such as `dev` or `alpha`
-- `BUILD_ON`: Build platform
-- `APP_UID/GID`: Container user permissions, default `1000`
-- `ENABLE_SIGN_UP`: Whether user sign-up is allowed, default `true`
-- `TOPIC_MODERATION_ENABLED`: Whether the worker runs local topic moderation, default `true`
-- `HUGGING_FACE_HUB_TOKEN`: Optional read token forwarded when the worker downloads the Gemma model
-- `MEDIA_SERVICE`: Media storage backend, either `minio` or `filesystem`
-
-### Gradle Properties
-
-Configure these values in `~/.gradle/gradle.properties`:
-
-```properties
-gpr.user=<GitHub username>
-gpr.key=<GitHub personal access token>
-```
-
-## Development Tools
-
-### Gradle Dependency Pruning
-
-```bash
-# Automatically prune unused implementation dependencies
-./scripts/build_scripts/gradle-prune-implementations.sh
-
-# Specify the build flavor
-./scripts/build_scripts/gradle-prune-implementations.sh -Pserver.flavor=alpha
-```
-
-## Architecture Notes
-
-### RefCell Pattern
-
-- `TopicRefCell`, `RoomRefCell`, `CommunityRefCell`, and `UserRefCell` obtain `LoadingHandler` through `LocalRefCellHandlerProvider`.
-- They do not create ViewModels directly; dependencies are provided through injection.
-
-### Android Module Boundaries
-
-- `app/androidApp` - App shell module that contains Activities and the manifest
-- `app/composeApp` - Shared Compose UI and actual implementations
-- `composeApp` must not depend on the Android module at compile time; use explicit Intents to launch Activities.
-
-### Panel / Worker Communication
-
-- Worker execution records are stored in the `TaskRecords` table.
-- Panel queries and manages them through the `/admin/task-records` API.
-
-## More Documentation
-
-For detailed project design and implementation notes, see [project.md](project.md).
+Deployment settings are read from `deploy/<flavor>.env`. Use `deploy/sample.env` as the reference;
+`BUILD_TYPE` is required, and `COMPOSE_FILE_LIST` selects which services are included in the stack.
 
 ## License
 

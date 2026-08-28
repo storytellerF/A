@@ -6,6 +6,7 @@ package com.storytellerf.a.cloud.worker.llm
 import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -102,6 +103,32 @@ internal class KoogIntegrationTest {
         val model = KoogClientFactory.resolveModel(config)
         assertNotNull(model)
         assertEquals("gpt-4", model.id)
+    }
+
+    @Test
+    fun `LiteRT model uses local provider and filename`() {
+        val config =
+            LlmConfig(
+                provider = LlmProvider.LITERT_LLM,
+                modelPath = "models/safety.litertlm",
+            )
+
+        val model = KoogClientFactory.resolveModel(config)
+
+        assertEquals(LITE_RT_LLM_PROVIDER, model.provider)
+        assertEquals("safety.litertlm", model.id)
+        assertEquals(LITE_RT_MODEL_CONTEXT_SIZE, model.contextLength)
+        assertEquals(LITE_RT_MODEL_MAX_OUTPUT_TOKENS, model.maxOutputTokens)
+    }
+
+    @Test
+    fun `LiteRT config without cache path is compatible`() {
+        val config =
+            Json.decodeFromString<LlmConfig>(
+                """{"provider":"LITERT_LLM","modelPath":"models/safety.litertlm"}""",
+            )
+
+        assertNull(config.cachePath)
     }
 
     @Test

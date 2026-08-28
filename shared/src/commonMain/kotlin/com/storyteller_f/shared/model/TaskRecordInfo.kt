@@ -103,6 +103,8 @@ data class LlmConfig(
     val maxTokens: Int = DEFAULT_LLM_MAX_TOKENS,
     /** Local model path used by the LiteRT provider. */
     val modelPath: String? = null,
+    /** Writable local cache directory used by the LiteRT provider. */
+    val cachePath: String? = null,
 ) {
     /** Constants used to persist this configuration model. */
     companion object {
