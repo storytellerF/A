@@ -39,21 +39,6 @@ internal class TopicModerationTaskTest {
     }
 
     @Test
-    fun `moderation response accepts only exact decisions`() {
-        assertFalse(parseSafetyDecision(" SAFE\n"))
-        assertTrue(parseSafetyDecision("unsafe"))
-        val failure =
-            assertFailsWith<UnexpectedTopicSafetyDecisionException> {
-                parseSafetyDecision("UNSAFE because the topic is violent")
-            }
-        assertEquals(
-            "Topic safety model did not return SAFE or UNSAFE, " +
-                "response: UNSAFE because the topic is violent",
-            failure.message,
-        )
-    }
-
-    @Test
     fun `structured moderation returns decision`() {
         assertTrue(parseStructuredSafetyDecision("""{"is_harmful":true}"""))
         assertFalse(parseStructuredSafetyDecision("""{"is_harmful":false}"""))
@@ -97,10 +82,10 @@ internal class TopicModerationTaskTest {
     fun `invalid response has model response failure type`() {
         val failure =
             assertFailsWith<UnexpectedTopicSafetyDecisionException> {
-                parseSafetyDecision("UNSAFE because the topic is violent")
+                parseStructuredSafetyDecision("UNSAFE because the topic is violent")
             }
 
-        assertTrue(failure.toTaskFailureType() == TaskRecordType.MODEL_RESPONSE_FAILURE)
+        assertEquals(TaskRecordType.MODEL_RESPONSE_FAILURE, failure.toTaskFailureType())
     }
 
     @Test

@@ -32,7 +32,6 @@ import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.LlmConfig
-import com.storyteller_f.shared.model.LlmProvider
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.setupKmpLogger
@@ -40,7 +39,6 @@ import com.storyteller_f.shared.utils.mapCatchingNotNull
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
-import com.storytellerf.a.cloud.worker.moderation.LiteRtTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.doTopicModerationTask
 import io.github.aakira.napier.Napier
@@ -120,25 +118,7 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): Result<TopicSa
                 "using LLM provider: ${config.provider}"
             }
             Result.success(
-                when (config.provider) {
-                    LlmProvider.LITERT_LLM -> {
-                        val modelPath =
-                            config.modelPath
-                                ?: error("modelPath required for LITERT_LLM provider")
-                        LiteRtTopicSafetyReviewer.create(
-                            java.nio.file.Path.of(modelPath),
-                        )
-                    }
-
-                    LlmProvider.OPENAI,
-                    LlmProvider.ANTHROPIC,
-                    LlmProvider.GOOGLE,
-                    LlmProvider.OLLAMA,
-                    LlmProvider.OPENAI_COMPATIBLE,
-                    -> {
-                        KoogTopicSafetyReviewer.create(config)
-                    }
-                },
+                KoogTopicSafetyReviewer.create(config),
             )
         }
         .onSuccess { reviewer ->

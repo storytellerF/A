@@ -3,6 +3,7 @@
   "llmConfigData": {
     "provider": "LITERT_LLM",
     "modelPath": "/path/to/your/model.litertlm",
+    "cachePath": "/path/to/writable/litertlm-cache",
     "temperature": 0.0,
     "maxTokens": 1024
   }
