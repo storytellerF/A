@@ -102,18 +102,16 @@ internal class KoogLlmService(
         Napier.d(tag = "llm") {
             "Closing Koog LLM service"
         }
+        client.close()
     }
 
     companion object {
         /**
          * Create a KoogLlmService from LLM configuration.
-         * Returns null for LITERT_LLM provider (handled separately).
          */
-        fun create(config: LlmConfig): KoogLlmService? {
-            val client = KoogClientFactory.createClient(config) ?: return null
-            val model =
-                KoogClientFactory.resolveModel(config)
-                    ?: error("Model resolution failed for ${config.provider}")
+        fun create(config: LlmConfig): KoogLlmService {
+            val client = KoogClientFactory.createClient(config)
+            val model = KoogClientFactory.resolveModel(config)
             return KoogLlmService(client, model, config)
         }
     }

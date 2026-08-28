@@ -14,6 +14,7 @@ import ai.koog.prompt.llm.LLModel
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
 import io.github.aakira.napier.Napier
+import java.nio.file.Path
 
 private const val OPENAI_CONTEXT_LENGTH = 128_000L
 private const val OPENAI_MAX_OUTPUT_TOKENS = 4_096L
@@ -38,7 +39,7 @@ private val customModelLimits =
     )
 
 private fun createCustomModel(provider: LlmProvider, modelName: String): LLModel {
-    val limits = checkNotNull(customModelLimits[provider]) { "LiteRT does not use a Koog model" }
+    val limits = checkNotNull(customModelLimits[provider]) { "LiteRT uses its own model definition" }
     return LLModel(
         provider = limits.provider,
         id = modelName,
@@ -57,14 +58,12 @@ private fun createCustomModel(provider: LlmProvider, modelName: String): LLModel
  * Factory for creating LLM clients based on configuration.
  * Uses koog's LLMClient interface directly for simple text generation.
  *
- * Note: LITERT_LLM provider is not handled here as it uses the litertlm library directly.
  */
 object KoogClientFactory {
     /**
      * Creates an LLM client for the given configuration.
-     * Returns null for LITERT_LLM provider (handled separately).
      */
-    fun createClient(config: LlmConfig): LLMClient? {
+    fun createClient(config: LlmConfig): LLMClient {
         val client =
             when (config.provider) {
                 LlmProvider.OPENAI -> createOpenAiClient(config)
@@ -72,7 +71,7 @@ object KoogClientFactory {
                 LlmProvider.GOOGLE -> createGoogleClient(config)
                 LlmProvider.OLLAMA -> createOllamaClient(config)
                 LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
-                LlmProvider.LITERT_LLM -> null
+                LlmProvider.LITERT_LLM -> createLiteRtClient(config)
             }
         return client
     }
@@ -80,7 +79,7 @@ object KoogClientFactory {
     /**
      * Resolves the model for the given configuration.
      */
-    fun resolveModel(config: LlmConfig): LLModel? {
+    fun resolveModel(config: LlmConfig): LLModel {
         val modelName = config.model
         return when (config.provider) {
             LlmProvider.OPENAI ->
@@ -100,7 +99,7 @@ object KoogClientFactory {
                 modelName?.let { createCustomModel(config.provider, it) }
                     ?: resolveOpenAIModel("gpt-3.5-turbo")
 
-            LlmProvider.LITERT_LLM -> null
+            LlmProvider.LITERT_LLM -> resolveLiteRtModel(config)
         }
     }
 
@@ -180,6 +179,33 @@ object KoogClientFactory {
         return createOpenAICompatibleClient(
             apiKey = apiKey,
             baseUrl = baseUrl,
+        )
+    }
+
+    private fun createLiteRtClient(config: LlmConfig): LLMClient {
+        val modelPath = config.modelPath ?: error("Model path required for LiteRT")
+        val cachePath =
+            config.cachePath?.let { configuredPath ->
+                require(configuredPath.isNotBlank()) { "Cache path must not be blank for LiteRT" }
+                Path.of(configuredPath)
+            }
+        return LiteRtLlmClient.create(
+            modelPath = Path.of(modelPath),
+            cachePath = cachePath,
+        )
+    }
+
+    private fun resolveLiteRtModel(config: LlmConfig): LLModel {
+        val modelPath = config.modelPath ?: error("Model path required for LiteRT")
+        return LLModel(
+            provider = LITE_RT_LLM_PROVIDER,
+            id = config.model ?: Path.of(modelPath).fileName.toString(),
+            capabilities =
+            listOf(
+                ai.koog.prompt.llm.LLMCapability.Completion,
+            ),
+            contextLength = LITE_RT_MODEL_CONTEXT_SIZE,
+            maxOutputTokens = LITE_RT_MODEL_MAX_OUTPUT_TOKENS,
         )
     }
 
