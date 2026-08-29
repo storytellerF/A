@@ -132,7 +132,6 @@
 
 ## CI
 
-- On Windows, Detekt can intermittently fail while opening Kotlin files with a user-mapped-section error. Run the required Git Bash `scripts/tool_scripts/exec-until-success.sh` wrapper with `--max-workers=1`; successful tasks remain cached across retries.
 - Appium runner sources live in the independent `*Appium` modules and use their target module package, while reusable drivers and helpers use `com.storyteller_f.a.dev.appium`.
 - The shared app interaction buttons are in the `com.storyteller_f.a.client.compose_core.components` package so both app pages and shared client UI conventions resolve them consistently.
 - `cloud:pdfbox` is intentionally excluded from `settings.gradle.kts`, and `cloud/server` snapshot tests cover only the enabled `OpenPdf` implementation. Do not restore the JitPack repository or a `cloud:pdfbox` test dependency merely to compile those tests.

@@ -44,7 +44,7 @@
 
 ## Static Checks
 - After code changes, run `./gradlew assemble --console=plain` to check for compilation errors.
-- After compilation checks, run `./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt --console=plain` for static code style checks.
+- After compilation checks, run `./gradlew detekt --console=plain` for static code style checks.
   - On Windows, run this through Git Bash.
 - Detekt allows function names up to 50 characters. Appium and CLI E2E source sets are exempt from function naming and length rules so backtick test names can remain behavior-descriptive. Keep production function names concise even when the configured limit permits longer names.
 
