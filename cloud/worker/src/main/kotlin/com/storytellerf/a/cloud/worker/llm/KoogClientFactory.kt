@@ -9,12 +9,17 @@ import ai.koog.prompt.executor.clients.anthropic.AnthropicClientSettings
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
 import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
+import ai.koog.prompt.llm.LLMCapability.Completion
+import ai.koog.prompt.llm.LLMCapability.Temperature
+import ai.koog.prompt.llm.LLMCapability.Tools
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
 import io.github.aakira.napier.Napier
 import java.nio.file.Path
+import ai.koog.prompt.llm.LLMCapability.Schema.JSON.Standard as JsonStandard
 
 private const val OPENAI_CONTEXT_LENGTH = 128_000L
 private const val OPENAI_MAX_OUTPUT_TOKENS = 4_096L
@@ -54,6 +59,17 @@ private fun createCustomModel(provider: LlmProvider, modelName: String): LLModel
     )
 }
 
+private fun createOpenRouterModel(modelName: String): LLModel {
+    val capabilities = listOf(Temperature, Tools, Completion, JsonStandard)
+    return LLModel(
+        provider = LLMProvider.OpenRouter,
+        id = modelName,
+        capabilities = capabilities,
+        contextLength = OPENAI_CONTEXT_LENGTH,
+        maxOutputTokens = OPENAI_MAX_OUTPUT_TOKENS,
+    )
+}
+
 /**
  * Factory for creating LLM clients based on configuration.
  * Uses koog's LLMClient interface directly for simple text generation.
@@ -71,6 +87,7 @@ object KoogClientFactory {
                 LlmProvider.GOOGLE -> createGoogleClient(config)
                 LlmProvider.OLLAMA -> createOllamaClient(config)
                 LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
+                LlmProvider.OPENROUTER -> createOpenRouterClient(config)
                 LlmProvider.LITERT_LLM -> createLiteRtClient(config)
             }
         return client
@@ -98,6 +115,8 @@ object KoogClientFactory {
             LlmProvider.OPENAI_COMPATIBLE ->
                 modelName?.let { createCustomModel(config.provider, it) }
                     ?: resolveOpenAIModel("gpt-3.5-turbo")
+
+            LlmProvider.OPENROUTER -> createOpenRouterModel(requireOpenRouterModel(config))
 
             LlmProvider.LITERT_LLM -> resolveLiteRtModel(config)
         }
@@ -174,11 +193,24 @@ object KoogClientFactory {
             "Creating OpenAI-compatible client at $baseUrl with model: ${config.model ?: "gpt-3.5-turbo"}"
         }
 
-        // Use custom OpenAI-compatible client for OpenRouter and similar providers
-        // This bypasses koog's parameter determination logic for non-standard model names
+        // Bypass koog's parameter determination logic for non-standard OpenAI-compatible model names.
         return createOpenAICompatibleClient(
             apiKey = apiKey,
             baseUrl = baseUrl,
+        )
+    }
+
+    private fun createOpenRouterClient(config: LlmConfig): LLMClient {
+        val apiKey = config.apiKey ?: error("API key required for OpenRouter")
+        val model = requireOpenRouterModel(config)
+
+        Napier.i(tag = "koog") {
+            "Creating OpenRouter client with model: $model"
+        }
+
+        return OpenRouterLLMClient(
+            apiKey = apiKey,
+            httpClientFactory = KtorKoogHttpClient.Factory(),
         )
     }
 
@@ -208,6 +240,9 @@ object KoogClientFactory {
             maxOutputTokens = LITE_RT_MODEL_MAX_OUTPUT_TOKENS,
         )
     }
+
+    private fun requireOpenRouterModel(config: LlmConfig): String =
+        config.model?.takeIf { it.isNotBlank() } ?: error("Model required for OpenRouter")
 
     private fun resolveOpenAIModel(modelName: String): LLModel {
         val model =
