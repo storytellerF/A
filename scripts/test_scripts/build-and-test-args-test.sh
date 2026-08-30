@@ -5,14 +5,8 @@ repository_root=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 test_directory=$(mktemp -d)
 trap 'rm -rf "$test_directory"' EXIT
 
-mkdir -p "$test_directory/scripts/test_scripts" "$test_directory/scripts/tool_scripts"
+mkdir -p "$test_directory/scripts/test_scripts"
 cp "$repository_root/scripts/test_scripts/build-and-test.sh" "$test_directory/scripts/test_scripts/build-and-test.sh"
-
-printf '%s\n' \
-  '#!/bin/sh' \
-  'exit 0' \
-  > "$test_directory/scripts/tool_scripts/exec-until-success.sh"
-chmod +x "$test_directory/scripts/tool_scripts/exec-until-success.sh"
 
 printf '%s\n' \
   '#!/bin/sh' \

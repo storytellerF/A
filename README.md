@@ -17,7 +17,9 @@ reload the setting before every iteration, so enabling, disabling, or tuning a t
 
 When the persisted `TOPIC_MODERATION` task configuration is enabled, the worker loads the active LLM
 configuration from backend storage. Apply one of the `cloud/worker/llm-config.*-example.json` presets with
-the Cloud CLI `add` command. For LiteRT-LM, set `modelPath` in
+the Cloud CLI `add` command. For OpenRouter, set a valid API key and model identifier in
+`cloud/worker/llm-config.openrouter-example.json`; its official Koog client uses OpenRouter's default API
+endpoint and ignores `baseUrl`. For LiteRT-LM, set `modelPath` in
 `cloud/worker/llm-config.litert-example.json` to an existing local `.litertlm` model before applying it;
 the worker does not download the model.
 

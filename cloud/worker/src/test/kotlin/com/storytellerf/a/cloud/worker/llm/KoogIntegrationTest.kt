@@ -3,6 +3,8 @@
  */
 package com.storytellerf.a.cloud.worker.llm
 
+import ai.koog.prompt.llm.LLMCapability
+import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
@@ -17,6 +19,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private const val OPENROUTER_MODEL_ID = "dots-studio/dots-3-note-preview:free"
 
 internal class KoogIntegrationTest {
     @BeforeTest
@@ -83,12 +88,44 @@ internal class KoogIntegrationTest {
             LlmConfig(
                 provider = LlmProvider.OPENAI_COMPATIBLE,
                 apiKey = "test-key",
-                baseUrl = "https://openrouter.ai/api/v1",
+                baseUrl = "https://llm.example.com/v1",
                 model = "gpt-3.5-turbo",
             )
 
         val client = KoogClientFactory.createClient(config)
         assertNotNull(client)
+    }
+
+    @Test
+    fun `OpenRouter client ignores configured base URL`() {
+        val config =
+            LlmConfig(
+                provider = LlmProvider.OPENROUTER,
+                apiKey = "test-key",
+                baseUrl = " ",
+                model = OPENROUTER_MODEL_ID,
+            )
+
+        val client = KoogClientFactory.createClient(config)
+
+        assertEquals(LLMProvider.OpenRouter, client.llmProvider())
+        client.close()
+    }
+
+    @Test
+    fun `OpenRouter model supports structured output`() {
+        val config =
+            LlmConfig(
+                provider = LlmProvider.OPENROUTER,
+                apiKey = "test-key",
+                model = OPENROUTER_MODEL_ID,
+            )
+
+        val model = KoogClientFactory.resolveModel(config)
+
+        assertEquals(OPENROUTER_MODEL_ID, model.id)
+        assertEquals(LLMProvider.OpenRouter, model.provider)
+        assertTrue(model.supports(LLMCapability.Schema.JSON.Standard))
     }
 
     @Test

@@ -82,6 +82,9 @@ enum class LlmProvider {
     /** API implementing the OpenAI protocol. */
     OPENAI_COMPATIBLE,
 
+    /** OpenRouter API. */
+    OPENROUTER,
+
     /** Local Google LiteRT language model. */
     LITERT_LLM,
 }
@@ -93,7 +96,7 @@ data class LlmConfig(
     val provider: LlmProvider,
     /** Provider API key, when required. */
     val apiKey: String? = null,
-    /** Endpoint override for OpenAI-compatible providers. */
+    /** Provider endpoint override, when supported. */
     val baseUrl: String? = null,
     /** Provider model identifier. */
     val model: String? = null,

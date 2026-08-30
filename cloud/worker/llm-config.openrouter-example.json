@@ -1,0 +1,10 @@
+{
+  "type": "llmConfig",
+  "llmConfigData": {
+    "provider": "OPENROUTER",
+    "apiKey": "your-openrouter-api-key",
+    "model": "dots-studio/dots-3-note-preview:free",
+    "temperature": 0.7,
+    "maxTokens": 1024
+  }
+}

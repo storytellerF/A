@@ -250,6 +250,7 @@ kmp-zip-kotlinx = { module = "no.synth:kmp-zip-kotlinx", version.ref = "kmpZip" 
 koog-core = { module = "ai.koog:koog-agents-jvm", version.ref = "koog" }
 koog-http-client-ktor = { module = "ai.koog:http-client-ktor-jvm", version.ref = "koog" }
 koog-prompt-executor-openai = { module = "ai.koog:prompt-executor-openai-client-jvm", version.ref = "koog" }
+koog-prompt-executor-openrouter = { module = "ai.koog:prompt-executor-openrouter-client-jvm", version.ref = "koog" }
 koog-prompt-executor-anthropic = { module = "ai.koog:prompt-executor-anthropic-client-jvm", version.ref = "koog" }
 koog-prompt-executor-ollama = { module = "ai.koog:prompt-executor-ollama-client-jvm", version.ref = "koog" }
 kmpnotifier-local = { module = "io.github.mirzemehdi:kmpnotifier-local", version.ref = "kmpNotifier" }
