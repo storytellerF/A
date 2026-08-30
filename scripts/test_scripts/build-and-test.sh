@@ -180,7 +180,7 @@ if [ "$RUN_ANDROID" = true ] || [ "$RUN_E2E" = true ]; then
 fi
 
 echo "Running detekt..."
-if ! ./scripts/tool_scripts/exec-until-success.sh ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
+if ! ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
     showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi
