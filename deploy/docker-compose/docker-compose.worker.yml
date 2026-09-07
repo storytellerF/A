@@ -5,7 +5,7 @@ services:
       dockerfile: worker.Dockerfile
       args:
         BUILD_ON: ${BUILD_ON}
-#    restart: unless-stopped
+    restart: unless-stopped
     env_file:
       - ../../deploy/${FLAVOR}.env
     volumes:
