@@ -1,5 +1,9 @@
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.report.ReportMergeTask
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
+import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
+import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
@@ -17,6 +21,20 @@ plugins {
     alias(libs.plugins.android.test) apply false
     alias(libs.plugins.kotlinxRpc) apply false
     alias(libs.plugins.sentryAndroidGradle) apply false
+}
+
+plugins.withType<YarnPlugin> {
+    extensions.configure<YarnRootExtension> {
+        lockFileDirectory = layout.projectDirectory.dir("kotlin-js-store").asFile
+        lockFileName = "yarn.lock"
+    }
+}
+
+plugins.withType<WasmYarnPlugin> {
+    extensions.configure<WasmYarnRootExtension> {
+        lockFileDirectory = layout.projectDirectory.dir("kotlin-js-store/wasm").asFile
+        lockFileName = "yarn.lock"
+    }
 }
 
 fun isNoReleaseCompileTask(taskName: String): Boolean {

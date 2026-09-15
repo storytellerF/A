@@ -15,7 +15,6 @@ import org.gradle.api.tasks.TaskAction
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
-import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.FileInputStream
 import java.net.URI
@@ -380,17 +379,6 @@ compose.resources {
     publicResClass = false
     packageOfResClass = "com.storyteller_f.a.app"
     generateResClass = auto
-}
-
-rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-    rootProject.the<WasmYarnRootExtension>().run {
-        lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store/wasm")
-        lockFileName = "app-yarn.lock"
-    }
-    rootProject.the<WasmYarnRootExtension>().run {
-        lockFileDirectory = project.rootDir.resolve("app/kotlin-js-store")
-        lockFileName = "app-yarn.lock"
-    }
 }
 
 private fun KotlinDependencyHandler.implementation(

@@ -14,11 +14,22 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         outputModuleName = "panelWebApp"
-        browser()
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
         binaries.executable()
     }
 
     sourceSets {
+        wasmJsTest.dependencies {
+            implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.coil)
+        }
         wasmJsMain.dependencies {
             implementation(projects.panel.composeApp)
             implementation(projects.client.composeCore)

@@ -3,9 +3,8 @@
  */
 
 @file:OptIn(ExperimentalWasmJsInterop::class)
-@file:Suppress("INVISIBLE_REFERENCE")
 
-package com.storyteller.a.app
+package com.storyteller_f.a.client.compose_core.utils
 
 import coil3.ImageLoader
 import coil3.asImage
@@ -17,7 +16,6 @@ import coil3.request.Options
 import coil3.size.Dimension
 import coil3.size.Precision
 import coil3.size.Scale
-import kotlinx.coroutines.await
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okio.BufferedSource
 import okio.ByteString.Companion.encodeUtf8
@@ -27,13 +25,11 @@ import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorInfo
 import org.jetbrains.skia.ColorSpace
 import org.jetbrains.skia.ColorType
-import org.jetbrains.skia.Data
-import org.jetbrains.skia.Image
 import org.jetbrains.skia.ImageInfo
-import org.jetbrains.skia.impl.NativePointer
+import org.jetbrains.skia.webext.installPixelsFromArrayBuffer
 import org.jetbrains.skiko.ExperimentalSkikoApi
+import org.jetbrains.skiko.wasm.onWasmReady
 import org.khronos.webgl.ArrayBuffer
-import org.khronos.webgl.Int8Array
 import org.khronos.webgl.toInt8Array
 import org.w3c.dom.ErrorEvent
 import org.w3c.dom.MessageEvent
@@ -53,7 +49,7 @@ import kotlin.js.toJsString
 import kotlin.js.unsafeCast
 import kotlin.uuid.Uuid
 
-internal actual fun ImageLoader.Builder.addPlatformImageDecoders(): ImageLoader.Builder {
+actual fun ImageLoader.Builder.addPlatformImageDecoders(): ImageLoader.Builder {
     val configuredBuilder =
         components {
             add(AvifDecoder.Factory())
@@ -132,7 +128,8 @@ private suspend fun decodeAvif(bytes: ByteArray, options: Options): AvifWorkerRe
 
 @OptIn(ExperimentalSkikoApi::class)
 private suspend fun AvifWorkerResponse.toBitmap(): Bitmap {
-    val data = buffer.passToSkiko()
+    awaitSkikoReady()
+    val bitmap = Bitmap()
     try {
         val colorInfo =
             ColorInfo(
@@ -141,31 +138,21 @@ private suspend fun AvifWorkerResponse.toBitmap(): Bitmap {
                 ColorSpace.sRGB,
             )
         val imageInfo = ImageInfo(colorInfo, width, height)
-        val image = Image.makeRaster(imageInfo, data, imageInfo.minRowBytes)
-        try {
-            return Bitmap.makeFromImage(image).setImmutable()
-        } finally {
-            image.close()
+        check(bitmap.installPixelsFromArrayBuffer(imageInfo, buffer, imageInfo.minRowBytes)) {
+            "Failed to install decoded AVIF pixels"
         }
-    } finally {
-        data.close()
+        return bitmap.setImmutable()
+    } catch (exception: Throwable) {
+        bitmap.close()
+        throw exception
     }
 }
 
-private suspend fun ArrayBuffer.passToSkiko(): Data {
-    val data = Data.makeUninitialized(byteLength)
-    val skikoMemory =
-        org.jetbrains.skiko.wasm.awaitSkiko.await()
-            .unsafeCast<SkikoWasmModule>()
-            .wasmExports
-            .memory
-            .buffer
-    skikoMemory.set(this, data.writableData())
-    return data
-}
-
-private fun ArrayBuffer.set(data: ArrayBuffer, offset: NativePointer) {
-    Int8Array(this).set(Int8Array(data), offset)
+private suspend fun awaitSkikoReady(): Unit =
+    suspendCancellableCoroutine { continuation ->
+    onWasmReady {
+        if (continuation.isActive) continuation.resume(Unit)
+    }
 }
 
 private fun createWorkerRequest(id: String, buffer: ArrayBuffer, options: Options): JsAny {
@@ -229,18 +216,6 @@ private external interface AvifWorkerRequest : JsAny {
     var targetHeight: Int
     var scale: String
     var allowUpscale: Boolean
-}
-
-private external interface SkikoWasmModule : JsAny {
-    val wasmExports: SkikoWasmExports
-}
-
-private external interface SkikoWasmExports : JsAny {
-    val memory: SkikoWasmMemory
-}
-
-private external interface SkikoWasmMemory : JsAny {
-    val buffer: ArrayBuffer
 }
 
 private const val AVIF_MIME_TYPE = "image/avif"

@@ -9,8 +9,6 @@ import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
-import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
-import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnRootExtension
 import java.io.FileInputStream
 import java.util.Properties
 
@@ -220,17 +218,6 @@ compose.resources {
     publicResClass = false
     packageOfResClass = "com.storyteller_f.a.panel"
     generateResClass = auto
-}
-
-rootProject.plugins.withType<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin> {
-    rootProject.the<WasmYarnRootExtension>().run {
-        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store/wasm")
-        lockFileName = "panel-yarn.lock"
-    }
-    rootProject.the<YarnRootExtension>().run {
-        lockFileDirectory = project.rootDir.resolve("panel/kotlin-js-store")
-        lockFileName = "panel-yarn.lock"
-    }
 }
 
 private fun KotlinDependencyHandler.implementation(

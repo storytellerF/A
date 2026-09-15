@@ -49,7 +49,6 @@ import coil3.request.crossfade
 import coil3.util.DebugLogger
 import com.dokar.sonner.Toaster
 import com.dokar.sonner.rememberToasterState
-import com.storyteller.a.app.addPlatformImageDecoders
 import com.storyteller_f.a.app.common.AppNav
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.CommunityScreen
@@ -96,6 +95,7 @@ import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
 import com.storyteller_f.a.client.compose_core.components.Sonner
 import com.storyteller_f.a.client.compose_core.components.VideoViewFilled
 import com.storyteller_f.a.client.compose_core.components.rememberIsInPipMode
+import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.client.compose_core.utils.createSettings
 import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage

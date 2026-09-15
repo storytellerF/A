@@ -67,6 +67,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
 import com.storyteller_f.a.client.compose_core.common.LocalClient
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalDialogController
 import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
@@ -74,6 +76,7 @@ import com.storyteller_f.a.client.compose_core.components.GlobalDialog
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
+import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
 import com.storyteller_f.a.client.compose_core.utils.createSettings
@@ -143,6 +146,9 @@ fun createPanelUIViewModel() = PanelUIViewModel(kotlinx.coroutines.GlobalScope, 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context).addPlatformImageDecoders().build()
+    }
     val panelUiViewModel = LocalPanelUiViewModel.current
     val panelAccountInstance by panelUiViewModel.instance.collectAsState()
     val sessionManager = panelAccountInstance.sessionManager
