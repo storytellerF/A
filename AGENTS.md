@@ -69,6 +69,7 @@
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.
 - Do not create files outside the repository. Sensitive files (`deploy/*.env`) are excluded by `.aiexclude`.
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.
+- Configure shared Kotlin/JS and Wasm Yarn root extensions only in the root build; subprojects must not override lockfile locations. Keep JS and Wasm lockfiles separate under `kotlin-js-store` and regenerate the affected lockfile after npm dependency changes.
 - Keep existing tests compatible. If tests must be updated, explain the migration reason and steps.
 - Save knowledge learned while coding or scanning the project to `project.md`. Edit outdated or incorrect knowledge there when found.
 - Save rule-related knowledge learned while coding or scanning the project to this file.

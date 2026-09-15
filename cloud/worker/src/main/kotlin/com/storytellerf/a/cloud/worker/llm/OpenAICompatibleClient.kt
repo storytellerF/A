@@ -19,7 +19,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -91,12 +93,9 @@ internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMC
                     header("X-Title", "StoryTeller Worker")
                     contentType(ContentType.Application.Json)
                     setBody(requestBody)
-                }.body<String>()
+                }
 
-            val chatResponse = jsonSerializer.decodeFromString<ChatCompletionResponse>(response)
-
-            val firstChoice = checkNotNull(chatResponse.choices.firstOrNull()) { "No response content from LLM" }
-            val content = firstChoice.message.content
+            val content = decodeChatCompletionResponse(response.status.value, response.body<String>(), jsonSerializer)
 
             Napier.d(tag = TAG) {
                 "LLM response: ${content.take(LOG_PREVIEW_LENGTH)}..."
@@ -161,3 +160,31 @@ private data class ChatCompletionResponse(val choices: List<Choice>)
 
 @Serializable
 private data class Choice(val message: ChatMessage)
+
+internal fun decodeChatCompletionResponse(status: Int, body: String, json: Json): String {
+    val envelope =
+        try {
+            json.parseToJsonElement(body) as? JsonObject
+        } catch (exception: SerializationException) {
+            throw IllegalStateException("LLM request failed (HTTP $status): invalid JSON response", exception)
+        }
+    val errorElement = envelope?.get("error")
+    check(status in 200..299 && (errorElement == null || errorElement == JsonNull)) {
+        val error = errorElement as? JsonObject
+        val code = (error?.get("code") as? JsonPrimitive)?.content
+        val message = (error?.get("message") as? JsonPrimitive)?.content
+        "LLM request failed (HTTP $status, code ${code ?: "unknown"}): ${message ?: "upstream error"}"
+    }
+    val response =
+        try {
+            json.decodeFromString<ChatCompletionResponse>(body)
+        } catch (exception: SerializationException) {
+            throw IllegalStateException(
+                "LLM request failed (HTTP $status): invalid chat completion response",
+                exception,
+            )
+        }
+    return checkNotNull(
+        response.choices.firstOrNull(),
+    ) { "No response content from LLM (HTTP $status)" }.message.content
+}
