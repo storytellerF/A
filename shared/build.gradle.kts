@@ -60,6 +60,7 @@ kotlin {
                 dependencies {
                     implementation(libs.bcprov.jdk18on)
                     implementation(libs.bcpkix.jdk18on)
+                    implementation(libs.bcutil.jdk18on)
                 }
                 dependsOn(commonMain.get())
             }
