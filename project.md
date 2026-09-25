@@ -1,5 +1,9 @@
 # project
 
+## Release assets
+
+- Tag pushes build the existing alpha Android and Debian packages and attach them to the matching GitHub Release in a separate `release` job. The release job sets `GH_REPO`, creates a release only when absent, and replaces same-named assets on reruns. Tag builds do not run the alpha server deployment. MSI and DMG builds remain disabled.
+
 ## Cloud Worker LLM
 
 - All topic-safety providers use Koog's `LLMClient` and the shared structured JSON response schema. The JVM LiteRT adapter maps Koog's standard JSON schema to LiteRT-LM `ResponseFormat.json`, enabling native constrained decoding rather than maintaining a separate `SAFE`/`UNSAFE` text protocol.
