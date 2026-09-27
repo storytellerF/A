@@ -145,6 +145,12 @@ prebuilt Wasm distributions.
 ./scripts/service_scripts/start-service-in-local.sh sample
 ```
 
+On a deployment host without a local JDK, build the distributions in the Docker builder instead:
+
+```bash
+./scripts/service_scripts/start-service-in-docker.sh sample
+```
+
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
 Deployment settings are read from `deploy/<flavor>.env`. Use `deploy/sample.env` as the reference;
