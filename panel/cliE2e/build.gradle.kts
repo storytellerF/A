@@ -36,10 +36,10 @@ tasks.register<Test>("e2eTest") {
     testClassesDirs = e2eTest.output.classesDirs
     classpath = e2eTest.runtimeClasspath
     dependsOn(
-        ":cloud:server:buildTestDockerImage",
-        ":cloud:worker:buildTestDockerImage",
-        ":cloud:cli:buildTestDockerImage",
-        ":cloud:ws:buildTestDockerImage",
+        ":cloud:server:distTar",
+        ":cloud:worker:distTar",
+        ":cloud:cli:distTar",
+        ":cloud:ws:distTar",
         ":panel:cliApp:installDist",
     )
     systemProperty(

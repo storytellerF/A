@@ -13,7 +13,6 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.images.builder.ImageFromDockerfile
-import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.time.Duration
 
@@ -24,7 +23,7 @@ private const val POSTGRES_DATABASE = "a"
 private const val POSTGRES_USER = "a"
 private const val POSTGRES_PASSWORD = "a-test"
 
-private fun localServiceImage(name: String, target: String): ImageFromDockerfile {
+private fun testServiceImage(name: String, target: String): ImageFromDockerfile {
     val projectRoot =
         generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
             .firstOrNull { File(it, "TestServices.Dockerfile").isFile && File(it, "settings.gradle.kts").isFile }
@@ -34,12 +33,17 @@ private fun localServiceImage(name: String, target: String): ImageFromDockerfile
             .withFileFromPath("TestServices.Dockerfile", File(projectRoot, "TestServices.Dockerfile").toPath())
             .withDockerfilePath("TestServices.Dockerfile")
             .withTarget(target)
-    listOf("filesystem-service", "lucene-service").forEach { service ->
+    listOf("server", "worker", "ws", "cli", "filesystem-service", "lucene-service").forEach { service ->
         image.withFileFromPath(
             "deploy/build/$service.tar",
             File(projectRoot, "cloud/$service/build/distributions/$service.tar").toPath(),
         )
     }
+    listOf(
+        "scripts/docker/cli-entrypoint.sh",
+        "scripts/tool_scripts/flush-database.sh",
+        "scripts/tool_scripts/terminal-log.sh",
+    ).forEach { path -> image.withFileFromPath(path, File(projectRoot, path).toPath()) }
     return image
 }
 
@@ -59,7 +63,7 @@ suspend fun useLightweightBackendContainers(network: Network, block: suspend () 
         withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
     }.use { postgresql ->
         postgresql.start()
-        GenericContainer(localServiceImage("a-filesystem:latest", "filesystem-service")).apply {
+        GenericContainer(testServiceImage("a-filesystem:latest", "filesystem-service")).apply {
             withNetwork(network)
             withNetworkAliases("appium-filesystem")
             withEnv("SERVER_URL", "http://10.0.2.2:8811")
@@ -68,7 +72,7 @@ suspend fun useLightweightBackendContainers(network: Network, block: suspend () 
             waitingFor(Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)))
         }.use { filesystem ->
             filesystem.start()
-            GenericContainer(localServiceImage("a-lucene:latest", "lucene-service")).apply {
+            GenericContainer(testServiceImage("a-lucene:latest", "lucene-service")).apply {
                 withNetwork(network)
                 withNetworkAliases("appium-lucene")
                 withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
@@ -90,7 +94,7 @@ suspend fun useCliInitContainer(
     block: suspend () -> Unit,
 ) {
     val presetPath = resolveAppiumPresetPath()
-    GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
+    GenericContainer(testServiceImage("a-cli:latest", "cli")).apply {
         withNetwork(network)
         withEnv(
             commonEnv +
@@ -123,7 +127,7 @@ suspend fun useWsContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-ws:latest")).apply {
+    GenericContainer(testServiceImage("a-ws:latest", "ws")).apply {
         withNetwork(network)
         withNetworkAliases("appium-ws")
         withEnv(commonEnv)
@@ -145,7 +149,7 @@ suspend fun useServerContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-server:latest")).apply {
+    GenericContainer(testServiceImage("a-server:latest", "server")).apply {
         withNetwork(network)
         withEnv(commonEnv)
         withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
@@ -171,7 +175,7 @@ suspend fun useWorkerContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
+    GenericContainer(testServiceImage("a-worker:latest", "worker")).apply {
         withNetwork(network)
         withEnv(commonEnv)
         withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)

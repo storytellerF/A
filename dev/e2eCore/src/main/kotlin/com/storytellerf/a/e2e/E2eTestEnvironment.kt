@@ -14,7 +14,7 @@ import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.DockerImageName
+import org.testcontainers.images.builder.ImageFromDockerfile
 import java.io.File
 import java.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -28,6 +28,30 @@ private const val STARTUP_TIMEOUT_SECONDS = 90L
 private const val STARTUP_ATTEMPTS = 3
 private const val HEALTHY_STATUS_CODE = 200
 private const val API_VERSION = "1.44"
+
+private fun testServiceImage(name: String, target: String): ImageFromDockerfile {
+    val projectRoot =
+        generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+            .firstOrNull { File(it, "TestServices.Dockerfile").isFile && File(it, "settings.gradle.kts").isFile }
+            ?: error("Project root containing TestServices.Dockerfile not found")
+    val image =
+        ImageFromDockerfile(name, false)
+            .withFileFromPath("TestServices.Dockerfile", File(projectRoot, "TestServices.Dockerfile").toPath())
+            .withDockerfilePath("TestServices.Dockerfile")
+            .withTarget(target)
+    listOf("server", "worker", "ws", "cli").forEach { service ->
+        image.withFileFromPath(
+            "deploy/build/$service.tar",
+            File(projectRoot, "cloud/$service/build/distributions/$service.tar").toPath(),
+        )
+    }
+    listOf(
+        "scripts/docker/cli-entrypoint.sh",
+        "scripts/tool_scripts/flush-database.sh",
+        "scripts/tool_scripts/terminal-log.sh",
+    ).forEach { path -> image.withFileFromPath(path, File(projectRoot, path).toPath()) }
+    return image
+}
 
 /** Mapped host ports of the HTTP and WebSocket services started for a CLI E2E test. */
 class E2ePorts(server: Int, ws: Int) {
@@ -114,7 +138,7 @@ private suspend fun useCliInitContainer(
     block: suspend () -> Unit,
 ) {
     val presetPath = resolveE2ePresetPath()
-    GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
+    GenericContainer(testServiceImage("a-cli:latest", "cli")).apply {
         withNetwork(network)
         withEnv(
             commonEnv +
@@ -147,7 +171,7 @@ private suspend fun useWsContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-ws:latest")).apply {
+    GenericContainer(testServiceImage("a-ws:latest", "ws")).apply {
         withNetwork(network)
         withNetworkAliases("e2e-ws")
         withEnv(commonEnv)
@@ -172,7 +196,7 @@ private suspend fun useServerContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-server:latest")).apply {
+    GenericContainer(testServiceImage("a-server:latest", "server")).apply {
         withNetwork(network)
         withEnv(commonEnv)
         withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
@@ -198,7 +222,7 @@ private suspend fun useWorkerContainer(
     containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
-    GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
+    GenericContainer(testServiceImage("a-worker:latest", "worker")).apply {
         withNetwork(network)
         withEnv(commonEnv)
         withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
