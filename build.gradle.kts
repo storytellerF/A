@@ -45,11 +45,12 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
         "JavaWithJavac",
         "KotlinJvm",
         "KotlinMetadata",
+        "KotlinWasmJs",
         "Main",
     ).any { suffix ->
         taskName.endsWith(suffix)
     }
-    val isExcludedVariant = listOf("Release", "Benchmark", "Test", "Jmh").any { variant ->
+    val isExcludedVariant = listOf("Release", "Benchmark", "Test", "Jmh", "Executable").any { variant ->
         taskName.contains(variant)
     }
     return (isKsp || isKotlinOrJavaCompile) && !isExcludedVariant
@@ -57,7 +58,7 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
 
 val compileAllNoRelease = tasks.register("compileAllNoRelease") {
     group = "verification"
-    description = "Compile all included modules without Android release or benchmark variants."
+    description = "Compile all included modules without executable, release, or benchmark variants."
 }
 
 subprojects {
