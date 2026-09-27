@@ -2,7 +2,7 @@
 
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add --no-cache bash curl dos2unix
+RUN apk add --no-cache bash curl
 
 WORKDIR /app
 COPY . .
