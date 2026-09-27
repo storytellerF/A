@@ -45,6 +45,7 @@ fun isNoReleaseCompileTask(taskName: String): Boolean {
         "JavaWithJavac",
         "KotlinJvm",
         "KotlinMetadata",
+        "KotlinWasmJs",
         "Main",
     ).any { suffix ->
         taskName.endsWith(suffix)
