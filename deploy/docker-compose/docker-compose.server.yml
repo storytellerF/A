@@ -9,7 +9,7 @@ services:
     env_file:
       - ../../deploy/${FLAVOR}.env
     ports:
-      - ${SERVER_EXPOSE_PORT}:${SERVER_PORT}
+      - ${SERVER_EXPOSE_PORT}:80
     volumes:
       - ${PRESET_PATH}:/app/deploy/preset_data
   ws:
@@ -22,4 +22,4 @@ services:
     env_file:
       - ../../deploy/${FLAVOR}.env
     ports:
-      - ${WS_SERVER_EXPOSE_PORT:-8813}:${WS_SERVER_PORT}
+      - ${WS_SERVER_EXPOSE_PORT:-8813}:80
