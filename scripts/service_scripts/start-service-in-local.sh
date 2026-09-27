@@ -14,9 +14,6 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
-echo "build on local"
-# 在本地构建，本地启动
-"${BUILD_CLOUD_SCRIPT:-./scripts/build_scripts/build-cloud.sh}"
-
-export BUILD_ON=local
+echo "build in Docker"
+export BUILD_ON=docker
 ./scripts/service_scripts/compose-service.sh "$FLAVOR" false 'up -d --build'
