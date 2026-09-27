@@ -45,7 +45,7 @@ data class LuceneRoomDocument(val roomDocument: RoomDocument) : LuceneDocument {
     }
 }
 
-class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) :
+class LocalLuceneRoomSearchService(path: Path, isInMemory: Boolean = false) :
     Lucene(path, isInMemory),
     RoomSearchService {
     override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> =
@@ -101,11 +101,11 @@ class LuceneRoomSearchService(path: Path, isInMemory: Boolean = false) :
     }.build()
 }
 
-class LuceneRoomSearchServiceFactory : RoomSearchServiceFactory {
+class LocalLuceneRoomSearchServiceFactory : RoomSearchServiceFactory {
     override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
     override fun build(env: MergedEnv): RoomSearchService =
         buildLuceneSearchService(env) { path, isInMemory ->
-        LuceneRoomSearchService(path.resolve("room"), isInMemory)
+        LocalLuceneRoomSearchService(path.resolve("room"), isInMemory)
     }
 }

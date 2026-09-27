@@ -20,11 +20,20 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(projects.backend.core)
-    implementation(projects.backend.filesystem)
+    implementation(projects.shared)
+    implementation(libs.napier)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.urlbuilder)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.websockets)
     implementation(libs.kotlinx.rpc.krpc.server)
     implementation(libs.kotlinx.rpc.krpc.ktor.server)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

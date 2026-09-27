@@ -44,7 +44,7 @@ data class LuceneFileDocument(val fileDocument: FileDocument) : LuceneDocument {
     }
 }
 
-class LuceneFileSearchService(path: Path, isInMemory: Boolean = false) :
+class LocalLuceneFileSearchService(path: Path, isInMemory: Boolean = false) :
     Lucene(path, isInMemory),
     FileSearchService {
     override suspend fun saveDocument(documents: List<FileDocument>): Result<Unit> =
@@ -101,11 +101,11 @@ class LuceneFileSearchService(path: Path, isInMemory: Boolean = false) :
     }.build()
 }
 
-class LuceneFileSearchServiceFactory : FileSearchServiceFactory {
+class LocalLuceneFileSearchServiceFactory : FileSearchServiceFactory {
     override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
     override fun build(env: MergedEnv): FileSearchService =
         buildLuceneSearchService(env) { path, isInMemory ->
-        LuceneFileSearchService(path.resolve("file"), isInMemory)
+        LocalLuceneFileSearchService(path.resolve("file"), isInMemory)
     }
 }

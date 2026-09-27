@@ -81,7 +81,6 @@ include(":backend:simple")
 include(":backend:filesystem")
 include(":backend:redis")
 include(":backend:minio")
-include(":backend:rpc")
 include(":cloud:filesystem-service")
 include(":cloud:lucene-service")
 

@@ -2,7 +2,7 @@
  * This is a private project. All rights reserved.
  */
 
-package com.storyteller_f.a.backend.filesystem
+package com.storyteller_f.a.cloud.filesystem
 
 import com.storyteller_f.a.backend.core.service.UploadPack
 import kotlinx.coroutines.runBlocking
@@ -14,14 +14,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class FileSystemObjectStorageServiceTest {
+class LocalFileSystemObjectStorageServiceTest {
     @Test
     fun `object paths cannot escape their bucket`() =
         runBlocking {
         val base = createTempDirectory("filesystem-storage-")
         val source = Files.createTempFile("filesystem-upload-", ".txt").toFile()
         source.writeText("private")
-        val service = FileSystemObjectStorageService("https://example.invalid", base)
+        val service = LocalFileSystemObjectStorageService("https://example.invalid", base)
         val escaped = base.resolve("escaped.txt")
         val pack =
             UploadPack(

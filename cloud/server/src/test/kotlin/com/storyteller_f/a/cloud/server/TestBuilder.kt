@@ -185,7 +185,7 @@ private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, 
         )
     }.use { container ->
         container.start()
-        env["MEDIA_SERVICE"] = "rpc"
+        env["MEDIA_SERVICE"] = "filesystem"
         env["FILESYSTEM_RPC_URL"] =
             "ws://${container.host}:${container.getMappedPort(FILESYSTEM_PORT)}/rpc"
         block()
@@ -199,7 +199,7 @@ private suspend fun useLuceneTestContainer(env: MutableMap<String, String>, bloc
         waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
     }.use { container ->
         container.start()
-        env["SEARCH_SERVICE"] = "rpc"
+        env["SEARCH_SERVICE"] = "lucene"
         env["LUCENE_RPC_URL"] = "ws://${container.host}:${container.getMappedPort(LUCENE_PORT)}/rpc"
         block()
     }

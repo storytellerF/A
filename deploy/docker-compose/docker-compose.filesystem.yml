@@ -23,17 +23,17 @@ services:
 
   cli:
     environment:
-      MEDIA_SERVICE: rpc
+      MEDIA_SERVICE: filesystem
       FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
   server:
     environment:
-      MEDIA_SERVICE: rpc
+      MEDIA_SERVICE: filesystem
       FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
   worker:
     environment:
-      MEDIA_SERVICE: rpc
+      MEDIA_SERVICE: filesystem
       FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
   ws:
     environment:
-      MEDIA_SERVICE: rpc
+      MEDIA_SERVICE: filesystem
       FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc

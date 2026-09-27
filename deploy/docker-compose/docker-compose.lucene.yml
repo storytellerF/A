@@ -22,17 +22,17 @@ services:
 
   cli:
     environment:
-      SEARCH_SERVICE: rpc
+      SEARCH_SERVICE: lucene
       LUCENE_RPC_URL: ws://lucene:8821/rpc
   server:
     environment:
-      SEARCH_SERVICE: rpc
+      SEARCH_SERVICE: lucene
       LUCENE_RPC_URL: ws://lucene:8821/rpc
   worker:
     environment:
-      SEARCH_SERVICE: rpc
+      SEARCH_SERVICE: lucene
       LUCENE_RPC_URL: ws://lucene:8821/rpc
   ws:
     environment:
-      SEARCH_SERVICE: rpc
+      SEARCH_SERVICE: lucene
       LUCENE_RPC_URL: ws://lucene:8821/rpc

@@ -17,12 +17,12 @@ import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
-import com.storyteller_f.a.backend.lucene.LuceneCommunitySearchService
-import com.storyteller_f.a.backend.lucene.LuceneFileSearchService
-import com.storyteller_f.a.backend.lucene.LuceneMemberSearchService
-import com.storyteller_f.a.backend.lucene.LuceneRoomSearchService
-import com.storyteller_f.a.backend.lucene.LuceneTopicSearchService
-import com.storyteller_f.a.backend.lucene.LuceneUserSearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneCommunitySearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneFileSearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneMemberSearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneRoomSearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneTopicSearchService
+import com.storyteller_f.a.backend.lucene.LocalLuceneUserSearchService
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -37,12 +37,12 @@ import java.nio.file.Paths
 
 private class LuceneRpcImpl(basePath: String) : LuceneRpc {
     private val base = Paths.get(basePath)
-    private val topics = LuceneTopicSearchService(base.resolve("topic"))
-    private val users = LuceneUserSearchService(base.resolve("user"))
-    private val rooms = LuceneRoomSearchService(base.resolve("room"))
-    private val communities = LuceneCommunitySearchService(base.resolve("community"))
-    private val members = LuceneMemberSearchService(base.resolve("member"))
-    private val files = LuceneFileSearchService(base.resolve("file"))
+    private val topics = LocalLuceneTopicSearchService(base.resolve("topic"))
+    private val users = LocalLuceneUserSearchService(base.resolve("user"))
+    private val rooms = LocalLuceneRoomSearchService(base.resolve("room"))
+    private val communities = LocalLuceneCommunitySearchService(base.resolve("community"))
+    private val members = LocalLuceneMemberSearchService(base.resolve("member"))
+    private val files = LocalLuceneFileSearchService(base.resolve("file"))
 
     override suspend fun health() = "ok"
     override suspend fun saveTopics(documents: List<TopicDocument>) {

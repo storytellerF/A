@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class RpcUploadPack(
-    val content: ByteArray,
+    val transferId: String,
     val name: String,
     val size: Long,
     val fullName: String,
@@ -22,12 +22,15 @@ data class RpcUploadPack(
 interface FilesystemRpc {
     suspend fun health(): String
 
-    suspend fun upload(bucketName: String, uploadPacks: List<RpcUploadPack>): List<ObjectStorageWriteRecord>
+    suspend fun beginUpload(bucketName: String, uploadPack: RpcUploadPack)
+    suspend fun uploadChunk(transferId: String, content: ByteArray)
+    suspend fun finishUpload(transferId: String): ObjectStorageWriteRecord
+    suspend fun abortUpload(transferId: String)
     suspend fun get(bucketName: String, names: List<String>): List<ObjectStorageRecord>
     suspend fun cleanObjects(bucketName: String)
     suspend fun list(bucketName: String, prefix: String): List<ObjectStorageRecord>
     suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): List<ObjectStorageRecord>
-    suspend fun getBytes(bucketName: String, name: String): ByteArray
+    suspend fun getChunk(bucketName: String, name: String, offset: Long, size: Int): ByteArray
     suspend fun compose(
         bucketName: String,
         targetFullName: String,

@@ -46,7 +46,7 @@ class LuceneCommunityDocument(val communityDocument: CommunityDocument) : Lucene
     }
 }
 
-class LuceneCommunitySearchService(path: Path, isInMemory: Boolean = false) :
+class LocalLuceneCommunitySearchService(path: Path, isInMemory: Boolean = false) :
     Lucene(path, isInMemory),
     CommunitySearchService {
     override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> =
@@ -98,11 +98,11 @@ class LuceneCommunitySearchService(path: Path, isInMemory: Boolean = false) :
     }.build()
 }
 
-class LuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory {
+class LocalLuceneCommunitySearchServiceFactory : CommunitySearchServiceFactory {
     override fun match(env: MergedEnv): Boolean = env["SEARCH_SERVICE"] == "lucene"
 
     override fun build(env: MergedEnv): CommunitySearchService =
         buildLuceneSearchService(env) { path, isInMemory ->
-        LuceneCommunitySearchService(path.resolve("community"), isInMemory)
+        LocalLuceneCommunitySearchService(path.resolve("community"), isInMemory)
     }
 }

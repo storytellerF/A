@@ -2,14 +2,11 @@
  * This is a private project. All rights reserved.
  */
 
-package com.storyteller_f.a.backend.filesystem
+package com.storyteller_f.a.cloud.filesystem
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder
-import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
-import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
@@ -42,7 +39,7 @@ import kotlin.io.path.visitFileTree
 import kotlin.time.ExperimentalTime
 import kotlin.time.toKotlinInstant
 
-class FileSystemObjectStorageService(private val url: String, base: Path) : ObjectStorageService {
+class LocalFileSystemObjectStorageService(private val url: String, base: Path) : ObjectStorageService {
     private val base =
         if (!base.exists()) {
             base.createDirectories()
@@ -214,28 +211,5 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
             require(!Files.isSymbolicLink(resolved)) { "symbolic links are not allowed in object paths" }
         }
         return resolved
-    }
-}
-
-class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
-    override fun match(env: MergedEnv): Boolean = env["MEDIA_SERVICE"] == "filesystem"
-
-    override fun build(env: MergedEnv): ObjectStorageService {
-        val url = env["SERVER_URL"] ?: error("SERVER_URL is empty")
-        val base = env["FILE_SYSTEM_MEDIA_PATH"]
-        val p =
-            if (base.isNullOrBlank()) {
-                Napier.i {
-                    "use in-memory file"
-                }
-                MemoryFileSystemBuilder.newLinux().build().getPath("/a_file")
-            } else {
-                val path = Paths.get(base)
-                Napier.i {
-                    "use file system oss ${path.toFile().canonicalPath}"
-                }
-                path
-            }
-        return FileSystemObjectStorageService(url, p)
     }
 }

@@ -11,20 +11,18 @@ group = "com.storyteller_f.a.backend"
 version = "unspecified"
 
 dependencies {
-    implementation(libs.napier)
-    implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(projects.backend.core)
     implementation(projects.shared)
-    implementation(libs.memoryfilesystem)
-    implementation(libs.urlbuilder)
-    testImplementation(kotlin("test"))
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.websockets)
+    implementation(libs.kotlinx.rpc.krpc.client)
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
 kotlin {
     jvmToolchain(21)
 }

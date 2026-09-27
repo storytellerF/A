@@ -33,7 +33,6 @@ dependencies {
     implementation(projects.backend.minio)
     implementation(projects.backend.redis)
     implementation(projects.backend.simple)
-    implementation(projects.backend.rpc)
     runtimeOnly(libs.h2)
     runtimeOnly(libs.postgresql)
 
