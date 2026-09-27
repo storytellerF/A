@@ -207,6 +207,23 @@ assert_not_contains "$TMP_DIR/$local_backend_flavor.generated.yml" "../lucene_da
 assert_contains "Dockerfile" "AS filesystem-service"
 assert_contains "Dockerfile" "AS lucene-service"
 assert_contains "deploy/docker-compose/docker-compose.minio.yml" "dockerfile: minio.Dockerfile"
+
+docker_start_args="$TMP_DIR/docker-start.args"
+: > "$docker_start_args"
+MOCK_DOCKER_ARGS="$docker_start_args" \
+MOCK_GENERATED_OUT="$TMP_DIR/docker-start.generated.yml" \
+MOCK_GRADLE_ARGS="$TMP_DIR/docker-start.gradle.args" \
+./scripts/service_scripts/start-service-in-docker.sh "$local_backend_flavor" > "$TMP_DIR/docker-start.stdout"
+mapfile -t docker_builds < <(grep ' build ' "$docker_start_args")
+[[ ${#docker_builds[@]} -eq 6 ]] || fail "expected six sequential backend image builds"
+[[ "${docker_builds[0]}" == *"build filesystem" ]] || fail "filesystem must build first"
+[[ "${docker_builds[1]}" == *"build lucene" ]] || fail "lucene must build second"
+[[ "${docker_builds[2]}" == *"build cli" ]] || fail "cli must build third"
+[[ "${docker_builds[3]}" == *"build worker" ]] || fail "worker must build fourth"
+[[ "${docker_builds[4]}" == *"build server" ]] || fail "server must build fifth"
+[[ "${docker_builds[5]}" == *"build ws" ]] || fail "ws must build sixth"
+assert_contains "$docker_start_args" "up -d --no-build"
+assert_not_contains "$docker_start_args" "up -d --build"
 rm -f "deploy/$local_backend_flavor.env"
 
 app_start_args="$TMP_DIR/app-start.args"
