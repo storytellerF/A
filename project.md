@@ -112,7 +112,7 @@
 
 ## Gradle Tool Scripts
 
-- The root `compileAllNoRelease` task includes Kotlin/Wasm main and executable compilation tasks by matching the `KotlinWasmJs` task-name suffix. Test, release, benchmark, and JMH compilations remain excluded.
+- The root `compileAllNoRelease` task includes Kotlin/Wasm main compilation tasks by matching the `KotlinWasmJs` task-name suffix. Executable, test, release, benchmark, and JMH compilations remain excluded so verification does not link multiple memory-intensive Wasm binaries in parallel.
 - `scripts/build_scripts/gradle-prune-implementations.sh` uses `./gradlew projects` to discover the modules actually included in the current build. It only processes those modules' `build.gradle.kts` files, avoiding accidental dependency removal from modules that are not included.
 - The prune check runs `assemble` by default, which can be overridden with `GRADLE_PRUNE_TASK`. Script arguments are forwarded to Gradle, for example `-Pserver.flavor=...`.
 - Each candidate `implementation` is verified on top of the cumulative "confirmed removable" state. On failure, only the current candidate is rolled back, preventing final deletion of dependencies that were never validated in combination.
