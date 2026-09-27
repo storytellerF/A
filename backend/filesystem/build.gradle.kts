@@ -19,6 +19,7 @@ dependencies {
     implementation(projects.shared)
     implementation(libs.memoryfilesystem)
     implementation(libs.urlbuilder)
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

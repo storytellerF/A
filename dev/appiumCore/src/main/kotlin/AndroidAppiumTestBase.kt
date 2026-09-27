@@ -12,11 +12,36 @@ import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.images.builder.ImageFromDockerfile
 import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.time.Duration
 
 const val CLI_READY_PORT = 8081
+private const val FILESYSTEM_PORT = 8820
+private const val LUCENE_PORT = 8821
+private const val POSTGRES_DATABASE = "a"
+private const val POSTGRES_USER = "a"
+private const val POSTGRES_PASSWORD = "a-test"
+
+private fun localServiceImage(name: String, target: String): ImageFromDockerfile {
+    val projectRoot =
+        generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
+            .firstOrNull { File(it, "TestServices.Dockerfile").isFile && File(it, "settings.gradle.kts").isFile }
+            ?: error("Project root containing TestServices.Dockerfile not found")
+    val image =
+        ImageFromDockerfile(name, false)
+            .withFileFromPath("TestServices.Dockerfile", File(projectRoot, "TestServices.Dockerfile").toPath())
+            .withDockerfilePath("TestServices.Dockerfile")
+            .withTarget(target)
+    listOf("filesystem-service", "lucene-service").forEach { service ->
+        image.withFileFromPath(
+            "deploy/build/$service.tar",
+            File(projectRoot, "cloud/$service/build/distributions/$service.tar").toPath(),
+        )
+    }
+    return image
+}
 
 data class AppiumPorts(val server: Int, val ws: Int)
 
@@ -24,13 +49,36 @@ data class AuthenticatedSession(val session: InjectedSession, val sessionManager
 
 data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useDatabaseContainer(network: Network, block: suspend (PostgreSQLContainer<*>) -> Unit) {
+suspend fun useLightweightBackendContainers(network: Network, block: suspend () -> Unit) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
         withNetwork(network)
-        withNetworkAliases("appium-postgres")
-    }.use { container ->
-        container.start()
-        block(container)
+        withNetworkAliases("appium-postgresql")
+        withDatabaseName(POSTGRES_DATABASE)
+        withUsername(POSTGRES_USER)
+        withPassword(POSTGRES_PASSWORD)
+        withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
+    }.use { postgresql ->
+        postgresql.start()
+        GenericContainer(localServiceImage("a-filesystem:latest", "filesystem-service")).apply {
+            withNetwork(network)
+            withNetworkAliases("appium-filesystem")
+            withEnv("SERVER_URL", "http://10.0.2.2:8811")
+            withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+            withExposedPorts(FILESYSTEM_PORT)
+            waitingFor(Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+        }.use { filesystem ->
+            filesystem.start()
+            GenericContainer(localServiceImage("a-lucene:latest", "lucene-service")).apply {
+                withNetwork(network)
+                withNetworkAliases("appium-lucene")
+                withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+                withExposedPorts(LUCENE_PORT)
+                waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+            }.use { lucene ->
+                lucene.start()
+                block()
+            }
+        }
     }
 }
 
@@ -151,9 +199,8 @@ fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "files").mkdirs()
 }
 
-fun buildContainerEnv(containerDataPath: String, postgresContainer: PostgreSQLContainer<*>): Map<String, String> {
+fun buildContainerEnv(containerDataPath: String): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
-    val databaseUri = "r2dbc:postgresql://appium-postgres:5432/${postgresContainer.databaseName}"
     return envFromFile +
         mapOf(
             "BUILD_TYPE" to "test",
@@ -164,12 +211,14 @@ fun buildContainerEnv(containerDataPath: String, postgresContainer: PostgreSQLCo
             "WS_SERVER_URL" to "ws://10.0.2.2:8813",
             "WS_RPC_URL" to "ws://appium-ws:8813/rpc",
             "SESSION_SECRET" to "appium-session-secret",
-            "DATABASE_URI" to databaseUri,
+            "DATABASE_URI" to "r2dbc:postgresql://appium-postgresql:5432/$POSTGRES_DATABASE",
             "DATABASE_DRIVER" to "postgresql",
-            "DATABASE_USER" to postgresContainer.username,
-            "DATABASE_PASS" to postgresContainer.password,
-            "LUCENE_BASE_PATH" to "$containerDataPath/lucene",
-            "FILE_SYSTEM_MEDIA_PATH" to "$containerDataPath/files",
+            "DATABASE_USER" to POSTGRES_USER,
+            "DATABASE_PASS" to POSTGRES_PASSWORD,
+            "MEDIA_SERVICE" to "rpc",
+            "FILESYSTEM_RPC_URL" to "ws://appium-filesystem:$FILESYSTEM_PORT/rpc",
+            "SEARCH_SERVICE" to "rpc",
+            "LUCENE_RPC_URL" to "ws://appium-lucene:$LUCENE_PORT/rpc",
             "LOG_PATH" to "$containerDataPath/logs",
             "INIT_ENABLE" to "false",
         )

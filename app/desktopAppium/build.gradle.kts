@@ -38,6 +38,8 @@ tasks.register<Test>("appiumTest") {
         ":cloud:worker:buildAppiumDockerImage",
         ":cloud:cli:buildAppiumDockerImage",
         ":cloud:ws:buildAppiumDockerImage",
+        ":cloud:filesystem-service:distTar",
+        ":cloud:lucene-service:distTar",
         ":app:desktopApp:writeAppiumRuntimeClasspath",
         accessibilityDumpAgentJar,
     )

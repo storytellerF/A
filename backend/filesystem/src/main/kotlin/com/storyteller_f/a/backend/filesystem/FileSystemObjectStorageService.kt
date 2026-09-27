@@ -28,14 +28,13 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.exists
 import kotlin.io.path.getLastModifiedTime
-import kotlin.io.path.inputStream
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
@@ -62,9 +61,9 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         uploadPacks: List<UploadPack>,
     ): Result<List<ObjectStorageWriteRecord>> =
         useFileSystem {
-        val bucketPath = base.resolve(bucketName)
+        val bucketPath = resolveBucket(bucketName)
         uploadPacks.map { uploadPack ->
-            val target = bucketPath.resolve(uploadPack.fullName).createParentDirectories()
+            val target = resolveObject(bucketPath, uploadPack.fullName).createParentDirectories()
             Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
             ObjectStorageWriteRecord(uploadPack.fullName)
         }
@@ -74,8 +73,8 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     override suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>> =
         useFileSystem {
             names.mapNotNull { name ->
-                val mediaPath = base.resolve("$bucketName/$name")
-                if (mediaPath.exists()) {
+                val mediaPath = resolveObject(bucketName, name)
+                if (mediaPath.isRegularFile()) {
                     val newUrl =
                         UrlBuilder.fromString(url)
                             .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$name")
@@ -95,12 +94,12 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
     @OptIn(ExperimentalPathApi::class)
     override suspend fun clean(bucketName: String): Result<Unit> =
         useFileSystem {
-        val bucketPath = base.resolve(bucketName)
+        val bucketPath = resolveBucket(bucketName)
         bucketPath.deleteRecursively()
     }
 
     override suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> {
-        val p = base.resolve("$bucketName/$prefix")
+        val p = if (prefix.isBlank()) resolveBucket(bucketName) else resolveObject(bucketName, prefix)
         if (p.notExists()) {
             return Result.success(emptyList())
         }
@@ -120,13 +119,13 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
 
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>> =
         useFileSystem {
-            val bucketPath = base.resolve(bucketName)
+            val bucketPath = resolveBucket(bucketName)
             copyPacks.map {
-                val p = bucketPath.resolve(it.originFullName)
-                if (!p.exists()) {
+                val p = resolveObject(bucketPath, it.originFullName)
+                if (!p.isRegularFile()) {
                     error("${it.originFullName} not exists")
                 }
-                val targetFile = bucketPath.resolve(it.newFullName).createParentDirectories()
+                val targetFile = resolveObject(bucketPath, it.newFullName).createParentDirectories()
                 p.copyTo(targetFile, true)
                 it.newFullName
             }
@@ -136,9 +135,9 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
 
     override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
         useFileSystem {
-        val mediaPath = base.resolve("$bucketName/$name")
-        if (mediaPath.exists()) {
-            mediaPath.inputStream()
+        val mediaPath = resolveObject(bucketName, name)
+        if (mediaPath.isRegularFile()) {
+            Files.newInputStream(mediaPath).buffered()
         } else {
             error("file $name not exists")
         }
@@ -150,13 +149,13 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
         sourceFullNames: List<String>,
     ): Result<ObjectStorageWriteRecord> =
         useFileSystem {
-        val bucketPath = base.resolve(bucketName)
-        val target = bucketPath.resolve(targetFullName).createParentDirectories()
-        Files.newOutputStream(target).use { out ->
+        val bucketPath = resolveBucket(bucketName)
+        val target = resolveObject(bucketPath, targetFullName).createParentDirectories()
+        Files.newOutputStream(target).buffered().use { out ->
             sourceFullNames.forEach { src ->
-                val p = bucketPath.resolve(src)
-                check(p.exists()) { "source $src not exists" }
-                Files.newInputStream(p).use { ins ->
+                val p = resolveObject(bucketPath, src)
+                check(p.isRegularFile()) { "source $src not exists" }
+                Files.newInputStream(p).buffered().use { ins ->
                     ins.copyTo(out)
                 }
             }
@@ -166,14 +165,13 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
 
     override suspend fun delete(bucketName: String, names: List<String>): Result<Unit> =
         useFileSystem {
-        val bucketPath = base.resolve(bucketName)
+        val bucketPath = resolveBucket(bucketName)
         names.forEach { name ->
-            val p = bucketPath.resolve(name)
+            val p = resolveObject(bucketPath, name)
             if (p.exists()) {
                 Files.deleteIfExists(p)
             }
         }
-        Unit
     }
 
     suspend fun <T> useFileSystem(block: suspend () -> T): Result<T> =
@@ -185,14 +183,38 @@ class FileSystemObjectStorageService(private val url: String, base: Path) : Obje
 
     suspend fun getPathResponse(it: List<String>): Path? =
         useFileSystem {
-        val path = base.resolve(it.joinToString("/"))
-        val file = path.toRealPath()
-        if (file.pathString != path.absolutePathString()) {
-            null
-        } else {
-            file
-        }
+        if (it.size < 2) return@useFileSystem null
+        val path = resolveObject(it.first(), it.drop(1).joinToString("/"))
+        path.takeIf { candidate -> candidate.isRegularFile() }?.toRealPath()
     }.getOrNull()
+
+    private fun resolveBucket(bucketName: String): Path {
+        val bucket = Paths.get(bucketName)
+        require(!bucket.isAbsolute && bucket.nameCount == 1 && bucketName !in setOf(".", "..")) {
+            "invalid bucket name"
+        }
+        return resolveWithoutLinks(base, bucketName)
+    }
+
+    private fun resolveObject(bucketName: String, name: String): Path = resolveObject(resolveBucket(bucketName), name)
+
+    private fun resolveObject(bucketPath: Path, name: String): Path {
+        require(name.isNotBlank()) { "object name is empty" }
+        val candidate = Paths.get(name)
+        require(!candidate.isAbsolute) { "absolute object name is not allowed" }
+        val resolved = bucketPath.resolve(candidate).normalize()
+        require(resolved.startsWith(bucketPath)) { "object name escapes its bucket" }
+        return resolveWithoutLinks(bucketPath, bucketPath.relativize(resolved).pathString)
+    }
+
+    private fun resolveWithoutLinks(parent: Path, relative: String): Path {
+        var resolved = parent
+        Paths.get(relative).forEach { component ->
+            resolved = resolved.resolve(component)
+            require(!Files.isSymbolicLink(resolved)) { "symbolic links are not allowed in object paths" }
+        }
+        return resolved
+    }
 }
 
 class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {

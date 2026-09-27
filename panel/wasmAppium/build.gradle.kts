@@ -50,6 +50,8 @@ tasks.register<Test>("appiumTest") {
         ":cloud:worker:buildAppiumDockerImage",
         ":cloud:cli:buildAppiumDockerImage",
         ":cloud:ws:buildAppiumDockerImage",
+        ":cloud:filesystem-service:distTar",
+        ":cloud:lucene-service:distTar",
     )
     jvmArgs("--add-modules", "jdk.httpserver")
     maxParallelForks = 1

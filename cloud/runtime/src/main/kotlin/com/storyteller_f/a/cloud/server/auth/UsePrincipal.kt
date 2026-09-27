@@ -8,8 +8,8 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.cloud.core.service.ByteArrayResponse
 import com.storyteller_f.a.cloud.core.service.FileResponse
-import com.storyteller_f.a.cloud.core.service.PathResponse
 import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentDisposition
@@ -23,11 +23,10 @@ import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.ParameterConversionException
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondFile
-import io.ktor.server.response.respondPath
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.websocket.DefaultWebSocketServerSession
-import kotlin.io.path.name
 
 inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
 
@@ -114,13 +113,13 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(result: Resul
                 call.respondFile(value.file)
             }
 
-            is PathResponse -> {
+            is ByteArrayResponse -> {
                 call.response.header(
                     HttpHeaders.ContentDisposition,
-                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, value.file.name)
+                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, value.name)
                         .toString(),
                 )
-                call.respondPath(value.file)
+                call.respondBytes(value.bytes)
             }
 
             is Unit -> call.respond(HttpStatusCode.OK)

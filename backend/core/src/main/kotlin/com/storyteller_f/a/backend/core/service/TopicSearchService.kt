@@ -11,7 +11,9 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class TopicDocument(
     override val id: PrimaryKey,
     val content: String,
@@ -35,13 +37,22 @@ data class TopicDocument(
     }
 }
 
+@Serializable
 sealed interface TopicDocumentSearch {
+    @Serializable
     data class Recommend(val uid: PrimaryKey, val communities: List<PrimaryKey>, val fetch: OffsetFetch) :
         TopicDocumentSearch
 
+    @Serializable
     data class Topics(val parentId: PrimaryKey, val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+
+    @Serializable
     data class RecommendNotLogin(val fetch: OffsetFetch) : TopicDocumentSearch
+
+    @Serializable
     data class All(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+
+    @Serializable
     data class AllCommunityRoot(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 }
 

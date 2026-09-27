@@ -6,7 +6,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.cloud.core.service.PathResponse
+import com.storyteller_f.a.cloud.core.service.ByteArrayResponse
 import com.storyteller_f.a.cloud.core.service.getFileSystemDownloadUrl
 import com.storyteller_f.a.cloud.server.auth.callRespond
 import com.storyteller_f.a.cloud.server.auth.handleResult
@@ -22,7 +22,7 @@ fun Routing.bindUnauthenticatedRoute(backend: Backend) {
 
     get("/a_file/{path...}") {
         callRespond(backend) {
-            checkParameter<List<String>, PathResponse>("path") { paths ->
+            checkParameter<List<String>, ByteArrayResponse>("path") { paths ->
                 getFileSystemDownloadUrl(backend, paths)
             }
         }

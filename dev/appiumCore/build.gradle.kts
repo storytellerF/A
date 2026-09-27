@@ -20,6 +20,7 @@ dependencies {
     api(projects.shared)
     api(libs.ktor.client.core)
     api(libs.java.client)
+    api(libs.testcontainers)
     api(libs.testcontainers.postgresql)
     implementation(libs.selenium.firefox.driver)
 }

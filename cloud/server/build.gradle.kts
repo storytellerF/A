@@ -43,6 +43,8 @@ val buildTestDockerImage =
             "build",
             "-f",
             "Dockerfile",
+            "--target",
+            "server",
             "--build-arg",
             "BUILD_ON=host",
             "-t",
@@ -108,11 +110,8 @@ dependencies {
     testImplementation(projects.client.core)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(kotlin("test"))
-    @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
-    testImplementation(libs.testcontainers.elasticsearch)
-    testImplementation(libs.testcontainers.minio)
+    testImplementation(libs.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
     // testImplementation(projects.cloud.pdfbox) // Disabled - pdfbox-layout requires JitPack
@@ -131,6 +130,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "3096m"
+    dependsOn(
+        ":cloud:filesystem-service:distTar",
+        ":cloud:lucene-service:distTar",
+    )
     testLogging {
         events("passed", "skipped", "failed")
         showStandardStreams = true

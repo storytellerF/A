@@ -1,0 +1,39 @@
+services:
+  filesystem:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: filesystem-service
+      args:
+        BUILD_ON: ${BUILD_ON}
+    restart: unless-stopped
+    environment:
+      FILESYSTEM_RPC_PORT: 8820
+      FILE_SYSTEM_MEDIA_PATH: /data
+      SERVER_URL: ${SERVER_URL}
+    expose:
+      - "8820"
+    volumes:
+      - ../a_file_data:/data
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8820/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  cli:
+    environment:
+      MEDIA_SERVICE: rpc
+      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
+  server:
+    environment:
+      MEDIA_SERVICE: rpc
+      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
+  worker:
+    environment:
+      MEDIA_SERVICE: rpc
+      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
+  ws:
+    environment:
+      MEDIA_SERVICE: rpc
+      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc
