@@ -394,7 +394,7 @@ private suspend fun processContentTypeAndDimension(files: List<UploadPack>): Lis
     }
 
 @OptIn(ExperimentalUuidApi::class)
-private suspend fun removeExifIfImage(
+internal suspend fun removeExifIfImage(
     uploadPacks: List<ProcessedUploadPack>,
     f: MutableList<File>,
 ): List<ProcessedUploadPack> =
@@ -409,7 +409,14 @@ private suspend fun removeExifIfImage(
             target.inputStream().buffered().use { input ->
                 sha256(input.asSource().buffered())
             }
-        it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
+        it.copy(
+            pack =
+            it.pack.copy(
+                file = target,
+                size = target.length(),
+                sha256 = newSha256,
+            ),
+        )
     } else {
         it
     }

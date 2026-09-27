@@ -50,6 +50,7 @@ private class FilesystemRpcImpl(private val storage: LocalFileSystemObjectStorag
     override suspend fun finishUpload(transferId: String): ObjectStorageWriteRecord {
         val pending = uploads.remove(transferId) ?: error("unknown transfer")
         return try {
+            check(Files.size(pending.path) == pending.pack.size) { "uploaded size does not match metadata" }
             storage.upload(
                 pending.bucketName,
                 listOf(
