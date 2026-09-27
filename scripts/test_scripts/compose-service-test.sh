@@ -181,7 +181,9 @@ fi
 assert_contains "deploy/docker-compose/docker-compose.app.yml" "dockerfile: wasm.Dockerfile"
 assert_contains "deploy/docker-compose/docker-compose.app.yml" "target: app-wasm"
 assert_contains "deploy/docker-compose/docker-compose.app.yml" "target: panel-wasm"
-assert_contains "deploy/docker-compose/docker-compose.app.yml" "flavor_env"
+assert_contains "deploy/docker-compose/docker-compose.app.yml" 'SERVER_URL: ${SERVER_URL}'
+assert_contains "deploy/docker-compose/docker-compose.app.yml" 'WS_SERVER_URL: ${WS_SERVER_URL}'
+assert_not_contains "deploy/docker-compose/docker-compose.app.yml" "flavor_env"
 assert_not_contains "deploy/docker-compose/docker-compose.app.yml" "productionExecutable:/usr/share/nginx/html"
 assert_contains "deploy/docker-compose/docker-compose.server.yml" "target: server"
 assert_contains "deploy/docker-compose/docker-compose.server.yml" "target: ws"
@@ -192,7 +194,10 @@ assert_contains "Dockerfile" "AS worker"
 assert_contains "Dockerfile" "AS ws"
 assert_contains "Dockerfile" "AS cli"
 assert_contains "Dockerfile" "org.gradle.parallel=false"
-assert_contains "wasm.Dockerfile" "--no-parallel"
+assert_contains "wasm.Dockerfile" "org.gradle.parallel=false"
+assert_not_contains "wasm.Dockerfile" "--no-parallel"
+assert_not_contains "wasm.Dockerfile" "flavor_env"
+assert_not_contains "wasm.Dockerfile" 'deploy/${FLAVOR}.env'
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "worker.Dockerfile"
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "ws.Dockerfile"
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "cli.Dockerfile"

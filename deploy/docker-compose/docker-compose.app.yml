@@ -7,8 +7,8 @@ services:
       args:
         FLAVOR: ${FLAVOR}
         BUILD_TYPE: ${BUILD_TYPE}
-      secrets:
-        - flavor_env
+        SERVER_URL: ${SERVER_URL}
+        WS_SERVER_URL: ${WS_SERVER_URL}
     restart: unless-stopped
     ports:
       - ${APP_WASM_PORT:-8080}:80
@@ -31,8 +31,8 @@ services:
       args:
         FLAVOR: ${FLAVOR}
         BUILD_TYPE: ${BUILD_TYPE}
-      secrets:
-        - flavor_env
+        SERVER_URL: ${SERVER_URL}
+        WS_SERVER_URL: ${WS_SERVER_URL}
     restart: unless-stopped
     ports:
       - ${PANEL_WASM_PORT:-8081}:80
@@ -44,7 +44,3 @@ services:
       interval: 5s
       timeout: 3s
       retries: 12
-
-secrets:
-  flavor_env:
-    file: ../${FLAVOR}.env
