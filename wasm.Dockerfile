@@ -8,6 +8,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 COPY . .
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
 
 ARG FLAVOR
 ARG BUILD_TYPE
@@ -29,6 +30,7 @@ RUN --mount=type=secret,id=flavor_env,required=true \
         -Pserver.flavor="$FLAVOR" \
         -Pserver.buildType="$BUILD_TYPE" \
         --console=plain \
+        --no-parallel \
         --no-daemon && \
     mkdir -p deploy/build/app-wasm deploy/build/panel-wasm && \
     cp -a app/webApp/build/dist/wasmJs/productionExecutable/. deploy/build/app-wasm/ && \

@@ -7,7 +7,7 @@ RUN apk add --no-cache bash curl dos2unix
 WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
-ENV GRADLE_OPTS=-Dorg.gradle.daemon=false
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
 
 ARG BUILD_ON
 
