@@ -4,8 +4,6 @@
 
 package com.storyteller_f.a.backend.core.service
 
-import com.storyteller_f.a.backend.core.PaginationResult
-import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.rpc.annotations.Rpc
 import kotlinx.serialization.Serializable
 
@@ -42,29 +40,36 @@ interface FilesystemRpc {
 @Rpc
 interface LuceneRpc {
     suspend fun health(): String
-    suspend fun saveTopics(documents: List<TopicDocument>)
-    suspend fun getTopics(ids: List<PrimaryKey>): List<TopicDocument?>
-    suspend fun cleanTopics()
-    suspend fun searchTopics(search: TopicDocumentSearch): PaginationResult<TopicDocument>
-
-    suspend fun saveUsers(documents: List<UserDocument>)
-    suspend fun cleanUsers()
-    suspend fun searchUsers(search: UserDocumentSearch): PaginationResult<UserDocument>
-
-    suspend fun saveRooms(documents: List<RoomDocument>)
-    suspend fun cleanRooms()
-    suspend fun searchRooms(search: RoomDocumentSearch): PaginationResult<RoomDocument>
-
-    suspend fun saveCommunities(documents: List<CommunityDocument>)
-    suspend fun cleanCommunities()
-    suspend fun searchCommunities(search: CommunityDocumentSearch): PaginationResult<CommunityDocument>
-
-    suspend fun saveMembers(documents: List<MemberDocument>)
-    suspend fun deleteMember(uid: PrimaryKey, objectId: PrimaryKey)
-    suspend fun cleanMembers()
-    suspend fun searchMembers(search: MemberDocumentSearch): PaginationResult<MemberDocument>
-
-    suspend fun saveFiles(documents: List<FileDocument>)
-    suspend fun cleanFiles()
-    suspend fun searchFiles(search: FileDocumentSearch): PaginationResult<FileDocument>
+    suspend fun save(index: String, documents: List<RpcLuceneDocument>)
+    suspend fun get(index: String, ids: List<Long>): List<String?>
+    suspend fun clean(index: String)
+    suspend fun delete(index: String, query: RpcLuceneQuery)
+    suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult
 }
+
+@Serializable
+data class RpcLuceneDocument(
+    val id: Long,
+    val payload: String,
+    val textFields: Map<String, String> = emptyMap(),
+    val keywordFields: Map<String, String> = emptyMap(),
+    val longFields: Map<String, Long> = emptyMap(),
+)
+
+@Serializable
+data class RpcLuceneTextQuery(val word: String, val fields: List<String>)
+
+@Serializable
+data class RpcLuceneQuery(
+    val mustLong: Map<String, Long> = emptyMap(),
+    val mustNotLong: Map<String, Long> = emptyMap(),
+    val mustLongSet: Map<String, List<Long>> = emptyMap(),
+    val mustKeyword: Map<String, String> = emptyMap(),
+    val text: List<RpcLuceneTextQuery> = emptyList(),
+    val offset: Int = 0,
+    val size: Int = 10,
+    val sortByIdDescending: Boolean = false,
+)
+
+@Serializable
+data class RpcLuceneResult(val payloads: List<String>, val total: Long)

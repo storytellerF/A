@@ -43,6 +43,7 @@ import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.test.runTest
@@ -86,6 +87,9 @@ class FileTest {
                 assertListSize(1, fileList)
                 val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
                 val fileInfo = fileList.getOrThrow().data.first()
+                HttpClient().use { downloadClient ->
+                    assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
+                }
                 assertEquals(fileInfo.size, quotaInfo.used)
                 assertEquals(null, quotaInfo.lockId)
                 fileInfo

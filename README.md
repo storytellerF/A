@@ -166,6 +166,14 @@ outside the repository. Set `BUNKER_ENV_FILE` to use another external path. The 
 `BUNKER_MEDIA_DOMAIN`, `BUNKER_MINIO_DOMAIN`, `BUNKER_ADMINER_DOMAIN`, `BUNKER_GRAFANA_DOMAIN`,
 `BUNKER_APP_DOMAIN`, and `BUNKER_PANEL_DOMAIN` host names.
 
+For filesystem storage, set `FILESYSTEM_PUBLIC_URL` to the externally reachable media origin
+(for example `https://media.example.com`), and `FILESYSTEM_EXPOSE_PORT` to the published HTTP port
+(default `8822`). Clients download `/objects/<bucket>/<name>` directly from this service.
+With BunkerWeb, the media domain routes this path to filesystem port 8822; port 8820 is the internal
+management RPC endpoint and must remain private.
+Place `FILESYSTEM_PUBLIC_URL=https://<media-domain>` in the external `bunker.env` when using BunkerWeb,
+so deployment-specific domains remain outside the repository.
+
 ## License
 
 This is a private project. All rights reserved.

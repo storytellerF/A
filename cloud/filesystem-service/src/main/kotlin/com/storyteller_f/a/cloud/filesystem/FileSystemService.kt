@@ -10,9 +10,14 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.RpcUploadPack
 import com.storyteller_f.a.backend.core.service.UploadPack
+import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.plugins.autohead.AutoHeadResponse
+import io.ktor.server.plugins.partialcontent.PartialContent
+import io.ktor.server.response.header
+import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
@@ -105,8 +110,13 @@ private class FilesystemRpcImpl(private val storage: LocalFileSystemObjectStorag
 fun main() {
     val port = System.getenv("FILESYSTEM_RPC_PORT")?.toIntOrNull() ?: 8820
     val base = Paths.get(System.getenv("FILE_SYSTEM_MEDIA_PATH") ?: "/data")
-    val publicUrl = System.getenv("SERVER_URL") ?: error("SERVER_URL is empty")
-    val service = FilesystemRpcImpl(LocalFileSystemObjectStorageService(publicUrl, base))
+    val publicUrl = System.getenv("FILESYSTEM_PUBLIC_URL") ?: error("FILESYSTEM_PUBLIC_URL is empty")
+    val httpPort = System.getenv("FILESYSTEM_HTTP_PORT")?.toIntOrNull() ?: 8822
+    val storage = LocalFileSystemObjectStorageService(publicUrl, base)
+    val service = FilesystemRpcImpl(storage)
+    embeddedServer(CIO, host = "0.0.0.0", port = httpPort) {
+        configureObjectDownloads(storage)
+    }.start(wait = false)
     embeddedServer(CIO, host = "0.0.0.0", port = port) {
         install(WebSockets) { maxFrameSize = Long.MAX_VALUE }
         install(Krpc)
@@ -118,4 +128,23 @@ fun main() {
             }
         }
     }.start(wait = true)
+}
+
+internal fun Application.configureObjectDownloads(storage: LocalFileSystemObjectStorageService) {
+    install(PartialContent)
+    install(AutoHeadResponse)
+    routing {
+        get("/health") { call.respondText("ok") }
+        get("/objects/{path...}") {
+            val path = call.parameters.getAll("path").orEmpty()
+            val file = storage.getPathResponse(path)
+            if (file == null) {
+                call.respondText("not found", status = io.ktor.http.HttpStatusCode.NotFound)
+            } else {
+                call.response.header("Access-Control-Allow-Origin", "*")
+                call.response.header("Access-Control-Expose-Headers", "Content-Length,Content-Range,Accept-Ranges")
+                call.respondFile(file.toFile())
+            }
+        }
+    }
 }

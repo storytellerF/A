@@ -9,7 +9,6 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
-import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
@@ -74,7 +73,7 @@ class LocalFileSystemObjectStorageService(private val url: String, base: Path) :
                 if (mediaPath.isRegularFile()) {
                     val newUrl =
                         UrlBuilder.fromString(url)
-                            .withPath("a_file/${A_FILE_DEFAULT_BUCKET}/$name")
+                            .withPath("objects/$bucketName/$name")
                             .toString()
                     ObjectStorageRecord(
                         newUrl,

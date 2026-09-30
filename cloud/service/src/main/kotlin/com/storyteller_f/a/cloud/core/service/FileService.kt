@@ -60,8 +60,6 @@ import kotlin.uuid.Uuid
 
 data class FileResponse(val file: File)
 
-data class ByteArrayResponse(val name: String, val bytes: ByteArray)
-
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
     objectTuple: ObjectTuple,
@@ -265,14 +263,6 @@ fun getCoverExtensionFromMimeType(mimeType: String): String =
     mimeType,
 )?.extension
     ?: error("Unsupported mime type: $mimeType")
-
-suspend fun getFileSystemDownloadUrl(backend: Backend, paths: List<String>): Result<ByteArrayResponse?> {
-    if (paths.size < 2) return Result.failure(CustomBadRequestException("invalid file path"))
-    val name = paths.drop(1).joinToString("/")
-    return backend.objectStorageService.getInputStream(paths.first(), name).map { input ->
-        input.buffered().use { ByteArrayResponse(name, it.readBytes()) }
-    }
-}
 
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,

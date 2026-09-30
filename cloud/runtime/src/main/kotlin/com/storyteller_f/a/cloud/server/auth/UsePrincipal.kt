@@ -8,7 +8,6 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.UnauthorizedException
-import com.storyteller_f.a.cloud.core.service.ByteArrayResponse
 import com.storyteller_f.a.cloud.core.service.FileResponse
 import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
@@ -23,7 +22,6 @@ import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.ParameterConversionException
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondBytes
 import io.ktor.server.response.respondFile
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.websocket.DefaultWebSocketServerSession
@@ -111,15 +109,6 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(result: Resul
                     ).toString(),
                 )
                 call.respondFile(value.file)
-            }
-
-            is ByteArrayResponse -> {
-                call.response.header(
-                    HttpHeaders.ContentDisposition,
-                    ContentDisposition.Attachment.withParameter(ContentDisposition.Parameters.FileName, value.name)
-                        .toString(),
-                )
-                call.respondBytes(value.bytes)
             }
 
             is Unit -> call.respond(HttpStatusCode.OK)

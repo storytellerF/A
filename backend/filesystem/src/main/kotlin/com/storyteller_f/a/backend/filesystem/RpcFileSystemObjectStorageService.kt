@@ -7,6 +7,7 @@ package com.storyteller_f.a.backend.filesystem
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.FilesystemRpc
+import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.RpcUploadPack
@@ -15,6 +16,9 @@ import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.WebSockets
+import io.ktor.http.URLBuilder
+import io.ktor.http.Url
+import io.ktor.http.encodedPath
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.rpc.krpc.ktor.client.installKrpc
@@ -30,7 +34,8 @@ import java.util.UUID
 
 private const val TRANSFER_CHUNK_SIZE = 256 * 1024
 
-class FileSystemObjectStorageService(private val rpc: FilesystemRpc) : ObjectStorageService {
+class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val publicUrl: String? = null) :
+    ObjectStorageService {
     override suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>) =
         rpcResult {
         uploadPacks.map { pack -> uploadOne(bucketName, pack) }
@@ -73,15 +78,36 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc) : ObjectSto
         }
     }
 
-    override suspend fun get(bucketName: String, names: List<String>) = rpcResult { rpc.get(bucketName, names) }
+    override suspend fun get(bucketName: String, names: List<String>) =
+        rpcResult {
+        publicRecords(
+            rpc.get(bucketName, names),
+        )
+    }
     override suspend fun clean(bucketName: String) = rpcResult { rpc.cleanObjects(bucketName) }
-    override suspend fun list(bucketName: String, prefix: String) = rpcResult { rpc.list(bucketName, prefix) }
+    override suspend fun list(bucketName: String, prefix: String) =
+        rpcResult {
+        publicRecords(
+            rpc.list(bucketName, prefix),
+        )
+    }
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>) =
         rpcResult {
-        rpc.copy(
-            bucketName,
-            copyPacks,
+        publicRecords(
+            rpc.copy(
+                bucketName,
+                copyPacks,
+            ),
         )
+    }
+
+    private fun publicRecords(records: List<ObjectStorageRecord>): List<ObjectStorageRecord> =
+        records.map { record ->
+        if (publicUrl == null) {
+            record
+        } else {
+            record.copy(url = URLBuilder(publicUrl).apply { encodedPath = Url(record.url).encodedPath }.buildString())
+        }
     }
 
     override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
@@ -137,6 +163,6 @@ class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
                 url { takeFrom(url) }
                 rpcConfig { serialization { json() } }
             }.withService<FilesystemRpc>()
-        return FileSystemObjectStorageService(service)
+        return FileSystemObjectStorageService(service, env["FILESYSTEM_PUBLIC_URL"])
     }
 }

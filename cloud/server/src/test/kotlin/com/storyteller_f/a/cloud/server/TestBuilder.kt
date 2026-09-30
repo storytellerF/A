@@ -177,9 +177,9 @@ private suspend fun usePostgresqlTestContainer(env: MutableMap<String, String>, 
 
 private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
     GenericContainer(localServiceImage("a-filesystem:latest", "filesystem-service")).apply {
-        withEnv("SERVER_URL", "http://localhost")
+        withEnv("FILESYSTEM_PUBLIC_URL", "http://filesystem:8822")
         withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
-        withExposedPorts(FILESYSTEM_PORT)
+        withExposedPorts(FILESYSTEM_PORT, 8822)
         waitingFor(
             Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)),
         )
@@ -188,6 +188,7 @@ private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, 
         env["MEDIA_SERVICE"] = "filesystem"
         env["FILESYSTEM_RPC_URL"] =
             "ws://${container.host}:${container.getMappedPort(FILESYSTEM_PORT)}/rpc"
+        env["FILESYSTEM_PUBLIC_URL"] = "http://${container.host}:${container.getMappedPort(8822)}"
         block()
     }
 }
