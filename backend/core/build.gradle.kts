@@ -4,7 +4,6 @@
 
 plugins {
     alias(libs.plugins.kotlinJvm)
-    alias(libs.plugins.kotlinxRpc)
     alias(libs.plugins.serialization)
 }
 
@@ -15,7 +14,6 @@ dependencies {
     implementation(libs.napier)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.rpc.core)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
     testImplementation(kotlin("test"))

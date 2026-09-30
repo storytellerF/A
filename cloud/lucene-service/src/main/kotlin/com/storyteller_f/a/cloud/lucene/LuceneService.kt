@@ -3,10 +3,10 @@
  */
 package com.storyteller_f.a.cloud.lucene
 
-import com.storyteller_f.a.backend.core.service.LuceneRpc
-import com.storyteller_f.a.backend.core.service.RpcLuceneDocument
-import com.storyteller_f.a.backend.core.service.RpcLuceneQuery
-import com.storyteller_f.a.backend.core.service.RpcLuceneResult
+import com.storyteller_f.services.lucene.api.LuceneRpc
+import com.storyteller_f.services.lucene.api.RpcLuceneDocument
+import com.storyteller_f.services.lucene.api.RpcLuceneQuery
+import com.storyteller_f.services.lucene.api.RpcLuceneResult
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer

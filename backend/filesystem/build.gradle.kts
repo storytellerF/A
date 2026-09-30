@@ -13,6 +13,7 @@ version = "unspecified"
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(projects.services.filesystemProtocol)
     implementation(projects.backend.core)
     implementation(projects.shared)
     implementation(libs.ktor.client.core)

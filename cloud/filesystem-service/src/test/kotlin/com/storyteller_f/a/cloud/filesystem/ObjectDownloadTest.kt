@@ -4,7 +4,6 @@
 
 package com.storyteller_f.a.cloud.filesystem
 
-import com.storyteller_f.a.backend.core.service.UploadPack
 import io.ktor.client.request.get
 import io.ktor.client.request.head
 import io.ktor.client.request.header
@@ -27,7 +26,7 @@ class ObjectDownloadTest {
         val storage = LocalFileSystemObjectStorageService("http://localhost", base)
         storage.upload(
             "custom",
-            listOf(UploadPack(source, "test.txt", source.length(), "test.txt", "unused")),
+            listOf(UploadPack(source, "test.txt")),
         ).getOrThrow()
         application { configureObjectDownloads(storage) }
 

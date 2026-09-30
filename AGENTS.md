@@ -66,6 +66,7 @@
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 - Cloud server integration tests and Appium E2E tests use PostgreSQL with dedicated filesystem RPC and Lucene RPC containers. Do not reintroduce H2, MinIO, or Elasticsearch into these test topologies.
 - Keep filesystem and Lucene RPC services business-independent. Translate business search models in backend adapters; clients download object contents directly from filesystem HTTP rather than through server.
+- Define filesystem and Lucene RPC contracts in their respective `services/*-protocol` modules. Service runtime code must not depend on `backend/core`, `shared`, or `api`; map business storage/search types in backend adapters. Keep service configuration independent of flavor env files.
 - Let Testcontainers build backend test images on demand from the service `distTar` outputs; do not add dedicated Gradle test-image build tasks or maintain a static Docker image list.
 - Do not reintroduce the removed H2 service or Docker target; `r2dbc-h2` supports only file and memory protocols, not the remote database topology required here.
 

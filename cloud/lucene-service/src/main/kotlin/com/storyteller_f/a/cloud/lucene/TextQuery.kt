@@ -4,7 +4,7 @@
 
 package com.storyteller_f.a.cloud.lucene
 
-import com.storyteller_f.a.backend.core.service.RpcLuceneTextQuery
+import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import org.apache.lucene.index.Term
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery

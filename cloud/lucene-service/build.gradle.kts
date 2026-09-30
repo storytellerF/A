@@ -20,7 +20,7 @@ application {
 kotlin { jvmToolchain(21) }
 
 dependencies {
-    implementation(projects.backend.core)
+    implementation(projects.services.luceneProtocol)
     implementation(libs.bundles.lucene)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.cio)

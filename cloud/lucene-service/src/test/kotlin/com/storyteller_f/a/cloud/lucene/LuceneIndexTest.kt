@@ -4,9 +4,9 @@
 
 package com.storyteller_f.a.cloud.lucene
 
-import com.storyteller_f.a.backend.core.service.RpcLuceneDocument
-import com.storyteller_f.a.backend.core.service.RpcLuceneQuery
-import com.storyteller_f.a.backend.core.service.RpcLuceneTextQuery
+import com.storyteller_f.services.lucene.api.RpcLuceneDocument
+import com.storyteller_f.services.lucene.api.RpcLuceneQuery
+import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import kotlinx.coroutines.runBlocking
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document

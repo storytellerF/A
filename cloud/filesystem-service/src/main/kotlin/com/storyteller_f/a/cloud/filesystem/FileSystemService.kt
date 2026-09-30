@@ -4,12 +4,11 @@
 
 package com.storyteller_f.a.cloud.filesystem
 
-import com.storyteller_f.a.backend.core.service.CopyPack
-import com.storyteller_f.a.backend.core.service.FilesystemRpc
-import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
-import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
-import com.storyteller_f.a.backend.core.service.RpcUploadPack
-import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.services.filesystem.api.CopyPack
+import com.storyteller_f.services.filesystem.api.FilesystemRpc
+import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
+import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
+import com.storyteller_f.services.filesystem.api.RpcUploadPack
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -61,10 +60,7 @@ private class FilesystemRpcImpl(private val storage: LocalFileSystemObjectStorag
                 listOf(
                     UploadPack(
                         pending.path.toFile(),
-                        pending.pack.name,
-                        pending.pack.size,
                         pending.pack.fullName,
-                        pending.pack.sha256,
                     ),
                 ),
             ).getOrThrow().single()

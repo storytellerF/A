@@ -6,12 +6,13 @@ package com.storyteller_f.a.backend.filesystem
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.service.CopyPack
-import com.storyteller_f.a.backend.core.service.FilesystemRpc
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
-import com.storyteller_f.a.backend.core.service.RpcUploadPack
+import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.services.filesystem.api.FilesystemRpc
+import com.storyteller_f.services.filesystem.api.RpcUploadPack
 import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -31,6 +32,8 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.UUID
+import com.storyteller_f.services.filesystem.api.CopyPack as RpcCopyPack
+import com.storyteller_f.services.filesystem.api.ObjectStorageRecord as RpcObjectStorageRecord
 
 private const val TRANSFER_CHUNK_SIZE = 256 * 1024
 
@@ -41,10 +44,7 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
         uploadPacks.map { pack -> uploadOne(bucketName, pack) }
     }
 
-    private suspend fun uploadOne(
-        bucketName: String,
-        pack: UploadPack,
-    ): com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord {
+    private suspend fun uploadOne(bucketName: String, pack: UploadPack): ObjectStorageWriteRecord {
         val transferId = UUID.randomUUID().toString()
         rpc.beginUpload(
             bucketName,
@@ -59,7 +59,9 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
                     rpc.uploadChunk(transferId, if (count == buffer.size) buffer else buffer.copyOf(count))
                 }
             }
-            rpc.finishUpload(transferId)
+            rpc.finishUpload(transferId).let {
+                ObjectStorageWriteRecord(it.fullName)
+            }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: Exception) {
@@ -96,19 +98,25 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
         publicRecords(
             rpc.copy(
                 bucketName,
-                copyPacks,
+                copyPacks.map { RpcCopyPack(it.originFullName, it.newFullName) },
             ),
         )
     }
 
-    private fun publicRecords(records: List<ObjectStorageRecord>): List<ObjectStorageRecord> =
-        records.map { record ->
-        if (publicUrl == null) {
-            record
-        } else {
-            record.copy(url = URLBuilder(publicUrl).apply { encodedPath = Url(record.url).encodedPath }.buildString())
+    private fun publicRecords(records: List<RpcObjectStorageRecord>): List<ObjectStorageRecord> =
+        records.map { rpcRecord ->
+            val record = ObjectStorageRecord(rpcRecord.url, rpcRecord.lastModified, rpcRecord.fullName)
+            if (publicUrl == null) {
+                record
+            } else {
+                record.copy(
+                    url =
+                    URLBuilder(publicUrl).apply {
+                        encodedPath = Url(record.url).encodedPath
+                    }.buildString(),
+                )
+            }
         }
-    }
 
     override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
         rpcResult {
@@ -130,7 +138,11 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
     }
 
     override suspend fun compose(bucketName: String, targetFullName: String, sourceFullNames: List<String>) =
-        rpcResult { rpc.compose(bucketName, targetFullName, sourceFullNames) }
+        rpcResult {
+            rpc.compose(bucketName, targetFullName, sourceFullNames).let {
+                ObjectStorageWriteRecord(it.fullName)
+            }
+        }
 
     override suspend fun delete(bucketName: String, names: List<String>) = rpcResult { rpc.delete(bucketName, names) }
 }

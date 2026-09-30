@@ -14,7 +14,6 @@ import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
 import com.storyteller_f.a.backend.core.service.FileSearchService
 import com.storyteller_f.a.backend.core.service.FileSearchServiceFactory
-import com.storyteller_f.a.backend.core.service.LuceneRpc
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberSearchService
@@ -23,10 +22,6 @@ import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.RoomSearchServiceFactory
-import com.storyteller_f.a.backend.core.service.RpcLuceneDocument
-import com.storyteller_f.a.backend.core.service.RpcLuceneQuery
-import com.storyteller_f.a.backend.core.service.RpcLuceneResult
-import com.storyteller_f.a.backend.core.service.RpcLuceneTextQuery
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
@@ -35,6 +30,11 @@ import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
+import com.storyteller_f.services.lucene.api.LuceneRpc
+import com.storyteller_f.services.lucene.api.RpcLuceneDocument
+import com.storyteller_f.services.lucene.api.RpcLuceneQuery
+import com.storyteller_f.services.lucene.api.RpcLuceneResult
+import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.cancellableRunCatching

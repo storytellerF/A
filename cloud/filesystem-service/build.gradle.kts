@@ -19,8 +19,7 @@ application {
 kotlin { jvmToolchain(21) }
 
 dependencies {
-    implementation(projects.backend.core)
-    implementation(projects.shared)
+    implementation(projects.services.filesystemProtocol)
     implementation(libs.napier)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)

@@ -3,6 +3,8 @@
 A Kotlin Multiplatform application for Android, Desktop, CLI, and Web, with cloud services and an
 administration panel.
 
+For build, test, and independent service setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 [Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
 ## Worker Configuration

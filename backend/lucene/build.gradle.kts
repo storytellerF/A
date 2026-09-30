@@ -21,10 +21,9 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
+    implementation(projects.services.luceneProtocol)
     implementation(projects.backend.core)
     implementation(projects.shared)
-    implementation(libs.bundles.lucene)
-    implementation(libs.memoryfilesystem)
 }
 
 tasks.test {

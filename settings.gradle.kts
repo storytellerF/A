@@ -83,6 +83,8 @@ include(":backend:redis")
 include(":backend:minio")
 include(":cloud:filesystem-service")
 include(":cloud:lucene-service")
+include(":services:filesystem-protocol")
+include(":services:lucene-protocol")
 
 include(":client:core")
 include(":client:bot-lib")
