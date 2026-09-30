@@ -40,6 +40,8 @@ tasks.register<Test>("e2eTest") {
         ":cloud:worker:distTar",
         ":cloud:cli:distTar",
         ":cloud:ws:distTar",
+        ":cloud:filesystem-service:distTar",
+        ":cloud:lucene-service:distTar",
         ":app:cliApp:installDist",
     )
     systemProperty(
