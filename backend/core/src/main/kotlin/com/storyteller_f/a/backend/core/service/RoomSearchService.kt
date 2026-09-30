@@ -11,7 +11,9 @@ import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class RoomDocument(
     override val id: PrimaryKey,
     val name: String,
@@ -25,7 +27,9 @@ data class RoomDocument(
     }
 }
 
+@Serializable
 sealed interface RoomDocumentSearch {
+    @Serializable
     data class Keyword(val words: String, val communityId: PrimaryKey? = null, val fetch: OffsetFetch) :
         RoomDocumentSearch
 }

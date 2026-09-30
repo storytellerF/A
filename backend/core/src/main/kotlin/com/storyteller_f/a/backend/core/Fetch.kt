@@ -6,9 +6,14 @@ package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 sealed interface ObjectFetch {
+    @Serializable
     data class AidFetch(val aid: String) : ObjectFetch
+
+    @Serializable
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
@@ -23,9 +28,14 @@ fun aidListFetch(aidList: List<String>) = ObjectListFetch.AidListFetch(aidList)
 fun idFetch(id: PrimaryKey) = ObjectFetch.IdFetch(id)
 fun aidFetch(aid: String) = ObjectFetch.AidFetch(aid)
 
+@Serializable
 sealed interface Cursor<T> {
     val value: T
+
+    @Serializable
     data class AscCursor<T>(override val value: T) : Cursor<T>
+
+    @Serializable
     data class DescCursor<T>(override val value: T) : Cursor<T>
 }
 
@@ -43,6 +53,7 @@ data class PrimaryKeyFetch(override val cursor: Cursor<PrimaryKey>?, override va
 data class ReactionFetch(override val cursor: Cursor<ReactionCursorKey>?, override val size: Int) :
     GenericFetch<ReactionCursorKey>
 
+@Serializable
 data class OffsetFetch(override val cursor: Cursor<Int>?, override val size: Int) : GenericFetch<Int>
 
 /** Returns [infos] in the order specified by [ids], omitting identifiers without a matching item. */

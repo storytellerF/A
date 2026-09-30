@@ -145,11 +145,14 @@ rm -f "deploy/$server_env_build_on_flavor.env"
 
 bunker_flavor="compose-test-bunker"
 write_env "$bunker_flavor" "pg,elastic,minio,certs_bind,grafana,dicebear,etcd,cli,server,worker,bunker"
-run_compose_service "$bunker_flavor" "local"
-assert_not_contains "$TMP_DIR/$bunker_flavor.args" "docker-compose._bunker.yml"
+BUNKER_TEST_ENV="$TMP_DIR/bunker.env"
+touch "$BUNKER_TEST_ENV"
+BUNKER_ENV_FILE="$BUNKER_TEST_ENV" run_compose_service "$bunker_flavor" "local"
+assert_contains "$TMP_DIR/$bunker_flavor.args" "--env-file $BUNKER_TEST_ENV"
+assert_contains "$TMP_DIR/$bunker_flavor.args" "docker-compose.bunker.yml"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "networks:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  bw-services:"
-assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    external: true"
+assert_not_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    external: true"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    name: bw-services"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  server:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  worker:"
@@ -175,6 +178,60 @@ assert_contains "$TMP_DIR/$app_flavor.args" "docker-compose.app.yml"
 if [ -s "$TMP_DIR/$app_flavor.gradle.args" ]; then
   fail "compose-service must not build the Wasm distributions itself"
 fi
+assert_contains "deploy/docker-compose/docker-compose.app.yml" "dockerfile: wasm.Dockerfile"
+assert_contains "deploy/docker-compose/docker-compose.app.yml" "target: app-wasm"
+assert_contains "deploy/docker-compose/docker-compose.app.yml" "target: panel-wasm"
+assert_contains "deploy/docker-compose/docker-compose.app.yml" 'SERVER_URL: ${SERVER_URL}'
+assert_contains "deploy/docker-compose/docker-compose.app.yml" 'WS_SERVER_URL: ${WS_SERVER_URL}'
+assert_not_contains "deploy/docker-compose/docker-compose.app.yml" "flavor_env"
+assert_not_contains "deploy/docker-compose/docker-compose.app.yml" "productionExecutable:/usr/share/nginx/html"
+assert_contains "deploy/docker-compose/docker-compose.server.yml" "target: server"
+assert_contains "deploy/docker-compose/docker-compose.server.yml" "target: ws"
+assert_contains "deploy/docker-compose/docker-compose.worker.yml" "target: worker"
+assert_contains "deploy/docker-compose/docker-compose.cli.yml" "target: cli"
+assert_contains "Dockerfile" "AS server"
+assert_contains "Dockerfile" "AS worker"
+assert_contains "Dockerfile" "AS ws"
+assert_contains "Dockerfile" "AS cli"
+assert_contains "Dockerfile" "org.gradle.parallel=false"
+assert_contains "wasm.Dockerfile" "org.gradle.parallel=false"
+assert_not_contains "wasm.Dockerfile" "--no-parallel"
+assert_not_contains "wasm.Dockerfile" "flavor_env"
+assert_not_contains "wasm.Dockerfile" 'deploy/${FLAVOR}.env'
+assert_not_contains "scripts/build_scripts/build-service-images.sh" "worker.Dockerfile"
+assert_not_contains "scripts/build_scripts/build-service-images.sh" "ws.Dockerfile"
+assert_not_contains "scripts/build_scripts/build-service-images.sh" "cli.Dockerfile"
+
+local_backend_flavor="compose-test-local-backends"
+write_env "$local_backend_flavor" "pg,filesystem,lucene,cli,server,worker"
+run_compose_service "$local_backend_flavor"
+assert_contains "$TMP_DIR/$local_backend_flavor.args" "docker-compose.filesystem.yml"
+assert_contains "$TMP_DIR/$local_backend_flavor.args" "docker-compose.lucene.yml"
+assert_contains "$TMP_DIR/$local_backend_flavor.generated.yml" "      filesystem:"
+assert_contains "$TMP_DIR/$local_backend_flavor.generated.yml" "      lucene:"
+assert_not_contains "$TMP_DIR/$local_backend_flavor.generated.yml" "../a_file_data:/app/deploy/a_file_data"
+assert_not_contains "$TMP_DIR/$local_backend_flavor.generated.yml" "../lucene_data:/app/deploy/lucene_data"
+assert_contains "Dockerfile" "AS filesystem-service"
+assert_contains "Dockerfile" "AS lucene-service"
+assert_contains "deploy/docker-compose/docker-compose.minio.yml" "dockerfile: minio.Dockerfile"
+
+docker_start_args="$TMP_DIR/docker-start.args"
+: > "$docker_start_args"
+MOCK_DOCKER_ARGS="$docker_start_args" \
+MOCK_GENERATED_OUT="$TMP_DIR/docker-start.generated.yml" \
+MOCK_GRADLE_ARGS="$TMP_DIR/docker-start.gradle.args" \
+./scripts/service_scripts/start-service-in-docker.sh "$local_backend_flavor" > "$TMP_DIR/docker-start.stdout"
+mapfile -t docker_builds < <(grep ' build ' "$docker_start_args")
+[[ ${#docker_builds[@]} -eq 6 ]] || fail "expected six sequential backend image builds"
+[[ "${docker_builds[0]}" == *"build filesystem" ]] || fail "filesystem must build first"
+[[ "${docker_builds[1]}" == *"build lucene" ]] || fail "lucene must build second"
+[[ "${docker_builds[2]}" == *"build cli" ]] || fail "cli must build third"
+[[ "${docker_builds[3]}" == *"build worker" ]] || fail "worker must build fourth"
+[[ "${docker_builds[4]}" == *"build server" ]] || fail "server must build fifth"
+[[ "${docker_builds[5]}" == *"build ws" ]] || fail "ws must build sixth"
+assert_contains "$docker_start_args" "up -d --no-build"
+assert_not_contains "$docker_start_args" "up -d --build"
+rm -f "deploy/$local_backend_flavor.env"
 
 app_start_args="$TMP_DIR/app-start.args"
 app_start_generated="$TMP_DIR/app-start.generated.yml"
@@ -189,11 +246,9 @@ GRADLEW=gradlew \
 BUILD_CLOUD_SCRIPT=true \
 ./scripts/service_scripts/start-service-in-local.sh "$app_flavor" > "$TMP_DIR/app-start.stdout"
 assert_contains "$app_start_args" "docker-compose.app.yml"
-assert_contains "$app_start_gradle_args" ":app:webApp:wasmJsBrowserDistribution"
-assert_contains "$app_start_gradle_args" ":panel:webApp:wasmJsBrowserDistribution"
-assert_contains "$app_start_gradle_args" "-Ptarget.wasm=true"
-assert_contains "$app_start_gradle_args" "-Pserver.flavor=$app_flavor"
-assert_contains "$app_start_gradle_args" "-Pserver.buildType=dev"
+if [ -s "$app_start_gradle_args" ]; then
+  fail "start-service-in-local must leave Wasm builds to Docker"
+fi
 rm -f "deploy/$app_flavor.env"
 
 no_app_flavor="compose-test-no-app"

@@ -168,7 +168,8 @@ jobs:
             build/outputs/pkg/release/
 
   release-server:
-    if: "!startsWith(github.ref, 'refs/tags/')"
+    # Temporarily paused. Restore the branch condition when server deployment resumes.
+    if: false
     needs: build-desktop-deb
     runs-on: ubuntu-latest
     environment: alpha

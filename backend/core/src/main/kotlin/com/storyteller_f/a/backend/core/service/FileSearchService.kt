@@ -10,7 +10,9 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class FileDocument(override val id: PrimaryKey, val name: String, val ownerId: PrimaryKey) :
     PrimaryKeyIdentifiable {
     companion object {
@@ -23,7 +25,9 @@ data class FileDocument(override val id: PrimaryKey, val name: String, val owner
     }
 }
 
+@Serializable
 sealed interface FileDocumentSearch {
+    @Serializable
     data class Keyword(val word: String, val ownerId: PrimaryKey? = null, val fetch: OffsetFetch) : FileDocumentSearch
 }
 

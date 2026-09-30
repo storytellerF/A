@@ -63,7 +63,9 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
 suspend fun <T> Result<List<T>?>.paging(total: Long) =

@@ -29,7 +29,6 @@ import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
 import com.storyteller_f.a.backend.core.types.toFileRefInfo
 import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
-import com.storyteller_f.a.backend.filesystem.FileSystemObjectStorageService
 import com.storyteller_f.a.cloud.core.utils.cleanImageMeta
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
@@ -56,14 +55,10 @@ import kotlinx.io.buffered
 import org.apache.tika.mime.MimeTypes
 import java.io.BufferedInputStream
 import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class FileResponse(val file: File)
-
-data class PathResponse(val file: Path)
 
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
@@ -269,21 +264,6 @@ fun getCoverExtensionFromMimeType(mimeType: String): String =
 )?.extension
     ?: error("Unsupported mime type: $mimeType")
 
-suspend fun getFileSystemDownloadUrl(backend: Backend, paths: List<String>): Result<PathResponse?> {
-    val service = backend.objectStorageService
-    return if (service is FileSystemObjectStorageService) {
-        val path = service.getPathResponse(paths)
-        if (path?.exists() == true) {
-            val value = PathResponse(path)
-            Result.success(value)
-        } else {
-            Result.success(null)
-        }
-    } else {
-        Result.failure(CustomBadRequestException("can't find file"))
-    }
-}
-
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
@@ -404,7 +384,7 @@ private suspend fun processContentTypeAndDimension(files: List<UploadPack>): Lis
     }
 
 @OptIn(ExperimentalUuidApi::class)
-private suspend fun removeExifIfImage(
+internal suspend fun removeExifIfImage(
     uploadPacks: List<ProcessedUploadPack>,
     f: MutableList<File>,
 ): List<ProcessedUploadPack> =
@@ -419,7 +399,14 @@ private suspend fun removeExifIfImage(
             target.inputStream().buffered().use { input ->
                 sha256(input.asSource().buffered())
             }
-        it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
+        it.copy(
+            pack =
+            it.pack.copy(
+                file = target,
+                size = target.length(),
+                sha256 = newSha256,
+            ),
+        )
     } else {
         it
     }

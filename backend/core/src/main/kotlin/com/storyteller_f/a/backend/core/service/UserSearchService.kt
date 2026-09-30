@@ -10,7 +10,9 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class UserDocument(override val id: PrimaryKey, val nickname: String, val aid: String?) :
     PrimaryKeyIdentifiable {
     companion object {
@@ -18,7 +20,9 @@ data class UserDocument(override val id: PrimaryKey, val nickname: String, val a
     }
 }
 
+@Serializable
 sealed interface UserDocumentSearch {
+    @Serializable
     data class Keyword(val word: String, val fetch: OffsetFetch) : UserDocumentSearch
 }
 

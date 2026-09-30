@@ -7,19 +7,24 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.shared.model.Dimension
 import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
 import java.io.File
 import java.io.InputStream
 
+@Serializable
 data class ObjectStorageRecord(val url: String, val lastModified: LocalDateTime, val fullName: String)
 
+@Serializable
 data class ObjectStorageWriteRecord(val fullName: String)
 
+@Serializable
 data class PresignContext(val uid: String?, val ip: String?)
 
 data class UploadPack(val file: File, val name: String, val size: Long, val fullName: String, val sha256: String)
 
 data class ProcessedUploadPack(val pack: UploadPack, val contentType: String, val dimension: Dimension? = null)
 
+@Serializable
 data class CopyPack(val originFullName: String, val newFullName: String)
 
 interface ObjectStorageService {

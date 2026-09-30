@@ -4,6 +4,7 @@
 
 plugins {
     alias(libs.plugins.kotlinJvm)
+    alias(libs.plugins.serialization)
 }
 
 group = "com.storyteller_f.a.backend"

@@ -2,7 +2,7 @@ services:
   worker:
     build:
       context: ../../
-      dockerfile: worker.Dockerfile
+      target: worker
       args:
         BUILD_ON: ${BUILD_ON}
     restart: unless-stopped

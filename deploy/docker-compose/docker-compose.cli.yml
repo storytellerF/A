@@ -2,7 +2,7 @@ services:
   cli:
     build:
       context: ../../
-      dockerfile: cli.Dockerfile
+      target: cli
       args:
         BUILD_ON: ${BUILD_ON}
     env_file:

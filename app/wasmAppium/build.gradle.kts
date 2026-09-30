@@ -46,10 +46,12 @@ tasks.register<Test>("appiumTest") {
     classpath = appiumTest.runtimeClasspath
     dependsOn(
         prepareWasmDistribution,
-        ":cloud:server:buildAppiumDockerImage",
-        ":cloud:worker:buildAppiumDockerImage",
-        ":cloud:cli:buildAppiumDockerImage",
-        ":cloud:ws:buildAppiumDockerImage",
+        ":cloud:server:distTar",
+        ":cloud:worker:distTar",
+        ":cloud:cli:distTar",
+        ":cloud:ws:distTar",
+        ":cloud:filesystem-service:distTar",
+        ":cloud:lucene-service:distTar",
     )
     jvmArgs("--add-modules", "jdk.httpserver")
     maxParallelForks = 1
