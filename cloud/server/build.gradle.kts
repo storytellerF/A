@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-docker-image")
     application
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
@@ -92,8 +93,8 @@ tasks.test {
     useJUnitPlatform()
     maxHeapSize = "3096m"
     dependsOn(
-        ":cloud:filesystem-service:distTar",
-        ":cloud:lucene-service:distTar",
+        ":cloud:filesystem-service:buildTestDockerImage",
+        ":cloud:lucene-service:buildTestDockerImage",
     )
     testLogging {
         events("passed", "skipped", "failed")

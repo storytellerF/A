@@ -8,9 +8,9 @@ deploy
 !deploy/build/**
 !deploy/docker-compose/app-wasm.nginx.conf
 local.properties
-.gradle
+**/.gradle
 **/iosApp/**
-.kotlin
+**/.kotlin
 .idea
 *.hprof
 dev/logs

@@ -1,5 +1,25 @@
 # Development
 
+## Backend test images
+
+Each backend service applies `test-docker-image`. Its `buildTestDockerImage` task depends on
+`copyTestDockerDistribution`, which copies the `distTar` task output to `deploy/build`.
+Integration and E2E tasks depend on the image tasks they require; ordinary assembly does not.
+Images use the root Dockerfile with `BUILD_ON=local`, so tests package host-built distributions
+without recompiling them inside Docker. Testcontainers starts these images without building them.
+The copy and image tasks share one Gradle build-service permit: context writes cannot overlap
+another image's archive, and image builds run sequentially even with parallel Gradle enabled.
+
+With native Docker, run Gradle normally. With QEMU on Windows, compile the QEMU skill's generic
+Docker proxy once with `build-docker-proxy.sh`, then run Gradle through `run-testcontainers.sh`.
+The wrapper places the proxy on PATH. It applies Docker ignore rules to the local build context
+and streams the archive over SSH to guest `docker buildx build --load`. No shared host mount or
+project-specific VM image list is required; secrets must remain excluded by `.dockerignore`.
+
+A device-independent E2E smoke test is `:app:cliE2e:e2eTest --tests '*CliE2eTest'` (also pass
+`-Pserver.flavor=dev -Pserver.buildType=debug`). Filter by class: Kotlin `internal` test
+methods acquire module-specific JVM name suffixes, so an exact source-method filter will not match.
+
 ## Adminer reverse proxy
 
 The Bunker Adminer site uses the regex location `~ ^/` instead of the ordinary `/` location.

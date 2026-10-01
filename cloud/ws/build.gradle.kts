@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-docker-image")
     application
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)

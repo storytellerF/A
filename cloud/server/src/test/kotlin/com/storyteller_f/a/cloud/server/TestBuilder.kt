@@ -62,7 +62,7 @@ import kotlinx.coroutines.yield
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.images.builder.ImageFromDockerfile
+import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
@@ -77,25 +77,6 @@ private const val TEST_WS_URL = "ws://localhost/ws"
 private const val TEST_SESSION_SECRET = "test-session-secret"
 private const val FILESYSTEM_PORT = 8820
 private const val LUCENE_PORT = 8821
-
-private fun localServiceImage(name: String, target: String): ImageFromDockerfile {
-    val projectRoot =
-        generateSequence(File(System.getProperty("user.dir"))) { it.parentFile }
-            .firstOrNull { File(it, "TestServices.Dockerfile").isFile && File(it, "settings.gradle.kts").isFile }
-            ?: error("Project root containing TestServices.Dockerfile not found")
-    val image =
-        ImageFromDockerfile(name, false)
-            .withFileFromPath("TestServices.Dockerfile", File(projectRoot, "TestServices.Dockerfile").toPath())
-            .withDockerfilePath("TestServices.Dockerfile")
-            .withTarget(target)
-    listOf("filesystem-service", "lucene-service").forEach { service ->
-        image.withFileFromPath(
-            "deploy/build/$service.tar",
-            File(projectRoot, "cloud/$service/build/distributions/$service.tar").toPath(),
-        )
-    }
-    return image
-}
 
 private typealias TestRoomReceiver = suspend (
     RoomFrame,
@@ -176,7 +157,7 @@ private suspend fun usePostgresqlTestContainer(env: MutableMap<String, String>, 
 }
 
 private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    GenericContainer(localServiceImage("a-filesystem:latest", "filesystem-service")).apply {
+    GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
         withEnv("FILESYSTEM_PUBLIC_URL", "http://filesystem:8822")
         withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
         withExposedPorts(FILESYSTEM_PORT, 8822)
@@ -194,7 +175,7 @@ private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, 
 }
 
 private suspend fun useLuceneTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    GenericContainer(localServiceImage("a-lucene:latest", "lucene-service")).apply {
+    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
         withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
         withExposedPorts(LUCENE_PORT)
         waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
