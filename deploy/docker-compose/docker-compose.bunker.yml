@@ -70,6 +70,8 @@ services:
       - "${BUNKER_MEDIA_DOMAIN}_CORS_DENY_REQUEST=yes"
       - "${BUNKER_MEDIA_DOMAIN}_CUSTOM_HEADER=Cross-Origin-Resource-Policy: same-site"
       - "${BUNKER_ADMINER_DOMAIN:?set BUNKER_ADMINER_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://adminer:8080"
+      # Regex routing avoids Bunker's X-Forwarded-Prefix=/, which makes Adminer's cookie path //.
+      - "${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_URL=~ ^/"
       - "${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
       - "${BUNKER_ADMINER_DOMAIN}_INTERCEPTED_ERROR_CODES="
       - "${BUNKER_ADMINER_DOMAIN}_ALLOWED_METHODS=GET|POST|DELETE|HEAD|OPTIONS"

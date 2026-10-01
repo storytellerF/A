@@ -28,6 +28,10 @@ cat > "$MOCK_BIN/docker" <<'EOF'
 set -euo pipefail
 
 printf '%s\n' "$*" >> "$MOCK_DOCKER_ARGS"
+if [[ "${EXPECT_DOCKER_BUILD:-false}" == "true" && "${BUILD_ON:-}" != "docker" ]]; then
+  echo "Deployment must build inside Docker" >&2
+  exit 1
+fi
 
 for arg in "$@"; do
   case "$arg" in
@@ -150,6 +154,7 @@ touch "$BUNKER_TEST_ENV"
 BUNKER_ENV_FILE="$BUNKER_TEST_ENV" run_compose_service "$bunker_flavor" "local"
 assert_contains "$TMP_DIR/$bunker_flavor.args" "--env-file $BUNKER_TEST_ENV"
 assert_contains "$TMP_DIR/$bunker_flavor.args" "docker-compose.bunker.yml"
+assert_contains "deploy/docker-compose/docker-compose.bunker.yml" '${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_URL=~ ^/'
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "networks:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  bw-services:"
 assert_not_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    external: true"
@@ -220,6 +225,7 @@ docker_start_args="$TMP_DIR/docker-start.args"
 MOCK_DOCKER_ARGS="$docker_start_args" \
 MOCK_GENERATED_OUT="$TMP_DIR/docker-start.generated.yml" \
 MOCK_GRADLE_ARGS="$TMP_DIR/docker-start.gradle.args" \
+EXPECT_DOCKER_BUILD=true \
 ./scripts/service_scripts/start-service-in-docker.sh "$local_backend_flavor" > "$TMP_DIR/docker-start.stdout"
 mapfile -t docker_builds < <(grep ' build ' "$docker_start_args")
 [[ ${#docker_builds[@]} -eq 6 ]] || fail "expected six sequential backend image builds"
@@ -243,11 +249,19 @@ MOCK_DOCKER_ARGS="$app_start_args" \
 MOCK_GENERATED_OUT="$app_start_generated" \
 MOCK_GRADLE_ARGS="$app_start_gradle_args" \
 GRADLEW=gradlew \
-BUILD_CLOUD_SCRIPT=true \
-./scripts/service_scripts/start-service-in-local.sh "$app_flavor" > "$TMP_DIR/app-start.stdout"
+EXPECT_DOCKER_BUILD=true \
+BUILD_ON=local \
+./scripts/service_scripts/start-service-in-docker.sh "$app_flavor" > "$TMP_DIR/app-start.stdout"
 assert_contains "$app_start_args" "docker-compose.app.yml"
+mapfile -t app_builds < <(grep ' build ' "$app_start_args")
+[[ ${#app_builds[@]} -eq 4 ]] || fail "expected server, ws, app-wasm and panel-wasm builds"
+[[ "${app_builds[0]}" == *"build server" ]] || fail "server must build first"
+[[ "${app_builds[1]}" == *"build ws" ]] || fail "ws must build second"
+[[ "${app_builds[2]}" == *"build app-wasm" ]] || fail "app-wasm must build third"
+[[ "${app_builds[3]}" == *"build panel-wasm" ]] || fail "panel-wasm must build fourth"
+assert_contains "$app_start_args" "up -d --no-build"
 if [ -s "$app_start_gradle_args" ]; then
-  fail "start-service-in-local must leave Wasm builds to Docker"
+  fail "Docker deployment must not invoke host Gradle"
 fi
 rm -f "deploy/$app_flavor.env"
 
@@ -263,10 +277,13 @@ MOCK_DOCKER_ARGS="$no_app_start_args" \
 MOCK_GENERATED_OUT="$no_app_start_generated" \
 MOCK_GRADLE_ARGS="$no_app_start_gradle_args" \
 GRADLEW=gradlew \
-BUILD_CLOUD_SCRIPT=true \
-./scripts/service_scripts/start-service-in-local.sh "$no_app_flavor" > "$TMP_DIR/no-app-start.stdout"
+EXPECT_DOCKER_BUILD=true \
+./scripts/service_scripts/start-service-in-docker.sh "$no_app_flavor" > "$TMP_DIR/no-app-start.stdout"
+assert_not_contains "$no_app_start_args" "build app-wasm"
+assert_not_contains "$no_app_start_args" "build panel-wasm"
+assert_contains "$no_app_start_args" "up -d --no-build"
 if [ -s "$no_app_start_gradle_args" ]; then
-  fail "start-service-in-local must skip Wasm builds without the app profile"
+  fail "Docker deployment must not invoke host Gradle without the app profile"
 fi
 rm -f "deploy/$no_app_flavor.env"
 

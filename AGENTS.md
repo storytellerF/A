@@ -71,6 +71,7 @@
 - Do not reintroduce the removed H2 service or Docker target; `r2dbc-h2` supports only file and memory protocols, not the remote database topology required here.
 
 ## Additional AI Collaboration Rules
+- Deploy through `scripts/service_scripts/start-service-in-docker.sh`; compile deployment artifacts inside Docker, not on the host.
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.
 - Do not create files outside the repository. Sensitive files (`deploy/*.env`) are excluded by `.aiexclude`.
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.

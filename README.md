@@ -139,15 +139,10 @@ messages above as the source of truth.
 ### Compose Stack With Wasm Apps
 
 Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites.
-Compose builds both sites in the JDK 21 builder stage of `wasm.Dockerfile`, passes the flavor env as a
-BuildKit secret, and copies each distribution into its own Nginx runtime image. The host does not need
-prebuilt Wasm distributions.
-
-```bash
-./scripts/service_scripts/start-service-in-local.sh sample
-```
-
-On a deployment host without a local JDK, build the distributions in the Docker builder instead:
+Compose builds both sites in the JDK 21 builder stage of `wasm.Dockerfile`, passes only the required
+flavor, build type, and server URLs as build arguments, and copies each distribution into its own
+Nginx runtime image. Deployment compiles backend and Wasm distributions inside Docker; the host
+does not need a local JDK or prebuilt distributions. Images are built sequentially before startup:
 
 ```bash
 ./scripts/service_scripts/start-service-in-docker.sh sample

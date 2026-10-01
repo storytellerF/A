@@ -1,5 +1,13 @@
 # Development
 
+## Adminer reverse proxy
+
+The Bunker Adminer site uses the regex location `~ ^/` instead of the ordinary `/` location.
+Bunker adds `X-Forwarded-Prefix: /` to ordinary root locations; Adminer then creates session
+cookies with `Path=//`, preventing login at `/`. Regex routing preserves the request URI without
+adding this prefix. When checking Adminer deployment, test an actual PostgreSQL login through
+its HTTPS domain, not only the login page response, and verify session cookies have `Path=/`.
+
 ## Independent filesystem and Lucene services
 
 The services share this repository's build tooling, but their runtime dependency graphs do not
