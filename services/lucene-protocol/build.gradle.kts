@@ -17,4 +17,7 @@ kotlin { jvmToolchain(21) }
 dependencies {
     api(libs.kotlinx.rpc.core)
     api(libs.kotlinx.serialization.json)
+    testImplementation(kotlin("test"))
 }
+
+tasks.test { useJUnitPlatform() }

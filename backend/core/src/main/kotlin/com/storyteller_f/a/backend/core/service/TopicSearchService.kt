@@ -11,9 +11,7 @@ import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class TopicDocument(
     override val id: PrimaryKey,
     val content: String,

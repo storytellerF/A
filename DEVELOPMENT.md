@@ -43,11 +43,25 @@ include A's `backend/core`, `shared`, or `api` business modules.
 
 - `services/filesystem-protocol` defines the filesystem RPC contract and object metadata.
 - `services/lucene-protocol` defines generic index documents, queries, and the Lucene RPC contract.
+  Documents are lists of named text/long fields, allowing repeated names. Indexing modes
+  (`NONE`, `TEXT`, `EXACT`), storage, and DocValues (`NONE`, `NUMERIC`, `SORTED`) are independent.
+  Reads return stored values grouped by field name, preserving multiple values; there is no ID property.
 - `cloud/filesystem-service` implements object storage and direct HTTP downloads.
 - `cloud/lucene-service` implements generic indexing and search.
 - `backend/filesystem` and `backend/lucene` adapt A's business interfaces to these protocols.
   Filesystem metadata is explicitly converted at this boundary; the service does not implement
   the business-side `ObjectStorageService` interface.
+
+`LuceneUserDocument` and the other backend conversion classes map business documents to these
+generic fields and restore search results without JSON payloads or business serializers.
+The service does not create or reserve `id1`, `id2`, or any other application fields.
+Queries declare their field names; sorting declares field names, LONG/STRING types, and directions.
+RPC has no `get(ids)` or `sortByIdDescending`. A's adapters explicitly declare their own stored,
+exact-indexed `id` field with numeric DocValues, and implement topic lookup through a normal query.
+The RPC contract changed: deploy the service and its backend clients together. The generic service
+returns legacy stored fields under their original names without translating them. A's old `id1` or
+`_payload` indexes need a rebuild from source data to match the adapters' new field declarations.
+This change does not delete or automatically migrate index data.
 
 Build distributions and run service tests without starting A's application services or database:
 

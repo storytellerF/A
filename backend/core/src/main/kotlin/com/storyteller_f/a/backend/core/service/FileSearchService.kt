@@ -10,9 +10,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class FileDocument(override val id: PrimaryKey, val name: String, val ownerId: PrimaryKey) :
     PrimaryKeyIdentifiable {
     companion object {

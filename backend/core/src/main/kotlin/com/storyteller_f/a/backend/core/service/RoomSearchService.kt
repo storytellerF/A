@@ -11,9 +11,7 @@ import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class RoomDocument(
     override val id: PrimaryKey,
     val name: String,

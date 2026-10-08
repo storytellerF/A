@@ -10,9 +10,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class UserDocument(override val id: PrimaryKey, val nickname: String, val aid: String?) :
     PrimaryKeyIdentifiable {
     companion object {

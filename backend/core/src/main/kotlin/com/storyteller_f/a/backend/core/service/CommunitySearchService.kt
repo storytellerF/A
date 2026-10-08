@@ -10,9 +10,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class CommunityDocument(override val id: PrimaryKey, val name: String, val aid: String, val owner: PrimaryKey) :
     PrimaryKeyIdentifiable {
     companion object {

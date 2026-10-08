@@ -4,9 +4,16 @@
 package com.storyteller_f.a.cloud.lucene
 
 import com.storyteller_f.services.lucene.api.LuceneRpc
+import com.storyteller_f.services.lucene.api.RpcLuceneDocValues
 import com.storyteller_f.services.lucene.api.RpcLuceneDocument
+import com.storyteller_f.services.lucene.api.RpcLuceneField
+import com.storyteller_f.services.lucene.api.RpcLuceneIndex
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery
 import com.storyteller_f.services.lucene.api.RpcLuceneResult
+import com.storyteller_f.services.lucene.api.RpcLuceneSort
+import com.storyteller_f.services.lucene.api.RpcLuceneSortType
+import com.storyteller_f.services.lucene.api.RpcLuceneStoredDocument
+import com.storyteller_f.services.lucene.api.RpcLuceneValue
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
@@ -21,14 +28,12 @@ import kotlinx.coroutines.withContext
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.buildJsonObject
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
-import org.apache.lucene.document.LongField
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.NumericDocValuesField
+import org.apache.lucene.document.SortedDocValuesField
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
@@ -45,15 +50,12 @@ import org.apache.lucene.search.Sort
 import org.apache.lucene.search.SortField
 import org.apache.lucene.search.TermQuery
 import org.apache.lucene.store.FSDirectory
+import org.apache.lucene.util.BytesRef
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.createDirectories
-
-private const val ID_FIELD = "id1"
-private const val SORT_ID_FIELD = "id2"
-private const val PAYLOAD_FIELD = "_payload"
 
 internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
     private val analyzer = StandardAnalyzer()
@@ -66,23 +68,6 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
         useIndex(index) {
         IndexWriter(this, IndexWriterConfig(analyzer)).use { it.addDocuments(documents.map(::toDocument)) }
         Unit
-    }
-    override suspend fun get(index: String, ids: List<Long>): List<String?> =
-        useIndex(index) {
-        if (ids.isEmpty()) return@useIndex emptyList()
-        try {
-            DirectoryReader.open(this).use { reader ->
-                val searcher = IndexSearcher(reader)
-                val found =
-                    searcher.search(LongPoint.newSetQuery(ID_FIELD, ids), ids.size).scoreDocs.associate { hit ->
-                        val document = searcher.storedFields().document(hit.doc)
-                        document.get(ID_FIELD).toLong() to readPayload(document)
-                    }
-                ids.map(found::get)
-            }
-        } catch (_: IndexNotFoundException) {
-            ids.map { null }
-        }
     }
     override suspend fun clean(index: String) =
         useIndex(index) {
@@ -101,20 +86,13 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
         try {
             DirectoryReader.open(this).use { reader ->
                 val searcher = IndexSearcher(reader)
-                val sort =
-                    if (query.sortByIdDescending) {
-                        Sort(
-                            SortField(SORT_ID_FIELD, SortField.Type.LONG, true),
-                        )
-                    } else {
-                        Sort.RELEVANCE
-                    }
+                val sort = buildSort(query.sort)
                 val hits = searcher.search(buildQuery(query), limit, sort)
-                val payloads =
+                val documents =
                     hits.scoreDocs.drop(
                         query.offset,
-                    ).map { readPayload(searcher.storedFields().document(it.doc)) }
-                RpcLuceneResult(payloads, hits.totalHits.value)
+                    ).map { readStoredDocument(searcher.storedFields().document(it.doc)) }
+                RpcLuceneResult(documents, hits.totalHits.value)
             }
         } catch (_: IndexNotFoundException) {
             RpcLuceneResult(emptyList(), 0)
@@ -131,27 +109,68 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
     }
     private fun toDocument(source: RpcLuceneDocument) =
         Document().apply {
-        val names = source.textFields.keys + source.keywordFields.keys + source.longFields.keys
-        require(
-            names.none { it in setOf(ID_FIELD, SORT_ID_FIELD, PAYLOAD_FIELD) || it.isBlank() },
-        ) { "invalid or reserved field name" }
-        add(LongField(ID_FIELD, source.id, Field.Store.YES))
-        add(NumericDocValuesField(SORT_ID_FIELD, source.id))
-        add(StoredField(PAYLOAD_FIELD, source.payload))
-        source.textFields.forEach { (name, value) -> add(TextField(name, value, Field.Store.NO)) }
-        source.keywordFields.forEach { (name, value) -> add(StringField(name, value, Field.Store.NO)) }
-        source.longFields.forEach { (name, value) -> add(LongField(name, value, Field.Store.NO)) }
+        require(source.fields.all { it.name.isNotBlank() }) { "field names must not be blank" }
+        source.fields.forEach { addField(it.name, it) }
     }
 
-    private fun readPayload(document: Document): String =
-        document.get(PAYLOAD_FIELD) ?: buildJsonObject {
-        // Earlier indexes stored fields individually. Preserve those records as generic JSON during migration.
-        document.fields.forEach { field ->
-            val name = if (field.name() == ID_FIELD) "id" else field.name()
-            val value = field.numericValue()?.let(::JsonPrimitive) ?: JsonPrimitive(field.stringValue())
-            put(name, value)
+    private fun buildSort(fields: List<RpcLuceneSort>): Sort {
+        if (fields.isEmpty()) {
+            return Sort.RELEVANCE
         }
-    }.toString()
+        // Construct the Java vararg array inline instead of copying an existing array.
+        return Sort(
+            *Array(fields.size) { index ->
+                val field = fields[index]
+                require(field.field.isNotBlank()) { "sort field names must not be blank" }
+                SortField(
+                    field.field,
+                    when (field.type) {
+                        RpcLuceneSortType.LONG -> SortField.Type.LONG
+                        RpcLuceneSortType.STRING -> SortField.Type.STRING
+                    },
+                    field.descending,
+                )
+            },
+        )
+    }
+
+    private fun Document.addField(name: String, field: RpcLuceneField) {
+        require(field.stored || field.index != RpcLuceneIndex.NONE || field.docValues != RpcLuceneDocValues.NONE) {
+            "fields must be stored, indexed or have DocValues"
+        }
+        when (val value = field.value) {
+            is RpcLuceneValue.Text -> {
+                when (field.index) {
+                    RpcLuceneIndex.TEXT -> add(TextField(name, value.value, Field.Store.NO))
+                    RpcLuceneIndex.EXACT -> add(StringField(name, value.value, Field.Store.NO))
+                    RpcLuceneIndex.NONE -> Unit
+                }
+                require(field.docValues != RpcLuceneDocValues.NUMERIC) { "text fields cannot use numeric DocValues" }
+                if (field.docValues == RpcLuceneDocValues.SORTED) add(SortedDocValuesField(name, BytesRef(value.value)))
+                if (field.stored) add(StoredField(name, value.value))
+            }
+
+            is RpcLuceneValue.LongNumber -> {
+                require(field.index != RpcLuceneIndex.TEXT) { "numeric fields cannot use text indexing" }
+                require(
+                    field.docValues != RpcLuceneDocValues.SORTED,
+                ) { "numeric fields cannot use sorted string DocValues" }
+                if (field.docValues == RpcLuceneDocValues.NUMERIC) add(NumericDocValuesField(name, value.value))
+                if (field.index == RpcLuceneIndex.EXACT) add(LongPoint(name, value.value))
+                if (field.stored) add(StoredField(name, value.value))
+            }
+        }
+    }
+
+    private fun readStoredDocument(document: Document) =
+        RpcLuceneStoredDocument(
+        document.fields.groupBy { it.name() }.mapValues { (_, fields) ->
+            fields.map { field ->
+                field.numericValue()?.let { RpcLuceneValue.LongNumber(it.toLong()) }
+                    ?: RpcLuceneValue.Text(field.stringValue())
+            }
+        },
+    )
     private fun buildQuery(source: RpcLuceneQuery) =
         BooleanQuery.Builder().apply {
         source.mustLong.forEach { (field, value) ->

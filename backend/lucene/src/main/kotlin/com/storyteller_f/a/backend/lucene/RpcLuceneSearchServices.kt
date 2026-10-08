@@ -31,9 +31,9 @@ import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
 import com.storyteller_f.services.lucene.api.LuceneRpc
-import com.storyteller_f.services.lucene.api.RpcLuceneDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery
 import com.storyteller_f.services.lucene.api.RpcLuceneResult
+import com.storyteller_f.services.lucene.api.RpcLuceneStoredDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -47,39 +47,23 @@ import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
 import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.json.Json
 import java.util.concurrent.ConcurrentHashMap
 
-private val rpcJson = Json { explicitNulls = false }
 private inline fun <T> rpcResult(block: () -> T): Result<T> = cancellableRunCatching(block)
 private fun OffsetFetch.query() = RpcLuceneQuery(offset = cursor?.value ?: 0, size = size)
 private fun RpcLuceneQuery.withText(word: String, vararg fields: String) =
     copy(
     text = listOf(RpcLuceneTextQuery(word, fields.toList())),
 )
-private fun <T> T.payload(serializer: KSerializer<T>) = rpcJson.encodeToString(serializer, this)
-private fun <T> String.decode(serializer: KSerializer<T>) = rpcJson.decodeFromString(serializer, this)
-private fun <T> RpcLuceneResult.toPage(serializer: KSerializer<T>) =
-    PaginationResult(
-    payloads.map { it.decode(serializer) },
-    total,
-)
+private fun <T> RpcLuceneResult.toPage(convert: (RpcLuceneStoredDocument) -> T) =
+    PaginationResult(documents.map(convert), total)
 
 class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService {
     override suspend fun saveDocument(documents: List<TopicDocument>) =
         rpcResult {
         rpc.save(
             "topic",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(TopicDocument.serializer()),
-                    mapOf("content" to d.content),
-                    mapOf("rootType" to d.rootType, "parentType" to d.parentType),
-                    mapOf("rootId" to d.rootId, "parentId" to d.parentId, "author" to d.author),
-                )
-            },
+            documents.map { LuceneTopicDocument(it).save() },
         )
     }
     override suspend fun getDocuments(idList: List<PrimaryKey>) =
@@ -87,7 +71,7 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
         rpc.get(
             "topic",
             idList,
-        ).map { it?.decode(TopicDocument.serializer()) }
+        ).map { it?.let(LuceneTopicDocument.Companion::restore) }
     }
     override suspend fun clean() = rpcResult { rpc.clean("topic") }
     override suspend fun searchDocument(search: TopicDocumentSearch) =
@@ -130,7 +114,7 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
                 0,
             )
         } else {
-            rpc.search("topic", query).toPage(TopicDocument.serializer())
+            rpc.search("topic", query).toPage(LuceneTopicDocument.Companion::restore)
         }
     }
 }
@@ -140,13 +124,7 @@ class LuceneUserSearchService(private val rpc: LuceneRpc) : UserSearchService {
         rpcResult {
         rpc.save(
             "user",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(UserDocument.serializer()),
-                    mapOf("nickname" to d.nickname, "aid" to d.aid.orEmpty()),
-                )
-            },
+            documents.map { LuceneUserDocument(it).save() },
         )
     }
     override suspend fun clean() = rpcResult { rpc.clean("user") }
@@ -163,7 +141,7 @@ class LuceneUserSearchService(private val rpc: LuceneRpc) : UserSearchService {
                     rpc.search(
                         "user",
                         search.fetch.query().withText(search.word, "aid", "nickname"),
-                    ).toPage(UserDocument.serializer())
+                    ).toPage(LuceneUserDocument.Companion::restore)
                 }
         }
     }
@@ -174,14 +152,7 @@ class LuceneRoomSearchService(private val rpc: LuceneRpc) : RoomSearchService {
         rpcResult {
         rpc.save(
             "room",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(RoomDocument.serializer()),
-                    mapOf("name" to d.name, "aid" to d.aid),
-                    longFields = d.communityId?.let { mapOf("communityId" to it) }.orEmpty(),
-                )
-            },
+            documents.map { LuceneRoomDocument(it).save() },
         )
     }
     override suspend fun clean() = rpcResult { rpc.clean("room") }
@@ -200,7 +171,7 @@ class LuceneRoomSearchService(private val rpc: LuceneRpc) : RoomSearchService {
                         search.fetch.query().copy(
                             mustLong = search.communityId?.let { mapOf("communityId" to it) }.orEmpty(),
                         ).withText(search.words, "aid", "name"),
-                    ).toPage(RoomDocument.serializer())
+                    ).toPage(LuceneRoomDocument.Companion::restore)
                 }
         }
     }
@@ -211,14 +182,7 @@ class LuceneCommunitySearchService(private val rpc: LuceneRpc) : CommunitySearch
         rpcResult {
         rpc.save(
             "community",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(CommunityDocument.serializer()),
-                    mapOf("name" to d.name, "aid" to d.aid),
-                    longFields = mapOf("owner" to d.owner),
-                )
-            },
+            documents.map { LuceneCommunityDocument(it).save() },
         )
     }
     override suspend fun clean() = rpcResult { rpc.clean("community") }
@@ -235,7 +199,7 @@ class LuceneCommunitySearchService(private val rpc: LuceneRpc) : CommunitySearch
                     rpc.search(
                         "community",
                         search.fetch.query().withText(search.keyword, "aid", "name"),
-                    ).toPage(CommunityDocument.serializer())
+                    ).toPage(LuceneCommunityDocument.Companion::restore)
                 }
         }
     }
@@ -246,19 +210,7 @@ class LuceneMemberSearchService(private val rpc: LuceneRpc) : MemberSearchServic
         rpcResult {
         rpc.save(
             "member",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(MemberDocument.serializer()),
-                    mapOf("nickname" to d.nickname, "objectName" to d.objectName),
-                    mapOf("objectType" to d.objectType.name),
-                    buildMap {
-                        put("uid", d.uid)
-                        put("objectId", d.objectId)
-                        d.communityId?.let { put("communityId", it) }
-                    },
-                )
-            },
+            documents.map { LuceneMemberDocument(it).save() },
         )
     }
     override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey) =
@@ -300,7 +252,7 @@ class LuceneMemberSearchService(private val rpc: LuceneRpc) : MemberSearchServic
                 0,
             )
         } else {
-            rpc.search("member", query).toPage(MemberDocument.serializer())
+            rpc.search("member", query).toPage(LuceneMemberDocument.Companion::restore)
         }
     }
 }
@@ -310,14 +262,7 @@ class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
         rpcResult {
         rpc.save(
             "file",
-            documents.map { d ->
-                RpcLuceneDocument(
-                    d.id,
-                    d.payload(FileDocument.serializer()),
-                    mapOf("name" to d.name),
-                    longFields = mapOf("ownerId" to d.ownerId),
-                )
-            },
+            documents.map { LuceneFileDocument(it).save() },
         )
     }
     override suspend fun clean() = rpcResult { rpc.clean("file") }
@@ -336,7 +281,7 @@ class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
                         search.fetch.query().copy(
                             mustLong = search.ownerId?.let { mapOf("ownerId" to it) }.orEmpty(),
                         ).withText(search.word, "name"),
-                    ).toPage(FileDocument.serializer())
+                    ).toPage(LuceneFileDocument.Companion::restore)
                 }
         }
     }

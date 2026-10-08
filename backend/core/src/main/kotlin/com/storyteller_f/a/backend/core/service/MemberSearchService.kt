@@ -11,9 +11,7 @@ import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class MemberDocument(
     override val id: PrimaryKey,
     val uid: PrimaryKey,

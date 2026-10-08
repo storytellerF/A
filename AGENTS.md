@@ -67,6 +67,7 @@
 - Cloud server integration tests and Appium E2E tests use PostgreSQL with dedicated filesystem RPC and Lucene RPC containers. Do not reintroduce H2, MinIO, or Elasticsearch into these test topologies.
 - Keep filesystem and Lucene RPC services business-independent. Translate business search models in backend adapters; clients download object contents directly from filesystem HTTP rather than through server.
 - Define filesystem and Lucene RPC contracts in their respective `services/*-protocol` modules. Service runtime code must not depend on `backend/core`, `shared`, or `api`; map business storage/search types in backend adapters. Keep service configuration independent of flavor env files.
+- Lucene RPC uses explicit named fields with independent indexing, storage and DocValues settings, not business JSON payloads. Do not inject fixed ID fields or expose ID-specific RPC operations; adapters declare business identifiers, queries and sort fields. Keep `Lucene*Document` conversion classes in backend adapters.
 - Gradle owns test image construction: `distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`, using the root Dockerfile. Testcontainers only starts the resulting images. Keep image tasks in the shared convention plugin, and use the QEMU skill's Docker CLI proxy on Windows rather than a separate test Dockerfile.
 - Do not reintroduce the removed H2 service or Docker target; `r2dbc-h2` supports only file and memory protocols, not the remote database topology required here.
 
