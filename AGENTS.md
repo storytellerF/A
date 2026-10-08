@@ -74,7 +74,7 @@
 ## Additional AI Collaboration Rules
 - Deploy through `scripts/service_scripts/start-service-in-docker.sh`; compile deployment artifacts inside Docker, not on the host.
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.
-- Do not create files outside the repository. Sensitive files (`deploy/*.env`) are excluded by `.aiexclude`.
+- Do not create files outside the repository. Do not expose sensitive values from `deploy/*.env` in logs, documentation, or commits.
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.
 - Configure shared Kotlin/JS and Wasm Yarn root extensions only in the root build; subprojects must not override lockfile locations. Keep JS and Wasm lockfiles separate under `kotlin-js-store` and regenerate the affected lockfile after npm dependency changes.
 - Keep existing tests compatible. If tests must be updated, explain the migration reason and steps.
