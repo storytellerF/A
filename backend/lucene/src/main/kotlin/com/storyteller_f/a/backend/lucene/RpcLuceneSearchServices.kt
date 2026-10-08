@@ -33,6 +33,8 @@ import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
 import com.storyteller_f.services.lucene.api.LuceneRpc
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery
 import com.storyteller_f.services.lucene.api.RpcLuceneResult
+import com.storyteller_f.services.lucene.api.RpcLuceneSort
+import com.storyteller_f.services.lucene.api.RpcLuceneSortType
 import com.storyteller_f.services.lucene.api.RpcLuceneStoredDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import com.storyteller_f.shared.type.ObjectType
@@ -68,10 +70,13 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
     }
     override suspend fun getDocuments(idList: List<PrimaryKey>) =
         rpcResult {
-        rpc.get(
-            "topic",
-            idList,
-        ).map { it?.let(LuceneTopicDocument.Companion::restore) }
+        if (idList.isEmpty()) return@rpcResult emptyList<TopicDocument?>()
+        val documents =
+            rpc.search(
+                "topic",
+                RpcLuceneQuery(mustLongSet = mapOf(DOCUMENT_ID_FIELD to idList), size = idList.size),
+            ).documents.map(LuceneTopicDocument.Companion::restore).associateBy { it.id }
+        idList.map(documents::get)
     }
     override suspend fun clean() = rpcResult { rpc.clean("topic") }
     override suspend fun searchDocument(search: TopicDocumentSearch) =
@@ -82,13 +87,13 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
                     search.fetch.query().copy(
                         mustLongSet = mapOf("parentId" to search.communities),
                         mustNotLong = mapOf("author" to search.uid),
-                        sortByIdDescending = true,
+                        sort = listOf(RpcLuceneSort(DOCUMENT_ID_FIELD, RpcLuceneSortType.LONG, descending = true)),
                     )
 
                 is TopicDocumentSearch.RecommendNotLogin ->
                     search.fetch.query().copy(
                         mustKeyword = mapOf("parentType" to ObjectType.COMMUNITY.name),
-                        sortByIdDescending = true,
+                        sort = listOf(RpcLuceneSort(DOCUMENT_ID_FIELD, RpcLuceneSortType.LONG, descending = true)),
                     )
 
                 is TopicDocumentSearch.AllCommunityRoot ->
