@@ -37,22 +37,16 @@ data class TopicDocument(
     }
 }
 
-@Serializable
 sealed interface TopicDocumentSearch {
-    @Serializable
     data class Recommend(val uid: PrimaryKey, val communities: List<PrimaryKey>, val fetch: OffsetFetch) :
         TopicDocumentSearch
 
-    @Serializable
     data class Topics(val parentId: PrimaryKey, val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 
-    @Serializable
     data class RecommendNotLogin(val fetch: OffsetFetch) : TopicDocumentSearch
 
-    @Serializable
     data class All(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 
-    @Serializable
     data class AllCommunityRoot(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 }
 

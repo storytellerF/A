@@ -44,17 +44,13 @@ data class MemberDocument(
     }
 }
 
-@Serializable
 sealed interface MemberDocumentSearch {
-    @Serializable
     data class Keyword(val objectId: PrimaryKey? = null, val nickname: String, val fetch: OffsetFetch) :
         MemberDocumentSearch
 
-    @Serializable
     data class CommunityMembers(val uid: PrimaryKey, val objectName: String, val fetch: OffsetFetch) :
         MemberDocumentSearch
 
-    @Serializable
     data class RoomMembers(
         val uid: PrimaryKey,
         val objectName: String,

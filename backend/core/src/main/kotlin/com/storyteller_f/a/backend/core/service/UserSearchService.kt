@@ -20,9 +20,7 @@ data class UserDocument(override val id: PrimaryKey, val nickname: String, val a
     }
 }
 
-@Serializable
 sealed interface UserDocumentSearch {
-    @Serializable
     data class Keyword(val word: String, val fetch: OffsetFetch) : UserDocumentSearch
 }
 

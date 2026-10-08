@@ -26,9 +26,7 @@ data class CommunityDocument(override val id: PrimaryKey, val name: String, val 
     }
 }
 
-@Serializable
 sealed interface CommunityDocumentSearch {
-    @Serializable
     data class Keyword(val keyword: String, val fetch: OffsetFetch) : CommunityDocumentSearch
 }
 

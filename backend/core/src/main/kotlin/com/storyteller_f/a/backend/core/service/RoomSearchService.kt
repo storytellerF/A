@@ -27,9 +27,7 @@ data class RoomDocument(
     }
 }
 
-@Serializable
 sealed interface RoomDocumentSearch {
-    @Serializable
     data class Keyword(val words: String, val communityId: PrimaryKey? = null, val fetch: OffsetFetch) :
         RoomDocumentSearch
 }

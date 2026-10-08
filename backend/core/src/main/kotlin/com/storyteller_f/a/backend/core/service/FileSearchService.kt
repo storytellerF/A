@@ -25,9 +25,7 @@ data class FileDocument(override val id: PrimaryKey, val name: String, val owner
     }
 }
 
-@Serializable
 sealed interface FileDocumentSearch {
-    @Serializable
     data class Keyword(val word: String, val ownerId: PrimaryKey? = null, val fetch: OffsetFetch) : FileDocumentSearch
 }
 
