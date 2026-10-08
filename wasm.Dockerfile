@@ -39,10 +39,8 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
 
 FROM nginx:1.27-alpine AS app-wasm
 
-COPY deploy/docker-compose/app-wasm.nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/deploy/build/app-wasm/ /usr/share/nginx/html/
 
 FROM nginx:1.27-alpine AS panel-wasm
 
-COPY deploy/docker-compose/app-wasm.nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/deploy/build/panel-wasm/ /usr/share/nginx/html/

@@ -6,7 +6,6 @@ android-llama-cpp
 **/build/**
 deploy
 !deploy/build/**
-!deploy/docker-compose/app-wasm.nginx.conf
 local.properties
 **/.gradle
 **/iosApp/**

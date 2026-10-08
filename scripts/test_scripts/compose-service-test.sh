@@ -203,6 +203,8 @@ assert_contains "wasm.Dockerfile" "org.gradle.parallel=false"
 assert_not_contains "wasm.Dockerfile" "--no-parallel"
 assert_not_contains "wasm.Dockerfile" "flavor_env"
 assert_not_contains "wasm.Dockerfile" 'deploy/${FLAVOR}.env'
+assert_contains "deploy/docker-compose/docker-compose.app.yml" './app-wasm.nginx.conf:/etc/nginx/conf.d/default.conf:ro'
+assert_not_contains "wasm.Dockerfile" 'COPY deploy/docker-compose/app-wasm.nginx.conf'
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "worker.Dockerfile"
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "ws.Dockerfile"
 assert_not_contains "scripts/build_scripts/build-service-images.sh" "cli.Dockerfile"

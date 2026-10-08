@@ -20,6 +20,14 @@ A device-independent E2E smoke test is `:app:cliE2e:e2eTest --tests '*CliE2eTest
 `-Pserver.flavor=dev -Pserver.buildType=debug`). Filter by class: Kotlin `internal` test
 methods acquire module-specific JVM name suffixes, so an exact source-method filter will not match.
 
+## Wasm Nginx configuration
+
+Compose mounts `deploy/docker-compose/app-wasm.nginx.conf` read-only into both Wasm sites
+at `/etc/nginx/conf.d/default.conf`. The Wasm images contain the built site, not this
+configuration. After editing the host configuration, reload Nginx or recreate the containers;
+no image rebuild is required. Standalone image runs must supply the same configuration to
+enable the required COOP/COEP headers.
+
 ## Adminer reverse proxy
 
 The Bunker Adminer site uses the regex location `~ ^/` instead of the ordinary `/` location.
