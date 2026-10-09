@@ -23,4 +23,4 @@ else
 fi
 
 log "Start service..."
-tmux new-session -d -s $SESSION_NAME "./scripts/service_scripts/start-service-in-local.sh $FLAVOR; exec bash"
+tmux new-session -d -s $SESSION_NAME "./scripts/service_scripts/start-service-in-docker.sh $FLAVOR; exec bash"

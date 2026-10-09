@@ -9,6 +9,7 @@ import com.storyteller_f.shared.type.PrimaryKey
 
 sealed interface ObjectFetch {
     data class AidFetch(val aid: String) : ObjectFetch
+
     data class IdFetch(val id: PrimaryKey) : ObjectFetch
 }
 
@@ -25,7 +26,9 @@ fun aidFetch(aid: String) = ObjectFetch.AidFetch(aid)
 
 sealed interface Cursor<T> {
     val value: T
+
     data class AscCursor<T>(override val value: T) : Cursor<T>
+
     data class DescCursor<T>(override val value: T) : Cursor<T>
 }
 

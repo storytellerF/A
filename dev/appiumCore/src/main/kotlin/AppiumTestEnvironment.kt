@@ -18,8 +18,8 @@ suspend fun runAppiumTestEnvironment(block: suspend (AppiumPorts) -> Unit) {
     val containerDataPath = "/appium-session"
     System.setProperty("api.version", "1.44")
     Network.newNetwork().use { network ->
-        useDatabaseContainer(network) { database ->
-            val environment = buildContainerEnv(containerDataPath, database)
+        useLightweightBackendContainers(network) {
+            val environment = buildContainerEnv(containerDataPath)
             useCliInitContainer(network, environment, hostSessionPath, containerDataPath) {
                 useWsContainer(network, environment, hostSessionPath, containerDataPath) { ws ->
                     val wsPort = ws.getMappedPort(8813)

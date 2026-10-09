@@ -205,7 +205,9 @@ buildkonfig {
                 }
             }
         }
-    val serverUrl = properties["SERVER_URL"] as? String
+    val serverUrl =
+        providers.gradleProperty("app.server.url").orNull
+            ?: properties["SERVER_URL"] as? String
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)

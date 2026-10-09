@@ -8,22 +8,22 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.slf4j.LoggerFactory
-import org.testcontainers.containers.BindMode
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.Network
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.output.Slf4jLogConsumer
 import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.utility.DockerImageName
+import org.testcontainers.utility.MountableFile
 import java.io.File
 import java.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 private const val CLI_READY_PORT = 8081
 private const val SERVER_PORT = 8811
 private const val WEBSOCKET_PORT = 8813
+private const val FILESYSTEM_PORT = 8820
+private const val LUCENE_PORT = 8821
 private const val STARTUP_TIMEOUT_SECONDS = 90L
 private const val STARTUP_ATTEMPTS = 3
 private const val HEALTHY_STATUS_CODE = 200
@@ -48,51 +48,79 @@ fun runE2eBlockingTest(block: suspend CoroutineScope.() -> Unit) {
 }
 
 /** Start the complete backend topology required by an installed CLI distribution. */
-@OptIn(ExperimentalUuidApi::class)
 suspend fun runE2eTestEnvironment(block: suspend (E2ePorts) -> Unit) {
-    val sessionId = Uuid.random().toHexString()
-    val hostSessionPath = File("build/test/e2e/sessions", sessionId).canonicalPath
-    prepareSessionDirectories(hostSessionPath)
-    val containerDataPath = "/e2e-session"
     System.setProperty("api.version", API_VERSION)
     Network.newNetwork().use { network ->
         useDatabaseContainer(network) { database ->
-            val environment = buildContainerEnv(containerDataPath, database)
-            useCliInitContainer(
-                network = network,
-                commonEnv = environment,
-                hostSessionPath = hostSessionPath,
-                containerDataPath = containerDataPath,
-            ) {
-                useWsContainer(
-                    network = network,
-                    commonEnv = environment,
-                    hostSessionPath = hostSessionPath,
-                    containerDataPath = containerDataPath,
-                ) { ws ->
-                    useServerContainer(
+            useFilesystemContainer(network) { filesystem ->
+                useLuceneContainer(network) {
+                    val environment =
+                        buildContainerEnv(database) +
+                            ("FILESYSTEM_PUBLIC_URL" to "http://${filesystem.host}:${filesystem.getMappedPort(8822)}")
+                    useCliInitContainer(
                         network = network,
                         commonEnv = environment,
-                        hostSessionPath = hostSessionPath,
-                        containerDataPath = containerDataPath,
-                    ) { server ->
-                        useWorkerContainer(
+                    ) {
+                        useWsContainer(
                             network = network,
                             commonEnv = environment,
-                            hostSessionPath = hostSessionPath,
-                            containerDataPath = containerDataPath,
-                        ) {
-                            block(
-                                E2ePorts(
-                                    server = server.getMappedPort(SERVER_PORT),
-                                    ws = ws.getMappedPort(WEBSOCKET_PORT),
-                                ),
-                            )
+                        ) { ws ->
+                            useServerContainer(
+                                network = network,
+                                commonEnv = environment,
+                            ) { server ->
+                                useWorkerContainer(
+                                    network = network,
+                                    commonEnv = environment,
+                                ) {
+                                    block(
+                                        E2ePorts(
+                                            server = server.getMappedPort(SERVER_PORT),
+                                            ws = ws.getMappedPort(WEBSOCKET_PORT),
+                                        ),
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private suspend fun useFilesystemContainer(network: Network, block: suspend (GenericContainer<*>) -> Unit) {
+    GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
+        withNetwork(network)
+        withNetworkAliases("e2e-filesystem")
+        withEnv("FILESYSTEM_PUBLIC_URL", "http://e2e-filesystem:8822")
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(FILESYSTEM_PORT, 8822)
+        waitingFor(
+            Wait.forHttp("/health")
+                .forPort(FILESYSTEM_PORT)
+                .withStartupTimeout(Duration.ofSeconds(STARTUP_TIMEOUT_SECONDS)),
+        )
+    }.use { container ->
+        container.start()
+        block(container)
+    }
+}
+
+private suspend fun useLuceneContainer(network: Network, block: suspend () -> Unit) {
+    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+        withNetwork(network)
+        withNetworkAliases("e2e-lucene")
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(LUCENE_PORT)
+        waitingFor(
+            Wait.forHttp("/health")
+                .forPort(LUCENE_PORT)
+                .withStartupTimeout(Duration.ofSeconds(STARTUP_TIMEOUT_SECONDS)),
+        )
+    }.use { container ->
+        container.start()
+        block()
     }
 }
 
@@ -106,13 +134,7 @@ private suspend fun useDatabaseContainer(network: Network, block: suspend (Postg
     }
 }
 
-private suspend fun useCliInitContainer(
-    network: Network,
-    commonEnv: Map<String, String>,
-    hostSessionPath: String,
-    containerDataPath: String,
-    block: suspend () -> Unit,
-) {
+private suspend fun useCliInitContainer(network: Network, commonEnv: Map<String, String>, block: suspend () -> Unit) {
     val presetPath = resolveE2ePresetPath()
     GenericContainer(DockerImageName.parse("a-cli:latest")).apply {
         withNetwork(network)
@@ -123,8 +145,7 @@ private suspend fun useCliInitContainer(
                     "CLI_READY_PORT" to CLI_READY_PORT.toString(),
                 ),
         )
-        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
-        withFileSystemBind(presetPath.canonicalPath, "/app/deploy/preset_data", BindMode.READ_ONLY)
+        withCopyFileToContainer(MountableFile.forHostPath(presetPath.toPath()), "/app/deploy/preset_data")
         withExposedPorts(CLI_READY_PORT)
         waitingFor(
             Wait.forHttp("/")
@@ -143,15 +164,12 @@ private suspend fun useCliInitContainer(
 private suspend fun useWsContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
-    containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-ws:latest")).apply {
         withNetwork(network)
         withNetworkAliases("e2e-ws")
         withEnv(commonEnv)
-        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
         withExposedPorts(WEBSOCKET_PORT)
         waitingFor(
             Wait.forListeningPort()
@@ -168,14 +186,11 @@ private suspend fun useWsContainer(
 private suspend fun useServerContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
-    containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-server:latest")).apply {
         withNetwork(network)
         withEnv(commonEnv)
-        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
         withExposedPorts(SERVER_PORT)
         waitingFor(
             Wait.forHttp("/metrics")
@@ -194,14 +209,11 @@ private suspend fun useServerContainer(
 private suspend fun useWorkerContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
-    containerDataPath: String,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
         withNetwork(network)
         withEnv(commonEnv)
-        withFileSystemBind(hostSessionPath, containerDataPath, BindMode.READ_WRITE)
         withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("e2e-worker")))
         withStartupAttempts(STARTUP_ATTEMPTS)
     }.use { container ->
@@ -218,18 +230,7 @@ private fun resolveE2ePresetPath(): File {
         ?: error("Shared E2E preset data directory not found")
 }
 
-private fun prepareSessionDirectories(sessionPath: String) {
-    val sessionDir = File(sessionPath)
-    sessionDir.mkdirs()
-    File(sessionDir, "logs").mkdirs()
-    File(sessionDir, "lucene").mkdirs()
-    File(sessionDir, "files").mkdirs()
-}
-
-private fun buildContainerEnv(
-    containerDataPath: String,
-    postgresContainer: PostgreSQLContainer<*>,
-): Map<String, String> {
+private fun buildContainerEnv(postgresContainer: PostgreSQLContainer<*>): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
     val databaseUri = "r2dbc:postgresql://e2e-postgres:5432/${postgresContainer.databaseName}"
     return envFromFile +
@@ -246,9 +247,11 @@ private fun buildContainerEnv(
             "DATABASE_DRIVER" to "postgresql",
             "DATABASE_USER" to postgresContainer.username,
             "DATABASE_PASS" to postgresContainer.password,
-            "LUCENE_BASE_PATH" to "$containerDataPath/lucene",
-            "FILE_SYSTEM_MEDIA_PATH" to "$containerDataPath/files",
-            "LOG_PATH" to "$containerDataPath/logs",
+            "MEDIA_SERVICE" to "filesystem",
+            "FILESYSTEM_RPC_URL" to "ws://e2e-filesystem:$FILESYSTEM_PORT/rpc",
+            "SEARCH_SERVICE" to "lucene",
+            "LUCENE_RPC_URL" to "ws://e2e-lucene:$LUCENE_PORT/rpc",
+            "LOG_PATH" to "/tmp/e2e/logs",
             "INIT_ENABLE" to "false",
         )
 }

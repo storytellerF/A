@@ -59,12 +59,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import org.testcontainers.containers.MinIOContainer
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.elasticsearch.ElasticsearchContainer
+import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
+import java.time.Duration
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
@@ -73,6 +75,8 @@ import com.storyteller_f.a.cloud.ws.module as wsModule
 
 private const val TEST_WS_URL = "ws://localhost/ws"
 private const val TEST_SESSION_SECRET = "test-session-secret"
+private const val FILESYSTEM_PORT = 8820
+private const val LUCENE_PORT = 8821
 
 private typealias TestRoomReceiver = suspend (
     RoomFrame,
@@ -128,9 +132,9 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.
 private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String>, block: suspend TestMate.() -> Unit) {
     runBlocking {
         val env = mutableMapOf<String, String>()
-        useElasticTestContainer(env) {
-            useMinioTestContainer(env) {
-                useDatabaseContainer(env) {
+        usePostgresqlTestContainer(env) {
+            useFilesystemTestContainer(env) {
+                useLuceneTestContainer(env) {
                     doTest(uuid, env + overrideEnv, block)
                 }
             }
@@ -138,45 +142,49 @@ private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String
     }
 }
 
-private suspend fun useDatabaseContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    PostgreSQLContainer(
-        ContainerImages.POSTGRESQL,
-    ).use { postgreSQLContainer ->
-        postgreSQLContainer.start()
-        Napier.i("jdbc: ${postgreSQLContainer.jdbcUrl}")
-        env["DATABASE_URI"] = postgreSQLContainer.jdbcUrl.replace("jdbc", "r2dbc")
+private suspend fun usePostgresqlTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
+    PostgreSQLContainer(ContainerImages.POSTGRESQL).apply {
+        withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
+    }.use { container ->
+        container.start()
+        env["DATABASE_URI"] =
+            "r2dbc:postgresql://${container.host}:${container.firstMappedPort}/${container.databaseName}"
         env["DATABASE_DRIVER"] = "postgresql"
-        env["DATABASE_USER"] = postgreSQLContainer.username
-        env["DATABASE_PASS"] = postgreSQLContainer.password
-        env["DATABASE_DB"] = postgreSQLContainer.databaseName
+        env["DATABASE_USER"] = container.username
+        env["DATABASE_PASS"] = container.password
         block()
     }
 }
 
-private suspend fun useMinioTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    MinIOContainer(ContainerImages.MINIO)
-        .use { minioContainer ->
-            minioContainer.start()
-            env["MEDIA_SERVICE"] = "minio"
-            env["MINIO_URL"] = minioContainer.s3URL
-            env["MINIO_NAME"] = minioContainer.userName
-            env["MINIO_PASS"] = minioContainer.password
-            block()
-        }
+private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
+    GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
+        withEnv("FILESYSTEM_PUBLIC_URL", "http://filesystem:8822")
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(FILESYSTEM_PORT, 8822)
+        waitingFor(
+            Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)),
+        )
+    }.use { container ->
+        container.start()
+        env["MEDIA_SERVICE"] = "filesystem"
+        env["FILESYSTEM_RPC_URL"] =
+            "ws://${container.host}:${container.getMappedPort(FILESYSTEM_PORT)}/rpc"
+        env["FILESYSTEM_PUBLIC_URL"] = "http://${container.host}:${container.getMappedPort(8822)}"
+        block()
+    }
 }
 
-private suspend fun useElasticTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    ElasticsearchContainer(
-        ContainerImages.ELASTICSEARCH,
-    ).withEnv("xpack.security.transport.ssl.enabled", "false")
-        .withEnv("xpack.security.http.ssl.enabled", "false").use { elasticClient ->
-            elasticClient.start()
-            env["SEARCH_SERVICE"] = "elastic"
-            env["ELASTIC_NAME"] = "elastic"
-            env["ELASTIC_PASSWORD"] = "changeme"
-            env["ELASTIC_URL"] = "http://${elasticClient.httpHostAddress}"
-            block()
-        }
+private suspend fun useLuceneTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
+    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(LUCENE_PORT)
+        waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+    }.use { container ->
+        container.start()
+        env["SEARCH_SERVICE"] = "lucene"
+        env["LUCENE_RPC_URL"] = "ws://${container.host}:${container.getMappedPort(LUCENE_PORT)}/rpc"
+        block()
+    }
 }
 
 private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMate.() -> Unit) {

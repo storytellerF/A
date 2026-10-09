@@ -7,9 +7,9 @@ android-llama-cpp
 deploy
 !deploy/build/**
 local.properties
-.gradle
+**/.gradle
 **/iosApp/**
-.kotlin
+**/.kotlin
 .idea
 *.hprof
 dev/logs

@@ -34,10 +34,12 @@ tasks.register<Test>("appiumTest") {
     testClassesDirs = appiumTest.output.classesDirs
     classpath = appiumTest.runtimeClasspath
     dependsOn(
-        ":cloud:server:buildAppiumDockerImage",
-        ":cloud:worker:buildAppiumDockerImage",
-        ":cloud:cli:buildAppiumDockerImage",
-        ":cloud:ws:buildAppiumDockerImage",
+        ":cloud:server:buildTestDockerImage",
+        ":cloud:worker:buildTestDockerImage",
+        ":cloud:cli:buildTestDockerImage",
+        ":cloud:ws:buildTestDockerImage",
+        ":cloud:filesystem-service:buildTestDockerImage",
+        ":cloud:lucene-service:buildTestDockerImage",
         ":panel:desktopApp:writeAppiumRuntimeClasspath",
         accessibilityDumpAgentJar,
     )

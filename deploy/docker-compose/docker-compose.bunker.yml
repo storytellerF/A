@@ -1,0 +1,118 @@
+networks:
+  bw-services:
+    name: bw-services
+
+volumes:
+  bw-storage:
+
+services:
+  bunkerweb:
+    image: bunkerity/bunkerweb-all-in-one:1.6.13
+    ports:
+      - "80:8080/tcp"
+      - "443:8443/tcp"
+      - "443:8443/udp"
+      - "7000:7000"
+    environment:
+      - "SERVER_NAME=${BUNKER_SERVER_NAME:?set BUNKER_SERVER_NAME in bunker.env}"
+      - "MULTISITE=yes"
+      - "ALLOWED_METHODS=GET|POST|HEAD|DELETE|OPTIONS"
+      - "BLACKLIST_COUNTRY=CN MO TW HK"
+      - "USE_REVERSE_PROXY=yes"
+      - "REVERSE_PROXY_URL=/"
+      - "REVERSE_PROXY_CONNECT_TIMEOUT=15m"
+      - "REVERSE_PROXY_READ_TIMEOUT=15m"
+      - "REVERSE_PROXY_SEND_TIMEOUT=15m"
+      - "USE_REAL_IP=yes"
+      - "USE_PROXY_PROTOCOL=yes"
+      - "REAL_IP_HEADER=proxy_protocol"
+      - "AUTO_LETS_ENCRYPT=yes"
+      - "EMAIL_LETS_ENCRYPT=${BUNKER_LETS_ENCRYPT_EMAIL:?set BUNKER_LETS_ENCRYPT_EMAIL in bunker.env}"
+      - "LETS_ENCRYPT_CLEAR_OLD_CERTS=yes"
+      - "USE_LIMIT_REQ=no"
+      - "USE_BAD_BEHAVIOR=yes"
+      - "USE_MODSECURITY_CRS=no"
+      - "REDIS_MAXMEMORY=1024mb"
+      - "ADMIN_USERNAME=${BUNKER_ADMIN:?set BUNKER_ADMIN in bunker.env}"
+      - "ADMIN_PASSWORD=${BUNKER_PASS:?set BUNKER_PASS in bunker.env}"
+      - "${BUNKER_UI_DOMAIN:?set BUNKER_UI_DOMAIN in bunker.env}_USE_UI=yes"
+      - "${BUNKER_UI_DOMAIN}_REVERSE_PROXY_HOST=http://localhost:7000"
+      - "${BUNKER_UI_DOMAIN}_MAX_CLIENT_SIZE=50m"
+      - "${BUNKER_UI_DOMAIN}_REVERSE_PROXY_URL=/etasuhe"
+      - "${BUNKER_API_DOMAIN:?set BUNKER_API_DOMAIN in bunker.env}_REVERSE_PROXY_URL=/"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_HOST=http://server:80"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_URL_1=/ws"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_HOST_1=http://ws:80"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_WS_1=yes"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_READ_TIMEOUT_1=15m"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_SEND_TIMEOUT_1=15m"
+      - "${BUNKER_API_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_API_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_API_DOMAIN}_ALLOWED_METHODS=GET|POST|DELETE|HEAD|OPTIONS"
+      - "${BUNKER_API_DOMAIN}_USE_CORS=yes"
+      - "${BUNKER_API_DOMAIN}_CORS_ALLOW_ORIGIN=${BUNKER_CORS_ALLOW_ORIGIN:?set BUNKER_CORS_ALLOW_ORIGIN in bunker.env}"
+      - "${BUNKER_API_DOMAIN}_CORS_ALLOW_METHODS=GET, POST, DELETE, OPTIONS"
+      - "${BUNKER_API_DOMAIN}_CORS_ALLOW_HEADERS=DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,a-ts,X-Request-ID"
+      - "${BUNKER_API_DOMAIN}_CORS_ALLOW_CREDENTIALS=yes"
+      - "${BUNKER_API_DOMAIN}_CORS_EXPOSE_HEADERS=Content-Length,Content-Range,WWW-Authenticate"
+      - "${BUNKER_API_DOMAIN}_CORS_DENY_REQUEST=yes"
+      - "${BUNKER_API_DOMAIN}_CUSTOM_HEADER=Access-Control-Allow-Credentials: true"
+      - "${BUNKER_MEDIA_DOMAIN:?set BUNKER_MEDIA_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://filesystem:8822"
+      - "${BUNKER_MEDIA_DOMAIN}_REVERSE_PROXY_URL=/objects/"
+      - "${BUNKER_MEDIA_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_MEDIA_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_MEDIA_DOMAIN}_ALLOWED_METHODS=GET|HEAD|OPTIONS"
+      - "${BUNKER_MEDIA_DOMAIN}_USE_CORS=no"
+      - "${BUNKER_MEDIA_DOMAIN}_CORS_ALLOW_ORIGIN=${BUNKER_CORS_ALLOW_ORIGIN}"
+      - "${BUNKER_MEDIA_DOMAIN}_CORS_ALLOW_METHODS=GET, POST, DELETE, OPTIONS"
+      - "${BUNKER_MEDIA_DOMAIN}_CORS_ALLOW_HEADERS=DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,a-ts,X-Request-ID"
+      - "${BUNKER_MEDIA_DOMAIN}_CORS_ALLOW_CREDENTIALS=no"
+      - "${BUNKER_MEDIA_DOMAIN}_CORS_DENY_REQUEST=yes"
+      - "${BUNKER_MEDIA_DOMAIN}_CUSTOM_HEADER=Cross-Origin-Resource-Policy: same-site"
+      - "${BUNKER_ADMINER_DOMAIN:?set BUNKER_ADMINER_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://adminer:8080"
+      # Regex routing avoids Bunker's X-Forwarded-Prefix=/, which makes Adminer's cookie path //.
+      - "${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_URL=~ ^/"
+      - "${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_ADMINER_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_ADMINER_DOMAIN}_ALLOWED_METHODS=GET|POST|DELETE|HEAD|OPTIONS"
+      - "${BUNKER_GRAFANA_DOMAIN:?set BUNKER_GRAFANA_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://grafana:3000"
+      - "${BUNKER_GRAFANA_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_GRAFANA_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_GRAFANA_DOMAIN}_ALLOWED_METHODS=GET|POST|DELETE|HEAD|OPTIONS"
+      - "${BUNKER_APP_DOMAIN:?set BUNKER_APP_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://app-wasm:80"
+      - "${BUNKER_APP_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_APP_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_APP_DOMAIN}_ALLOWED_METHODS=GET|HEAD|OPTIONS"
+      - >-
+        ${BUNKER_APP_DOMAIN}_PERMISSIONS_POLICY=accelerometer=(), ambient-light-sensor=(),
+        attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(),
+        compute-pressure=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(),
+        gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), local-fonts=(self),
+        magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(),
+        publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(),
+        storage-access=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=(),
+        aria-notify=(), captured-surface-control=(), cross-origin-isolated=(), deferred-fetch=(),
+        deferred-fetch-minimal=(), on-device-speech-recognition=(), summarizer=(), wildcards=(),
+        private-state-token-issuance=(), private-state-token-redemption=(), ch-ua-high-entropy-values=(),
+        gamepad=(), local-network=(), local-network-access=(), loopback-network=(), interest-cohort=()
+      - "${BUNKER_PANEL_DOMAIN:?set BUNKER_PANEL_DOMAIN in bunker.env}_REVERSE_PROXY_HOST=http://panel-wasm:80"
+      - "${BUNKER_PANEL_DOMAIN}_REVERSE_PROXY_INTERCEPT_ERRORS=no"
+      - "${BUNKER_PANEL_DOMAIN}_INTERCEPTED_ERROR_CODES="
+      - "${BUNKER_PANEL_DOMAIN}_ALLOWED_METHODS=GET|HEAD|OPTIONS"
+      - >-
+        ${BUNKER_PANEL_DOMAIN}_PERMISSIONS_POLICY=accelerometer=(), ambient-light-sensor=(),
+        attribution-reporting=(), autoplay=(), bluetooth=(), browsing-topics=(), camera=(),
+        compute-pressure=(), display-capture=(), encrypted-media=(), fullscreen=(), geolocation=(),
+        gyroscope=(), hid=(), identity-credentials-get=(), idle-detection=(), local-fonts=(self),
+        magnetometer=(), microphone=(), midi=(), otp-credentials=(), payment=(), picture-in-picture=(),
+        publickey-credentials-create=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(),
+        storage-access=(), usb=(), web-share=(), window-management=(), xr-spatial-tracking=(),
+        aria-notify=(), captured-surface-control=(), cross-origin-isolated=(), deferred-fetch=(),
+        deferred-fetch-minimal=(), on-device-speech-recognition=(), summarizer=(), wildcards=(),
+        private-state-token-issuance=(), private-state-token-redemption=(), ch-ua-high-entropy-values=(),
+        gamepad=(), local-network=(), local-network-access=(), loopback-network=(), interest-cohort=()
+    restart: "unless-stopped"
+    networks:
+      - bw-services
+    volumes:
+      - bw-storage:/data

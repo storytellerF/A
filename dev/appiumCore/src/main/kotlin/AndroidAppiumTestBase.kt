@@ -17,6 +17,11 @@ import java.io.File
 import java.time.Duration
 
 const val CLI_READY_PORT = 8081
+private const val FILESYSTEM_PORT = 8820
+private const val LUCENE_PORT = 8821
+private const val POSTGRES_DATABASE = "a"
+private const val POSTGRES_USER = "a"
+private const val POSTGRES_PASSWORD = "a-test"
 
 data class AppiumPorts(val server: Int, val ws: Int)
 
@@ -24,13 +29,36 @@ data class AuthenticatedSession(val session: InjectedSession, val sessionManager
 
 data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useDatabaseContainer(network: Network, block: suspend (PostgreSQLContainer<*>) -> Unit) {
+suspend fun useLightweightBackendContainers(network: Network, block: suspend () -> Unit) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
         withNetwork(network)
-        withNetworkAliases("appium-postgres")
-    }.use { container ->
-        container.start()
-        block(container)
+        withNetworkAliases("appium-postgresql")
+        withDatabaseName(POSTGRES_DATABASE)
+        withUsername(POSTGRES_USER)
+        withPassword(POSTGRES_PASSWORD)
+        withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
+    }.use { postgresql ->
+        postgresql.start()
+        GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
+            withNetwork(network)
+            withNetworkAliases("appium-filesystem")
+            withEnv("SERVER_URL", "http://10.0.2.2:8811")
+            withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+            withExposedPorts(FILESYSTEM_PORT)
+            waitingFor(Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+        }.use { filesystem ->
+            filesystem.start()
+            GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+                withNetwork(network)
+                withNetworkAliases("appium-lucene")
+                withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+                withExposedPorts(LUCENE_PORT)
+                waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+            }.use { lucene ->
+                lucene.start()
+                block()
+            }
+        }
     }
 }
 
@@ -151,9 +179,8 @@ fun prepareSessionDirectories(sessionPath: String) {
     File(sessionDir, "files").mkdirs()
 }
 
-fun buildContainerEnv(containerDataPath: String, postgresContainer: PostgreSQLContainer<*>): Map<String, String> {
+fun buildContainerEnv(containerDataPath: String): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
-    val databaseUri = "r2dbc:postgresql://appium-postgres:5432/${postgresContainer.databaseName}"
     return envFromFile +
         mapOf(
             "BUILD_TYPE" to "test",
@@ -164,12 +191,14 @@ fun buildContainerEnv(containerDataPath: String, postgresContainer: PostgreSQLCo
             "WS_SERVER_URL" to "ws://10.0.2.2:8813",
             "WS_RPC_URL" to "ws://appium-ws:8813/rpc",
             "SESSION_SECRET" to "appium-session-secret",
-            "DATABASE_URI" to databaseUri,
+            "DATABASE_URI" to "r2dbc:postgresql://appium-postgresql:5432/$POSTGRES_DATABASE",
             "DATABASE_DRIVER" to "postgresql",
-            "DATABASE_USER" to postgresContainer.username,
-            "DATABASE_PASS" to postgresContainer.password,
-            "LUCENE_BASE_PATH" to "$containerDataPath/lucene",
-            "FILE_SYSTEM_MEDIA_PATH" to "$containerDataPath/files",
+            "DATABASE_USER" to POSTGRES_USER,
+            "DATABASE_PASS" to POSTGRES_PASSWORD,
+            "MEDIA_SERVICE" to "filesystem",
+            "FILESYSTEM_RPC_URL" to "ws://appium-filesystem:$FILESYSTEM_PORT/rpc",
+            "SEARCH_SERVICE" to "lucene",
+            "LUCENE_RPC_URL" to "ws://appium-lucene:$LUCENE_PORT/rpc",
             "LOG_PATH" to "$containerDataPath/logs",
             "INIT_ENABLE" to "false",
         )

@@ -98,8 +98,8 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         val containerDataPath = "/appium-session"
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            useDatabaseContainer(network) { databaseContainer ->
-                val commonEnv = buildContainerEnv(containerDataPath, databaseContainer)
+            useLightweightBackendContainers(network) {
+                val commonEnv = buildContainerEnv(containerDataPath)
                 useCliInitContainer(network, commonEnv, hostSessionPath, containerDataPath) {
                     useWsContainer(network, commonEnv, hostSessionPath, containerDataPath) { wsContainer ->
                         val hostWsPort = wsContainer.getMappedPort(8813)
@@ -434,13 +434,15 @@ internal fun buildDesktopLaunchScriptContent(
     appLogFile: File,
     browserEnvironment: String,
 ): String {
+    val appLogPath = appLogFile.path.toBashPath()
+    val appLogDirectory = requireNotNull(appLogFile.parentFile).path.toBashPath()
     val argumentLines =
         arguments.joinToString(" \\\n") {
             "              \"${it.escapeForDoubleQuotedShell()}\""
         }
     return buildString {
         appendLine("#!/bin/bash")
-        appendLine("""mkdir -p "${appLogFile.parentFile.canonicalPath}"""")
+        appendLine("""mkdir -p "$appLogDirectory"""")
         if (browserEnvironment.isNotEmpty()) {
             appendLine(browserEnvironment)
         }
@@ -449,9 +451,11 @@ internal fun buildDesktopLaunchScriptContent(
         appendLine("\" \\")
         append(argumentLines)
         appendLine(" \\")
-        append("""  >> "${appLogFile.canonicalPath}" 2>&1""")
+        append("""  >> "$appLogPath" 2>&1""")
     }
 }
+
+private fun String.toBashPath(): String = replace('\\', '/')
 
 private fun String.escapeForDoubleQuotedShell(): String {
     val escapedBackslashes = replace("\\", "\\\\")

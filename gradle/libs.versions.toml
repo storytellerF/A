@@ -276,6 +276,7 @@ krop-ui = { module = "com.attafitamim.krop:ui", version.ref = "krop-ui" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-call-id = { module = "io.ktor:ktor-client-call-id", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
@@ -289,6 +290,7 @@ ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "k
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm", version.ref = "ktor" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-server-partial-content = { module = "io.ktor:ktor-server-partial-content", version.ref = "ktor" }
@@ -348,6 +350,7 @@ testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", ve
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testContainer" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testContainer" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "ui" }
 ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "ui" }

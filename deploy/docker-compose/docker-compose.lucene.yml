@@ -1,0 +1,38 @@
+services:
+  lucene:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: lucene-service
+      args:
+        BUILD_ON: ${BUILD_ON}
+    restart: unless-stopped
+    environment:
+      LUCENE_RPC_PORT: 8821
+      LUCENE_BASE_PATH: /data
+    expose:
+      - "8821"
+    volumes:
+      - ../lucene_data:/data
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8821/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  cli:
+    environment:
+      SEARCH_SERVICE: lucene
+      LUCENE_RPC_URL: ws://lucene:8821/rpc
+  server:
+    environment:
+      SEARCH_SERVICE: lucene
+      LUCENE_RPC_URL: ws://lucene:8821/rpc
+  worker:
+    environment:
+      SEARCH_SERVICE: lucene
+      LUCENE_RPC_URL: ws://lucene:8821/rpc
+  ws:
+    environment:
+      SEARCH_SERVICE: lucene
+      LUCENE_RPC_URL: ws://lucene:8821/rpc

@@ -3,6 +3,8 @@
 A Kotlin Multiplatform application for Android, Desktop, CLI, and Web, with cloud services and an
 administration panel.
 
+For build, test, and independent service setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 [Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
 ## Worker Configuration
@@ -136,16 +138,38 @@ messages above as the source of truth.
 
 ### Compose Stack With Wasm Apps
 
-Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites. The local startup script builds both distributions before starting Compose.
+Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites.
+Compose builds both sites in the JDK 21 builder stage of `wasm.Dockerfile`, passes only the required
+flavor, build type, and server URLs as build arguments, and copies each distribution into its own
+Nginx runtime image. Deployment compiles backend and Wasm distributions inside Docker; the host
+does not need a local JDK or prebuilt distributions. Images are built sequentially before startup:
 
 ```bash
-./scripts/service_scripts/start-service-in-local.sh sample
+./scripts/service_scripts/start-service-in-docker.sh sample
 ```
 
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
 Deployment settings are read from `deploy/<flavor>.env`. Use `deploy/sample.env` as the reference;
 `BUILD_TYPE` is required, and `COMPOSE_FILE_LIST` selects which services are included in the stack.
+Server, Worker, WebSocket server, and CLI images share the JDK 21 builder in the root `Dockerfile` and
+are packaged as the separate `server`, `worker`, `ws`, and `cli` targets.
+
+When `COMPOSE_FILE_LIST` includes `bunker`, create `~/deploy/bunker.env` outside the project. The startup
+scripts load it after the flavor file so BunkerWeb credentials and deployment-specific domains stay
+outside the repository. Set `BUNKER_ENV_FILE` to use another external path. The file must define
+`BUNKER_ADMIN`, `BUNKER_PASS`, `BUNKER_LETS_ENCRYPT_EMAIL`,
+`BUNKER_SERVER_NAME`, `BUNKER_CORS_ALLOW_ORIGIN`, and the `BUNKER_UI_DOMAIN`, `BUNKER_API_DOMAIN`,
+`BUNKER_MEDIA_DOMAIN`, `BUNKER_MINIO_DOMAIN`, `BUNKER_ADMINER_DOMAIN`, `BUNKER_GRAFANA_DOMAIN`,
+`BUNKER_APP_DOMAIN`, and `BUNKER_PANEL_DOMAIN` host names.
+
+For filesystem storage, set `FILESYSTEM_PUBLIC_URL` to the externally reachable media origin
+(for example `https://media.example.com`), and `FILESYSTEM_EXPOSE_PORT` to the published HTTP port
+(default `8822`). Clients download `/objects/<bucket>/<name>` directly from this service.
+With BunkerWeb, the media domain routes this path to filesystem port 8822; port 8820 is the internal
+management RPC endpoint and must remain private.
+Place `FILESYSTEM_PUBLIC_URL=https://<media-domain>` in the external `bunker.env` when using BunkerWeb,
+so deployment-specific domains remain outside the repository.
 
 ## License
 

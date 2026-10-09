@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-docker-image")
     application
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.serialization)
@@ -53,41 +54,4 @@ kotlin {
 application {
     mainClass = "com.storyteller_f.a.cloud.worker.WorkerMainKt"
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
-val copyTestDockerDistribution =
-    tasks.register<Copy>("copyTestDockerDistribution") {
-        group = "verification"
-        description = "Copies the worker distribution used by test Docker images."
-        dependsOn(tasks.named("distTar"), tasks.named("distZip"))
-        from(layout.buildDirectory.dir("distributions")) {
-            include("worker.tar", "worker.zip")
-        }
-        into(rootProject.layout.projectDirectory.dir("deploy/build"))
-    }
-
-val buildTestDockerImage =
-    tasks.register<Exec>("buildTestDockerImage") {
-        group = "verification"
-        description = "Builds the a-worker Docker image used by integration tests."
-        dependsOn(copyTestDockerDistribution)
-        workingDir = rootProject.layout.projectDirectory.asFile
-        commandLine(
-            "docker",
-            "build",
-            "-f",
-            "worker.Dockerfile",
-            "--build-arg",
-            "BUILD_ON=host",
-            "-t",
-            "a-worker:latest",
-            ".",
-        )
-        outputs.upToDateWhen { false }
-    }
-
-tasks.register("buildAppiumDockerImage") {
-    group = "appium"
-    description = "Compatibility alias for buildTestDockerImage."
-    dependsOn(buildTestDockerImage)
 }
