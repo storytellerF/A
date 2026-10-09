@@ -12,6 +12,10 @@
 - LiteRT-LM 0.16.1 rejects `Engine.close()` before a failed engine has initialized, so GPU initialization failures must be discarded without closing that engine before creating the CPU fallback. `LlmConfig.cachePath` selects a writable LiteRT cache directory; old configurations fall back to a model-specific directory under the JVM temporary directory. Prepare the cache before selecting GPU or CPU so filesystem failures retain their real cause.
 - On Windows, LiteRT-LM's Direct3D 12 WebGPU backend requires 64-bit `dxil.dll` and `dxcompiler.dll` from DirectX Shader Compiler to be available beside the worker's Java executable (or already loaded in the process). Without them, GPU initialization fails and the adapter falls back to CPU.
 
+## Backend Core Serialization
+
+- `backend/core` currently declares no kotlinx.serialization `@Serializable` types in its main or test sources. `WrapCacheService` uses the serialization runtime (`Json` and `KClass.serializer()`) to obtain serializers for types defined by other modules. Its JSON runtime dependency is needed; the module-local serialization compiler plugin is unnecessary while this remains true.
+
 ## Gradle Version Catalog
 
 - Versions in `gradle/libs.versions.toml` that are consumed directly by build scripts rather than a library or plugin `version.ref` must include `# @keep this version`, so catalog cleanup does not remove them. Current examples are Android SDK levels and `jdk`.
