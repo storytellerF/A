@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -93,6 +92,7 @@ import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SubscriptionButton
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -109,7 +109,7 @@ import org.jetbrains.compose.resources.stringResource
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun CommunityPage(communityId: PrimaryKey, showDialog: Boolean) {
-    val size = calculateWindowSizeClass()
+    val size = CurrentWindowSizeClass()
     val model = createCommunityViewModel(communityId)
     val typography = getCommunityFont(communityId)
 

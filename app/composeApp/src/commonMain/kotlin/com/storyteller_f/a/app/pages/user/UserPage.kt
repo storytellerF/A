@@ -20,7 +20,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -57,6 +56,7 @@ import com.storyteller_f.a.app.topics
 import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
 import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
+import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.UserInfo
@@ -82,7 +82,7 @@ private fun UserPageInternal(uid: PrimaryKey, userViewModel: IdUserViewModel) {
         rememberPagerState {
             3
         }
-    val size = calculateWindowSizeClass()
+    val size = CurrentWindowSizeClass()
     if (size.widthSizeClass == WindowWidthSizeClass.Compact) {
         UserCompatInternal(uid, user, pagerState)
     } else {

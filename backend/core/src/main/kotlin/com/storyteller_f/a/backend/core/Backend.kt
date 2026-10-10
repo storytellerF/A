@@ -121,7 +121,7 @@ fun buildNameService(env: MergedEnv): NameService {
 
 /**
  * 安装教程 https://github.com/AOMediaCodec/libavif
- * 在Windows 上安装后的文件名需要手动重命名为libavif.dll.
+ * On Windows, AVIF_LIBRARY_PATH selects the native library directory.
  */
 fun loadAvif() {
     val osName = System.getProperty("os.name")
@@ -129,12 +129,9 @@ fun loadAvif() {
         osName.contains("mac", true) -> System.setProperty("jna.library.path", "/opt/homebrew/lib")
 
         osName.contains("win", true) -> {
-//            val vcpkgRoot = System.getenv("VCPKG_ROOT")
-//            if (vcpkgRoot.isNullOrBlank()) {
-            System.setProperty("jna.library.path", """C:\msys64\ucrt64\bin""")
-//            } else {
-//                System.setProperty("jna.library.path", "${vcpkgRoot}\\packages\\libavif_x64-windows\\bin")
-//            }
+            val libraryPath = System.getenv("AVIF_LIBRARY_PATH")
+            require(!libraryPath.isNullOrBlank()) { "AVIF_LIBRARY_PATH must be set on Windows" }
+            System.setProperty("jna.library.path", libraryPath)
         }
 
         else -> System.setProperty("jna.library.path", "/usr/local/lib")

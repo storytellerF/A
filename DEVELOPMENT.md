@@ -100,3 +100,31 @@ anyone who can reach their URLs. Business authorization is not implemented by ei
 
 Clients and servers must be rebuilt together after this protocol extraction: RPC interfaces now
 use the independent `com.storyteller_f.services.*.api` namespaces.
+
+## Service log collection
+
+- Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws and cli. All four services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.
+- Runtime images create the log directory owned by the application user. Container logs no longer depend on a host `LOG_PATH` bind mount. Recreate the application services and Promtail together to apply the volume/path changes; existing host log files are not automatically migrated.
+
+## Windows AVIF native library
+
+Set `AVIF_LIBRARY_PATH` in the environment of the JVM process to the directory containing
+libavif and its dependent DLLs. For a PowerShell development or test session:
+
+```powershell
+$env:AVIF_LIBRARY_PATH = 'C:\tools\msys64\ucrt64\bin'
+```
+
+`loadAvif()` uses this value as `jna.library.path` on Windows and reports a configuration
+error when it is missing or blank. There is no fixed installation directory or vcpkg detection.
+DLL naming and dependency installation remain the caller's responsibility.
+### Desktop Appium on Windows and Linux
+
+Desktop E2E helpers select the host platform by default. `APPIUM_DESKTOP_PLATFORM` can explicitly select `Windows` or `Linux`; the Appium server must run on that same platform. Other platforms fail with an explicit error.
+
+- Windows: use Appium 3 with `appium driver install --source=npm appium-desktop-driver@2.8.0` (verified with DesktopDriver 2.8.0). The helper launches the JDK 21 JVM with `appium:javaSwing=true`, uses a JVM argument file for long classpaths, and operates on the Java accessibility tree. No WinAppDriver or Java Access Bridge installation is required for this driver.
+- Linux: retain the `linux` Appium driver, a graphical session, and `/usr/share/java/java-atk-wrapper.jar`.
+- `APPIUM_DESKTOP_SERVER_URL` defaults to `http://127.0.0.1:4723`; `APP_DESKTOP_TEST_JAVA` optionally selects the Java executable.
+- Test JVMs use English UI labels, a JVM-local Preferences factory on Windows, and isolated database directories. Windows app logs go to the same per-test desktop log files as Linux. Desktop accessibility maps the existing `appiumSemantics` labels/actions so image descriptions do not hide account and topic text. Android retains its native semantics. The Windows launcher preserves the system temporary directory during Java-agent initialization before switching the application to its isolated directory. Gradle also builds a test-only compatibility agent: DesktopDriver 2.8.0 calls the removed Component.getPeer() method on JDK 21, so this agent replaces its getHwnd lookup with the JDK 21 AWT peer field lookup and dispatches accessibility read queries on Swing EDT (mutating commands retain the driver's existing EDT dispatch). It opens the two required java.desktop packages only to the test agent module. The agent verifies the supported bridge bytecode before installing transformations; unsupported bridge versions or method signatures fail explicitly; installed Appium files are not patched. The helper records the launched JVM PID and switches between that process's native frame and dialogs. Session cleanup force-closes the test JVM and deletes its PID file.
+
+Build `:app:desktopApp:writeAppiumRuntimeClasspath` and `:panel:desktopApp:writeAppiumRuntimeClasspath` with `-Pserver.flavor=dev -Pserver.buildType=debug` before running `:app:desktopAppium:appiumTest` and `:panel:desktopAppium:appiumTest`. Run these suites sequentially on the same desktop. Docker/Testcontainers must be available for the backend services; on Windows use the QEMU Docker proxy described above.

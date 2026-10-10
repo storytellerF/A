@@ -44,6 +44,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.takeFrom
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.isActive
 import kotlinx.rpc.krpc.ktor.client.installKrpc
 import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
@@ -298,7 +300,7 @@ private class LuceneRpcConnection(rpcUrl: String) {
             install(WebSockets)
             installKrpc()
         }
-    val service: LuceneRpc =
+    private val rpcClient =
         client.rpc {
             url {
                 takeFrom(
@@ -306,15 +308,38 @@ private class LuceneRpcConnection(rpcUrl: String) {
                 )
             }
             ; rpcConfig { serialization { json() } }
-        }.withService()
+        }
+    val service: LuceneRpc = rpcClient.withService()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val isActive: Boolean
+        get() {
+            val session = rpcClient.webSocketSession
+            if (session.isCancelled) return false
+            if (!session.isCompleted) return true
+            return session.getCompleted().coroutineContext.isActive
+        }
+
+    fun close() {
+        rpcClient.close()
+        client.close()
+    }
 }
 private object LuceneRpcConnections {
     private val connections = ConcurrentHashMap<String, LuceneRpcConnection>()
-    fun service(env: MergedEnv) =
-        connections.computeIfAbsent(
-        env["LUCENE_RPC_URL"] ?: error("LUCENE_RPC_URL is empty"),
-        ::LuceneRpcConnection,
-    ).service
+    fun service(env: MergedEnv): LuceneRpc {
+        val rpcUrl = env["LUCENE_RPC_URL"] ?: error("LUCENE_RPC_URL is empty")
+        return checkNotNull(
+            connections.compute(rpcUrl) { _, previous ->
+                if (previous?.isActive == true) {
+                    previous
+                } else {
+                    previous?.close()
+                    LuceneRpcConnection(rpcUrl)
+                }
+            },
+        ).service
+    }
 }
 open class LuceneSearchServiceFactory {
     protected fun service(env: MergedEnv) =

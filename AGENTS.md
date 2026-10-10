@@ -81,7 +81,11 @@
 - Save knowledge learned while coding or scanning the project to `project.md`. Edit outdated or incorrect knowledge there when found.
 - Save rule-related knowledge learned while coding or scanning the project to this file.
 
+- Android KMP device tests must include `commonTest` when exercising shared Compose tests and declare their test-only host activity in `src/androidDeviceTest/AndroidManifest.xml`. Keep the device awake during UI testing and restore temporary power settings before releasing its lease.
+
 ## Troubleshooting Quick Reference
 - Network errors: check `client/core/*Request.kt` `serviceCatching` logs and `AdminApi`/`CustomApi` routes.
 - Paging errors: check how `RemoteKeyStorage`/`RemoteKeyRoomStorage` saves and reads cursors.
 - Data not persisted: check `*RoomStorage.save`/`observeData` implementations and `commonJson` serialization.
+
+- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data.

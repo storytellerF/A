@@ -15,9 +15,19 @@ scrape_configs:
           - localhost
         labels:
           job: server
-          __path__: /var/log/A/A.log
+          __path__: /var/log/A/server/*.log
       - targets:
           - localhost
         labels:
           job: worker
-          __path__: /var/log/A/A_worker.log
+          __path__: /var/log/A/worker/*.log
+      - targets:
+          - localhost
+        labels:
+          job: ws
+          __path__: /var/log/A/ws/*.log
+      - targets:
+          - localhost
+        labels:
+          job: cli
+          __path__: /var/log/A/cli/*.log

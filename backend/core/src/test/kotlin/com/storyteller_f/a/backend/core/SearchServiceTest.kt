@@ -7,6 +7,11 @@ package com.storyteller_f.a.backend.core
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
+import kotlinx.coroutines.runBlocking
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.Wait
+import org.testcontainers.utility.DockerImageName
+import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -64,26 +69,66 @@ class SearchServiceTest {
     }
 
     @Test
-    fun `test save and get documents memory`() = testSearchMemory(saveAndGetDocuments)
+    fun `test save and get documents rpc`() = testSearchRpc(saveAndGetDocuments)
 
     @Test
     fun `test save and get documents container`() = testSearchContainer(saveAndGetDocuments)
 
     @Test
-    fun `test save multi document memory`() = testSearchMemory(saveMultiDocument)
+    fun `test save multi document rpc`() = testSearchRpc(saveMultiDocument)
 
     @Test
     fun `test save multi document container`() = testSearchContainer(saveMultiDocument)
 
     @Test
-    fun `test search documents memory`() = testSearchMemory(searchDocuments)
+    fun `test search documents rpc`() = testSearchRpc(searchDocuments)
 
     @Test
     fun `test search documents container`() = testSearchContainer(searchDocuments)
 
     @Test
-    fun `test clean documents memory`() = testSearchMemory(cleanDocuments)
+    fun `test clean documents rpc`() = testSearchRpc(cleanDocuments)
 
     @Test
     fun `test clean documents container`() = testSearchContainer(cleanDocuments)
+
+    @Test
+    fun `test reconnect search after service restart`() =
+        runBlocking {
+        System.setProperty("api.version", "1.44")
+        createLuceneContainer().use { first ->
+            first.start()
+            val port = first.getMappedPort(8821)
+            val env =
+                MergedEnv(
+                    listOf(
+                        mapOf(
+                            "SEARCH_SERVICE" to "lucene",
+                            "LUCENE_RPC_URL" to "ws://${first.host}:$port/rpc",
+                        ),
+                    ),
+                )
+            val service = buildTopicSearchService(env)
+            service.saveDocument(listOf(TopicDocument(1, "before restart", 1, "ROOM", 1, "ROOM", 100))).getOrThrow()
+            first.stop()
+            assertTrue(service.getDocuments(listOf(1)).isFailure)
+            createLuceneContainer().apply {
+                setPortBindings(listOf("$port:8821"))
+            }.use { replacement ->
+                replacement.start()
+                val rebuiltService = buildTopicSearchService(env)
+                rebuiltService.saveDocument(
+                    listOf(TopicDocument(2, "after restart", 1, "ROOM", 1, "ROOM", 100)),
+                ).getOrThrow()
+                assertEquals("after restart", rebuiltService.getDocuments(listOf(2)).getOrThrow().single()?.content)
+            }
+        }
+    }
+
+    private fun createLuceneContainer(): GenericContainer<*> =
+        GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+            withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+            withExposedPorts(8821)
+            waitingFor(Wait.forHttp("/health").forPort(8821).withStartupTimeout(Duration.ofSeconds(90)))
+        }
 }

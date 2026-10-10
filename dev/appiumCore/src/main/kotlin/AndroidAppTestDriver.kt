@@ -8,6 +8,7 @@ import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import kotlinx.coroutines.delay
 import org.openqa.selenium.OutputType
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
@@ -135,15 +136,17 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
     private fun inputLastElement(selector: String, input: String, seconds: Long = UI_WAIT_SECONDS) {
         try {
             val locator = AppiumBy.androidUIAutomator(selector)
-            val elements =
-                if (seconds > 0) {
-                    WebDriverWait(driver, Duration.ofSeconds(seconds)).until {
-                        driver.findElements(locator).takeIf(List<*>::isNotEmpty)
+            if (seconds > 0) {
+                WebDriverWait(driver, Duration.ofSeconds(seconds))
+                    .ignoring(StaleElementReferenceException::class.java)
+                    .until {
+                        val element = driver.findElements(locator).lastOrNull() ?: return@until false
+                        element.sendKeys(input)
+                        true
                     }
-                } else {
-                    driver.findElements(locator)
-                }
-            elements.last().sendKeys(input)
+            } else {
+                driver.findElements(locator).last().sendKeys(input)
+            }
         } catch (throwable: Throwable) {
             runCatching {
                 saveDebugSnapshot("input-failed-${System.currentTimeMillis()}")

@@ -31,6 +31,7 @@ dependencies {
 }
 
 tasks.test {
+    dependsOn(":cloud:filesystem-service:buildTestDockerImage", ":cloud:lucene-service:buildTestDockerImage")
     useJUnitPlatform()
 }
 kotlin {

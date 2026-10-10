@@ -7,7 +7,6 @@ package com.storyteller_f.a.dev.appium
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
-import org.openqa.selenium.remote.DesiredCapabilities
 import org.testcontainers.containers.Network
 import java.io.File
 import java.net.URI
@@ -95,19 +94,19 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         val sessionId = Uuid.random().toHexString()
         val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
         prepareSessionDirectories(hostSessionPath)
-        val containerDataPath = "/appium-session"
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            useLightweightBackendContainers(network) {
-                val commonEnv = buildContainerEnv(containerDataPath)
-                useCliInitContainer(network, commonEnv, hostSessionPath, containerDataPath) {
-                    useWsContainer(network, commonEnv, hostSessionPath, containerDataPath) { wsContainer ->
+            useLightweightBackendContainers(network) { filesystem ->
+                bindAndroidReverse(hostPort = filesystem.getMappedPort(8822), devicePort = 8822)
+                val commonEnv = buildContainerEnv() + ("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
+                useCliInitContainer(network, commonEnv, hostSessionPath) {
+                    useWsContainer(network, commonEnv, hostSessionPath) { wsContainer ->
                         val hostWsPort = wsContainer.getMappedPort(8813)
                         bindAndroidReverse(hostPort = hostWsPort, devicePort = 8813)
-                        useServerContainer(network, commonEnv, hostSessionPath, containerDataPath) { serverContainer ->
+                        useServerContainer(network, commonEnv, hostSessionPath) { serverContainer ->
                             val hostServerPort = serverContainer.getMappedPort(8811)
                             bindAndroidReverse(hostPort = hostServerPort, devicePort = 8811)
-                            useWorkerContainer(network, commonEnv, hostSessionPath, containerDataPath) {
+                            useWorkerContainer(network, commonEnv, hostSessionPath) {
                                 block(AppiumPorts(server = hostServerPort, ws = hostWsPort))
                             }
                         }
@@ -228,9 +227,8 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
     }
 
     private fun runAdbCommandAllowFailure(args: List<String>): AdbCommandResult {
-        val home = System.getProperty("user.home")
         val process =
-            ProcessBuilder(listOf("$home/Android/Sdk/platform-tools/adb") + args)
+            ProcessBuilder(listOf("adb") + args)
                 .redirectErrorStream(true)
                 .start()
         val output = process.inputStream.bufferedReader().use { it.readText().trim() }
@@ -256,6 +254,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
 }
 
 class DesktopAppiumHelper : PlatformAppiumHelper {
+    private val platform = DesktopTestPlatform.current()
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(
@@ -277,8 +276,8 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 prepared
             },
             browserCapture = browserCapture,
-        ) { driver, prepared ->
-            block(DesktopAppiumTestScope(DesktopAppTestDriver(driver), browserCapture), prepared.data)
+        ) { driver, prepared, processId ->
+            block(DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture), prepared.data)
         }
     }
 
@@ -287,7 +286,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         config: DesktopAppiumRuntimeConfig,
         beforeLaunch: suspend (ports: AppiumPorts, sessionFilePath: String) -> T,
         browserCapture: DesktopBrowserCapture?,
-        block: suspend (AppiumDriver, T) -> Unit,
+        block: suspend (AppiumDriver, T, Long?) -> Unit,
     ) {
         runAppiumTestEnvironment { ports ->
             val sessionFile = File("build/test/appium/tmp/desktop-session-$testName.json")
@@ -315,15 +314,10 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
 
             var driver: AppiumDriver? = null
             try {
-                val caps =
-                    DesiredCapabilities().apply {
-                        setCapability("platformName", "linux")
-                        setCapability("appium:automationName", "linux")
-                        setCapability("appium:app", launchScript.canonicalPath)
-                        setCapability("appium:newCommandTimeout", config.windowWaitSeconds)
-                    }
-                driver = AppiumDriver(URI("http://127.0.0.1:4723").toURL(), caps)
-                block(driver, setup)
+                val caps = platform.createCapabilities(launchScript, config.windowWaitSeconds)
+                val serverUrl = System.getenv("APPIUM_DESKTOP_SERVER_URL") ?: "http://127.0.0.1:4723"
+                driver = AppiumDriver(URI(serverUrl).toURL(), caps)
+                block(driver, setup, readDesktopProcessId(sessionFile))
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
@@ -345,6 +339,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 driver?.quit()
                 launchScript.delete()
                 sessionFile.delete()
+                File("${sessionFile.canonicalPath}.pid").delete()
                 runtimeDir.deleteRecursively()
             }
         }
@@ -352,6 +347,13 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
 
     private fun writeSessionFile(path: String, sessionJson: String) {
         File(path).also { it.parentFile?.mkdirs() }.writeText(sessionJson)
+    }
+
+    private fun readDesktopProcessId(sessionFile: File): Long? =
+        if (platform == DesktopTestPlatform.Windows) {
+        File("${sessionFile.canonicalPath}.pid").readText().trim().toLong()
+    } else {
+        null
     }
 
     private fun resolveRuntimeClasspath(config: DesktopAppiumRuntimeConfig): String =
@@ -372,38 +374,37 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
     )
 
     private fun buildLaunchScript(context: LaunchScriptContext): File {
-        val ports = context.ports
-        val sessionFile = context.sessionFile
         val runtimeDir = context.runtimeDir
         val appLogFile = context.appLogFile
         val runtimeClasspath = context.runtimeClasspath
         val config = context.config
         val browserCapture = context.browserCapture
-        val javaExec = System.getenv("APP_DESKTOP_TEST_JAVA") ?: "java"
+        val javaExec = resolveDesktopJava(platform)
         val atspiClasspath =
-            listOf(runtimeClasspath, "/usr/share/java/java-atk-wrapper.jar")
+            listOfNotNull(
+                runtimeClasspath,
+                "/usr/share/java/java-atk-wrapper.jar".takeIf { platform == DesktopTestPlatform.Linux },
+                File(
+                    DesktopTestLauncher::class.java
+                        .protectionDomain.codeSource.location.toURI(),
+                ).canonicalPath
+                    .takeIf { platform == DesktopTestPlatform.Windows },
+            )
                 .joinToString(File.pathSeparator)
         val prefsDir = runtimeDir.resolve("prefs").also { it.mkdirs() }
         val tmpDir = runtimeDir.resolve("tmp").also { it.mkdirs() }
         val scriptDir = File("build/test/appium/tmp").also { it.mkdirs() }
-        val script = File.createTempFile(config.scriptPrefix, ".sh", scriptDir)
-        val arguments =
-            buildList {
-                add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
-                add("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED")
-                add("-Dappium.server.url=http://127.0.0.1:${ports.server}")
-                if (config.includeWsUrl) {
-                    add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
-                }
-                add("-Dappium.session.file=${sessionFile.canonicalPath}")
-                add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
-                add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
-                add("-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log")
-                add("-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper")
-                add("-cp")
-                add(atspiClasspath)
-                add(config.mainClassName)
-            }
+        val script =
+            File.createTempFile(
+                config.scriptPrefix,
+                if (platform == DesktopTestPlatform.Windows) ".args" else ".sh",
+                scriptDir,
+            )
+        val arguments = buildLaunchArguments(context, atspiClasspath, prefsDir, tmpDir)
+        if (platform == DesktopTestPlatform.Windows) {
+            script.writeText(buildJavaArgumentFile(arguments))
+            return script
+        }
         val browserEnvironment =
             browserCapture?.let {
                 """
@@ -421,6 +422,54 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         )
         script.setExecutable(true)
         return script
+    }
+
+    private fun buildLaunchArguments(
+        context: LaunchScriptContext,
+        runtimeClasspath: String,
+        prefsDir: File,
+        tmpDir: File,
+    ): List<String> {
+        val ports = context.ports
+        val sessionFile = context.sessionFile
+        val appLogFile = context.appLogFile
+        val config = context.config
+        val arguments =
+            buildList {
+                add("-Duser.language=en")
+                add("-Duser.country=US")
+                add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
+                add("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED")
+                add("-Dappium.server.url=http://127.0.0.1:${ports.server}")
+                if (config.includeWsUrl) {
+                    add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
+                }
+                add("-Dappium.session.file=${sessionFile.canonicalPath}")
+                add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
+                if (platform == DesktopTestPlatform.Linux) {
+                    add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
+                }
+                add("-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log")
+                if (platform == DesktopTestPlatform.Linux) {
+                    add("-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper")
+                }
+                if (platform == DesktopTestPlatform.Windows) {
+                    val bridgeAgent =
+                        requireNotNull(System.getProperty("desktop.windows.bridge.agent")) {
+                            "Desktop Windows bridge agent is not configured; run the desktop appiumTest task"
+                        }
+                    add("-javaagent:$bridgeAgent")
+                    add("-Djava.util.prefs.PreferencesFactory=${DesktopTestPreferences::class.java.name}")
+                    add("-Dappium.desktop.tmpdir=${tmpDir.canonicalPath}")
+                    add("-Dappium.desktop.log=${appLogFile.canonicalPath}")
+                    add("-Dappium.desktop.pid.file=${sessionFile.canonicalPath}.pid")
+                }
+                add("-cp")
+                add(runtimeClasspath)
+                if (platform == DesktopTestPlatform.Windows) add(DesktopTestLauncher::class.java.name)
+                add(config.mainClassName)
+            }
+        return arguments
     }
 
     companion object {

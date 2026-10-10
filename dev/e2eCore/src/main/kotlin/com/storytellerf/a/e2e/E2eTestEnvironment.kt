@@ -251,7 +251,6 @@ private fun buildContainerEnv(postgresContainer: PostgreSQLContainer<*>): Map<St
             "FILESYSTEM_RPC_URL" to "ws://e2e-filesystem:$FILESYSTEM_PORT/rpc",
             "SEARCH_SERVICE" to "lucene",
             "LUCENE_RPC_URL" to "ws://e2e-lucene:$LUCENE_PORT/rpc",
-            "LOG_PATH" to "/tmp/e2e/logs",
             "INIT_ENABLE" to "false",
         )
 }

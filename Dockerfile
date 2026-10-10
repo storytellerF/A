@@ -37,7 +37,9 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/server && chown -R app:app /home/app/logs
 ENV HOME=/home/app
+ENV LOG_PATH=/home/app/logs/server
 
 USER app:app
 WORKDIR /app
@@ -52,7 +54,9 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/worker && chown -R app:app /home/app/logs
 ENV HOME=/home/app
+ENV LOG_PATH=/home/app/logs/worker
 
 USER app:app
 WORKDIR /app
@@ -67,7 +71,9 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/ws && chown -R app:app /home/app/logs
 ENV HOME=/home/app
+ENV LOG_PATH=/home/app/logs/ws
 
 USER app:app
 WORKDIR /app
@@ -82,7 +88,9 @@ ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && \
     adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/cli && chown -R app:app /home/app/logs
 ENV HOME=/home/app
+ENV LOG_PATH=/home/app/logs/cli
 
 WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/cli/ .

@@ -8,34 +8,16 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
 import kotlinx.coroutines.runBlocking
+import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.MinIOContainer
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.containers.wait.strategy.Wait
 import org.testcontainers.elasticsearch.ElasticsearchContainer
+import org.testcontainers.utility.DockerImageName
 import java.io.File
+import java.time.Duration
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
-
-fun buildMemorySearchEnv(): MergedEnv =
-    MergedEnv(
-    listOf(
-        mapOf(
-            "SEARCH_SERVICE" to "lucene",
-            "LUCENE_BASE_PATH" to "",
-            "BUILD_TYPE" to "test",
-        ),
-    ),
-)
-
-fun buildMemoryOssEnv(): MergedEnv =
-    MergedEnv(
-    listOf(
-        mapOf(
-            "MEDIA_SERVICE" to "filesystem",
-            "FILE_SYSTEM_MEDIA_PATH" to "",
-            "SERVER_URL" to "http://localhost",
-        ),
-    ),
-)
 
 @OptIn(ExperimentalUuidApi::class)
 fun buildMemoryDatabaseConnection(): DatabaseConnection {
@@ -109,10 +91,26 @@ fun usePostgresContainer(block: (DatabaseConnection) -> Unit) {
         }
 }
 
-fun testSearchMemory(block: suspend (TopicSearchService) -> Unit) {
-    val env = buildMemorySearchEnv()
-    val service = buildTopicSearchService(env)
-    runBlocking { block(service) }
+fun testSearchRpc(block: suspend (TopicSearchService) -> Unit) {
+    System.setProperty("api.version", "1.44")
+    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(8821)
+        waitingFor(Wait.forHttp("/health").forPort(8821).withStartupTimeout(Duration.ofSeconds(90)))
+    }.use { container ->
+        container.start()
+        val env =
+            MergedEnv(
+                listOf(
+                    mapOf(
+                        "SEARCH_SERVICE" to "lucene",
+                        "LUCENE_RPC_URL" to "ws://${container.host}:${container.getMappedPort(8821)}/rpc",
+                        "BUILD_TYPE" to "test",
+                    ),
+                ),
+            )
+        runBlocking { block(buildTopicSearchService(env)) }
+    }
 }
 
 fun testSearchContainer(block: suspend (TopicSearchService) -> Unit) {
@@ -122,10 +120,27 @@ fun testSearchContainer(block: suspend (TopicSearchService) -> Unit) {
     }
 }
 
-fun testOssMemory(block: suspend (ObjectStorageService) -> Unit) {
-    val env = buildMemoryOssEnv()
-    val service = mediaService(env)
-    runBlocking { block(service) }
+fun testOssRpc(block: suspend (ObjectStorageService) -> Unit) {
+    System.setProperty("api.version", "1.44")
+    GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
+        withEnv("FILESYSTEM_PUBLIC_URL", "http://filesystem:8822")
+        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+        withExposedPorts(8820, 8822)
+        waitingFor(Wait.forHttp("/health").forPort(8820).withStartupTimeout(Duration.ofSeconds(90)))
+    }.use { container ->
+        container.start()
+        val env =
+            MergedEnv(
+                listOf(
+                    mapOf(
+                        "MEDIA_SERVICE" to "filesystem",
+                        "FILESYSTEM_RPC_URL" to "ws://${container.host}:${container.getMappedPort(8820)}/rpc",
+                        "FILESYSTEM_PUBLIC_URL" to "http://${container.host}:${container.getMappedPort(8822)}",
+                    ),
+                ),
+            )
+        runBlocking { block(mediaService(env)) }
+    }
 }
 
 fun testOssContainer(block: suspend (ObjectStorageService) -> Unit) {
