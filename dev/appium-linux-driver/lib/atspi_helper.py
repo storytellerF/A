@@ -67,6 +67,11 @@ def node_to_dict(node, depth=0, max_depth=20):
         return {"role": "error", "name": str(e), "children": []}
 
 
+def matches_label(value, expected):
+    # Compose can expose the same semantic label more than once.
+    return value == expected or all(part.strip() == expected for part in value.split(","))
+
+
 def find_nodes(node, strategy, selector, results, max_results=10):
     if node is None or len(results) >= max_results:
         return
@@ -91,7 +96,7 @@ def find_nodes(node, strategy, selector, results, max_results=10):
 
     matched = False
     if strategy == "name":
-        matched = name == selector or desc == selector or value == selector
+        matched = any(matches_label(label, selector) for label in (name, desc, value))
     elif strategy == "name_contains":
         matched = selector in name or selector in desc or selector in value
     elif strategy == "xpath":
@@ -106,7 +111,7 @@ def find_nodes(node, strategy, selector, results, max_results=10):
             except Exception:
                 matched = False
         elif m:
-            matched = name == m.group(1) or desc == m.group(1) or value == m.group(1)
+            matched = any(matches_label(label, m.group(1)) for label in (name, desc, value))
         elif mc:
             needle = mc.group(1)
             matched = needle in name or needle in desc or needle in value
@@ -242,6 +247,7 @@ def main():
             cx, cy = get_center(node)
             elements.append({
                 "id": i,
+                "path": node.path,
                 "name": node.name or "",
                 "role": node.getRoleName(),
                 "cx": cx,
@@ -273,12 +279,15 @@ def main():
             cmd.get("timeout", 15),
         )
         if not results:
-            print(json.dumps({"ok": False, "error": "element not found"}))
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         index = cmd.get("index", 0)
-        target = results[index] if len(results) > index else None
+        object_path = cmd.get("path")
+        target = next((node for node in results if node.path == object_path), None) if object_path else (
+            results[index] if len(results) > index else None
+        )
         if not target:
-            print(json.dumps({"ok": False, "error": "element index out of range"}))
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         ok, action_name = perform_action(target)
         cx, cy = get_center(target)

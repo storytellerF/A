@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Appium driver for Linux desktop apps (Compose Desktop / AT-SPI2)",
   "main": "lib/driver.js",
+  "scripts": {
+    "test": "node --test"
+  },
   "keywords": ["appium", "appium-driver"],
   "license": "MIT",
   "appium": {

@@ -48,6 +48,7 @@ tasks.register<Test>("appiumTest") {
         accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath,
     )
     jvmArgs("--add-modules", "jdk.attach")
+    mustRunAfter(":app:desktopAppium:appiumTest")
     maxParallelForks = 1
 }
 

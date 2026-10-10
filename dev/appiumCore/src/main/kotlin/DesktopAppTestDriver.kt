@@ -6,6 +6,7 @@ package com.storyteller_f.a.dev.appium
 
 import io.appium.java_client.AppiumDriver
 import org.openqa.selenium.By
+import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
 import java.time.Duration
@@ -25,15 +26,15 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
     }
 
     override suspend fun clickByDescription(description: String) {
-        clickElement(findDescriptionElement(description))
+        clickElement { findDescriptionElement(description) }
     }
 
     override suspend fun clickByText(text: String) {
-        clickElement(findTextElement(text, false))
+        clickElement { findTextElement(text, false) }
     }
 
     override suspend fun clickByTextContaining(text: String) {
-        clickElement(findTextElement(text, true))
+        clickElement { findTextElement(text, true) }
     }
 
     private fun findDescriptionElement(description: String): org.openqa.selenium.WebElement =
@@ -44,7 +45,16 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                 ?: driver.findElements(By.xpath("//*[${namePredicate(description)}]")).lastOrNull()
         }
 
-    private fun clickElement(element: org.openqa.selenium.WebElement) {
+    private fun clickElement(findElement: () -> org.openqa.selenium.WebElement) {
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+            .ignoring(StaleElementReferenceException::class.java)
+            .until {
+                performElementClick(findElement())
+                true
+            }
+    }
+
+    private fun performElementClick(element: org.openqa.selenium.WebElement) {
         if (platform == DesktopTestPlatform.Windows) {
             driver.executeScript(
                 "windows: invoke",

@@ -1,6 +1,6 @@
 'use strict';
 
-const { BaseDriver } = require('@appium/base-driver');
+const { BaseDriver, errors } = require('@appium/base-driver');
 const { spawn, execSync, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -71,7 +71,7 @@ class LinuxDriver extends BaseDriver {
   async findElOrEls(strategy, selector, mult) {
     this.log.info(`Finding element(s) by ${strategy}: "${selector}"`);
     const atspiStrategy = this._mapStrategy(strategy, selector);
-    const deadline = Date.now() + ATSPI_TIMEOUT * 1000;
+    const deadline = Date.now() + this.implicitWaitMs;
     let result;
     do {
       const searchStartedAt = Date.now();
@@ -112,6 +112,7 @@ class LinuxDriver extends BaseDriver {
       const encoded = String(this.nextElementId++);
       this.elements.set(encoded, {
         index,
+        objectPath: e.path,
         strategy: atspiStrategy.strategy,
         selector: atspiStrategy.selector,
         cx: e.cx,
@@ -149,15 +150,17 @@ class LinuxDriver extends BaseDriver {
   // ── Element interaction ───────────────────────────────────────────────────
 
   async click(elementId) {
-    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const { index, objectPath, strategy, selector, cx, cy, name } = this._parseElement(elementId);
     const result = await this._atspi({
       action: 'click_element',
+      path: objectPath,
       pid: this.appPid,
       strategy,
       selector,
       index,
       timeout: ATSPI_TIMEOUT,
     });
+    if (result.stale) throw new errors.StaleElementReferenceError(result.error);
     if (result.ok) {
       this.log.info(`Clicked element "${name}" via AT-SPI action "${result.action}"`);
       return;
@@ -172,7 +175,7 @@ class LinuxDriver extends BaseDriver {
   }
 
   async setValue(value, elementId) {
-    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const { index, objectPath, strategy, selector, cx, cy, name } = this._parseElement(elementId);
     const text = Array.isArray(value) ? value.join('') : String(value);
     const result = await this._atspi({
       action: 'set_text',
