@@ -34,6 +34,7 @@ interface FilesystemRpc {
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>,
+        expectedSha256: String,
     ): ObjectStorageWriteRecord
     suspend fun delete(bucketName: String, names: List<String>)
 }

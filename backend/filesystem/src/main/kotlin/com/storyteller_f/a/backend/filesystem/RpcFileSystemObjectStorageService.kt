@@ -137,12 +137,17 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
         }
     }
 
-    override suspend fun compose(bucketName: String, targetFullName: String, sourceFullNames: List<String>) =
-        rpcResult {
-            rpc.compose(bucketName, targetFullName, sourceFullNames).let {
-                ObjectStorageWriteRecord(it.fullName)
-            }
+    override suspend fun compose(
+        bucketName: String,
+        targetFullName: String,
+        sourceFullNames: List<String>,
+        expectedSha256: String,
+        expectedCrc32c: String,
+    ) = rpcResult {
+        rpc.compose(bucketName, targetFullName, sourceFullNames, expectedSha256).let {
+            ObjectStorageWriteRecord(it.fullName)
         }
+    }
 
     override suspend fun delete(bucketName: String, names: List<String>) = rpcResult { rpc.delete(bucketName, names) }
 }

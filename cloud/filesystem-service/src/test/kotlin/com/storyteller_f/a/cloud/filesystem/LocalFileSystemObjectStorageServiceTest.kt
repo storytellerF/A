@@ -19,6 +19,22 @@ import kotlin.test.assertTrue
 
 class LocalFileSystemObjectStorageServiceTest {
     @Test
+    fun `failed compose retains target and cleans temporary`() =
+        runBlocking {
+        val root = Files.createDirectories(java.nio.file.Path.of("build/test/filesystem-checksum"))
+        val base = Files.createTempDirectory(root, "storage-")
+        val source = Files.createTempFile(base, "filesystem-part-", ".txt").toFile()
+        source.writeText("original")
+        val service = LocalFileSystemObjectStorageService("https://example.invalid", base)
+        service.upload("objects", listOf(UploadPack(source, "part"), UploadPack(source, "target"))).getOrThrow()
+        assertTrue(service.compose("objects", "target", listOf("part"), "0".repeat(64)).isFailure)
+        assertEquals(setOf("part", "target"), service.list("objects", "").getOrThrow().map { it.fullName }.toSet())
+        service.getInputStream("objects", "target").getOrThrow().use {
+            assertEquals("original", it.readBytes().decodeToString())
+        }
+    }
+
+    @Test
     fun `object lifecycle uses independent storage models`() =
         runBlocking {
         val base = createTempDirectory("filesystem-lifecycle-")
@@ -37,7 +53,14 @@ class LocalFileSystemObjectStorageServiceTest {
             service.list("objects", "").getOrThrow()
                 .map { it.fullName }.toSet(),
         )
-        service.compose("objects", "combined.txt", listOf("original.txt", "copy.txt")).getOrThrow()
+        service.compose(
+            "objects",
+            "combined.txt",
+            listOf("original.txt", "copy.txt"),
+            java.security.MessageDigest.getInstance(
+                "SHA-256",
+            ).digest("contentcontent".encodeToByteArray()).toHexString(),
+        ).getOrThrow()
         service.getInputStream("objects", "combined.txt").getOrThrow().use {
             assertEquals("contentcontent", it.readBytes().decodeToString())
         }

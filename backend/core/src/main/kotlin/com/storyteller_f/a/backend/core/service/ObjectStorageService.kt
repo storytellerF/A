@@ -52,11 +52,15 @@ interface ObjectStorageService {
      * @param bucketName 目标与源对象所在的 bucket（需相同）
      * @param targetFullName 合并后目标对象完整路径
      * @param sourceFullNames 源对象完整路径列表，按顺序依次合并
+     * @param expectedSha256 文件内容的十六进制 SHA256，由 filesystem 在复制时校验
+     * @param expectedCrc32c 文件内容的 CRC32C（大端四字节 Base64），由 MinIO 合并时校验
      */
     suspend fun compose(
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>,
+        expectedSha256: String,
+        expectedCrc32c: String,
     ): Result<ObjectStorageWriteRecord>
 
     /**

@@ -22,6 +22,7 @@ data class UploadInfo(
     val pathHash: String,
     val path: String,
     val sha256: String,
+    val crc32c: String,
     val progress: Long,
     val chunkProgress: Long,
     val total: Long,
@@ -35,6 +36,6 @@ data class UploadInfo(
 ) {
     companion object {
         /** Empty upload state used before an upload begins. */
-        val EMPTY: UploadInfo = UploadInfo(0, 0, "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0)
+        val EMPTY: UploadInfo = UploadInfo(0, 0, "", "", "", "", 0, 0, 0, UploadStatus.NOT_UPLOADING, "", "", "", 0)
     }
 }

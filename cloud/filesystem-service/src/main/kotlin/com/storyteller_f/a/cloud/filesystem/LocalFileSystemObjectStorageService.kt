@@ -134,20 +134,35 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>,
+        expectedSha256: String,
     ): Result<ObjectStorageWriteRecord> =
         useFileSystem {
         val bucketPath = resolveBucket(bucketName)
         val target = resolveObject(bucketPath, targetFullName).createParentDirectories()
-        Files.newOutputStream(target).buffered().use { out ->
-            sourceFullNames.forEach { src ->
-                val p = resolveObject(bucketPath, src)
-                check(p.isRegularFile()) { "source $src not exists" }
-                Files.newInputStream(p).buffered().use { ins ->
-                    ins.copyTo(out)
+        val digest = java.security.MessageDigest.getInstance("SHA-256")
+        val temporary = Files.createTempFile(target.parent, ".compose-", ".tmp")
+        try {
+            Files.newOutputStream(temporary).buffered().use { out ->
+                val bytes = ByteArray(DEFAULT_BUFFER_SIZE)
+                sourceFullNames.forEach { src ->
+                    val source = resolveObject(bucketPath, src)
+                    check(source.isRegularFile()) { "source $src not exists" }
+                    Files.newInputStream(source).buffered().use { input ->
+                        var count = input.read(bytes)
+                        while (count >= 0) {
+                            digest.update(bytes, 0, count)
+                            out.write(bytes, 0, count)
+                            count = input.read(bytes)
+                        }
+                    }
                 }
             }
+            check(digest.digest().toHexString() == expectedSha256) { "file hash mismatch" }
+            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+            ObjectStorageWriteRecord(targetFullName)
+        } finally {
+            Files.deleteIfExists(temporary)
         }
-        ObjectStorageWriteRecord(targetFullName)
     }
 
     suspend fun delete(bucketName: String, names: List<String>): Result<Unit> =

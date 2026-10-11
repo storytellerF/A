@@ -20,10 +20,15 @@ data class UploadRecord(
     val progress: Long,
     val name: String,
     val chunkSize: Long,
-    val sha256: String?,
+    val sha256: String,
+    val crc32c: String,
 ) {
+    init {
+        com.storyteller_f.shared.model.FileChecksums(sha256, crc32c)
+    }
+
     companion object
 }
 
 fun UploadRecord.toUploadRecordInfo(): UploadRecordInfo =
-    UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256)
+    UploadRecordInfo(id, createdTime, objectId, objectType, status, total, progress, name, chunkSize, sha256, crc32c)

@@ -556,6 +556,7 @@ suspend fun UserSessionManager.initChunkUpload(
     contentType: ContentType,
     chunkSize: Long,
     sha256: String,
+    crc32c: String,
 ) = serviceCatching {
     CustomApi.Files.Chunks.init(
         CustomApi.Files.Chunks.InitBody(
@@ -566,6 +567,7 @@ suspend fun UserSessionManager.initChunkUpload(
             contentType.contentType,
             chunkSize,
             sha256,
+            crc32c,
         ),
     ) {
         contentType(ContentType.Application.Json)

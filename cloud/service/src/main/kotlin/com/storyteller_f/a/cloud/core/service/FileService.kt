@@ -313,7 +313,6 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey, clientIp: String
             ObjectTuple(uid, ObjectType.USER),
             QuotaType.FILE,
             fileRecord.size,
-            fileRecord.name,
         ) {
             copyFile(fileRecord, uid)
         }
@@ -353,7 +352,6 @@ suspend fun Backend.tryUploadFiles(
     files.sumOf {
         it.size
     },
-    Uuid.random().toHexString(),
 ) {
     val f = mutableListOf<File>()
     try {
@@ -512,6 +510,7 @@ suspend fun initChunkUpload(backend: Backend, id: PrimaryKey, body: CustomApi.Fi
                     body.name,
                     body.chunkSize,
                     body.sha256,
+                    body.crc32c,
                 ),
             )
         }
@@ -531,7 +530,7 @@ suspend fun completeChunkUpload(
     val record =
         backend.database.file.getUploadRecord(recordId).getOrThrow()
             ?: throw CustomBadRequestException("upload record not found")
-    val expectedSha256 = record.sha256 ?: throw CustomBadRequestException("file sha256 missing")
+    val expectedSha256 = record.sha256
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
         .mapResultIfNotNull {
@@ -568,6 +567,8 @@ suspend fun completeChunkUpload(
                     A_FILE_DEFAULT_BUCKET,
                     targetFullName,
                     sortedSources,
+                    expectedSha256,
+                    record.crc32c,
                 ).getOrThrow()
                 val fileRecord =
                     backend.buildFileRecordFromComposedObject(

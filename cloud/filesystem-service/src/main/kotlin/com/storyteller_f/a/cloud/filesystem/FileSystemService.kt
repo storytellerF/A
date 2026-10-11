@@ -93,8 +93,12 @@ private class FilesystemRpcImpl(private val storage: LocalFileSystemObjectStorag
             input.readNBytes(size)
         }
     }
-    override suspend fun compose(bucketName: String, targetFullName: String, sourceFullNames: List<String>) =
-        storage.compose(bucketName, targetFullName, sourceFullNames).getOrThrow()
+    override suspend fun compose(
+        bucketName: String,
+        targetFullName: String,
+        sourceFullNames: List<String>,
+        expectedSha256: String,
+    ) = storage.compose(bucketName, targetFullName, sourceFullNames, expectedSha256).getOrThrow()
     override suspend fun delete(bucketName: String, names: List<String>) {
         storage.delete(
             bucketName,

@@ -21,6 +21,9 @@ dependencies {
     implementation(libs.urlbuilder)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.testcontainers.minio)
+    testRuntimeOnly(projects.backend.simple)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.test {

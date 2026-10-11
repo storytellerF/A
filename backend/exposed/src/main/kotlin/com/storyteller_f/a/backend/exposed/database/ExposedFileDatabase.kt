@@ -133,6 +133,10 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         ownerId: PrimaryKey,
         ownerType: ObjectType,
     ) = databaseSession.dbQuery {
+        insertFileRecords(fileRecordList)
+    }
+
+    private suspend fun insertFileRecords(fileRecordList: List<FileRecord>) {
         check(
             FileRecords.batchInsert(fileRecordList) { e ->
                 this[FileRecords.id] = e.id
@@ -154,6 +158,36 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         }
     }
 
+    override suspend fun lockFileQuota(quotaInfo: QuotaInfo, operationId: PrimaryKey) =
+        databaseSession.dbQuery {
+        check(
+            Quotas.update({
+                Quotas.ownerId eq quotaInfo.ownerId and
+                    (Quotas.quotaType eq QuotaType.FILE) and
+                    (Quotas.lockId eq null) and (Quotas.used eq quotaInfo.used)
+            }) { it[lockId] = operationId } > 0,
+        ) { "lock quota failed" }
+    }
+
+    override suspend fun finishFileQuota(
+        quotaInfo: QuotaInfo,
+        operationId: PrimaryKey,
+        fileRecords: List<FileRecord>,
+    ) = databaseSession.dbQuery {
+        check(
+            Quotas.update({
+                Quotas.ownerId eq quotaInfo.ownerId and
+                    (Quotas.quotaType eq QuotaType.FILE) and
+                    (Quotas.lockId eq operationId) and (Quotas.used eq quotaInfo.used)
+            }) {
+                it[lockId] = null
+                it[used] = quotaInfo.used + fileRecords.sumOf { file -> file.size }
+            } > 0,
+        ) { "unlock quota failed" }
+        insertFileRecords(fileRecords)
+        fileRecords
+    }
+
     override suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord> =
         databaseSession.dbQuery {
         check(
@@ -168,6 +202,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
                 it[UploadRecords.name] = record.name
                 it[UploadRecords.chunkSize] = record.chunkSize
                 it[UploadRecords.sha256] = record.sha256
+                it[UploadRecords.crc32c] = record.crc32c
             }.insertedCount > 0,
         ) {
             "insert upload record failed"
@@ -221,25 +256,7 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
             ) {
                 "unlock quota failed"
             }
-            check(
-                FileRecords.batchInsert(fileRecordList) { e ->
-                    this[FileRecords.id] = e.id
-                    this[FileRecords.createdTime] = e.createdTime
-                    this[FileRecords.name] = e.name
-                    this[FileRecords.duration] = 0
-                    this[FileRecords.width] = e.width
-                    this[FileRecords.height] = e.height
-                    this[FileRecords.owner] = e.owner
-                    this[FileRecords.ownerType] = e.ownerType
-                    this[FileRecords.contentType] = e.contentType
-                    this[FileRecords.size] = e.size
-                    this[FileRecords.fullName] = e.fullName
-                    this[FileRecords.sha256] = e.sha256
-                    this[FileRecords.status] = e.status
-                }.size == fileRecordList.size,
-            ) {
-                "insert file record failed"
-            }
+            insertFileRecords(fileRecordList)
             fileRecordList
         }
     }
