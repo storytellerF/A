@@ -28,6 +28,8 @@ class LinuxDriver extends BaseDriver {
     const appArgs = caps.appArguments || this.opts.appArguments || [];
     const args = Array.isArray(appArgs) ? appArgs : appArgs.split(' ').filter(Boolean);
 
+    this._assertDisplay();
+
     this.log.info(`Launching app: ${app} ${args.join(' ')}`);
     this.appProcess = spawn(app, args, {
       detached: false,
@@ -99,7 +101,13 @@ class LinuxDriver extends BaseDriver {
       }
       await this._sleep(200);
     } while (Date.now() < deadline);
-    if (!result.ok) throw new Error(`findElOrEls failed: ${result.error}`);
+    if (!result.ok) {
+      if (result.error === 'app not found') {
+        if (mult) return [];
+        throw new errors.NoSuchElementError('Application is unavailable in the AT-SPI tree');
+      }
+      throw new Error(`findElOrEls failed: ${result.error}`);
+    }
     if (result.elements.length === 0) {
       if (mult) return [];
       const source = await this._atspi({ action: 'page_source', pid: this.appPid });
@@ -160,7 +168,9 @@ class LinuxDriver extends BaseDriver {
       index,
       timeout: ATSPI_TIMEOUT,
     });
-    if (result.stale) throw new errors.StaleElementReferenceError(result.error);
+    if (result.stale || result.error === 'app not found') {
+      throw new errors.StaleElementReferenceError(result.error);
+    }
     if (result.ok) {
       this.log.info(`Clicked element "${name}" via AT-SPI action "${result.action}"`);
       return;
@@ -186,6 +196,9 @@ class LinuxDriver extends BaseDriver {
       text,
       timeout: ATSPI_TIMEOUT,
     });
+    if (result.stale || result.error === 'app not found') {
+      throw new errors.StaleElementReferenceError(result.error);
+    }
     if (result.ok) {
       this.log.info(`Set text via AT-SPI editable text${name ? ` for "${name}"` : ''}`);
       return;
@@ -255,6 +268,18 @@ class LinuxDriver extends BaseDriver {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  _assertDisplay() {
+    const result = this._displayInfo();
+    const dimensions = /dimensions:\s+(\d+)x(\d+)\s+pixels/.exec(result.stdout || '');
+    if (result.status !== 0 || !dimensions || Number(dimensions[1]) === 0 || Number(dimensions[2]) === 0) {
+      throw new Error('Linux desktop requires a display with nonzero dimensions; use scripts/test_scripts/run-linux-desktop-e2e.sh for an isolated desktop');
+    }
+  }
+
+  _displayInfo() {
+    return spawnSync('xdpyinfo', [], { encoding: 'utf8' });
+  }
 
   _xdotool(...args) {
     const strArgs = args.map(String);
