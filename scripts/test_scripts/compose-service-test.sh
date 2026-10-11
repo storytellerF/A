@@ -141,6 +141,31 @@ assert_contains "$TMP_DIR/$server_flavor.generated.yml" "        condition: serv
 assert_contains "$TMP_DIR/$server_flavor.generated.yml" "      - certs:/app/deploy/es_ca"
 rm -f "deploy/$server_flavor.env"
 
+for profiles in "filesystem,lucene,server,worker" "pg,filesystem,lucene,server,worker"; do
+  rpc_flavor="compose-test-rpc-no-cli"
+  write_env "$rpc_flavor" "$profiles"
+  run_compose_service "$rpc_flavor"
+  for service in server worker ws; do
+    service_section=$(sed -n "/^  $service:/,/^  [a-z]/p" "$TMP_DIR/$rpc_flavor.generated.yml")
+    grep -Fq "      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc" <<< "$service_section" || fail "$service misses filesystem environment"
+    grep -Fq "      LUCENE_RPC_URL: ws://lucene:8821/rpc" <<< "$service_section" || fail "$service misses lucene environment"
+    for dependency in filesystem lucene; do
+      grep -Fq "      $dependency:" <<< "$service_section" || fail "$service misses $dependency dependency"
+    done
+  done
+  rm -f "deploy/$rpc_flavor.env"
+done
+
+for backend in filesystem lucene; do
+  assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  cli:"
+  assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  server:"
+  assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  worker:"
+  assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  ws:"
+done
+assert_contains "deploy/docker-compose/docker-compose.server.yml" "      SERVER_PORT: 80"
+assert_contains "deploy/docker-compose/docker-compose.server.yml" "      WS_SERVER_PORT: 80"
+assert_contains "minio.Dockerfile" "apk add --no-cache ca-certificates curl"
+
 server_env_build_on_flavor="compose-test-server-env-build-on"
 write_env "$server_env_build_on_flavor" "server"
 run_compose_service "$server_env_build_on_flavor"
@@ -150,11 +175,14 @@ rm -f "deploy/$server_env_build_on_flavor.env"
 bunker_flavor="compose-test-bunker"
 write_env "$bunker_flavor" "pg,elastic,minio,certs_bind,grafana,dicebear,etcd,cli,server,worker,bunker"
 BUNKER_TEST_ENV="$TMP_DIR/bunker.env"
-touch "$BUNKER_TEST_ENV"
+cp deploy/bunker.env.example "$BUNKER_TEST_ENV"
 BUNKER_ENV_FILE="$BUNKER_TEST_ENV" run_compose_service "$bunker_flavor" "local"
-assert_contains "$TMP_DIR/$bunker_flavor.args" "--env-file $BUNKER_TEST_ENV"
+assert_not_contains "$TMP_DIR/$bunker_flavor.args" "--env-file $BUNKER_TEST_ENV"
+assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    env_file:"
+assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "$BUNKER_TEST_ENV"
 assert_contains "$TMP_DIR/$bunker_flavor.args" "docker-compose.bunker.yml"
-assert_contains "deploy/docker-compose/docker-compose.bunker.yml" '${BUNKER_ADMINER_DOMAIN}_REVERSE_PROXY_URL=~ ^/'
+assert_contains "deploy/bunker.env.example" 'adminer.example.com_REVERSE_PROXY_URL=~ ^/'
+assert_not_contains "deploy/docker-compose/docker-compose.bunker.yml" '${BUNKER_'
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "networks:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  bw-services:"
 assert_not_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    external: true"

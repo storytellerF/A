@@ -8,9 +8,10 @@ RUN apk add --no-cache git && \
 
 FROM alpine:3.22
 
-RUN apk add --no-cache ca-certificates && \
+RUN apk add --no-cache ca-certificates curl && \
     addgroup -S -g 1000 minio && \
-    adduser -S -D -h /home/minio -u 1000 -G minio minio
+    adduser -S -D -h /home/minio -u 1000 -G minio minio && \
+    mkdir -p /data && chown minio:minio /data
 COPY --from=builder /go/bin/minio /usr/local/bin/minio
 
 USER minio:minio

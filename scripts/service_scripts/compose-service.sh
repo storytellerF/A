@@ -33,6 +33,21 @@ has_profile() {
     return 1
 }
 
+emit_backend_environment() {
+    if has_profile filesystem || has_profile lucene; then
+        echo "    environment:"
+        if has_profile filesystem; then
+            echo "      MEDIA_SERVICE: filesystem"
+            echo "      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc"
+            echo '      FILESYSTEM_PUBLIC_URL: ${FILESYSTEM_PUBLIC_URL:?set the externally reachable filesystem HTTP origin}'
+        fi
+        if has_profile lucene; then
+            echo "      SEARCH_SERVICE: lucene"
+            echo "      LUCENE_RPC_URL: ws://lucene:8821/rpc"
+        fi
+    fi
+}
+
 emit_bunker_network_if_needed() {
     if has_profile bunker; then
         echo "    networks:"
@@ -60,7 +75,12 @@ if has_profile bunker; then
         echo "$BUNKER_ENV_FILE does not exist"
         exit 1
     fi
-    ENV_FILES+=("--env-file" "$BUNKER_ENV_FILE")
+    for required in SERVER_NAME ADMIN_USERNAME ADMIN_PASSWORD EMAIL_LETS_ENCRYPT; do
+        if ! grep -qE "^${required}=.+$" "$BUNKER_ENV_FILE"; then
+            echo "Bunker environment must define $required" >&2
+            exit 1
+        fi
+    done
 fi
 
 GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.yml"
@@ -70,6 +90,11 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
     else
         echo "services:"
         if has_profile bunker; then
+            echo "  bunkerweb:"
+            echo "    env_file:"
+            bunker_env_yaml=$(printf '%s' "$BUNKER_ENV_FILE" | sed "s/'/''/g")
+            printf "      - path: '%s'\n" "$bunker_env_yaml"
+            echo "        format: raw"
             if has_profile pg; then
                 echo "  pg:"
                 emit_bunker_network_if_needed
@@ -125,6 +150,7 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
         fi
         if has_profile cli; then
             echo "  cli:"
+            emit_backend_environment
             if has_profile pg || has_profile minio || has_profile elastic || has_profile filesystem || has_profile lucene; then
                 echo "    depends_on:"
                 if has_profile pg; then
@@ -159,6 +185,7 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
         for service in server worker ws; do
             if has_profile "$service" || { [[ "$service" == "ws" ]] && has_profile server; }; then
                 echo "  $service:"
+                emit_backend_environment
                 if has_profile cli; then
                     echo "    depends_on:"
                     echo "      cli:"
@@ -195,6 +222,14 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                     fi
                     if has_profile elastic; then
                         echo "      es01:"
+                        echo "        condition: service_healthy"
+                    fi
+                    if has_profile filesystem; then
+                        echo "      filesystem:"
+                        echo "        condition: service_healthy"
+                    fi
+                    if has_profile lucene; then
+                        echo "      lucene:"
                         echo "        condition: service_healthy"
                     fi
                 fi
