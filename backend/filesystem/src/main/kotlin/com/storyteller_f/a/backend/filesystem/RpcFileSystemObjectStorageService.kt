@@ -4,7 +4,9 @@
 
 package com.storyteller_f.a.backend.filesystem
 
+import com.storyteller_f.a.backend.core.ManagedRpcService
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.RpcServiceProvider
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
@@ -15,20 +17,12 @@ import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
 import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
 import io.ktor.http.encodedPath
-import io.ktor.http.takeFrom
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
-import kotlinx.rpc.krpc.ktor.client.installKrpc
-import kotlinx.rpc.krpc.ktor.client.rpc
-import kotlinx.rpc.krpc.ktor.client.rpcConfig
-import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -40,14 +34,18 @@ import com.storyteller_f.services.filesystem.api.ObjectStorageRecord as RpcObjec
 
 private const val TRANSFER_CHUNK_SIZE = 256 * 1024
 
-class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val publicUrl: String? = null) :
-    ObjectStorageService {
+class FileSystemObjectStorageService(
+    private val connection: RpcServiceProvider<FilesystemRpc>,
+    private val publicUrl: String? = null,
+) : ObjectStorageService {
+    constructor(rpc: FilesystemRpc, publicUrl: String? = null) : this(RpcServiceProvider { rpc }, publicUrl)
     override suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>) =
         rpcResult {
-        uploadPacks.map { pack -> uploadOne(bucketName, pack) }
+        val rpc = connection.acquire()
+        uploadPacks.map { pack -> uploadOne(rpc, bucketName, pack) }
     }
 
-    private suspend fun uploadOne(bucketName: String, pack: UploadPack): ObjectStorageWriteRecord {
+    private suspend fun uploadOne(rpc: FilesystemRpc, bucketName: String, pack: UploadPack): ObjectStorageWriteRecord {
         val transferId = UUID.randomUUID().toString()
         var completed = false
         var failure: Exception? = null
@@ -75,12 +73,12 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
             throw exception
         } finally {
             if (!completed) {
-                withContext(NonCancellable) { abortUpload(transferId, failure) }
+                withContext(NonCancellable) { abortUpload(rpc, transferId, failure) }
             }
         }
     }
 
-    private suspend fun abortUpload(transferId: String, cause: Throwable?) {
+    private suspend fun abortUpload(rpc: FilesystemRpc, transferId: String, cause: Throwable?) {
         try {
             rpc.abortUpload(transferId)
         } catch (cancellation: CancellationException) {
@@ -97,20 +95,20 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
     override suspend fun get(bucketName: String, names: List<String>) =
         rpcResult {
         publicRecords(
-            rpc.get(bucketName, names),
+            connection.acquire().get(bucketName, names),
         )
     }
-    override suspend fun clean(bucketName: String) = rpcResult { rpc.cleanObjects(bucketName) }
+    override suspend fun clean(bucketName: String) = rpcResult { connection.acquire().cleanObjects(bucketName) }
     override suspend fun list(bucketName: String, prefix: String) =
         rpcResult {
         publicRecords(
-            rpc.list(bucketName, prefix),
+            connection.acquire().list(bucketName, prefix),
         )
     }
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>) =
         rpcResult {
         publicRecords(
-            rpc.copy(
+            connection.acquire().copy(
                 bucketName,
                 copyPacks.map { RpcCopyPack(it.originFullName, it.newFullName) },
             ),
@@ -134,6 +132,7 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
 
     override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
         rpcResult {
+        val rpc = connection.acquire()
         val temporary = Files.createTempFile("a-filesystem-rpc-", ".download")
         try {
             Files.newOutputStream(temporary).buffered().use { output ->
@@ -158,12 +157,18 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
         expectedSha256: String,
         expectedCrc32c: String,
     ) = rpcResult {
-        rpc.compose(bucketName, targetFullName, sourceFullNames, expectedSha256).let {
+        connection.acquire().compose(bucketName, targetFullName, sourceFullNames, expectedSha256).let {
             ObjectStorageWriteRecord(it.fullName)
         }
     }
 
-    override suspend fun delete(bucketName: String, names: List<String>) = rpcResult { rpc.delete(bucketName, names) }
+    override suspend fun delete(bucketName: String, names: List<String>) =
+        rpcResult {
+        connection.acquire().delete(
+            bucketName,
+            names,
+        )
+    }
 }
 
 private class DeletingInputStream(private val path: Path) :
@@ -184,16 +189,7 @@ class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
 
     override fun build(env: MergedEnv): ObjectStorageService {
         val url = env["FILESYSTEM_RPC_URL"] ?: error("FILESYSTEM_RPC_URL is empty")
-        val client =
-            HttpClient(CIO) {
-                install(WebSockets)
-                installKrpc()
-            }
-        val service =
-            client.rpc {
-                url { takeFrom(url) }
-                rpcConfig { serialization { json() } }
-            }.withService<FilesystemRpc>()
-        return FileSystemObjectStorageService(service, env["FILESYSTEM_PUBLIC_URL"])
+        val connection = ManagedRpcService(url, { it.withService<FilesystemRpc>() }, { it.health() })
+        return FileSystemObjectStorageService(connection, env["FILESYSTEM_PUBLIC_URL"])
     }
 }

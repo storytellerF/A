@@ -3,6 +3,7 @@
  */
 
 plugins {
+    `java-test-fixtures`
     alias(libs.plugins.kotlinJvm)
 }
 
@@ -11,11 +12,23 @@ version = "unspecified"
 
 dependencies {
     implementation(libs.napier)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.websockets)
+    implementation(libs.kotlinx.rpc.krpc.ktor.client)
+    implementation(libs.kotlinx.rpc.krpc.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(projects.shared)
     implementation(libs.kotlinx.datetime)
+    testFixturesImplementation(libs.ktor.server.core)
+    testFixturesImplementation(libs.ktor.server.cio)
+    testFixturesImplementation(libs.ktor.server.websockets)
+    testFixturesImplementation(libs.kotlinx.rpc.krpc.ktor.server)
+    testFixturesImplementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testFixturesImplementation(libs.kotlinx.coroutines.core)
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(projects.backend.elastic)
     testImplementation(projects.backend.lucene)
     testImplementation(projects.backend.minio)

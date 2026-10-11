@@ -24,7 +24,9 @@ dependencies {
     implementation(projects.services.luceneProtocol)
     implementation(projects.backend.core)
     implementation(projects.shared)
+    testImplementation(testFixtures(projects.backend.core))
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 tasks.test {

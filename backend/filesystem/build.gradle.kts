@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.kotlinx.rpc.krpc.client)
     implementation(libs.kotlinx.rpc.krpc.ktor.client)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testImplementation(testFixtures(projects.backend.core))
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
 }

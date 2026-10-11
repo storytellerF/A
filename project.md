@@ -202,7 +202,7 @@
 
 - Windows AVIF discovery requires `AVIF_LIBRARY_PATH`; developer setup is documented in DEVELOPMENT.md. `loadAvif()` no longer assumes an MSYS2 installation path or detects vcpkg.
 
-- Cached Lucene RPC connections must be replaced after their WebSocket session is cancelled/completed; close the old RPC and HTTP clients before caching the replacement. A backend/core regression test restarts Lucene on the same mapped port and rebuilds its search service.
+- Lucene and filesystem adapters acquire a managed RPC proxy per operation, retain it through multi-call transfers, and replace disconnected transports for subsequent operations without replaying failed calls. Coroutine Mutex serializes establishment; cancelled establishment closes its candidate. Recovery regressions retain the same adapter across service restart, concurrent calls, interrupted uploads and cancellation. Docker random published ports can change on restart; container recovery fixtures recreate the service with its original published port explicitly bound.
 - Android KMP device test source sets must include `commonTest` to execute shared tests. Standalone Compose test APKs need their own ComponentActivity declaration in `src/androidDeviceTest/AndroidManifest.xml`; a successful NO-SOURCE device task is not test coverage. Merge duplicated license resources rather than dropping license contents.
 - Ktor external-service mocks inherit the parent test environment builder. The WebSocket mock already receives the same configured environment, so duplicating that configuration is not a remedy for RTC/sign-in failures.
 
@@ -256,3 +256,5 @@ Regular-check investigation: the four Compose Wasm test targets need executable 
 - Worker runtime (2026-10-11): restored eclipse-temurin:21-jre-jammy, apt libavif-dev/libvulkan1 and Ubuntu group/user creation; the shared JDK21 Alpine builder remains. Alpine supports optional gcompat, but the current base image does not install it and LiteRT compatibility has not been demonstrated there.
 
 - Ubuntu Worker verification (2026-10-11): built the changed runtime stage with its actual apt packages and UID1000 user; glibc loader paths and JRE21 exist. Loaded the current cached LiteRT 0.16.1 linux-x86_64 JNI with System.load in that image successfully. This validates JNI loading, not model inference. Root assemble and Detekt pass.
+
+- RPC recovery verification (2026-10-11): same-adapter container restart tests 2, filesystem adapter tests 9, Lucene adapter tests 11, filesystem service tests 6, and cloud server file/search tests 25 all pass (53 total, zero failures/skips). Root assemble and Detekt pass with configuration cache enabled. Interrupted operations are not replayed; uploads retain one proxy through abort/finish.

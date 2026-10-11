@@ -3,9 +3,11 @@
  */
 package com.storyteller_f.a.backend.lucene
 
+import com.storyteller_f.a.backend.core.ManagedRpcService
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.RpcServiceProvider
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
@@ -40,16 +42,6 @@ import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.cancellableRunCatching
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.http.takeFrom
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.isActive
-import kotlinx.rpc.krpc.ktor.client.installKrpc
-import kotlinx.rpc.krpc.ktor.client.rpc
-import kotlinx.rpc.krpc.ktor.client.rpcConfig
-import kotlinx.rpc.krpc.serialization.json.json
 import kotlinx.rpc.withService
 import java.util.concurrent.ConcurrentHashMap
 
@@ -62,10 +54,11 @@ private fun RpcLuceneQuery.withText(word: String, vararg fields: String) =
 private fun <T> RpcLuceneResult.toPage(convert: (RpcLuceneStoredDocument) -> T) =
     PaginationResult(documents.map(convert), total)
 
-class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService {
+class LuceneTopicSearchService(private val connection: RpcServiceProvider<LuceneRpc>) : TopicSearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<TopicDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "topic",
             documents.map { LuceneTopicDocument(it).save() },
         )
@@ -74,13 +67,13 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
         rpcResult {
         if (idList.isEmpty()) return@rpcResult emptyList<TopicDocument?>()
         val documents =
-            rpc.search(
+            connection.acquire().search(
                 "topic",
                 RpcLuceneQuery(mustLongSet = mapOf(DOCUMENT_ID_FIELD to idList), size = idList.size),
             ).documents.map(LuceneTopicDocument.Companion::restore).associateBy { it.id }
         idList.map(documents::get)
     }
-    override suspend fun clean() = rpcResult { rpc.clean("topic") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("topic") }
     override suspend fun searchDocument(search: TopicDocumentSearch) =
         rpcResult {
         val query =
@@ -121,20 +114,21 @@ class LuceneTopicSearchService(private val rpc: LuceneRpc) : TopicSearchService 
                 0,
             )
         } else {
-            rpc.search("topic", query).toPage(LuceneTopicDocument.Companion::restore)
+            connection.acquire().search("topic", query).toPage(LuceneTopicDocument.Companion::restore)
         }
     }
 }
 
-class LuceneUserSearchService(private val rpc: LuceneRpc) : UserSearchService {
+class LuceneUserSearchService(private val connection: RpcServiceProvider<LuceneRpc>) : UserSearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<UserDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "user",
             documents.map { LuceneUserDocument(it).save() },
         )
     }
-    override suspend fun clean() = rpcResult { rpc.clean("user") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("user") }
     override suspend fun searchDocument(search: UserDocumentSearch) =
         rpcResult {
         when (search) {
@@ -145,7 +139,7 @@ class LuceneUserSearchService(private val rpc: LuceneRpc) : UserSearchService {
                         0,
                     )
                 } else {
-                    rpc.search(
+                    connection.acquire().search(
                         "user",
                         search.fetch.query().withText(search.word, "aid", "nickname"),
                     ).toPage(LuceneUserDocument.Companion::restore)
@@ -154,15 +148,16 @@ class LuceneUserSearchService(private val rpc: LuceneRpc) : UserSearchService {
     }
 }
 
-class LuceneRoomSearchService(private val rpc: LuceneRpc) : RoomSearchService {
+class LuceneRoomSearchService(private val connection: RpcServiceProvider<LuceneRpc>) : RoomSearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<RoomDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "room",
             documents.map { LuceneRoomDocument(it).save() },
         )
     }
-    override suspend fun clean() = rpcResult { rpc.clean("room") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("room") }
     override suspend fun searchDocument(search: RoomDocumentSearch) =
         rpcResult {
         when (search) {
@@ -173,7 +168,7 @@ class LuceneRoomSearchService(private val rpc: LuceneRpc) : RoomSearchService {
                         0,
                     )
                 } else {
-                    rpc.search(
+                    connection.acquire().search(
                         "room",
                         search.fetch.query().copy(
                             mustLong = search.communityId?.let { mapOf("communityId" to it) }.orEmpty(),
@@ -184,15 +179,16 @@ class LuceneRoomSearchService(private val rpc: LuceneRpc) : RoomSearchService {
     }
 }
 
-class LuceneCommunitySearchService(private val rpc: LuceneRpc) : CommunitySearchService {
+class LuceneCommunitySearchService(private val connection: RpcServiceProvider<LuceneRpc>) : CommunitySearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<CommunityDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "community",
             documents.map { LuceneCommunityDocument(it).save() },
         )
     }
-    override suspend fun clean() = rpcResult { rpc.clean("community") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("community") }
     override suspend fun searchDocument(search: CommunityDocumentSearch) =
         rpcResult {
         when (search) {
@@ -203,7 +199,7 @@ class LuceneCommunitySearchService(private val rpc: LuceneRpc) : CommunitySearch
                         0,
                     )
                 } else {
-                    rpc.search(
+                    connection.acquire().search(
                         "community",
                         search.fetch.query().withText(search.keyword, "aid", "name"),
                     ).toPage(LuceneCommunityDocument.Companion::restore)
@@ -212,22 +208,23 @@ class LuceneCommunitySearchService(private val rpc: LuceneRpc) : CommunitySearch
     }
 }
 
-class LuceneMemberSearchService(private val rpc: LuceneRpc) : MemberSearchService {
+class LuceneMemberSearchService(private val connection: RpcServiceProvider<LuceneRpc>) : MemberSearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<MemberDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "member",
             documents.map { LuceneMemberDocument(it).save() },
         )
     }
     override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey) =
         rpcResult {
-        rpc.delete(
+        connection.acquire().delete(
             "member",
             RpcLuceneQuery(mustLong = mapOf("uid" to uid, "objectId" to objectId)),
         )
     }
-    override suspend fun clean() = rpcResult { rpc.clean("member") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("member") }
     override suspend fun searchDocument(search: MemberDocumentSearch) =
         rpcResult {
         val query =
@@ -259,20 +256,21 @@ class LuceneMemberSearchService(private val rpc: LuceneRpc) : MemberSearchServic
                 0,
             )
         } else {
-            rpc.search("member", query).toPage(LuceneMemberDocument.Companion::restore)
+            connection.acquire().search("member", query).toPage(LuceneMemberDocument.Companion::restore)
         }
     }
 }
 
-class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
+class LuceneFileSearchService(private val connection: RpcServiceProvider<LuceneRpc>) : FileSearchService {
+    constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<FileDocument>) =
         rpcResult {
-        rpc.save(
+        connection.acquire().save(
             "file",
             documents.map { LuceneFileDocument(it).save() },
         )
     }
-    override suspend fun clean() = rpcResult { rpc.clean("file") }
+    override suspend fun clean() = rpcResult { connection.acquire().clean("file") }
     override suspend fun searchDocument(search: FileDocumentSearch) =
         rpcResult {
         when (search) {
@@ -283,7 +281,7 @@ class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
                         0,
                     )
                 } else {
-                    rpc.search(
+                    connection.acquire().search(
                         "file",
                         search.fetch.query().copy(
                             mustLong = search.ownerId?.let { mapOf("ownerId" to it) }.orEmpty(),
@@ -294,51 +292,13 @@ class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
     }
 }
 
-private class LuceneRpcConnection(rpcUrl: String) {
-    private val client =
-        HttpClient(CIO) {
-            install(WebSockets)
-            installKrpc()
-        }
-    private val rpcClient =
-        client.rpc {
-            url {
-                takeFrom(
-                    rpcUrl,
-                )
-            }
-            ; rpcConfig { serialization { json() } }
-        }
-    val service: LuceneRpc = rpcClient.withService()
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val isActive: Boolean
-        get() {
-            val session = rpcClient.webSocketSession
-            if (session.isCancelled) return false
-            if (!session.isCompleted) return true
-            return session.getCompleted().coroutineContext.isActive
-        }
-
-    fun close() {
-        rpcClient.close()
-        client.close()
-    }
-}
 private object LuceneRpcConnections {
-    private val connections = ConcurrentHashMap<String, LuceneRpcConnection>()
-    fun service(env: MergedEnv): LuceneRpc {
+    private val connections = ConcurrentHashMap<String, ManagedRpcService<LuceneRpc>>()
+    fun service(env: MergedEnv): RpcServiceProvider<LuceneRpc> {
         val rpcUrl = env["LUCENE_RPC_URL"] ?: error("LUCENE_RPC_URL is empty")
-        return checkNotNull(
-            connections.compute(rpcUrl) { _, previous ->
-                if (previous?.isActive == true) {
-                    previous
-                } else {
-                    previous?.close()
-                    LuceneRpcConnection(rpcUrl)
-                }
-            },
-        ).service
+        return connections.computeIfAbsent(rpcUrl) {
+            ManagedRpcService(rpcUrl, { it.withService<LuceneRpc>() }, { it.health() })
+        }
     }
 }
 open class LuceneSearchServiceFactory {

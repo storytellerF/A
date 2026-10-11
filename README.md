@@ -7,6 +7,11 @@ For build, test, and independent service setup instructions, see [DEVELOPMENT.md
 
 [Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
+## Storage and Search Availability
+
+After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted
+request still reports failure; failed operations and partial uploads are not replayed automatically.
+
 ## Worker Configuration
 
 Worker task settings are stored per task type. A task without a persisted configuration does not run.
