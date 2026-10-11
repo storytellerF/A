@@ -1,23 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-FLAVOR=${1:-}
-
-if [ -z "$FLAVOR" ]; then
-  echo "FLAVOR must be set"
-  exit 1
-fi
-
-ENV_FILE="./deploy/$FLAVOR.env"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "$ENV_FILE does not exist"
-  exit 1
-fi
+. "$(dirname "${BASH_SOURCE[0]}")/service-env.sh"
+resolve_service_env "${1:-}"
+cd "$SERVICE_PROJECT_ROOT"
 
 echo "build and start in Docker"
 export BUILD_ON=docker
 
-IFS=',' read -ra PROFILES <<< "$(grep '^COMPOSE_FILE_LIST=' "$ENV_FILE" | cut -d '=' -f2-)"
+IFS=',' read -ra PROFILES <<< "$(read_service_env COMPOSE_FILE_LIST)"
 
 has_profile() {
   local target=$1
@@ -44,7 +35,7 @@ fi
 
 for service in "${BUILD_SERVICES[@]}"; do
   echo "build $service"
-  ./scripts/service_scripts/compose-service.sh "$FLAVOR" false "build $service"
+  ./scripts/service_scripts/compose-service.sh "$ENV_FILE" false "build $service"
 done
 
-./scripts/service_scripts/compose-service.sh "$FLAVOR" false 'up -d --no-build'
+./scripts/service_scripts/compose-service.sh "$ENV_FILE" false 'up -d --no-build'

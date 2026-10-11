@@ -10,7 +10,7 @@ services:
       LOG_PATH: /home/app/logs/server
       SERVER_PORT: 80
     env_file:
-      - ../../deploy/${FLAVOR}.env
+      - ${APP_ENV_FILE:-../../deploy/${FLAVOR}.env}
     ports:
       - ${SERVER_EXPOSE_PORT}:80
     volumes:
@@ -27,7 +27,7 @@ services:
       LOG_PATH: /home/app/logs/ws
       WS_SERVER_PORT: 80
     env_file:
-      - ../../deploy/${FLAVOR}.env
+      - ${APP_ENV_FILE:-../../deploy/${FLAVOR}.env}
     ports:
       - ${WS_SERVER_EXPOSE_PORT:-8813}:80
     volumes:

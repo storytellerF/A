@@ -6,7 +6,7 @@ services:
       args:
         BUILD_ON: ${BUILD_ON}
     env_file:
-      - ../../deploy/${FLAVOR}.env
+      - ${APP_ENV_FILE:-../../deploy/${FLAVOR}.env}
     environment:
       LOG_PATH: /home/app/logs/cli
       CLI_READY_PORT: ${CLI_READY_PORT:-8081}

@@ -266,3 +266,5 @@ Regular-check investigation: the four Compose Wasm test targets need executable 
 
 - R2DBC PostgreSQL is temporarily pinned to 1.1.2.RELEASE for upstream issue #756 (DNS UDP socket retention in 1.1.3). Dependabot ignores the exact org.postgresql:r2dbc-postgresql coordinate until a verified upstream fix; other dependencies remain enabled.
 - R2DBC rollback verification: runtimeClasspath resolves 1.1.2.RELEASE; five PostgreSQL container database tests pass with no failures/skips. Root assemble and Detekt pass; Dependabot YAML parses and retains the all-dependencies group. The ignore configuration must reach the repository default branch to take effect.
+
+- Deployment env names prefer ~/deploy over repository deploy files; explicit paths use the same selected file for Compose interpolation and application env_file. BUNKER_ENV_FILE can be configured inside that env and relative paths resolve beside it. PRESET_PATH=/home/<user>/data mounts to /app/deploy/preset_data; CLI clean/init/add imports that directory. Docker contexts must exclude dev/preset/secrets.

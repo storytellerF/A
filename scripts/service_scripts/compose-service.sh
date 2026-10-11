@@ -1,20 +1,19 @@
 #!/bin/bash
 
-FLAVOR=$1
-USE_PREBUILD=$2
-CUSTOM_COMMAND=$3
+set -euo pipefail
 
-if [ -z "$FLAVOR" ]; then
-    echo "FLAVOR must be set."
-    exit 1
-fi
+. "$(dirname "${BASH_SOURCE[0]}")/service-env.sh"
+resolve_service_env "${1:-}"
+cd "$SERVICE_PROJECT_ROOT"
+USE_PREBUILD=${2:-false}
+CUSTOM_COMMAND=${3:-}
 
 # 默认 compose 命令
 if [ -z "$CUSTOM_COMMAND" ]; then
     CUSTOM_COMMAND="up -d --build"
 fi
 
-IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)"
+IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(read_service_env COMPOSE_FILE_LIST)"
 echo "${COMPOSE_FILE_LIST[@]}"
 
 # 公共 compose 文件
@@ -68,13 +67,9 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
     COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.${profile}.yml")
 done
 
-ENV_FILES=("--env-file" "./deploy/${FLAVOR}.env")
+ENV_FILES=("--env-file" "$ENV_FILE")
 if has_profile bunker; then
-    BUNKER_ENV_FILE=${BUNKER_ENV_FILE:-$HOME/deploy/bunker.env}
-    if [ ! -f "$BUNKER_ENV_FILE" ]; then
-        echo "$BUNKER_ENV_FILE does not exist"
-        exit 1
-    fi
+    resolve_bunker_env
     for required in SERVER_NAME ADMIN_USERNAME ADMIN_PASSWORD EMAIL_LETS_ENCRYPT; do
         if ! grep -qE "^${required}=.+$" "$BUNKER_ENV_FILE"; then
             echo "Bunker environment must define $required" >&2
@@ -264,7 +259,7 @@ if [ "$USE_PREBUILD" = "true" ]; then
     COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
 else
   if [[ "$NEEDS_BUILD_ON" == "true" ]]; then
-      BUILD_ON=${BUILD_ON:-$(grep '^BUILD_ON=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)}
+      BUILD_ON=${BUILD_ON:-$(read_service_env BUILD_ON)}
       if [ -z "$BUILD_ON" ]; then
           echo "BUILD_ON must be set."
           exit 1

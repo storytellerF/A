@@ -28,6 +28,7 @@ cat > "$MOCK_BIN/docker" <<'EOF'
 set -euo pipefail
 
 printf '%s\n' "$*" >> "$MOCK_DOCKER_ARGS"
+printf 'APP_ENV_FILE=%s\n' "${APP_ENV_FILE:-}" >> "$MOCK_DOCKER_ARGS"
 if [[ "${EXPECT_DOCKER_BUILD:-false}" == "true" && "${BUILD_ON:-}" != "docker" ]]; then
   echo "Deployment must build inside Docker" >&2
   exit 1
@@ -316,6 +317,37 @@ if [ -s "$no_app_start_gradle_args" ]; then
   fail "Docker deployment must not invoke host Gradle without the app profile"
 fi
 rm -f "deploy/$no_app_flavor.env"
+
+external_flavor="compose-test-external"
+write_env "$external_flavor" "filesystem,lucene,cli,server,worker,app,bunker"
+external_directory="$TMP_DIR/external config"
+mkdir -p "$external_directory"
+external_env="$external_directory/alpha.env"
+cp "deploy/$external_flavor.env" "$external_env"
+rm -f "deploy/$external_flavor.env"
+printf '\nBUNKER_ENV_FILE=bunker.env\n' >> "$external_env"
+cp deploy/bunker.env.example "$external_directory/bunker.env"
+external_args="$TMP_DIR/external.args"
+external_generated="$TMP_DIR/external.generated.yml"
+export MOCK_DOCKER_ARGS="$external_args"
+export MOCK_GENERATED_OUT="$external_generated"
+export MOCK_GRADLE_ARGS="$TMP_DIR/external.gradle.args"
+: > "$external_args"
+: > "$MOCK_GRADLE_ARGS"
+./scripts/service_scripts/compose-service.sh "$external_env" false config > "$TMP_DIR/external.stdout"
+assert_contains "$external_args" "--env-file $external_env"
+assert_contains "$external_args" "APP_ENV_FILE=$external_env"
+assert_not_contains "$external_args" "--env-file $external_directory/bunker.env"
+assert_contains "$external_generated" "path: '$external_directory/bunker.env'"
+(cd "$external_directory" && "$ROOT_DIR/scripts/service_scripts/compose-service.sh" alpha.env false config) > "$TMP_DIR/external-relative.stdout"
+assert_contains "$external_args" "APP_ENV_FILE=$external_env"
+EXPECT_DOCKER_BUILD=true ./scripts/service_scripts/start-service-in-docker.sh "$external_env" > "$TMP_DIR/external-start.stdout"
+assert_contains "$external_args" "build app-wasm"
+assert_contains "$external_args" "build panel-wasm"
+assert_contains "$external_args" "up -d --no-build"
+if ./scripts/service_scripts/compose-service.sh "$external_directory/missing.env" false config > "$TMP_DIR/missing.stdout" 2>&1; then
+  fail "missing explicit environment path must fail"
+fi
 
 if find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \) | grep -q .; then
   find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \)

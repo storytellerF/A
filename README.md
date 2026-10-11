@@ -155,14 +155,17 @@ does not need a local JDK or prebuilt distributions. Images are built sequential
 
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
-Deployment settings are read from `deploy/<flavor>.env`. Use `deploy/sample.env` as the reference;
+Both `compose-service.sh` and `start-service-in-docker.sh` accept an environment name
+(`alpha` or `alpha.env`) or a file path (`~/deploy/alpha.env`). Names resolve to
+`~/deploy/<name>.env` first, then `deploy/<name>.env`. Use `deploy/sample.env` as the reference;
 `BUILD_TYPE` is required, and `COMPOSE_FILE_LIST` selects which services are included in the stack.
 Server, Worker, WebSocket server, and CLI images share the JDK 21 builder in the root `Dockerfile` and
 are packaged as the separate `server`, `worker`, `ws`, and `cli` targets.
 
 When `COMPOSE_FILE_LIST` includes `bunker`, copy `deploy/bunker.env.example` to
 `~/deploy/bunker.env` outside the project and replace its example domains and credentials.
-Set `BUNKER_ENV_FILE` to use another external path. The file is injected only into the BunkerWeb
+Set `BUNKER_ENV_FILE=/home/<user>/deploy/bunker.env` inside the selected application env file
+to use another path; a relative path is resolved beside that env file. A shell override takes precedence. The file is injected only into the BunkerWeb
 container using `env_file`; it does not participate in Compose interpolation or override the flavor
 configuration. Docker Compose 2.30 or newer is required for the raw env-file format, which preserves
 literal credential values without interpolation. It contains final BunkerWeb names such as `SERVER_NAME`, `ADMIN_USERNAME`,
@@ -175,6 +178,10 @@ With BunkerWeb, the media domain routes this path to filesystem port 8822; port 
 management RPC endpoint and must remain private.
 Set `FILESYSTEM_PUBLIC_URL=https://<media-domain>` in `deploy/{flavor}.env`, including BunkerWeb deployments.
 The startup script passes the same resolved origin to filesystem and the application services.
+
+`PRESET_PATH=/home/<user>/data` bind-mounts the host preset directory into Server and CLI
+as `/app/deploy/preset_data`. CLI reads numbered JSON presets and referenced local files there.
+Enable `CLI_INIT_ENABLE=true` only for deliberate data initialization; disable it afterwards.
 
 ## License
 

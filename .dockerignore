@@ -14,3 +14,6 @@ local.properties
 *.hprof
 dev/logs
 dev/reports
+
+# Exclude private test key material from deployment build contexts.
+dev/preset/secrets
