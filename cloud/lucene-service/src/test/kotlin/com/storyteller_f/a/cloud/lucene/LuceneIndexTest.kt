@@ -23,6 +23,8 @@ import org.apache.lucene.document.TextField
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
 import org.apache.lucene.store.FSDirectory
+import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -188,6 +190,26 @@ class LuceneIndexTest {
             listOf(third.stored(), second.stored(), first.stored()),
             service.search("products", query).documents,
         )
+    }
+
+    @Test
+    fun `clean resets fields and keeps other indexes`() =
+        runBlocking {
+        val base = Files.createTempDirectory(Files.createDirectories(Path.of("build/test")), "reset-index-")
+        val service = LuceneRpcImpl(base)
+        val previous = RpcLuceneDocument(listOf(number("value", 1, docValues = RpcLuceneDocValues.NUMERIC)))
+        FSDirectory.open(base.resolve("products")).use { directory ->
+            IndexWriter(directory, IndexWriterConfig(StandardAnalyzer())).use { writer ->
+                writer.addDocument(Document().apply { add(LongField("value", 1, Field.Store.YES)) })
+            }
+        }
+        service.save("other", listOf(previous))
+        service.clean("products")
+        assertEquals(0L, service.search("products", RpcLuceneQuery()).total)
+        val replacement = RpcLuceneDocument(listOf(text("value", "new field type", RpcLuceneIndex.TEXT)))
+        service.save("products", listOf(replacement))
+        assertEquals(listOf(replacement.stored()), service.search("products", RpcLuceneQuery()).documents)
+        assertEquals(listOf(previous.stored()), service.search("other", RpcLuceneQuery()).documents)
     }
 
     private fun product(title: String, stock: Long) =

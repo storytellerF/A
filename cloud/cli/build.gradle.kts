@@ -17,6 +17,8 @@ version = "unspecified"
 dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(projects.backend.lucene)
+    testImplementation(projects.services.luceneProtocol)
 
     implementation(projects.shared)
     implementation(projects.backend.core)

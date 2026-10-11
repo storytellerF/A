@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.cli
 
+import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli
@@ -20,15 +21,21 @@ class CleanCommand : Subcommand("clean", "clean all data") {
                 "database tables delete done"
             }
             connected.objectStorageService.clean(A_FILE_DEFAULT_BUCKET).getOrThrow()
-            connected.topicSearchService.clean().getOrThrow()
-            connected.userSearchService.clean().getOrThrow()
-            connected.roomSearchService.clean().getOrThrow()
-            connected.communitySearchService.clean().getOrThrow()
+            cleanSearchIndexes(connected)
         }
         Napier.i {
             "clean done"
         }
     }
+}
+
+internal suspend fun cleanSearchIndexes(backend: Backend) {
+    backend.topicSearchService.clean().getOrThrow()
+    backend.userSearchService.clean().getOrThrow()
+    backend.roomSearchService.clean().getOrThrow()
+    backend.communitySearchService.clean().getOrThrow()
+    backend.memberSearchService.clean().getOrThrow()
+    backend.fileSearchService.clean().getOrThrow()
 }
 
 @OptIn(ExperimentalCli::class)
