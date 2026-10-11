@@ -35,6 +35,8 @@ dependencies {
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
     testImplementation(kotlin("test"))
     testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.ktor.client.websockets)
+    testImplementation(libs.kotlinx.rpc.krpc.ktor.client)
 }
 
 tasks.test {

@@ -9,6 +9,7 @@ import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
 import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
+import io.github.aakira.napier.Napier
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -18,9 +19,11 @@ import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.response.header
 import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
+import kotlinx.coroutines.job
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
@@ -34,14 +37,33 @@ private const val MAX_CHUNK_SIZE = 256 * 1024
 
 private data class PendingUpload(val bucketName: String, val pack: RpcUploadPack, val path: Path)
 
-private class FilesystemRpcImpl(private val storage: LocalFileSystemObjectStorageService) : FilesystemRpc {
+internal class FilesystemRpcImpl(
+    private val storage: LocalFileSystemObjectStorageService,
+    private val uploadDirectory: Path,
+) : FilesystemRpc {
     private val uploads = ConcurrentHashMap<String, PendingUpload>()
+
+    fun closeUploads() {
+        uploads.values.forEach { pending ->
+            try {
+                Files.deleteIfExists(pending.path)
+            } catch (failure: Exception) {
+                Napier.e(failure) { "remove disconnected filesystem upload failed" }
+            }
+        }
+        uploads.clear()
+    }
 
     override suspend fun health() = "ok"
 
     override suspend fun beginUpload(bucketName: String, uploadPack: RpcUploadPack) {
         require(uploadPack.transferId.isNotBlank()) { "transfer id is empty" }
-        val pending = PendingUpload(bucketName, uploadPack, Files.createTempFile("a-filesystem-rpc-", ".upload"))
+        val pending =
+            PendingUpload(
+                bucketName,
+                uploadPack,
+                Files.createTempFile(uploadDirectory, "a-filesystem-rpc-", ".upload"),
+            )
         check(uploads.putIfAbsent(uploadPack.transferId, pending) == null) { "transfer already exists" }
     }
 
@@ -113,7 +135,6 @@ fun main() {
     val publicUrl = System.getenv("FILESYSTEM_PUBLIC_URL") ?: error("FILESYSTEM_PUBLIC_URL is empty")
     val httpPort = System.getenv("FILESYSTEM_HTTP_PORT")?.toIntOrNull() ?: 8822
     val storage = LocalFileSystemObjectStorageService(publicUrl, base)
-    val service = FilesystemRpcImpl(storage)
     embeddedServer(CIO, host = "0.0.0.0", port = httpPort) {
         configureObjectDownloads(storage)
     }.start(wait = false)
@@ -122,12 +143,22 @@ fun main() {
         install(Krpc)
         routing {
             get("/health") { call.respondText("ok") }
-            rpc("/rpc") {
-                rpcConfig { serialization { json() } }
-                registerService<FilesystemRpc> { service }
-            }
+            configureFilesystemRpc(storage)
         }
     }.start(wait = true)
+}
+
+internal fun Route.configureFilesystemRpc(
+    storage: LocalFileSystemObjectStorageService,
+    uploadDirectory: Path = Paths.get(System.getProperty("java.io.tmpdir")),
+) {
+    rpc("/rpc") {
+        val service = FilesystemRpcImpl(storage, uploadDirectory)
+        // Session completion runs after in-flight calls, so no upload can register after cleanup.
+        coroutineContext.job.invokeOnCompletion { service.closeUploads() }
+        rpcConfig { serialization { json() } }
+        registerService<FilesystemRpc> { service }
+    }
 }
 
 internal fun Application.configureObjectDownloads(storage: LocalFileSystemObjectStorageService) {

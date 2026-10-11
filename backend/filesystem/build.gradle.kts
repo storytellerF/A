@@ -11,6 +11,7 @@ group = "com.storyteller_f.a.backend"
 version = "unspecified"
 
 dependencies {
+    implementation(libs.napier)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(projects.services.filesystemProtocol)
@@ -22,6 +23,12 @@ dependencies {
     implementation(libs.kotlinx.rpc.krpc.client)
     implementation(libs.kotlinx.rpc.krpc.ktor.client)
     implementation(libs.kotlinx.rpc.krpc.serialization.json)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 kotlin {

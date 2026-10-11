@@ -14,6 +14,7 @@ import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
 import com.storyteller_f.shared.utils.cancellableRunCatching
+import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.websocket.WebSockets
@@ -22,6 +23,8 @@ import io.ktor.http.Url
 import io.ktor.http.encodedPath
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.rpc.krpc.ktor.client.installKrpc
 import kotlinx.rpc.krpc.ktor.client.rpc
 import kotlinx.rpc.krpc.ktor.client.rpcConfig
@@ -46,11 +49,13 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
 
     private suspend fun uploadOne(bucketName: String, pack: UploadPack): ObjectStorageWriteRecord {
         val transferId = UUID.randomUUID().toString()
-        rpc.beginUpload(
-            bucketName,
-            RpcUploadPack(transferId, pack.name, pack.size, pack.fullName, pack.sha256),
-        )
+        var completed = false
+        var failure: Exception? = null
         return try {
+            rpc.beginUpload(
+                bucketName,
+                RpcUploadPack(transferId, pack.name, pack.size, pack.fullName, pack.sha256),
+            )
             pack.file.inputStream().buffered().use { input ->
                 val buffer = ByteArray(TRANSFER_CHUNK_SIZE)
                 while (true) {
@@ -60,23 +65,32 @@ class FileSystemObjectStorageService(private val rpc: FilesystemRpc, private val
                 }
             }
             rpc.finishUpload(transferId).let {
+                completed = true
                 ObjectStorageWriteRecord(it.fullName)
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (exception: Exception) {
-            abortUpload(transferId, exception)
+            failure = exception
             throw exception
+        } finally {
+            if (!completed) {
+                withContext(NonCancellable) { abortUpload(transferId, failure) }
+            }
         }
     }
 
-    private suspend fun abortUpload(transferId: String, cause: Throwable) {
+    private suspend fun abortUpload(transferId: String, cause: Throwable?) {
         try {
             rpc.abortUpload(transferId)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (abortException: Exception) {
-            cause.addSuppressed(abortException)
+            if (cause != null) {
+                cause.addSuppressed(abortException)
+            } else {
+                Napier.e(abortException) { "abort cancelled filesystem upload failed" }
+            }
         }
     }
 
