@@ -10,15 +10,17 @@ import com.caoccao.javet.node.modules.NodeModuleModule
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.use
 
 class ParseTest : PlatformHeadlessTest() {
     @Test
-    fun `test parse ascii doc`() {
-        val scriptDir = File("src/headlessTest/resources")
-        if (!File(scriptDir, "node_modules").exists()) {
-            return
-        }
+    fun testParseAsciiDoc() {
+        val scriptDir =
+            File(
+                requireNotNull(System.getProperty("asciidoc.test.fixture")) { "Run this test through Gradle" },
+            )
+        assertTrue(File(scriptDir, "node_modules").isDirectory, "Gradle must prepare the AsciiDoc test dependencies")
         val scripts =
             File(scriptDir, "parse-asciidoc.js").bufferedReader().use {
                 it.readText()

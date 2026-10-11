@@ -44,11 +44,12 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
+        // noReset keeps the previous process alive; stop it before replacing its reverse targets.
+        clearAppData(target.androidApp.packageName)
         runAndroidTestEnvironment { ports ->
             var driver: AndroidDriver? = null
             var testFailed = false
             try {
-                clearAppData(target.androidApp.packageName)
                 val prepared = setup(ports)
                 prepared.injectedSession?.let { session ->
                     pushInjectedSessionToPrivateDir(
@@ -85,6 +86,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     }
                     runCatching { activeDriver.quit() }
                 }
+                runAdbCommand(listOf("shell", "am", "force-stop", target.androidApp.packageName))
             }
         }
     }

@@ -8,7 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
 
-class AsciidocPreviewTest {
+class AsciidocPreviewTest : PlatformHeadlessTest() {
     @Test
     fun buildsPreviewHtmlWithConvertedDocument() =
         kotlinx.coroutines.test.runTest {

@@ -28,6 +28,11 @@
   resolved "https://registry.yarnpkg.com/@boltffi/runtime/-/runtime-0.26.1.tgz#9ec02136d3e9954f9c40f6512d52d0f842c7d35d"
   integrity sha512-0ZU+UJFYBGy94y2ZxwGe6keGh2DgmLxQZCL/j1gVLaGqiD6YDoH8uQINuBkHS+Mua5dI0fW9rDVYVyioOEWI0w==
 
+"@boltffi/runtime@0.31.0":
+  version "0.31.0"
+  resolved "https://registry.yarnpkg.com/@boltffi/runtime/-/runtime-0.31.0.tgz#5bf5851482cef473277160a8660526106d632fac"
+  integrity sha512-nxht21tsG0KLzkdN2gHqSAZv7Ainht5v/Q6ZGVT8xXAmJKdewk4PwwryLeQR4xrejwDOtuWRD7p7OGkKGw8JIQ==
+
 "@js-joda/core@3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@js-joda/core/-/core-3.2.0.tgz#3e61e21b7b2b8a6be746df1335cf91d70db2a273"
@@ -197,6 +202,13 @@ mermaid-ffi-wasm@0.0.1-alpha2:
   integrity sha512-/mD1I12qO1lyhVvdjlNzimAs0BwVI4L/ILdXhsL7smEx+1qZF5rBpIygX6NVUR1uVqxWtF7VgTFrFP47FfAMKA==
   dependencies:
     "@boltffi/runtime" "*"
+
+mermaid-ffi-wasm@0.0.1-alpha5:
+  version "0.0.1-alpha5"
+  resolved "https://registry.yarnpkg.com/mermaid-ffi-wasm/-/mermaid-ffi-wasm-0.0.1-alpha5.tgz#c7e4f424c8ca4b2d67f79e8abc2f753812656057"
+  integrity sha512-1zTHoCPR/42sX330odTgNf1BkS7a+Q5nnX6zfQwFABdIb+GXPT0bnVxOS9x8svQAVScrYWsH5VCTrzTmSkFTNw==
+  dependencies:
+    "@boltffi/runtime" "0.31.0"
 
 minimatch@^5.0.1:
   version "5.1.9"

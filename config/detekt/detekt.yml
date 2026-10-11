@@ -541,6 +541,15 @@ potential-bugs:
     active: true
 
 style:
+  # JUnit host bases must remain abstract: concrete runner-annotated bases are
+  # discovered as test classes and fail with "No runnable methods". Interfaces
+  # cannot carry their constructors and platform initialization lifecycle.
+  AbstractClassCanBeInterface:
+    active: true
+    excludes: ['**/src/**/PlatformHeadlessTest*.kt']
+  AbstractClassCanBeConcreteClass:
+    active: true
+    excludes: ['**/src/**/PlatformHeadlessTest*.kt']
   active: true
   AlsoCouldBeApply:
     # Forcing apply/also conflicts with NestedScopeFunctions and can obscure the receiver.

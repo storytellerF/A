@@ -17,17 +17,11 @@ import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runComposeUiTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 
-/**
- * 由于Compose 测试存在问题，全部忽略，禁止执行.
- */
-@Ignore
 class AppTest {
     @OptIn(ExperimentalTestApi::class)
     @Test
-    @Ignore
     fun myTest() =
         runComposeUiTest {
         // Declares a mock UI to demonstrate API calls

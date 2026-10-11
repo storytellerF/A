@@ -40,10 +40,11 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
+        binaries.executable()
         browser {
             testTask {
                 useKarma {
-                    useFirefox()
+                    useChromeHeadless()
                 }
             }
         }

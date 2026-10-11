@@ -6,7 +6,7 @@ package com.storyteller_f.a.app
 
 import org.junit.Before
 
-actual open class PlatformHeadlessTest {
+actual abstract class PlatformHeadlessTest {
     @Before
     fun setup() = Unit
 }

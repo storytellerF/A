@@ -4,4 +4,4 @@
 
 package com.storyteller_f.a.client.asciidoc_parser
 
-actual open class PlatformHeadlessTest actual constructor()
+actual abstract class PlatformHeadlessTest actual constructor()
