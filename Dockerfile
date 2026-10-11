@@ -46,14 +46,16 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/server/ .
 ENTRYPOINT ["sh", "./bin/server"]
 
-FROM eclipse-temurin:21-alpine AS worker
+FROM eclipse-temurin:21-jre-jammy AS worker
 
-RUN apk add --no-cache libavif-dev vulkan-loader
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libavif-dev libvulkan1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ARG APP_UID=1000
 ARG APP_GID=1000
-RUN addgroup -S -g "$APP_GID" app && \
-    adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN groupadd --gid "$APP_GID" app && \
+    useradd --uid "$APP_UID" --gid app --home-dir /home/app --create-home --shell /usr/sbin/nologin app
 RUN mkdir -p /home/app/logs/worker && chown -R app:app /home/app/logs
 ENV HOME=/home/app
 ENV LOG_PATH=/home/app/logs/worker
