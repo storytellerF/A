@@ -287,7 +287,7 @@ class LuceneFileSearchService(private val rpc: LuceneRpc) : FileSearchService {
                         "file",
                         search.fetch.query().copy(
                             mustLong = search.ownerId?.let { mapOf("ownerId" to it) }.orEmpty(),
-                        ).withText(search.word, "name"),
+                        ).withText(search.word, FILE_NAME_EXACT_FIELD, "name"),
                     ).toPage(LuceneFileDocument.Companion::restore)
                 }
         }

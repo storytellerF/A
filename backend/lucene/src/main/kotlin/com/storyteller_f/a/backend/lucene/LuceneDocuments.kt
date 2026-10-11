@@ -19,6 +19,7 @@ import com.storyteller_f.services.lucene.api.RpcLuceneValue
 import com.storyteller_f.shared.type.ObjectType
 
 internal const val DOCUMENT_ID_FIELD = "id"
+internal const val FILE_NAME_EXACT_FIELD = "nameExact"
 
 private fun buildFields(
     id: Long,
@@ -176,7 +177,13 @@ internal data class LuceneFileDocument(val fileDocument: FileDocument) : LuceneD
     override fun save(): RpcLuceneDocument =
         with(fileDocument) {
         RpcLuceneDocument(
-            buildFields(id, text = mapOf("name" to name), numbers = mapOf("ownerId" to ownerId)),
+            buildFields(id, text = mapOf("name" to name), numbers = mapOf("ownerId" to ownerId)) +
+                RpcLuceneField(
+                    FILE_NAME_EXACT_FIELD,
+                    RpcLuceneValue.Text(name.lowercase()),
+                    RpcLuceneIndex.EXACT,
+                    stored = false,
+                ),
         )
     }
 
