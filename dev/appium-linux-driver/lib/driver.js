@@ -185,10 +185,11 @@ class LinuxDriver extends BaseDriver {
   }
 
   async setValue(value, elementId) {
-    const { index, objectPath, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const { index, objectPath, strategy, selector, name } = this._parseElement(elementId);
     const text = Array.isArray(value) ? value.join('') : String(value);
     const result = await this._atspi({
       action: 'set_text',
+      path: objectPath,
       pid: this.appPid,
       strategy,
       selector,
@@ -203,13 +204,7 @@ class LinuxDriver extends BaseDriver {
       this.log.info(`Set text via AT-SPI editable text${name ? ` for "${name}"` : ''}`);
       return;
     }
-    this.log.warn(`AT-SPI set text failed: ${result.error || 'unknown error'}`);
-    this._xdotool('mousemove', '--sync', cx, cy);
-    this._xdotool('click', 1);
-    await this._sleep(100);
-    // Clear existing content then type
-    this._xdotool('key', '--clearmodifiers', 'ctrl+a');
-    this._xdotool('type', '--clearmodifiers', '--delay', '20', '--', text);
+    throw new Error(`AT-SPI set text failed: ${result.error || 'unknown error'}`);
   }
 
   async getText(elementId) {

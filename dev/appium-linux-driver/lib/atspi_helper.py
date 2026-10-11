@@ -186,18 +186,25 @@ def find_focusable(node):
     return None
 
 
-def find_editable(node):
+def find_by_path(node, object_path):
+    """Resolve only the saved identity, regardless of label or result order."""
+    if node is None or not object_path:
+        return None
     try:
-        role = node.getRoleName()
-        state = node.getState()
-        if role == "text" and state.contains(pyatspi.STATE_EDITABLE):
+        if node.path == object_path:
+            if node.getState().contains(pyatspi.STATE_DEFUNCT):
+                return None
             return node
-        for i in range(node.childCount):
-            result = find_editable(node.getChildAtIndex(i))
-            if result:
-                return result
+        child_count = node.childCount
     except Exception:
-        pass
+        return None
+    for index in range(child_count):
+        try:
+            target = find_by_path(node.getChildAtIndex(index), object_path)
+            if target is not None:
+                return target
+        except Exception:
+            continue
     return None
 
 
@@ -298,20 +305,9 @@ def main():
         if not app:
             print(json.dumps({"ok": False, "error": "app not found"}))
             return
-        selector = cmd.get("selector", "")
-        results = []
-        if selector:
-            results = wait_for_elements(
-                cmd["pid"],
-                cmd.get("strategy", "name"),
-                selector,
-                cmd.get("timeout", 15),
-            )
-        target = results[0] if results else find_editable(app)
-        index = cmd.get("index", 0)
-        target = results[index] if len(results) > index else target
-        if not target:
-            print(json.dumps({"ok": False, "error": "editable element not found"}))
+        target = find_by_path(app, cmd.get("path"))
+        if target is None:
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         perform_action(target)
         try:
@@ -330,12 +326,16 @@ def main():
                     break
                 time.sleep(0.05)
             if stable_reads < 2:
-                print(json.dumps({"ok": False, "error": "editable text did not reach the requested value"}))
+                stale = find_by_path(app, cmd.get("path")) is None
+                error = "element no longer exists" if stale else "editable text did not reach the requested value"
+                print(json.dumps({"ok": False, "stale": stale, "error": error}))
                 return
             cx, cy = get_center(target)
             print(json.dumps({"ok": True, "cx": cx, "cy": cy}))
         except Exception as e:
-            print(json.dumps({"ok": False, "error": str(e)}))
+            stale = find_by_path(app, cmd.get("path")) is None
+            print(json.dumps({"ok": False, "stale": stale,
+                              "error": "element no longer exists" if stale else str(e)}))
 
 
 if __name__ == "__main__":

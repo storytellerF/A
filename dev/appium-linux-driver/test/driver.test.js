@@ -98,3 +98,38 @@ test('a valid virtual display permits application launch', () => {
   driver._displayInfo = () => ({ status: 0, stdout: '  dimensions:    1600x1000 pixels (406x254 millimeters)\n' });
   driver._assertDisplay();
 });
+
+test('setValue sends the saved identity and concatenates input', async () => {
+  const driver = new LinuxDriver();
+  driver._atspi = async () => ({ ok: true, elements: [{ name: 'field', path: '/saved/field' }] });
+  const [element] = await driver.findElOrEls('name', 'field', true);
+  driver._atspi = async (command) => {
+    assert.equal(command.path, '/saved/field');
+    assert.equal(command.text, 'new text');
+    return { ok: true };
+  };
+  await driver.setValue(['new ', 'text'], element.ELEMENT);
+});
+
+for (const result of [
+  { ok: false, stale: true, error: 'element no longer exists' },
+  { ok: false, error: 'editable text did not reach the requested value' },
+]) {
+  test(`setValue reports ${result.error} without keyboard or coordinate fallback`, async () => {
+    const driver = new LinuxDriver();
+    driver._atspi = async () => ({ ok: true, elements: [{ path: '/saved/field', cx: 10, cy: 20 }] });
+    const [element] = await driver.findElOrEls('name', 'field', true);
+    driver._atspi = async () => result;
+    driver._xdotool = () => { throw new Error('Unexpected input fallback'); };
+    await assert.rejects(driver.setValue('text', element.ELEMENT),
+      result.stale ? errors.StaleElementReferenceError : /editable text did not reach/);
+  });
+}
+
+test('Python helper identity regressions', () => {
+  const { spawnSync } = require('node:child_process');
+  const path = require('node:path');
+  const result = spawnSync(process.platform === 'win32' ? 'python' : 'python3',
+    [path.join(__dirname, 'atspi_helper_test.py')], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+});

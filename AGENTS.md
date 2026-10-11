@@ -74,7 +74,7 @@
 ## Additional AI Collaboration Rules
 - Deploy through `scripts/service_scripts/start-service-in-docker.sh`; compile deployment artifacts inside Docker, not on the host.
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.
-- Do not create files outside the repository. Do not expose sensitive values from `deploy/*.env` in logs, documentation, or commits.
+- Do not create files outside the repository. Do not expose sensitive values from `deploy/*.env` in logs, documentation, or commits. Source-transfer archives must also exclude `dev/preset/secrets`, credential files and private-key contents; inspect the final archive before transfer and preserve Git executable modes.
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.
 - Configure shared Kotlin/JS and Wasm Yarn root extensions only in the root build; subprojects must not override lockfile locations. Keep JS and Wasm lockfiles separate under `kotlin-js-store` and regenerate the affected lockfile after npm dependency changes.
 - Keep existing tests compatible. If tests must be updated, explain the migration reason and steps.
@@ -89,7 +89,7 @@
 - Data not persisted: check `*RoomStorage.save`/`observeData` implementations and `commonJson` serialization.
 
 - Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data.
-- Linux Appium element handles must retain stable AT-SPI object paths. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target.
+- Linux Appium element handles must retain stable AT-SPI object paths. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target. Text input must pass and resolve the saved object path directly; never reselect by result index or fall back to another editable control.
 - Shared Wasm browser test configuration belongs to the wasm-browser-test-interop convention. A later useKarma call replaces the framework configuration, so do not override it in consuming modules; track loader files as task inputs and preserve the configuration cache.
 
 - JUnit host test initialization bases must be abstract so test discovery does not run the base itself. Keep the two conflicting Detekt abstract-class rule exceptions scoped to PlatformHeadlessTest files.
