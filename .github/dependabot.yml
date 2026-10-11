@@ -6,6 +6,10 @@ updates:
       interval: "weekly"
     labels:
       - "dependencies"
+    # Resume after the DNS socket regression is fixed and verified:
+    # https://github.com/pgjdbc/r2dbc-postgresql/issues/756
+    ignore:
+      - dependency-name: "org.postgresql:r2dbc-postgresql"
     groups:
       all-dependencies:
         patterns:

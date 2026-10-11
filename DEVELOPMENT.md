@@ -1,5 +1,15 @@
 # Development
 
+## Temporary dependency pins
+
+PostgreSQL R2DBC is pinned to `1.1.2.RELEASE` while
+[upstream issue #756](https://github.com/pgjdbc/r2dbc-postgresql/issues/756)
+(DNS UDP socket retention in 1.1.3) is unresolved. Dependabot ignores
+`org.postgresql:r2dbc-postgresql` specifically, including grouped version updates.
+After verifying an upstream fix, update the catalog version and remove the matching
+`ignore` entry from `.github/dependabot.yml`.
+The ignore rule takes effect when this configuration reaches the repository default branch.
+
 ## Backend test images
 
 Each backend service applies `test-docker-image`. Its `buildTestDockerImage` task depends on
