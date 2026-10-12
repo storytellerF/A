@@ -23,72 +23,45 @@ import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
 import com.storyteller_f.a.client.compose_core.components.request
-import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.getPanelUserSignInPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
-import com.storyteller_f.shared.getAlgo
-import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.utils.cancellableRunCatching
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+private val panelInputCoordination = Dispatchers.Default.limitedParallelism(1)
+
 class PanelInputViewModel : ViewModel() {
-    val privateKey = MutableStateFlow("")
+    internal val host = PanelInputHost(viewModelScope, panelInputCoordination, Dispatchers.Default)
 
-    val publicKey =
-        privateKey.map {
-            getAlgo(AlgoType.P256).run {
-                getDerPublicKeyFromPrivateKey(it).getOrNull()
-            }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    val address =
-        publicKey.map {
-            getAlgo(AlgoType.P256).run {
-                it?.let { derPublicKeyStr -> calcAddress(derPublicKeyStr).getOrNull() }
-            }
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-    fun updatePrivateKey(privateKey: String) {
-        this.privateKey.value = privateKey
-    }
-
-    fun autoGeneratePrivateKey() {
-        viewModelScope.launch {
-            getAlgo(AlgoType.P256).generatePemKeyPair().onSuccess { (privateKey, _) ->
-                updatePrivateKey(privateKey)
-            }
-        }
+    override fun onCleared() {
+        host.close()
     }
 }
 
 @Composable
 fun PanelInputPage(back: () -> Unit) {
-    val viewModel: PanelInputViewModel = viewModel()
+    val viewModel: PanelInputViewModel = viewModel { PanelInputViewModel() }
     val dialogController = LocalPanelGlobalDialog.current
     val panelUiViewModel = LocalPanelUiViewModel.current
     CenterBox {
         val scope = rememberCoroutineScope()
-        val privateKey by viewModel.privateKey.collectAsState()
-        val address by viewModel.address.collectAsState()
+        val host = viewModel.host
+        val privateKey by host.privateKey.collectAsState()
+        val encryptionPrivateKey by host.encryptionPrivateKey.collectAsState()
+        val algo by host.algo.collectAsState()
+        val address by host.address.collectAsState()
 
         val startSign: () -> Unit = {
             scope.launch {
                 dialogController.useResult {
                     request {
                         cancellableRunCatching {
-                            val algo = getAlgo(AlgoType.P256)
-                            val derPriKey = algo.getDerPrivateKey(privateKey).getOrThrow()
-                            val derPubKey =
-                                algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
                             val signResult =
                                 getPanelUserSignInPass(
-                                    AuthKey.P256(privateKey, derPriKey, derPubKey),
+                                    host.createAuthKey(),
                                 )
                             signResult to
                                 historyFactory.addSession(
@@ -108,11 +81,14 @@ fun PanelInputPage(back: () -> Unit) {
         Column(modifier = Modifier.padding(20.dp)) {
             PrivateKeyInput(
                 privateKey = privateKey,
-                encryptionPrivateKey = null,
+                encryptionPrivateKey = encryptionPrivateKey,
+                algo = algo,
+                onAlgoChange = host::updateAlgo,
+                updateEncryption = host::updateEncryptionPrivateKey,
                 address = address,
                 enableRandom = false,
                 update = {
-                    viewModel.updatePrivateKey(it)
+                    host.updatePrivateKey(it)
                 },
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
