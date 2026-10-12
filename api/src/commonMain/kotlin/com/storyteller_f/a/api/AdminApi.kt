@@ -5,6 +5,7 @@
 package com.storyteller_f.a.api
 
 import com.storyteller_f.endpoint4k.common.MutationEndpointWithPath
+import com.storyteller_f.endpoint4k.common.MutationMethodType
 import com.storyteller_f.endpoint4k.common.SafeEndpoint
 import com.storyteller_f.endpoint4k.common.body
 import com.storyteller_f.endpoint4k.common.mutationEndpointBuilder
@@ -293,6 +294,16 @@ object AdminApi {
             }
         }
     }
+
+    val session = safeEndpointBuilder("admin/session") { resp(PanelSigninSessionInfo::class) }
+
+    val signOutAll = mutationEndpointBuilder("admin/sign-out-all", MutationMethodType.POST) { resp(Unit::class) }
+
+    val activity =
+        mutationEndpointBuilder("admin/activity") {
+            resp(Unit::class)
+            body(Unit::class)
+        }
 
     val signIn =
         mutationEndpointBuilder("/admin/sign-in") {

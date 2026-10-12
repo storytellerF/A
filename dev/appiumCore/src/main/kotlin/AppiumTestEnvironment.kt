@@ -11,7 +11,7 @@ import kotlin.uuid.Uuid
 
 /** Starts the backend topology shared by desktop and browser Appium tests. */
 @OptIn(ExperimentalUuidApi::class)
-suspend fun runAppiumTestEnvironment(block: suspend (AppiumPorts) -> Unit) {
+suspend fun runAppiumTestEnvironment(allowedOrigins: String = "", block: suspend (AppiumPorts) -> Unit) {
     val sessionId = Uuid.random().toHexString()
     val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
     prepareSessionDirectories(hostSessionPath)
@@ -19,7 +19,7 @@ suspend fun runAppiumTestEnvironment(block: suspend (AppiumPorts) -> Unit) {
     Network.newNetwork().use { network ->
         useLightweightBackendContainers(network) { filesystem ->
             val environment =
-                buildContainerEnv() +
+                buildContainerEnv() + ("SIGNIN_ALLOWED_ORIGINS" to allowedOrigins) +
                     ("FILESYSTEM_PUBLIC_URL" to "http://${filesystem.host}:${filesystem.getMappedPort(8822)}")
             useCliInitContainer(network, environment, hostSessionPath) {
                 useWsContainer(network, environment, hostSessionPath) { ws ->

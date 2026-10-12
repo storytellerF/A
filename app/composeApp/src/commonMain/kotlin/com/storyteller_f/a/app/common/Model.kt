@@ -741,13 +741,13 @@ class SessionHistoryViewModel(uIViewModel: UIViewModel) : SimpleViewModel<SavedS
 
     override val handler: LoadingHandler<SavedSession> =
         SimpleLoadingHandler(viewModelScope) {
-            runCatching {
+            cancellableRunCatching {
                 manager.getSavedSession()
             }
         }
 
     fun deleteSession(alias: String) {
-        manager.removeSession(alias)
+        viewModelScope.launch { manager.removeSession(alias) }
     }
 }
 

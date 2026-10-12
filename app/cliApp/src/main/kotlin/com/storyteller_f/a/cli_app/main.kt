@@ -834,7 +834,6 @@ fun main() {
                         defaultClientConfigure(
                             cookiesStorage = cookieManager,
                             manager = model,
-                            passHolder = passHolder,
                             httpUrl = httpUrl,
                         )
                     }

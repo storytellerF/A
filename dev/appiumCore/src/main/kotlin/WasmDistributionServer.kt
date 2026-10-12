@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 class WasmDistributionServer(private val root: File, backendUrl: String? = null) : AutoCloseable {
-    private val backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
+    @Volatile private var backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
     private val httpClient = HttpClient.newHttpClient()
     val requestedPaths = mutableListOf<String>()
     private val server =
@@ -27,6 +27,11 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
 
     val url: String = "http://127.0.0.1:${server.address.port}/"
     val bootstrapUrl: String = "${url}appium-bootstrap.html"
+
+    /** Set once before browser requests; HttpServer handlers read it on their own threads. */
+    fun setBackendUrl(url: String) {
+        backendUri = URI.create("${url.removeSuffix("/")}/")
+    }
 
     override fun close() {
         server.stop(0)

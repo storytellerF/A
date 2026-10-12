@@ -68,7 +68,7 @@ private fun runBot() {
             passHolder,
             { model, cookieManager ->
                 getClient {
-                    defaultClientConfigure(cookieManager, model, passHolder, httpUrl, LogLevel.INFO)
+                    defaultClientConfigure(cookieManager, model, httpUrl, LogLevel.INFO)
                 }
             },
         ) { r, t, _ ->

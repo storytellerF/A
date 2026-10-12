@@ -108,7 +108,6 @@ dependencies {
     testImplementation(libs.bundles.ktor.client)
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation(libs.multiplatform.settings)
     testImplementation(libs.robolectric)
     screenshotTestImplementation(projects.client.composeCore)
     screenshotTestImplementation(projects.app.composeApp)

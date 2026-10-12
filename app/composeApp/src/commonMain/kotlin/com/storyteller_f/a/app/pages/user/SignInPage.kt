@@ -60,6 +60,8 @@ import com.storyteller_f.a.app.sign_in_subtitle
 import com.storyteller_f.a.client.compose_core.components.BaseSheet
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
+import com.storyteller_f.a.client.core.PendingTotpSignIn
+import com.storyteller_f.a.client.core.RawUserPass
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -121,35 +123,40 @@ private fun SelectFromHistoryInternal(viewModel: SessionHistoryViewModel) {
         Text(stringResource(Res.string.last_used), modifier = Modifier.padding(start = 8.dp))
     }
     val uIViewModel = LocalUiViewModel.current
+    val scope = rememberCoroutineScope()
+    val appNavFactory = LocalAppNavFactory.current
+    val globalDialogController = LocalGlobalDialog.current
+    var pendingTotp by remember { mutableStateOf<PendingTotpSignIn?>(null) }
     BaseSheet(showSheet, sheetState, {
         showSheet = false
     }) {
         val data by viewModel.handler.data.collectAsState()
         val last = data?.history?.last
-        val scope = rememberCoroutineScope()
-        val appNavFactory = LocalAppNavFactory.current
-        val globalDialogController = LocalGlobalDialog.current
         StateView(viewModel.handler, modifier = Modifier.height(260.dp)) {
             LazyColumn {
                 items(it.alias) { alias ->
                     LoginHistoryCell(alias, last, {
                         scope.launch {
-                            val userPass = uIViewModel.historyManager.buildSession(alias) ?: return@launch
-                            globalDialogController.useResult {
-                                userPass.address().map { address ->
-                                    uIViewModel.login(address, "", "", userPass)
+                            pendingTotp =
+                                globalDialogController.performKeySignInAuth(appNavFactory, uIViewModel) {
+                                    val pass =
+                                        checkNotNull(
+                                            uIViewModel.historyManager.buildSession(alias),
+                                        ) as RawUserPass
+                                    pass.rawUSerPass.authKey
                                 }
-                            }.onSuccess {
-                                uIViewModel.historyManager.logSession(alias)
-                                showSheet = false
-                                appNavFactory.newAppNav().gotoHome()
-                            }
+                            showSheet = false
                         }
                     }, {
                         viewModel.deleteSession(alias)
                     })
                 }
             }
+        }
+    }
+    TotpSignInDialog(pendingTotp, { pendingTotp = null }) { pending, code ->
+        scope.completePendingTotpSignIn(globalDialogController, appNavFactory, pending, code, uIViewModel) {
+            pendingTotp = null
         }
     }
 }

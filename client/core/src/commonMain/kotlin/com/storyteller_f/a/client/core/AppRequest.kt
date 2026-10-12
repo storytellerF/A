@@ -72,12 +72,16 @@ suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.(
         Result.success(value)
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
-    } catch (e: Throwable) {
-        point.addSuppressed(e)
-        Napier.e(point) {
-            "serviceCatching"
+    } catch (e: SessionIdentityChangedException) {
+        model.sessionExpired.value = true
+        failServiceRequest(point, e)
+    } catch (e: ServerErrorException) {
+        if (e.isSessionAuthenticationFailure && e.status == io.ktor.http.HttpStatusCode.Unauthorized) {
+            model.sessionExpired.value = true
         }
-        Result.failure(e)
+        failServiceRequest(point, e)
+    } catch (e: Throwable) {
+        failServiceRequest(point, e)
     }
 }
 
@@ -434,6 +438,14 @@ suspend fun UserSessionManager.getReactions(topicId: PrimaryKey, size: Int, next
             CommonPath(topicId),
         )
     }
+
+suspend fun UserSessionManager.restoreSession() =
+    serviceCatching {
+    val user = CustomApi.Accounts.session()
+    val expected = passHolder.currentUserPass?.address()?.getOrThrow()
+    if (expected != null && user.address != expected) throw SessionIdentityChangedException()
+    user
+}
 
 suspend fun UserSessionManager.signOut() =
     serviceCatching {
@@ -848,4 +860,12 @@ suspend fun UserSessionManager.getFileInfo(fileId: PrimaryKey) =
 suspend fun UserSessionManager.hasUnreadRooms(): Result<UnreadRoomsResponse> =
     serviceCatching {
     CustomApi.Users.Unread.hasUnreadRooms()
+}
+
+internal class SessionIdentityChangedException : Exception("Login identity changed; explicit sign-in is required")
+
+private fun <R> failServiceRequest(point: Exception, failure: Throwable): Result<R> {
+    point.addSuppressed(failure)
+    Napier.e(point) { "serviceCatching" }
+    return Result.failure(failure)
 }

@@ -128,7 +128,7 @@ private fun Application.configureWsPlugin(backend: Backend) {
         contentConverter = KotlinxWebsocketSerializationConverter(Json)
     }
     install(Sessions) {
-        setupUserSessions(env)
+        setupUserSessions(env, this@configureWsPlugin)
     }
     install(Krpc)
     if (backend.customConfig.buildType == "prod") {

@@ -130,7 +130,13 @@ private suspend fun useDatabaseContainer(network: Network, block: suspend (Postg
         withNetworkAliases("e2e-postgres")
     }.use { container ->
         container.start()
-        block(container)
+        GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+            withNetwork(network)
+            withNetworkAliases("signin-redis")
+        }.use { redis ->
+            redis.start()
+            block(container)
+        }
     }
 }
 
@@ -235,6 +241,7 @@ private fun buildContainerEnv(postgresContainer: PostgreSQLContainer<*>): Map<St
     val databaseUri = "r2dbc:postgresql://e2e-postgres:5432/${postgresContainer.databaseName}"
     return envFromFile +
         mapOf(
+            "SIGNIN_REDIS_ENDPOINT" to "signin-redis:6379",
             "BUILD_TYPE" to "test",
             "FLAVOR" to "dev",
             "SERVER_PORT" to SERVER_PORT.toString(),

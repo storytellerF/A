@@ -52,6 +52,7 @@ import com.storyteller_f.a.client.compose_core.components.SheetContainer
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.UserIcon
 import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.utils.supportsChildAccountSwitching
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addChildAccount
@@ -70,6 +71,7 @@ class AccountSwitcher(val state: MutableState<Boolean> = mutableStateOf(false)) 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSwitch() {
+    if (!supportsChildAccountSwitching) return
     val accountSwitcher = LocalAccountSwitcher.current
     var expand by accountSwitcher.state
     val sheetState = rememberModalBottomSheetState()
@@ -185,6 +187,7 @@ fun isInChildAccount(): Boolean {
 }
 
 suspend fun AppGlobalDialogController.switchUser(childAccountInfo: ChildAccountInfo, uiViewModel: UIViewModel) {
+    check(supportsChildAccountSwitching) { "Browser child account switching is unsupported" }
     val mainInstance =
         when (val instance = uiViewModel.instance.value) {
             is IAccountInstance.Child -> instance.main

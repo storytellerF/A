@@ -15,6 +15,10 @@ kotlin {
 }
 
 dependencies {
+    testImplementation(libs.kreds)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.testcontainers)
+    testImplementation(libs.ktor.server.test.host)
     implementation(libs.napier)
     implementation(projects.shared)
     implementation(projects.backend.core)

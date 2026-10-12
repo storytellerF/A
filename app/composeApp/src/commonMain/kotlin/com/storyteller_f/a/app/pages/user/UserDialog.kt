@@ -56,8 +56,6 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.storyteller_f.a.api.SignInBody
-import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAccountSwitcher
 import com.storyteller_f.a.app.LocalAppNavFactory
@@ -96,15 +94,14 @@ import com.storyteller_f.a.client.compose_core.components.SubscriptionButton
 import com.storyteller_f.a.client.compose_core.components.UserIcon
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
+import com.storyteller_f.a.client.compose_core.utils.supportsChildAccountSwitching
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.UserSessionManager
-import com.storyteller_f.a.client.core.getData
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
-import com.storyteller_f.a.client.core.signIn
+import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.signOut
-import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.type.UserStatus
@@ -383,6 +380,7 @@ private fun UnboundSimpleUserCell(userInfo: UserInfo?) {
 
 @Composable
 fun AccountSwitchButton(dismiss: () -> Unit, overviewHandler: LoadingHandler<UserOverview>) {
+    if (!supportsChildAccountSwitching) return
     val accountSwitcher = LocalAccountSwitcher.current
     val userOverview by overviewHandler.data.collectAsState()
     val userOverviewState by overviewHandler.state.collectAsState()
@@ -506,21 +504,7 @@ private suspend fun refreshMyInfo(my: UserInfo?, sessionManager: UserSessionMana
     try {
         val sessionModel = sessionManager.model
         if (my == null) {
-            val userPass = sessionManager.passHolder.currentUserPass ?: return
-            val data = sessionManager.getData().getOrThrow()
-            val address = userPass.address().getOrThrow()
-            val signature = userPass.signature(finalData(data)).getOrThrow()
-            when (
-                val response =
-                    sessionManager.signIn(SignInBody(address, signature)).getOrThrow()
-            ) {
-                is SignInResponse.Success -> {
-                    sessionModel.updateUser(response.userInfo)
-                    sessionModel.updateSignature(data, signature)
-                }
-
-                SignInResponse.RequiresTotp -> Unit
-            }
+            sessionManager.restoreSession().onSuccess { sessionModel.updateUser(it) }
         } else {
             val aid = my.aid
             val userInfo =

@@ -79,8 +79,9 @@ import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
-import com.storyteller_f.a.client.compose_core.utils.createSettings
+import com.storyteller_f.a.client.compose_core.utils.createSigninCookies
 import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage
+import com.storyteller_f.a.client.compose_core.utils.signinActivity
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.ConstPassHolder
 import com.storyteller_f.a.client.core.PanelSessionManager
@@ -90,6 +91,7 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnCommunityStatusUpdated
 import com.storyteller_f.a.panel.common.OnFileStatusUpdated
@@ -115,7 +117,10 @@ import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -219,7 +224,14 @@ private fun PanelNavigationDrawer(
 @Composable
 private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
     val windowPosture = currentWindowAdaptiveInfoV2().windowPosture
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val account by LocalPanelUiViewModel.current.instance.collectAsState()
+    BoxWithConstraints(
+        modifier =
+        Modifier.fillMaxSize().signinActivity(
+            account.sessionManager,
+            panel = true,
+        ),
+    ) {
         val contentSize = DpSize(maxWidth, maxHeight)
         val directive =
             remember(contentSize, windowPosture) {
@@ -355,6 +367,8 @@ class CustomPanelSessionManager(val proxy: SimplePanelSessionManager, val histor
 }
 
 sealed interface IPanelAccountInstance {
+    val accountScope: CoroutineScope
+
     val database: ModelStorage
     val sessionManager: CustomPanelSessionManager
     val task: CustomGlobalTask<GlobalTaskContext<CustomPanelSessionManager>>
@@ -363,9 +377,19 @@ sealed interface IPanelAccountInstance {
 
     val passHolder: ConstPassHolder
 
+    fun close() {
+        accountScope.cancel()
+        sessionManager.client.close()
+    }
+
     val isAlreadySign get() = passHolder.currentUserPass != null
 
-    class None(scope: CoroutineScope, httpUrl: String) : IPanelAccountInstance {
+    class None(parentScope: CoroutineScope, httpUrl: String) : IPanelAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         val events = MutableSharedFlow<Any>()
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
 
@@ -373,7 +397,7 @@ sealed interface IPanelAccountInstance {
             createPanelSessionManager(
                 httpUrl,
                 passHolder,
-                AcceptAllCookiesStorage(),
+                createSigninCookies(httpUrl, "panel"),
             )
         override val database = getRoomModelStorage("guest")
         val context: GlobalTaskContext<CustomPanelSessionManager> =
@@ -387,12 +411,17 @@ sealed interface IPanelAccountInstance {
     }
 
     class Regular(
-        scope: CoroutineScope,
+        parentScope: CoroutineScope,
         override val address: String,
         httpUrl: String,
         override val passHolder: ConstPassHolder,
-        cookiesStorage: AcceptAllCookiesStorage,
+        cookiesStorage: CookiesStorage,
     ) : IPanelAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         val events = MutableSharedFlow<Any>()
         override val sessionManager: CustomPanelSessionManager =
             createPanelSessionManager(httpUrl, passHolder, cookiesStorage)
@@ -406,6 +435,9 @@ sealed interface IPanelAccountInstance {
             CustomGlobalDialogController(scope, dialogContext)
 
         init {
+            scope.launch {
+                sessionManager.restoreSession().onSuccess { sessionManager.model.updateUser(it) }
+            }
             scope.launch {
                 events.collectLatest {
                     processEvent(it, database)
@@ -506,7 +538,7 @@ sealed interface IPanelAccountInstance {
 fun createPanelSessionManager(
     httpUrl: String,
     passHolder: ConstPassHolder,
-    cookiesStorage: AcceptAllCookiesStorage,
+    cookiesStorage: CookiesStorage,
 ): CustomPanelSessionManager {
     val simpleManager =
         createSimplePanelSessionManager(
@@ -514,11 +546,10 @@ fun createPanelSessionManager(
             cookiesStorage,
         ) { m, c ->
             getClient {
-                defaultClientConfigureForPanel(c, m, passHolder, httpUrl)
+                defaultClientConfigureForPanel(c, m, httpUrl)
             }
         }
-    val settings = createSettings("main")
-    val historyManager = buildSessionHistoryFactory(settings)
+    val historyManager = buildSessionHistoryFactory("panel")
     return CustomPanelSessionManager(simpleManager, historyManager)
 }
 
@@ -528,18 +559,37 @@ class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) 
     init {
         val value = IPanelAccountInstance.None(viewModelScope, httpUrl)
         instance = MutableStateFlow(value)
-        val settings = createSettings("main")
-        val state = restoreFromStorage(settings)
-        if (state is ClientSessionState.Success) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            instance.collectLatest { account ->
+                account.sessionManager.model.sessionExpired.collect { expired ->
+                    if (expired && account !is IPanelAccountInstance.None) {
+                        account.sessionManager.historyFactory.exitSession(account.address)
+                        logout()
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            val state = restoreFromStorage("panel")
+            if (state is ClientSessionState.Success) {
                 val address = state.userPass.address().getOrNull() ?: return@launch
+                val cookies =
+                    if (state.cookies.isEmpty()) {
+                        createSigninCookies(
+                            httpUrl,
+                            "panel",
+                        )
+                    } else {
+                        AcceptAllCookiesStorage()
+                    }
+                state.cookies.forEach { cookies.addCookie(io.ktor.http.Url(httpUrl), it) }
                 val regular =
                     IPanelAccountInstance.Regular(
                         viewModelScope,
                         address,
                         httpUrl,
                         ConstPassHolder(state.userPass),
-                        AcceptAllCookiesStorage(),
+                        cookies,
                     )
                 instance.value = regular
             }
@@ -547,6 +597,7 @@ class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) 
     }
 
     fun logout() {
+        instance.value.close()
         instance.value = IPanelAccountInstance.None(viewModelScope, httpUrl)
     }
 

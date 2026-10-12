@@ -18,6 +18,7 @@ dependencies {
 
     implementation(projects.shared)
     implementation(libs.kreds)
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {

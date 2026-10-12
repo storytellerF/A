@@ -188,3 +188,24 @@ Enable `CLI_INIT_ENABLE=true` only for deliberate data initialization; disable i
 ## License
 
 This is a private project. All rights reserved.
+
+### Login sessions
+
+HTTP and WebSocket authentication use an HttpOnly session Cookie backed by Redis. A login expires after
+30 days without user activity or 90 days after sign-in. Background refresh, heartbeats and incoming
+notifications do not keep a login alive. Expired or revoked sessions require an explicit sign-in.
+Browser clients support one primary account; child-account switching remains available in native clients.
+
+The server Compose profile includes private Redis storage with AOF persistence and no exposed host port.
+Set `SIGNIN_ALLOWED_ORIGINS` in the application flavor environment to the exact comma-separated browser
+origins, for example `https://app.example.com,https://panel.example.com`. API and `/ws` must share a host.
+An external Redis can be selected with `SIGNIN_REDIS_ENDPOINT`. Redis failure prevents authentication
+until it recovers; credentials are retained locally during temporary outages.
+
+Native GUI clients protect saved session Cookies with Android Keystore, Windows DPAPI, macOS Keychain,
+or Linux Secret Service (`secret-tool`). Cookie persistence may retain an in-memory credential when
+protected storage is unavailable; saving account keys requires the system secure store. There is no
+plaintext fallback. Saved private keys and account history also use protected storage. Browser key history is encrypted
+in IndexedDB with a non-extractable WebCrypto key; browser login Cookies remain HttpOnly. Old
+Settings login history is ignored; import the account private key again after upgrading.
+This migration invalidates older encrypted session Cookies; sign in once after upgrading.

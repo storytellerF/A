@@ -8,6 +8,7 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.remoteIp
 import com.storyteller_f.shared.model.TopicContent
@@ -31,25 +32,36 @@ import io.ktor.server.application.log
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.receiveDeserialized
 import io.ktor.util.logging.error
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 val messageResponseFlow = MutableSharedFlow<RoomFrame.NewTopicInfo>()
 val sharedFlow = messageResponseFlow.asSharedFlow()
-val userWebSocketSessionMap = mutableMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>()
+private val userSockets = MutableStateFlow(persistentMapOf<PrimaryKey, PersistentList<DefaultWebSocketServerSession>>())
+val userWebSocketSessionMap: Map<PrimaryKey, PersistentList<DefaultWebSocketServerSession>> get() = userSockets.value
 
 suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: suspend () -> Unit) {
-    userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).adding(this)
+    userSockets.update { sockets -> sockets.put(uid, sockets.getOrDefault(uid, persistentListOf()).adding(this)) }
     try {
         block()
     } finally {
-        userWebSocketSessionMap[uid] = userWebSocketSessionMap.getOrDefault(uid, persistentListOf()).remove(this)
+        userSockets.update { sockets ->
+            val remaining = sockets.getOrDefault(uid, persistentListOf()).removing(this)
+            if (remaining.isEmpty()) sockets.remove(uid) else sockets.put(uid, remaining)
+        }
     }
 }
 
@@ -84,17 +96,54 @@ class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : Noti
 
 suspend fun DefaultWebSocketServerSession.webSocketContent(reader: DatabaseReader, backend: Backend) {
     usePrincipal { uid ->
+        val expected = call.request.queryParameters["account"]
+        if (expected != null && expected.toLongOrNull() != uid) {
+            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Login identity changed"))
+            return@usePrincipal
+        }
         useWebSocket(uid) {
-            while (true) {
-                try {
-                    val frame = receiveDeserialized<RoomFrame>()
-                    processUserMessage(backend, frame, uid)
-                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-                    throw cancellation
-                } catch (e: Exception) {
-                    printWsError(e, reader)
-                    break
+            val watcher =
+                launch {
+                    while (isActive) {
+                        delay(5000)
+                        val valid =
+                            try {
+                                call.isSigninSessionValid()
+                            } catch (cancellation: CancellationException) {
+                                throw cancellation
+                            } catch (_: Exception) {
+                                close(
+                                    CloseReason(
+                                        CloseReason.Codes.TRY_AGAIN_LATER,
+                                        "Authentication service unavailable",
+                                    ),
+                                )
+                                return@launch
+                            }
+                        if (!valid) {
+                            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Sign-in session expired or revoked"))
+                            break
+                        }
+                    }
                 }
+            try {
+                while (true) {
+                    try {
+                        val frame = receiveDeserialized<RoomFrame>()
+                        if (!call.isSigninSessionValid(active = true)) {
+                            close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Sign-in session expired or revoked"))
+                            break
+                        }
+                        processUserMessage(backend, frame, uid)
+                    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                        throw cancellation
+                    } catch (e: Exception) {
+                        printWsError(e, reader)
+                        break
+                    }
+                }
+            } finally {
+                watcher.cancel()
             }
         }
     }

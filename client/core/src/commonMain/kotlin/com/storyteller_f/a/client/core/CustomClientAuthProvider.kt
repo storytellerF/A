@@ -19,13 +19,13 @@ suspend fun <U> HttpRequestBuilder.addRequestHeaders(
     val session = sessionModel.dataAndSignature
     val userInfo = sessionModel.userHandler.data.value
     Napier.i(tag = "ClientAuth") {
-        "addRequestHeaders session: ${session ?: "<none>"}"
+        "Preparing legacy request proof"
     }
     if (session != null && passSession != null) {
         val (localData, localSignature) = session
         if (localData.isNotBlank() && !localSignature.isNullOrBlank()) {
             Napier.i {
-                "addRequestHeaders headers $localData $localSignature"
+                "Prepared authentication proof"
             }
             if (userInfo == null) {
                 val address = passSession.address().getOrThrow()

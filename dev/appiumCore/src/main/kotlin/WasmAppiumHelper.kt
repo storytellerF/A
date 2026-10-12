@@ -28,8 +28,9 @@ class WasmAppiumHelper(
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
-        runAppiumTestEnvironment { ports ->
-            WasmDistributionServer(distribution, backendUrl = "http://127.0.0.1:${ports.server}").use { server ->
+        WasmDistributionServer(distribution).use { server ->
+            runAppiumTestEnvironment(allowedOrigins = server.url.removeSuffix("/")) { ports ->
+                server.setBackendUrl("http://127.0.0.1:${ports.server}")
                 val browser = FirefoxDriver(FirefoxOptions().addArguments(browserArguments))
                 try {
                     val prepared = setup(ports)
@@ -72,6 +73,12 @@ class WasmAppiumHelper(
 
     private fun initializeBrowserState(browser: WebDriver, server: WasmDistributionServer, session: InjectedSession?) {
         browser.get(server.bootstrapUrl)
+        session?.cookies?.forEach { cookie ->
+            browser.manage().addCookie(
+                org.openqa.selenium.Cookie.Builder(cookie.name, cookie.value)
+                    .path(cookie.path ?: "/").isHttpOnly(cookie.httpOnly).isSecure(cookie.secure).build(),
+            )
+        }
         (browser as JavascriptExecutor).executeScript(
             """
             window.localStorage.clear();

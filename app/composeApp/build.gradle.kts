@@ -189,8 +189,6 @@ kotlin {
             implementation(libs.fonticons.core)
             implementation(libs.qrose)
             implementation(libs.krop.ui)
-            implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.serialization)
             implementation(libs.androidx.datastore.preferences.core)
 
             implementation(libs.kmpnotifier.local)
@@ -413,4 +411,11 @@ tasks.named("copyNonXmlValueResourcesForCommonMain") {
 
 tasks.withType<Test>().configureEach {
     maxHeapSize = "3096m"
+}
+
+tasks.named<Test>("jvmTest") {
+    systemProperty(
+        "app.protected.storage.dir",
+        layout.buildDirectory.dir("test-protected-storage").get().asFile.absolutePath,
+    )
 }
