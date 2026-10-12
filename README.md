@@ -153,6 +153,8 @@ does not need a local JDK or prebuilt distributions. Images are built sequential
 ./scripts/service_scripts/start-service-in-docker.sh sample
 ```
 
+To refresh configuration using existing Docker-built images, run `./scripts/service_scripts/start-service-in-docker.sh sample --no-build`.
+
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
 Both `compose-service.sh` and `start-service-in-docker.sh` accept an environment name
