@@ -69,7 +69,7 @@ class HomeStartDestinationTest {
 
         assertEquals(
             listOf(HomeScreen, TopicScreen(2)),
-            backStack,
+            backStack.toList(),
         )
     }
 
@@ -81,7 +81,7 @@ class HomeStartDestinationTest {
 
         assertEquals(
             listOf(HomeScreen, RoomScreen(1), TopicScreen(2)),
-            backStack,
+            backStack.toList(),
         )
     }
 
@@ -93,7 +93,7 @@ class HomeStartDestinationTest {
 
         assertEquals(
             listOf(HomeScreen, AboutScreen, UserScreen(2)),
-            backStack,
+            backStack.toList(),
         )
     }
 

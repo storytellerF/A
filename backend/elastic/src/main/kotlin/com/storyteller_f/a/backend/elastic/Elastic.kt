@@ -108,18 +108,23 @@ suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
     indexName: String,
     clazz: Class<T>,
 ): List<T?> =
+    try {
     if (idList.size == 1) {
-    idList.map { id ->
-        get({
-            it.index(indexName).id(id.toString())
-        }, clazz).await().source()
+        idList.map { id ->
+            get({
+                it.index(indexName).id(id.toString())
+            }, clazz).await().source()
+        }
+    } else {
+        mget({ builder ->
+            builder.index(indexName).ids(idList.map { it.toString() })
+        }, clazz).await().docs().map {
+            it.result().source()
+        }
     }
-} else {
-    mget({ builder ->
-        builder.index(indexName).ids(idList.map { it.toString() })
-    }, clazz).await().docs().map {
-        it.result().source()
-    }
+} catch (exception: ElasticsearchException) {
+    if (exception.status() != 404) throw exception
+    idList.map { null }
 }
 
 suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentList(

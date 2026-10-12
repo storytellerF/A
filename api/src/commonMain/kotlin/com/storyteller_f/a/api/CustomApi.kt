@@ -990,7 +990,12 @@ object CustomApi {
                 val contentType: String,
                 val chunkSize: Long,
                 val sha256: String,
-            )
+                val crc32c: String,
+            ) {
+                init {
+                    com.storyteller_f.shared.model.FileChecksums(sha256, crc32c)
+                }
+            }
 
             @Serializable
             data class InitResponse(val recordId: PrimaryKey, val chunkSize: Long)

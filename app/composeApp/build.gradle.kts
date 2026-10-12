@@ -66,10 +66,15 @@ kotlin {
         androidResources {
             enable = true
         }
+        packaging {
+            resources.merges.add("META-INF/LICENSE.md")
+        }
         withHostTest {
             isIncludeAndroidResources = true
         }
-        withDeviceTest { }
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
 //        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
 //        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
@@ -91,6 +96,7 @@ kotlin {
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
+        binaries.executable()
         browser()
     }
 
@@ -132,6 +138,7 @@ kotlin {
             dependsOn(headlessTest)
         }
         getByName("androidDeviceTest") {
+            dependsOn(commonTest.get())
             dependencies {
                 implementation(libs.androidx.ui.test.junit4.android)
             }

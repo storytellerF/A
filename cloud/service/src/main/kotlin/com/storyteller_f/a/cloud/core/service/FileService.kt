@@ -29,7 +29,6 @@ import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
 import com.storyteller_f.a.backend.core.types.toFileRefInfo
 import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
-import com.storyteller_f.a.backend.filesystem.FileSystemObjectStorageService
 import com.storyteller_f.a.cloud.core.utils.cleanImageMeta
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
@@ -56,14 +55,10 @@ import kotlinx.io.buffered
 import org.apache.tika.mime.MimeTypes
 import java.io.BufferedInputStream
 import java.io.File
-import java.nio.file.Path
-import kotlin.io.path.exists
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 data class FileResponse(val file: File)
-
-data class PathResponse(val file: Path)
 
 suspend fun Backend.getFileList(
     uid: PrimaryKey,
@@ -269,21 +264,6 @@ fun getCoverExtensionFromMimeType(mimeType: String): String =
 )?.extension
     ?: error("Unsupported mime type: $mimeType")
 
-suspend fun getFileSystemDownloadUrl(backend: Backend, paths: List<String>): Result<PathResponse?> {
-    val service = backend.objectStorageService
-    return if (service is FileSystemObjectStorageService) {
-        val path = service.getPathResponse(paths)
-        if (path?.exists() == true) {
-            val value = PathResponse(path)
-            Result.success(value)
-        } else {
-            Result.success(null)
-        }
-    } else {
-        Result.failure(CustomBadRequestException("can't find file"))
-    }
-}
-
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
@@ -333,7 +313,6 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey, clientIp: String
             ObjectTuple(uid, ObjectType.USER),
             QuotaType.FILE,
             fileRecord.size,
-            fileRecord.name,
         ) {
             copyFile(fileRecord, uid)
         }
@@ -373,7 +352,6 @@ suspend fun Backend.tryUploadFiles(
     files.sumOf {
         it.size
     },
-    Uuid.random().toHexString(),
 ) {
     val f = mutableListOf<File>()
     try {
@@ -404,7 +382,7 @@ private suspend fun processContentTypeAndDimension(files: List<UploadPack>): Lis
     }
 
 @OptIn(ExperimentalUuidApi::class)
-private suspend fun removeExifIfImage(
+internal suspend fun removeExifIfImage(
     uploadPacks: List<ProcessedUploadPack>,
     f: MutableList<File>,
 ): List<ProcessedUploadPack> =
@@ -419,7 +397,14 @@ private suspend fun removeExifIfImage(
             target.inputStream().buffered().use { input ->
                 sha256(input.asSource().buffered())
             }
-        it.copy(pack = it.pack.copy(file = target, sha256 = newSha256))
+        it.copy(
+            pack =
+            it.pack.copy(
+                file = target,
+                size = target.length(),
+                sha256 = newSha256,
+            ),
+        )
     } else {
         it
     }
@@ -525,6 +510,7 @@ suspend fun initChunkUpload(backend: Backend, id: PrimaryKey, body: CustomApi.Fi
                     body.name,
                     body.chunkSize,
                     body.sha256,
+                    body.crc32c,
                 ),
             )
         }
@@ -544,7 +530,7 @@ suspend fun completeChunkUpload(
     val record =
         backend.database.file.getUploadRecord(recordId).getOrThrow()
             ?: throw CustomBadRequestException("upload record not found")
-    val expectedSha256 = record.sha256 ?: throw CustomBadRequestException("file sha256 missing")
+    val expectedSha256 = record.sha256
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
         .mapResultIfNotNull {
@@ -581,6 +567,8 @@ suspend fun completeChunkUpload(
                     A_FILE_DEFAULT_BUCKET,
                     targetFullName,
                     sortedSources,
+                    expectedSha256,
+                    record.crc32c,
                 ).getOrThrow()
                 val fileRecord =
                     backend.buildFileRecordFromComposedObject(

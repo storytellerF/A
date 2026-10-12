@@ -3,7 +3,14 @@
 A Kotlin Multiplatform application for Android, Desktop, CLI, and Web, with cloud services and an
 administration panel.
 
+For build, test, and independent service setup instructions, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 [Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
+
+## Storage and Search Availability
+
+After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted
+request still reports failure; failed operations and partial uploads are not replayed automatically.
 
 ## Worker Configuration
 
@@ -136,16 +143,45 @@ messages above as the source of truth.
 
 ### Compose Stack With Wasm Apps
 
-Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites. The local startup script builds both distributions before starting Compose.
+Add `app` to a flavor's `COMPOSE_FILE_LIST` to deploy the user app and admin panel as Wasm sites.
+Compose builds both sites in the JDK 21 builder stage of `wasm.Dockerfile`, passes only the required
+flavor, build type, and server URLs as build arguments, and copies each distribution into its own
+Nginx runtime image. Deployment compiles backend and Wasm distributions inside Docker; the host
+does not need a local JDK or prebuilt distributions. Images are built sequentially before startup:
 
 ```bash
-./scripts/service_scripts/start-service-in-local.sh sample
+./scripts/service_scripts/start-service-in-docker.sh sample
 ```
 
 Open the user app at `http://localhost:8080` and the panel at `http://localhost:8081` after the containers become healthy. Omit `app` to skip both Wasm builds and services.
 
-Deployment settings are read from `deploy/<flavor>.env`. Use `deploy/sample.env` as the reference;
+Both `compose-service.sh` and `start-service-in-docker.sh` accept an environment name
+(`alpha` or `alpha.env`) or a file path (`~/deploy/alpha.env`). Names resolve to
+`~/deploy/<name>.env` first, then `deploy/<name>.env`. Use `deploy/sample.env` as the reference;
 `BUILD_TYPE` is required, and `COMPOSE_FILE_LIST` selects which services are included in the stack.
+Server, Worker, WebSocket server, and CLI images share the JDK 21 builder in the root `Dockerfile` and
+are packaged as the separate `server`, `worker`, `ws`, and `cli` targets.
+
+When `COMPOSE_FILE_LIST` includes `bunker`, copy `deploy/bunker.env.example` to
+`~/deploy/bunker.env` outside the project and replace its example domains and credentials.
+Set `BUNKER_ENV_FILE=/home/<user>/deploy/bunker.env` inside the selected application env file
+to use another path; a relative path is resolved beside that env file. A shell override takes precedence. The file is injected only into the BunkerWeb
+container using `env_file`; it does not participate in Compose interpolation or override the flavor
+configuration. Docker Compose 2.30 or newer is required for the raw env-file format, which preserves
+literal credential values without interpolation. It contains final BunkerWeb names such as `SERVER_NAME`, `ADMIN_USERNAME`,
+`ADMIN_PASSWORD`, and `api.example.com_REVERSE_PROXY_HOST`, rather than the former `BUNKER_*` variables.
+
+For filesystem storage, set `FILESYSTEM_PUBLIC_URL` to the externally reachable media origin
+(for example `https://media.example.com`), and `FILESYSTEM_EXPOSE_PORT` to the published HTTP port
+(default `8822`). Clients download `/objects/<bucket>/<name>` directly from this service.
+With BunkerWeb, the media domain routes this path to filesystem port 8822; port 8820 is the internal
+management RPC endpoint and must remain private.
+Set `FILESYSTEM_PUBLIC_URL=https://<media-domain>` in `deploy/{flavor}.env`, including BunkerWeb deployments.
+The startup script passes the same resolved origin to filesystem and the application services.
+
+`PRESET_PATH=/home/<user>/data` bind-mounts the host preset directory into Server and CLI
+as `/app/deploy/preset_data`. CLI reads numbered JSON presets and referenced local files there.
+Enable `CLI_INIT_ENABLE=true` only for deliberate data initialization; disable it afterwards.
 
 ## License
 

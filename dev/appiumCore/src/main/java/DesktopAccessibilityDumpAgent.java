@@ -19,18 +19,25 @@ public class DesktopAccessibilityDumpAgent {
     }
 
     private static void dump(String path) {
+        // Attach callbacks must return promptly; collect AWT state on EDT and write on the existing worker.
         new Thread(() -> {
-            try (PrintWriter out = new PrintWriter(new FileWriter(path))) {
-                Window[] windows = Window.getWindows();
-                out.println("WINDOW_COUNT " + windows.length);
-                for (Window window : windows) {
-                    out.println(
-                        "WINDOW " + window.getClass().getName()
-                            + " showing=" + window.isShowing()
-                            + " visible=" + window.isVisible()
-                            + " title=" + quote(title(window))
-                    );
-                    dumpAccessible(window, out, 1);
+            try {
+                java.io.StringWriter buffer = new java.io.StringWriter();
+                try (PrintWriter out = new PrintWriter(buffer)) {
+                    javax.swing.SwingUtilities.invokeAndWait(() -> {
+                        Window[] windows = Window.getWindows();
+                        out.print("WINDOW_COUNT " + windows.length + "\n");
+                        for (Window window : windows) {
+                            out.print("WINDOW " + window.getClass().getName()
+                                + " showing=" + window.isShowing()
+                                + " visible=" + window.isVisible()
+                                + " title=" + quote(title(window)) + "\n");
+                            dumpAccessible(window, out, 1);
+                        }
+                    });
+                }
+                try (FileWriter output = new FileWriter(path)) {
+                    output.write(buffer.toString());
                 }
             } catch (Throwable throwable) {
                 try (PrintWriter out = new PrintWriter(new FileWriter(path + ".error"))) {

@@ -45,6 +45,7 @@ import com.storyteller_f.a.client.core.getUserReactions
 import com.storyteller_f.a.client.core.getUserReceivedTitles
 import com.storyteller_f.a.client.core.getUserSubscriptions
 import com.storyteller_f.a.client.core.getUserUploadRecords
+import com.storyteller_f.a.client.core.initChunkUpload
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.sendMessage
@@ -451,10 +452,25 @@ class AdminTest {
         val uid =
             attachSession {
                 val uid = it.uid
-                upload(uid ob ObjectType.USER, getUploadDataFromText("hello")).getOrThrow()
+                val checksums =
+                    com.storyteller_f.shared.utils.calculateFileChecksums(
+                        kotlinx.io.Buffer().apply { write("hello".encodeToByteArray()) },
+                    )
+                initChunkUpload(
+                    uid ob ObjectType.USER,
+                    "hello.txt",
+                    5,
+                    io.ktor.http.ContentType.Text.Plain,
+                    5,
+                    checksums.sha256,
+                    checksums.crc32c,
+                ).getOrThrow()
             }.uid
         loginPanelSession(outer) {
-            assertListSize(1, getUserUploadRecords(uid, PaginationQuery()))
+            val records = getUserUploadRecords(uid, PaginationQuery()).getOrThrow().data
+            assertEquals(1, records.size)
+            assertEquals("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", records.single().sha256)
+            assertEquals("mnG7TA==", records.single().crc32c)
         }
     }
 

@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
+    id("wasm-browser-test-interop")
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.serialization)
@@ -16,13 +17,7 @@ val buildIosTarget = project.findProperty("target.ios") == "true"
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
-        browser {
-            testTask {
-                useKarma {
-                    useFirefox()
-                }
-            }
-        }
+        browser()
         compilerOptions {
             freeCompilerArgs.add("-Xwasm-attach-js-exception")
         }
@@ -82,6 +77,7 @@ kotlin {
             dependsOn(headlessTest)
         }
         commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)
             implementation(libs.kotlinx.datetime)

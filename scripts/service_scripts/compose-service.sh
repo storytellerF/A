@@ -1,27 +1,25 @@
 #!/bin/bash
 
-FLAVOR=$1
-USE_PREBUILD=$2
-CUSTOM_COMMAND=$3
+set -euo pipefail
 
-if [ -z "$FLAVOR" ]; then
-    echo "FLAVOR must be set."
-    exit 1
-fi
+. "$(dirname "${BASH_SOURCE[0]}")/service-env.sh"
+resolve_service_env "${1:-}"
+cd "$SERVICE_PROJECT_ROOT"
+USE_PREBUILD=${2:-false}
+CUSTOM_COMMAND=${3:-}
 
 # 默认 compose 命令
 if [ -z "$CUSTOM_COMMAND" ]; then
     CUSTOM_COMMAND="up -d --build"
 fi
 
-IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(grep '^COMPOSE_FILE_LIST=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)"
+IFS=',' read -ra COMPOSE_FILE_LIST <<< "$(read_service_env COMPOSE_FILE_LIST)"
 echo "${COMPOSE_FILE_LIST[@]}"
 
 # 公共 compose 文件
 COMPOSE_FILES=("-f" "./deploy/docker-compose/docker-compose.yml")
 NEEDS_BUILD_ON=false
 ENABLED_PROFILES=()
-GENERATED_ONLY_PROFILES=("bunker")
 
 has_profile() {
     local target=$1
@@ -34,15 +32,19 @@ has_profile() {
     return 1
 }
 
-is_generated_only_profile() {
-    local target=$1
-    local profile
-    for profile in "${GENERATED_ONLY_PROFILES[@]}"; do
-        if [[ "$profile" == "$target" ]]; then
-            return 0
+emit_backend_environment() {
+    if has_profile filesystem || has_profile lucene; then
+        echo "    environment:"
+        if has_profile filesystem; then
+            echo "      MEDIA_SERVICE: filesystem"
+            echo "      FILESYSTEM_RPC_URL: ws://filesystem:8820/rpc"
+            echo '      FILESYSTEM_PUBLIC_URL: ${FILESYSTEM_PUBLIC_URL:?set the externally reachable filesystem HTTP origin}'
         fi
-    done
-    return 1
+        if has_profile lucene; then
+            echo "      SEARCH_SERVICE: lucene"
+            echo "      LUCENE_RPC_URL: ws://lucene:8821/rpc"
+        fi
+    fi
 }
 
 emit_bunker_network_if_needed() {
@@ -58,13 +60,23 @@ for profile in "${COMPOSE_FILE_LIST[@]}"; do
         continue
     fi
     ENABLED_PROFILES+=("$profile")
-    if [[ "$profile" == "server" ]] || [[ "$profile" == "worker" ]] || [[ "$profile" == "cli" ]]; then
+    if [[ "$profile" == "server" ]] || [[ "$profile" == "worker" ]] || [[ "$profile" == "cli" ]] || \
+        [[ "$profile" == "filesystem" ]] || [[ "$profile" == "lucene" ]]; then
         NEEDS_BUILD_ON=true
     fi
-    if ! is_generated_only_profile "$profile"; then
-        COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.${profile}.yml")
-    fi
+    COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.${profile}.yml")
 done
+
+ENV_FILES=("--env-file" "$ENV_FILE")
+if has_profile bunker; then
+    resolve_bunker_env
+    for required in SERVER_NAME ADMIN_USERNAME ADMIN_PASSWORD EMAIL_LETS_ENCRYPT; do
+        if ! grep -qE "^${required}=.+$" "$BUNKER_ENV_FILE"; then
+            echo "Bunker environment must define $required" >&2
+            exit 1
+        fi
+    done
+fi
 
 GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.yml"
 {
@@ -73,6 +85,11 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
     else
         echo "services:"
         if has_profile bunker; then
+            echo "  bunkerweb:"
+            echo "    env_file:"
+            bunker_env_yaml=$(printf '%s' "$BUNKER_ENV_FILE" | sed "s/'/''/g")
+            printf "      - path: '%s'\n" "$bunker_env_yaml"
+            echo "        format: raw"
             if has_profile pg; then
                 echo "  pg:"
                 emit_bunker_network_if_needed
@@ -83,6 +100,14 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
             fi
             if has_profile minio; then
                 echo "  minio:"
+                emit_bunker_network_if_needed
+            fi
+            if has_profile filesystem; then
+                echo "  filesystem:"
+                emit_bunker_network_if_needed
+            fi
+            if has_profile lucene; then
+                echo "  lucene:"
                 emit_bunker_network_if_needed
             fi
             if has_profile grafana; then
@@ -120,7 +145,8 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
         fi
         if has_profile cli; then
             echo "  cli:"
-            if has_profile pg || has_profile minio || has_profile elastic; then
+            emit_backend_environment
+            if has_profile pg || has_profile minio || has_profile elastic || has_profile filesystem || has_profile lucene; then
                 echo "    depends_on:"
                 if has_profile pg; then
                     echo "      pg:"
@@ -134,23 +160,27 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                     echo "      es01:"
                     echo "        condition: service_healthy"
                 fi
+                if has_profile filesystem; then
+                    echo "      filesystem:"
+                    echo "        condition: service_healthy"
+                fi
+                if has_profile lucene; then
+                    echo "      lucene:"
+                    echo "        condition: service_healthy"
+                fi
             else
                 echo "    # no generated dependencies"
             fi
-            echo "    volumes:"
             if has_profile elastic; then
+                echo "    volumes:"
                 echo "      - certs:/app/deploy/es_ca"
-            else
-                echo "      - ../lucene_data:/app/deploy/lucene_data"
-            fi
-            if ! has_profile minio; then
-                echo "      - ../a_file_data:/app/deploy/a_file_data"
             fi
             emit_bunker_network_if_needed
         fi
         for service in server worker ws; do
             if has_profile "$service" || { [[ "$service" == "ws" ]] && has_profile server; }; then
                 echo "  $service:"
+                emit_backend_environment
                 if has_profile cli; then
                     echo "    depends_on:"
                     echo "      cli:"
@@ -167,7 +197,15 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                         echo "      es01:"
                         echo "        condition: service_healthy"
                     fi
-                elif has_profile pg || has_profile minio || has_profile elastic; then
+                    if has_profile filesystem; then
+                        echo "      filesystem:"
+                        echo "        condition: service_healthy"
+                    fi
+                    if has_profile lucene; then
+                        echo "      lucene:"
+                        echo "        condition: service_healthy"
+                    fi
+                elif has_profile pg || has_profile minio || has_profile elastic || has_profile filesystem || has_profile lucene; then
                     echo "    depends_on:"
                     if has_profile pg; then
                         echo "      pg:"
@@ -181,16 +219,19 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                         echo "      es01:"
                         echo "        condition: service_healthy"
                     fi
+                    if has_profile filesystem; then
+                        echo "      filesystem:"
+                        echo "        condition: service_healthy"
+                    fi
+                    if has_profile lucene; then
+                        echo "      lucene:"
+                        echo "        condition: service_healthy"
+                    fi
                 fi
                 emit_bunker_network_if_needed
-                echo "    volumes:"
                 if has_profile elastic; then
+                    echo "    volumes:"
                     echo "      - certs:/app/deploy/es_ca"
-                else
-                    echo "      - ../lucene_data:/app/deploy/lucene_data"
-                fi
-                if ! has_profile minio; then
-                    echo "      - ../a_file_data:/app/deploy/a_file_data"
                 fi
             fi
         done
@@ -198,7 +239,6 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
     if has_profile bunker; then
         echo "networks:"
         echo "  bw-services:"
-        echo "    external: true"
         echo "    name: bw-services"
     fi
 } > "$GENERATED_COMPOSE_FILE"
@@ -206,12 +246,20 @@ COMPOSE_FILES+=("-f" "$GENERATED_COMPOSE_FILE")
 
 IFS=' ' read -r -a custom_cmd_parts <<< "$CUSTOM_COMMAND"
 
+# Bind-mounted local backends run as UID 1000. Create their data directories
+# before Docker does, otherwise Docker creates missing paths as root:root.
+if has_profile filesystem; then
+    mkdir -p ./deploy/a_file_data
+fi
+if has_profile lucene; then
+    mkdir -p ./deploy/lucene_data
+fi
 # 条件：USE_PREBUILD = true
 if [ "$USE_PREBUILD" = "true" ]; then
     COMPOSE_FILES+=("-f" "./deploy/docker-compose/docker-compose.prebuild.yml")
 else
   if [[ "$NEEDS_BUILD_ON" == "true" ]]; then
-      BUILD_ON=${BUILD_ON:-$(grep '^BUILD_ON=' "./deploy/$FLAVOR.env" | cut -d '=' -f2-)}
+      BUILD_ON=${BUILD_ON:-$(read_service_env BUILD_ON)}
       if [ -z "$BUILD_ON" ]; then
           echo "BUILD_ON must be set."
           exit 1
@@ -220,9 +268,9 @@ else
   fi
 fi
 
-CMD=("docker" "compose" "--env-file" "./deploy/${FLAVOR}.env" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
+CMD=("docker" "compose" "${ENV_FILES[@]}" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}")
 
 echo "Executing: ${CMD[@]}"
 # "${CMD[@]}"
 
-docker compose --env-file ./deploy/${FLAVOR}.env ${COMPOSE_FILES[@]} ${custom_cmd_parts[@]}
+docker compose "${ENV_FILES[@]}" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}"

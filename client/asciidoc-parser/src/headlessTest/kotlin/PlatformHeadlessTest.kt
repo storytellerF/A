@@ -4,4 +4,4 @@
 
 package com.storyteller_f.a.client.asciidoc_parser
 
-expect open class PlatformHeadlessTest()
+expect abstract class PlatformHeadlessTest()

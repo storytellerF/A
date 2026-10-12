@@ -14,7 +14,6 @@ import com.storyteller_f.a.backend.core.getRawTopic
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.Quota
-import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toQuotaInfo
 import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
 import com.storyteller_f.shared.model.QuotaInfo
@@ -22,11 +21,9 @@ import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.type.UploadRecordStatus
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
-import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 import org.apache.tika.Tika
@@ -275,54 +272,31 @@ suspend fun Backend.lockQuotaInfo(
     objectTuple: ObjectTuple,
     quotaType: QuotaType,
     length: Long,
-    name: String,
     block: suspend () -> Result<List<FileRecord>>,
 ) = checkQuotaStatus(objectTuple, length, quotaType).mapResult { quotaInfo ->
-    database.file.insertUploadRecord(
-        UploadRecord(
-            SnowflakeFactory.nextId(),
-            now(),
-            objectTuple.objectId,
-            objectTuple.objectType,
-            UploadRecordStatus.PENDING,
-            length,
-            0,
-            name,
-            0,
-            null,
-        ),
-    ).mapResult { uploadRecord ->
+    val operationId = SnowflakeFactory.nextId()
+    database.file.lockFileQuota(quotaInfo, operationId).mapResult {
+        var committed = false
         try {
-            // 避免block 中出现未捕获的异常导致配额未释放
-            val t = block().getOrThrow()
-            val newRecord = uploadRecord.copy(status = UploadRecordStatus.SUCCESS)
-            database.file.updateUploadRecordStatus(quotaInfo, newRecord, t).onFailure {
-                Napier.e(it) {
-                    "update upload record status failed ${uploadRecord.id} $quotaInfo $length"
-                }
-            }.onSuccess {
-                // 保存文件文档到搜索服务
-                fileSearchService.saveDocument(
-                    t.map { fileRecord ->
-                        FileDocument.fromFileRecord(fileRecord)
-                    },
-                ).onFailure { error ->
-                    Napier.e(error) {
-                        "save file document failed"
+            val files = block().getOrThrow()
+            database.file.finishFileQuota(quotaInfo, operationId, files).getOrThrow()
+            committed = true
+            fileSearchService.saveDocument(files.map(FileDocument::fromFileRecord)).onFailure { error ->
+                Napier.e(error) { "save file document failed" }
+            }
+            Result.success(files)
+        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            Result.failure(failure)
+        } finally {
+            if (!committed) {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    database.file.finishFileQuota(quotaInfo, operationId, emptyList()).onFailure { error ->
+                        Napier.e(error) { "release file quota failed" }
                     }
                 }
             }
-            Result.success(t)
-        } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-            throw cancellation
-        } catch (e: Exception) {
-            val record = uploadRecord.copy(status = UploadRecordStatus.FAILED)
-            database.file.updateUploadRecordStatus(quotaInfo, record, emptyList()).onFailure {
-                Napier.e(it) {
-                    "update upload record status failed ${uploadRecord.id} $quotaInfo $length"
-                }
-            }
-            Result.failure(e)
         }
     }
 }

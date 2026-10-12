@@ -1,6 +1,6 @@
 FROM eclipse-temurin:21-alpine AS builder
 
-RUN apk add bash curl dos2unix
+RUN apk add --no-cache bash curl
 
 WORKDIR /app
 COPY . .
@@ -23,4 +23,3 @@ COPY --from=builder /app/bot/builtin-bot/build/decompressed/builtin-bot .
 
 ENTRYPOINT ["sh", "./bin/builtin-bot"]
 # ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
-

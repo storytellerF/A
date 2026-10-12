@@ -18,3 +18,12 @@ val accessibilityDumpAgentJar = tasks.register<Jar>("accessibilityDumpAgentJar")
         include("DesktopAccessibilityDumpAgent*.class")
     }
 }
+
+tasks.withType<Test>().matching { it.name == "appiumTest" }.configureEach {
+    dependsOn(":dev:appiumCore:desktopWindowsBridgeAgentJar")
+    systemProperty(
+        "desktop.windows.bridge.agent",
+        project(":dev:appiumCore").layout.buildDirectory.file("appium/agent/desktop-windows-bridge-agent.jar")
+            .get().asFile.absolutePath,
+    )
+}

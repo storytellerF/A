@@ -40,8 +40,11 @@ sealed interface TopicDocumentSearch {
         TopicDocumentSearch
 
     data class Topics(val parentId: PrimaryKey, val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+
     data class RecommendNotLogin(val fetch: OffsetFetch) : TopicDocumentSearch
+
     data class All(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
+
     data class AllCommunityRoot(val word: String, val fetch: OffsetFetch) : TopicDocumentSearch
 }
 

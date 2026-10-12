@@ -105,37 +105,37 @@ class ObjectStorageServiceTest {
     }
 
     @Test
-    fun `test upload and get memory`() = testOssMemory(uploadAndGet)
+    fun `test upload and get rpc`() = testOssRpc(uploadAndGet)
 
     @Test
     fun `test upload and get container`() = testOssContainer(uploadAndGet)
 
     @Test
-    fun `test upload and list memory`() = testOssMemory(uploadAndList)
+    fun `test upload and list rpc`() = testOssRpc(uploadAndList)
 
     @Test
     fun `test upload and list container`() = testOssContainer(uploadAndList)
 
     @Test
-    fun `test upload and get input stream memory`() = testOssMemory(uploadAndGetInputStream)
+    fun `test upload and get input stream rpc`() = testOssRpc(uploadAndGetInputStream)
 
     @Test
     fun `test upload and get input stream container`() = testOssContainer(uploadAndGetInputStream)
 
     @Test
-    fun `test copy memory`() = testOssMemory(copy)
+    fun `test copy rpc`() = testOssRpc(copy)
 
     @Test
     fun `test copy container`() = testOssContainer(copy)
 
     @Test
-    fun `test delete memory`() = testOssMemory(delete)
+    fun `test delete rpc`() = testOssRpc(delete)
 
     @Test
     fun `test delete container`() = testOssContainer(delete)
 
     @Test
-    fun `test clean memory`() = testOssMemory(clean)
+    fun `test clean rpc`() = testOssRpc(clean)
 
     @Test
     fun `test clean container`() = testOssContainer(clean)

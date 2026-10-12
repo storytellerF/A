@@ -38,11 +38,13 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UploadRecordStatus
+import com.storyteller_f.shared.utils.calculateFileChecksums
 import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.defaultForFileExtension
 import kotlinx.coroutines.test.runTest
@@ -62,7 +64,6 @@ import java.nio.file.StandardCopyOption
 import kotlin.io.path.Path
 import kotlin.math.ceil
 import kotlin.math.log10
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -86,6 +87,9 @@ class FileTest {
                 assertListSize(1, fileList)
                 val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
                 val fileInfo = fileList.getOrThrow().data.first()
+                HttpClient().use { downloadClient ->
+                    assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
+                }
                 assertEquals(fileInfo.size, quotaInfo.used)
                 assertEquals(null, quotaInfo.lockId)
                 fileInfo
@@ -208,6 +212,7 @@ class FileTest {
                     ContentType.Application.OctetStream,
                     chunkSize,
                     fileSha256,
+                    calculateTestFileCrc(totalSize),
                 ).getOrThrow()
             val recordId = init.recordId
 
@@ -269,6 +274,7 @@ class FileTest {
                     ContentType.Application.OctetStream,
                     chunkSize,
                     fileSha256,
+                    calculateTestFileCrc(totalSize),
                 ).getOrThrow()
             val recordId = init.recordId
 
@@ -320,6 +326,7 @@ class FileTest {
                     ContentType.Application.OctetStream,
                     chunkSize,
                     fileSha256,
+                    calculateTestFileCrc(totalSize),
                 ).getOrThrow()
             val recordId = init.recordId
 
@@ -360,7 +367,6 @@ class FileTest {
     }
 
     @Test
-    @Ignore
     fun `sha256 mismatch fails chunk completion and record`() =
         test {
         attachSession { session ->
@@ -378,6 +384,7 @@ class FileTest {
                     ContentType.Application.OctetStream,
                     chunkSize,
                     wrongSha256,
+                    calculateTestFileCrc(totalSize),
                 ).getOrThrow()
             val recordId = init.recordId
 
@@ -627,3 +634,10 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
     opencv_core.divide(temp3, temp1Result, ssimMap) // ssim_map =  t3./t1;
     return opencv_core.mean(ssimMap)
 }
+
+private suspend fun calculateTestFileCrc(size: Long): String =
+    calculateFileChecksums(
+    Buffer().apply {
+        for (index in 0 until size) writeByte((index % 256).toByte())
+    },
+).crc32c

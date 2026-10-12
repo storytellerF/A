@@ -16,7 +16,7 @@ import java.lang.ref.WeakReference
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [35])
-actual open class PlatformHeadlessTest {
+actual abstract class PlatformHeadlessTest {
     @Before
     fun setup() {
         System.setProperty("robolectric.logging.enabled", "true")

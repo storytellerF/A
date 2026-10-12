@@ -493,6 +493,14 @@ interface FileDatabase {
 
     suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord>
 
+    suspend fun lockFileQuota(quotaInfo: QuotaInfo, operationId: PrimaryKey): Result<Unit>
+
+    suspend fun finishFileQuota(
+        quotaInfo: QuotaInfo,
+        operationId: PrimaryKey,
+        fileRecords: List<FileRecord>,
+    ): Result<List<FileRecord>>
+
     /**
      * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况.
      */

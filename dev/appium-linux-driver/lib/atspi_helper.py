@@ -67,6 +67,11 @@ def node_to_dict(node, depth=0, max_depth=20):
         return {"role": "error", "name": str(e), "children": []}
 
 
+def matches_label(value, expected):
+    # Compose can expose the same semantic label more than once.
+    return value == expected or all(part.strip() == expected for part in value.split(","))
+
+
 def find_nodes(node, strategy, selector, results, max_results=10):
     if node is None or len(results) >= max_results:
         return
@@ -91,7 +96,7 @@ def find_nodes(node, strategy, selector, results, max_results=10):
 
     matched = False
     if strategy == "name":
-        matched = name == selector or desc == selector or value == selector
+        matched = any(matches_label(label, selector) for label in (name, desc, value))
     elif strategy == "name_contains":
         matched = selector in name or selector in desc or selector in value
     elif strategy == "xpath":
@@ -106,7 +111,7 @@ def find_nodes(node, strategy, selector, results, max_results=10):
             except Exception:
                 matched = False
         elif m:
-            matched = name == m.group(1) or desc == m.group(1) or value == m.group(1)
+            matched = any(matches_label(label, m.group(1)) for label in (name, desc, value))
         elif mc:
             needle = mc.group(1)
             matched = needle in name or needle in desc or needle in value
@@ -181,18 +186,25 @@ def find_focusable(node):
     return None
 
 
-def find_editable(node):
+def find_by_path(node, object_path):
+    """Resolve only the saved identity, regardless of label or result order."""
+    if node is None or not object_path:
+        return None
     try:
-        role = node.getRoleName()
-        state = node.getState()
-        if role == "text" and state.contains(pyatspi.STATE_EDITABLE):
+        if node.path == object_path:
+            if node.getState().contains(pyatspi.STATE_DEFUNCT):
+                return None
             return node
-        for i in range(node.childCount):
-            result = find_editable(node.getChildAtIndex(i))
-            if result:
-                return result
+        child_count = node.childCount
     except Exception:
-        pass
+        return None
+    for index in range(child_count):
+        try:
+            target = find_by_path(node.getChildAtIndex(index), object_path)
+            if target is not None:
+                return target
+        except Exception:
+            continue
     return None
 
 
@@ -242,6 +254,7 @@ def main():
             cx, cy = get_center(node)
             elements.append({
                 "id": i,
+                "path": node.path,
                 "name": node.name or "",
                 "role": node.getRoleName(),
                 "cx": cx,
@@ -273,12 +286,15 @@ def main():
             cmd.get("timeout", 15),
         )
         if not results:
-            print(json.dumps({"ok": False, "error": "element not found"}))
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         index = cmd.get("index", 0)
-        target = results[index] if len(results) > index else None
+        object_path = cmd.get("path")
+        target = next((node for node in results if node.path == object_path), None) if object_path else (
+            results[index] if len(results) > index else None
+        )
         if not target:
-            print(json.dumps({"ok": False, "error": "element index out of range"}))
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         ok, action_name = perform_action(target)
         cx, cy = get_center(target)
@@ -289,20 +305,9 @@ def main():
         if not app:
             print(json.dumps({"ok": False, "error": "app not found"}))
             return
-        selector = cmd.get("selector", "")
-        results = []
-        if selector:
-            results = wait_for_elements(
-                cmd["pid"],
-                cmd.get("strategy", "name"),
-                selector,
-                cmd.get("timeout", 15),
-            )
-        target = results[0] if results else find_editable(app)
-        index = cmd.get("index", 0)
-        target = results[index] if len(results) > index else target
-        if not target:
-            print(json.dumps({"ok": False, "error": "editable element not found"}))
+        target = find_by_path(app, cmd.get("path"))
+        if target is None:
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
             return
         perform_action(target)
         try:
@@ -321,12 +326,16 @@ def main():
                     break
                 time.sleep(0.05)
             if stable_reads < 2:
-                print(json.dumps({"ok": False, "error": "editable text did not reach the requested value"}))
+                stale = find_by_path(app, cmd.get("path")) is None
+                error = "element no longer exists" if stale else "editable text did not reach the requested value"
+                print(json.dumps({"ok": False, "stale": stale, "error": error}))
                 return
             cx, cy = get_center(target)
             print(json.dumps({"ok": True, "cx": cx, "cy": cy}))
         except Exception as e:
-            print(json.dumps({"ok": False, "error": str(e)}))
+            stale = find_by_path(app, cmd.get("path")) is None
+            print(json.dumps({"ok": False, "stale": stale,
+                              "error": "element no longer exists" if stale else str(e)}))
 
 
 if __name__ == "__main__":

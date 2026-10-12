@@ -3,7 +3,12 @@ volumes:
 
 services:
   minio:
-    image: minio/minio
+    image: a-minio:${MINIO_VERSION:-RELEASE.2025-04-22T22-12-26Z}
+    build:
+      context: ../..
+      dockerfile: minio.Dockerfile
+      args:
+        MINIO_VERSION: ${MINIO_VERSION:-RELEASE.2025-04-22T22-12-26Z}
     restart: unless-stopped
     ports:
       - ${MINIO_PORT}:9000

@@ -1,6 +1,6 @@
 'use strict';
 
-const { BaseDriver } = require('@appium/base-driver');
+const { BaseDriver, errors } = require('@appium/base-driver');
 const { spawn, execSync, spawnSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -27,6 +27,8 @@ class LinuxDriver extends BaseDriver {
 
     const appArgs = caps.appArguments || this.opts.appArguments || [];
     const args = Array.isArray(appArgs) ? appArgs : appArgs.split(' ').filter(Boolean);
+
+    this._assertDisplay();
 
     this.log.info(`Launching app: ${app} ${args.join(' ')}`);
     this.appProcess = spawn(app, args, {
@@ -71,7 +73,7 @@ class LinuxDriver extends BaseDriver {
   async findElOrEls(strategy, selector, mult) {
     this.log.info(`Finding element(s) by ${strategy}: "${selector}"`);
     const atspiStrategy = this._mapStrategy(strategy, selector);
-    const deadline = Date.now() + ATSPI_TIMEOUT * 1000;
+    const deadline = Date.now() + this.implicitWaitMs;
     let result;
     do {
       const searchStartedAt = Date.now();
@@ -99,7 +101,13 @@ class LinuxDriver extends BaseDriver {
       }
       await this._sleep(200);
     } while (Date.now() < deadline);
-    if (!result.ok) throw new Error(`findElOrEls failed: ${result.error}`);
+    if (!result.ok) {
+      if (result.error === 'app not found') {
+        if (mult) return [];
+        throw new errors.NoSuchElementError('Application is unavailable in the AT-SPI tree');
+      }
+      throw new Error(`findElOrEls failed: ${result.error}`);
+    }
     if (result.elements.length === 0) {
       if (mult) return [];
       const source = await this._atspi({ action: 'page_source', pid: this.appPid });
@@ -112,6 +120,7 @@ class LinuxDriver extends BaseDriver {
       const encoded = String(this.nextElementId++);
       this.elements.set(encoded, {
         index,
+        objectPath: e.path,
         strategy: atspiStrategy.strategy,
         selector: atspiStrategy.selector,
         cx: e.cx,
@@ -149,15 +158,19 @@ class LinuxDriver extends BaseDriver {
   // ── Element interaction ───────────────────────────────────────────────────
 
   async click(elementId) {
-    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const { index, objectPath, strategy, selector, cx, cy, name } = this._parseElement(elementId);
     const result = await this._atspi({
       action: 'click_element',
+      path: objectPath,
       pid: this.appPid,
       strategy,
       selector,
       index,
       timeout: ATSPI_TIMEOUT,
     });
+    if (result.stale || result.error === 'app not found') {
+      throw new errors.StaleElementReferenceError(result.error);
+    }
     if (result.ok) {
       this.log.info(`Clicked element "${name}" via AT-SPI action "${result.action}"`);
       return;
@@ -172,10 +185,11 @@ class LinuxDriver extends BaseDriver {
   }
 
   async setValue(value, elementId) {
-    const { index, strategy, selector, cx, cy, name } = this._parseElement(elementId);
+    const { index, objectPath, strategy, selector, name } = this._parseElement(elementId);
     const text = Array.isArray(value) ? value.join('') : String(value);
     const result = await this._atspi({
       action: 'set_text',
+      path: objectPath,
       pid: this.appPid,
       strategy,
       selector,
@@ -183,17 +197,14 @@ class LinuxDriver extends BaseDriver {
       text,
       timeout: ATSPI_TIMEOUT,
     });
+    if (result.stale || result.error === 'app not found') {
+      throw new errors.StaleElementReferenceError(result.error);
+    }
     if (result.ok) {
       this.log.info(`Set text via AT-SPI editable text${name ? ` for "${name}"` : ''}`);
       return;
     }
-    this.log.warn(`AT-SPI set text failed: ${result.error || 'unknown error'}`);
-    this._xdotool('mousemove', '--sync', cx, cy);
-    this._xdotool('click', 1);
-    await this._sleep(100);
-    // Clear existing content then type
-    this._xdotool('key', '--clearmodifiers', 'ctrl+a');
-    this._xdotool('type', '--clearmodifiers', '--delay', '20', '--', text);
+    throw new Error(`AT-SPI set text failed: ${result.error || 'unknown error'}`);
   }
 
   async getText(elementId) {
@@ -252,6 +263,18 @@ class LinuxDriver extends BaseDriver {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  _assertDisplay() {
+    const result = this._displayInfo();
+    const dimensions = /dimensions:\s+(\d+)x(\d+)\s+pixels/.exec(result.stdout || '');
+    if (result.status !== 0 || !dimensions || Number(dimensions[1]) === 0 || Number(dimensions[2]) === 0) {
+      throw new Error('Linux desktop requires a display with nonzero dimensions; use scripts/test_scripts/run-linux-desktop-e2e.sh for an isolated desktop');
+    }
+  }
+
+  _displayInfo() {
+    return spawnSync('xdpyinfo', [], { encoding: 'utf8' });
+  }
 
   _xdotool(...args) {
     const strArgs = args.map(String);

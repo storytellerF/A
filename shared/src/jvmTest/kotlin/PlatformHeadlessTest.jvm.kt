@@ -4,4 +4,4 @@
 
 package com.storyteller_f.shared
 
-actual open class PlatformHeadlessTest
+actual abstract class PlatformHeadlessTest

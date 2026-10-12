@@ -14,27 +14,28 @@ mkdir -p deploy/build
 
 echo "Building server image: a-server:latest"
 docker build --platform linux/amd64 \
+  --target server \
   --build-arg BUILD_ON="$BUILD_ON" \
   -t a-server:latest \
   .
 
 echo "Building worker image: a-worker:latest"
 docker build --platform linux/amd64 \
-  -f worker.Dockerfile \
+  --target worker \
   --build-arg BUILD_ON="$BUILD_ON" \
   -t a-worker:latest \
   .
 
 echo "Building cli image: a-cli:latest"
 docker build --platform linux/amd64 \
-  -f cli.Dockerfile \
+  --target cli \
   --build-arg BUILD_ON="$BUILD_ON" \
   -t a-cli:latest \
   .
 
 echo "Building ws image: a-ws:latest"
 docker build --platform linux/amd64 \
-  -f ws.Dockerfile \
+  --target ws \
   --build-arg BUILD_ON="$BUILD_ON" \
   -t a-ws:latest \
   .

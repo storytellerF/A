@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-docker-image")
     application
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.ktor)
@@ -19,43 +20,6 @@ version = "unspecified"
 application {
     mainClass.set("com.storyteller_f.a.cloud.server.ApplicationKt")
     applicationDefaultJvmArgs = listOf("--add-modules", "jdk.incubator.vector")
-}
-
-val copyTestDockerDistribution =
-    tasks.register<Copy>("copyTestDockerDistribution") {
-        group = "verification"
-        description = "Copies the server distribution used by test Docker images."
-        dependsOn(tasks.named("distTar"), tasks.named("distZip"))
-        from(layout.buildDirectory.dir("distributions")) {
-            include("server.tar", "server.zip")
-        }
-        into(rootProject.layout.projectDirectory.dir("deploy/build"))
-    }
-
-val buildTestDockerImage =
-    tasks.register<Exec>("buildTestDockerImage") {
-        group = "verification"
-        description = "Builds the a-server Docker image used by integration tests."
-        dependsOn(copyTestDockerDistribution)
-        workingDir = rootProject.layout.projectDirectory.asFile
-        commandLine(
-            "docker",
-            "build",
-            "-f",
-            "Dockerfile",
-            "--build-arg",
-            "BUILD_ON=host",
-            "-t",
-            "a-server:latest",
-            ".",
-        )
-        outputs.upToDateWhen { false }
-    }
-
-tasks.register("buildAppiumDockerImage") {
-    group = "appium"
-    description = "Compatibility alias for buildTestDockerImage."
-    dependsOn(buildTestDockerImage)
 }
 
 kotlin {
@@ -108,11 +72,8 @@ dependencies {
     testImplementation(projects.client.core)
     testImplementation(libs.ktor.server.test.host)
     testImplementation(kotlin("test"))
-    @Suppress("VulnerableLibrariesLocal", "RedundantSuppression")
-    testImplementation(libs.testcontainers.elasticsearch)
-    testImplementation(libs.testcontainers.minio)
+    testImplementation(libs.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
-    testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.sql.formatter)
     testImplementation(libs.javacv.platform)
     // testImplementation(projects.cloud.pdfbox) // Disabled - pdfbox-layout requires JitPack
@@ -131,6 +92,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     maxHeapSize = "3096m"
+    dependsOn(
+        ":cloud:filesystem-service:buildTestDockerImage",
+        ":cloud:lucene-service:buildTestDockerImage",
+    )
     testLogging {
         events("passed", "skipped", "failed")
         showStandardStreams = true

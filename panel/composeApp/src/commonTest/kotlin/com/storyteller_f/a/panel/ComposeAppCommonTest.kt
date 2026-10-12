@@ -74,7 +74,7 @@ class ComposeAppCommonTest {
 
         assertEquals(
             listOf(PanelAllUsersScreen, PanelUserDetailScreen(2)),
-            backStack,
+            backStack.toList(),
         )
     }
 
@@ -90,7 +90,7 @@ class ComposeAppCommonTest {
                 PanelUserDetailScreen(1),
                 PanelCommunityDetailScreen(2),
             ),
-            backStack,
+            backStack.toList(),
         )
     }
 

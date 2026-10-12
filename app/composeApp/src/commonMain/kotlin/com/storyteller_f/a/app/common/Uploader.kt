@@ -19,6 +19,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.utils.calculateFileChecksums
 import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.md5
@@ -31,6 +32,8 @@ import com.storyteller_f.storage.UploadInfo
 import com.storyteller_f.storage.UploadStatus
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.io.Buffer
@@ -143,9 +146,9 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
             return
         }
-        val fileSha256 =
-            clipFile.source().use {
-                sha256(it)
+        val checksums =
+            withContext(Dispatchers.Default) {
+                clipFile.source().use { calculateFileChecksums(it) }
             }
         val id =
             now().toInstant(
@@ -157,7 +160,8 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
                 objectId = myUid,
                 pathHash = pathHash,
                 path = clipFile.path,
-                sha256 = fileSha256,
+                sha256 = checksums.sha256,
+                crc32c = checksums.crc32c,
                 total = clipFile.size,
                 status = UploadStatus.UPLOADING,
                 name = clipFile.name,
@@ -341,6 +345,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             clipFile.contentType,
             chunkSize,
             fileSha256,
+            uploadInfo.crc32c,
         ).onSuccess { initResponse ->
             updateUploadInfo(modelStorage, collection, pathHash) {
                 it.copy(recordId = initResponse.recordId, chunkSize = initResponse.chunkSize)

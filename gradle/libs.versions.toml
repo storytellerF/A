@@ -1,4 +1,6 @@
 [versions]
+asm = "9.11"
+jna = "5.19.1"
 aboutlibrariesComposeM3 = "15.2.0"
 aboutlibrariesCore = "15.2.0"
 accompanistPermissions = "0.37.3"
@@ -83,11 +85,10 @@ luceneCore = "10.5.1"
 markdown = "0.7.16"
 material = "1.12.1"
 material3 = "1.9.0"
-material3WindowSizeClassMultiplatform = "0.5.0"
 materialIconsExtended = "1.7.3"
 media3Exoplayer = "1.10.1"
 memoryfilesystem = "2.8.2"
-mermaidFfi = "0.0.1-alpha2"
+mermaidFfi = "0.0.1-alpha5"
 micrometerRegistryPrometheus = "1.17.1"
 minio = "9.0.3"
 mosaicRuntime = "0.18.0"
@@ -102,7 +103,8 @@ pagingCommon = "3.5.0"
 pdfbox = "3.0.8"
 pdfboxLayout = "3.0.0-rc.0"
 pdfcompare = "1.2.11"
-postgresql = "1.1.3.RELEASE"
+# Temporary pin: https://github.com/pgjdbc/r2dbc-postgresql/issues/756
+postgresql = "1.1.2.RELEASE"
 pty4j = "0.13.13"
 qrose = "1.3.0"
 recordCore = "0.5.0"
@@ -131,6 +133,8 @@ webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.7.0"
 
 [libraries]
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibrariesCore" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
@@ -276,6 +280,7 @@ krop-ui = { module = "com.attafitamim.krop:ui", version.ref = "krop-ui" }
 ktor-client-auth = { module = "io.ktor:ktor-client-auth", version.ref = "ktor" }
 ktor-client-call-id = { module = "io.ktor:ktor-client-call-id", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
@@ -289,6 +294,7 @@ ktor-server-call-id = { module = "io.ktor:ktor-server-call-id", version.ref = "k
 ktor-server-call-logging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-core = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio-jvm", version.ref = "ktor" }
 ktor-server-metrics-micrometer = { module = "io.ktor:ktor-server-metrics-micrometer", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-server-partial-content = { module = "io.ktor:ktor-server-partial-content", version.ref = "ktor" }
@@ -313,7 +319,7 @@ markdown = { module = "org.jetbrains:markdown", version.ref = "markdown" }
 material = { module = "org.jetbrains.compose.material:material", version.ref = "material" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "org.jetbrains.compose.material3:material3", version.ref = "material3" }
-material3-window-size = { module = "dev.chrisbanes.material3:material3-window-size-class-multiplatform", version.ref = "material3WindowSizeClassMultiplatform" }
+material3-window-size = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "material3" }
 memoryfilesystem = { module = "com.github.marschall:memoryfilesystem", version.ref = "memoryfilesystem" }
 mermaid-ffi = { module = "io.github.storytellerf:mermaidffi-kmp", version.ref = "mermaidFfi" }
 micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometerRegistryPrometheus" }
@@ -348,6 +354,7 @@ testcontainers-elasticsearch = { module = "org.testcontainers:elasticsearch", ve
 testcontainers-minio = { module = "org.testcontainers:minio", version.ref = "testContainer" }
 testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testContainer" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testContainer" }
+testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testContainer" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "ui" }
 ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "ui" }

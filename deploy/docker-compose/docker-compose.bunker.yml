@@ -1,0 +1,39 @@
+networks:
+  bw-services:
+    name: bw-services
+
+volumes:
+  bw-storage:
+
+services:
+  bunkerweb:
+    image: bunkerity/bunkerweb-all-in-one:1.6.13
+    ports:
+      - "80:8080/tcp"
+      - "443:8443/tcp"
+      - "443:8443/udp"
+      - "7000:7000"
+    environment:
+      - "MULTISITE=yes"
+      - "ALLOWED_METHODS=GET|POST|HEAD|DELETE|OPTIONS"
+      - "BLACKLIST_COUNTRY=CN MO TW HK"
+      - "USE_REVERSE_PROXY=yes"
+      - "REVERSE_PROXY_URL=/"
+      - "REVERSE_PROXY_CONNECT_TIMEOUT=15m"
+      - "REVERSE_PROXY_READ_TIMEOUT=15m"
+      - "REVERSE_PROXY_SEND_TIMEOUT=15m"
+      - "USE_REAL_IP=yes"
+      - "USE_PROXY_PROTOCOL=yes"
+      - "REAL_IP_HEADER=proxy_protocol"
+      - "AUTO_LETS_ENCRYPT=yes"
+      - "LETS_ENCRYPT_CLEAR_OLD_CERTS=yes"
+      - "USE_LIMIT_REQ=no"
+      - "USE_BAD_BEHAVIOR=yes"
+      - "USE_MODSECURITY_CRS=no"
+      - "REDIS_MAXMEMORY=1024mb"
+      # Regex routing avoids Bunker's X-Forwarded-Prefix=/, which makes Adminer's cookie path //.
+    restart: "unless-stopped"
+    networks:
+      - bw-services
+    volumes:
+      - bw-storage:/data

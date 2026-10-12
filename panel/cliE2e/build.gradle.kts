@@ -40,6 +40,8 @@ tasks.register<Test>("e2eTest") {
         ":cloud:worker:buildTestDockerImage",
         ":cloud:cli:buildTestDockerImage",
         ":cloud:ws:buildTestDockerImage",
+        ":cloud:filesystem-service:buildTestDockerImage",
+        ":cloud:lucene-service:buildTestDockerImage",
         ":panel:cliApp:installDist",
     )
     systemProperty(

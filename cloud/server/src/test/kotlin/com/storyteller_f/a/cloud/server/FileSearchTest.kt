@@ -21,6 +21,19 @@ import kotlin.test.assertTrue
 
 class FileSearchTest {
     @Test
+    fun `file search matches full names and tokens`() =
+        test {
+        attachSession { session ->
+            val name = "Annual-Report.pdf"
+            upload(session.uid ob ObjectType.USER, getUploadDataFromText("report", name)).getOrThrow()
+            for (word in listOf("annual-report.pdf", "ANNUAL-REPORT.PDF", "annual", "report", "annual report")) {
+                val files = searchFiles(SearchQuery(word = word), session.uid, ObjectType.USER).getOrThrow().data
+                assertEquals(listOf(name), files.map { it.name }, word)
+            }
+        }
+    }
+
+    @Test
     fun `test search files by name`() =
         test {
         attachSession { session ->

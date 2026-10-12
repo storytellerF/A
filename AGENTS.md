@@ -64,17 +64,46 @@
 - Appium sources and runners belong to the independent `*Appium` modules under `src/appiumTest/kotlin`. They depend on built or installed application artifacts, not application implementation code.
 - Appium `appiumTest` tasks must disable Gradle up-to-date reuse so every explicit E2E invocation drives the target again.
 - Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
+- Cloud server integration tests and Appium E2E tests use PostgreSQL with dedicated filesystem RPC and Lucene RPC containers. Do not reintroduce H2, MinIO, or Elasticsearch into these test topologies.
+- Keep filesystem and Lucene RPC services business-independent. Translate business search models in backend adapters; clients download object contents directly from filesystem HTTP rather than through server.
+- Define filesystem and Lucene RPC contracts in their respective `services/*-protocol` modules. Service runtime code must not depend on `backend/core`, `shared`, or `api`; map business storage/search types in backend adapters. Keep service configuration independent of flavor env files.
+- Lucene RPC uses explicit named fields with independent indexing, storage and DocValues settings, not business JSON payloads. Do not inject fixed ID fields or expose ID-specific RPC operations; adapters declare business identifiers, queries and sort fields. Keep `Lucene*Document` conversion classes in backend adapters.
+- Gradle owns test image construction: `distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`, using the root Dockerfile. Testcontainers only starts the resulting images. Keep image tasks in the shared convention plugin, and use the QEMU skill's Docker CLI proxy on Windows rather than a separate test Dockerfile.
+- Do not reintroduce the removed H2 service or Docker target; `r2dbc-h2` supports only file and memory protocols, not the remote database topology required here.
 
 ## Additional AI Collaboration Rules
+- Deploy through `scripts/service_scripts/start-service-in-docker.sh`; compile deployment artifacts inside Docker, not on the host.
 - Make the smallest necessary changes. Prefer extending `client/core` and `api`; do not casually change public models.
-- Do not create files outside the repository. Sensitive files (`deploy/*.env`) are excluded by `.aiexclude`.
+- Do not create files outside the repository. Do not expose sensitive values from `deploy/*.env` in logs, documentation, or commits. Source-transfer archives must also exclude `dev/preset/secrets`, credential files and private-key contents; inspect the final archive before transfer and preserve Git executable modes.
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.
 - Configure shared Kotlin/JS and Wasm Yarn root extensions only in the root build; subprojects must not override lockfile locations. Keep JS and Wasm lockfiles separate under `kotlin-js-store` and regenerate the affected lockfile after npm dependency changes.
 - Keep existing tests compatible. If tests must be updated, explain the migration reason and steps.
 - Save knowledge learned while coding or scanning the project to `project.md`. Edit outdated or incorrect knowledge there when found.
 - Save rule-related knowledge learned while coding or scanning the project to this file.
 
+- Android KMP device tests must include `commonTest` when exercising shared Compose tests and declare their test-only host activity in `src/androidDeviceTest/AndroidManifest.xml`. Keep the device awake during UI testing and restore temporary power settings before releasing its lease.
+
 ## Troubleshooting Quick Reference
 - Network errors: check `client/core/*Request.kt` `serviceCatching` logs and `AdminApi`/`CustomApi` routes.
 - Paging errors: check how `RemoteKeyStorage`/`RemoteKeyRoomStorage` saves and reads cursors.
 - Data not persisted: check `*RoomStorage.save`/`observeData` implementations and `commonJson` serialization.
+
+- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data.
+- Linux Appium element handles must retain stable AT-SPI object paths. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target. Text input must pass and resolve the saved object path directly; never reselect by result index or fall back to another editable control.
+- Shared Wasm browser test configuration belongs to the wasm-browser-test-interop convention. A later useKarma call replaces the framework configuration, so do not override it in consuming modules; track loader files as task inputs and preserve the configuration cache.
+
+- JUnit host test initialization bases must be abstract so test discovery does not run the base itself. Keep the two conflicting Detekt abstract-class rule exceptions scoped to PlatformHeadlessTest files.
+
+- Diagnose QEMU forwarding with guest/host application probes and the installed binary's polling capacity. Listener binding or successful TCP connect alone does not prove forwarding; do not report SSH bridging as a fix for direct-forward failures.
+- For intermittent connection-refused/reset failures, compare guest health with concurrent host connection probes. Serial health or passing focused reruns alone does not establish cross-test state interference; distinguish per-listener backlog from total polling capacity.
+
+- The QEMU plugin now uses verified upstream gvproxy over loopback TCP. Keep Docker automatic publish ranges aligned with explicit gvproxy rules, use gvproxy DNS for guest/containers, and coordinate both processes during recovery. Confirm the shared VM is idle before migration/restart. Never use SSH networking bridges, diagnostic DLL replacement, added connection retries, skipped tests or relaxed timeouts as a permanent forwarding fix.
+
+- Preserve Git executable modes when copying Windows sources into an isolated Linux test checkout; ordinary Windows archive metadata can remove launcher execution permissions.
+- Keep Android test app shutdown and reverse-port replacement in the fixture order documented in DEVELOPMENT.md; noReset must not leave an old app requesting removed host targets.
+
+- Run unattended Linux desktop E2E through the isolated display runner documented in DEVELOPMENT.md. Do not use a zero-size/disconnected Xwayland session or change render settings, retries, skips, or timeouts to hide an unresponsive accessibility tree.
+
+- Resumable upload sessions require real SHA256 and CRC32C values. Keep generic file-operation quota locks separate; never fill required digest fields with dummy values. OSS compose owns backend-specific verification; follow DEVELOPMENT.md for MinIO's verified-source CRC32C combination and filesystem's streaming SHA256 check.
+
+- RPC adapters acquire a valid connection once per business operation. Pin upload/download sequences to that proxy, preserve caller cancellation, and never automatically replay failed operations. Recovery tests must reuse the same adapter across independent service restarts.

@@ -2,13 +2,16 @@ services:
   worker:
     build:
       context: ../../
-      dockerfile: worker.Dockerfile
+      target: worker
       args:
         BUILD_ON: ${BUILD_ON}
     restart: unless-stopped
+    environment:
+      LOG_PATH: /home/app/logs/worker
     env_file:
-      - ../../deploy/${FLAVOR}.env
+      - ${APP_ENV_FILE:-../../deploy/${FLAVOR}.env}
     volumes:
+      - service-logs:/home/app/logs
       - worker-home:/home/app
 
 volumes:

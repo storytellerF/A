@@ -72,6 +72,11 @@ object DesktopAppiumFailureDumper {
     }
 
     private fun findDesktopAppPid(sessionFile: File): Long? {
+        val pidFile = File("${sessionFile.canonicalPath}.pid")
+        if (pidFile.isFile) {
+            return pidFile.readText().trim().toLongOrNull()
+                ?.takeIf { ProcessHandle.of(it).map(ProcessHandle::isAlive).orElse(false) }
+        }
         val marker = "-Dappium.session.file=${sessionFile.canonicalPath}"
         return ProcessHandle.allProcesses()
             .filter { process ->

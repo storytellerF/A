@@ -6,7 +6,7 @@ package com.storyteller_f.a.client.compose_core.utils
 
 import androidx.compose.ui.Modifier
 
-/** Native no-op implementation of [appiumSemantics]. */
+/** Native accessibility adaptation of [appiumSemantics]. */
 @Suppress("LibraryEntitiesShouldNotBePublic", "LongParameterList")
 actual fun Modifier.appiumSemantics(
     testTag: String?,
@@ -16,4 +16,11 @@ actual fun Modifier.appiumSemantics(
     inputValue: String?,
     onInputValueChange: ((String) -> Unit)?,
     onClick: (() -> Unit)?,
-): Modifier = this
+): Modifier = nativeAppiumSemantics(testTag, description, text, onClick)
+
+internal expect fun Modifier.nativeAppiumSemantics(
+    tag: String?,
+    description: String?,
+    label: String?,
+    click: (() -> Unit)?,
+): Modifier

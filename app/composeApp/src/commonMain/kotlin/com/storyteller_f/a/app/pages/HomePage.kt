@@ -36,7 +36,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -85,6 +84,7 @@ import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
 import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SignInButton
+import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -95,7 +95,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage() {
-    val size = calculateWindowSizeClass()
+    val size = CurrentWindowSizeClass()
     val homeStartDestination by rememberStringPreference(
         HOME_START_DESTINATION_PREFERENCE_KEY,
         HOME_START_DESTINATION_WORLD,

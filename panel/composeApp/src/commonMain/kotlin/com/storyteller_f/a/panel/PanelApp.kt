@@ -45,7 +45,6 @@ import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneSt
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -75,6 +74,7 @@ import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalDialog
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
+import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
@@ -200,7 +200,7 @@ private fun PanelNavigationDrawer(
     drawerContent: @Composable (permanent: Boolean) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val windowSizeClass = calculateWindowSizeClass()
+    val windowSizeClass = CurrentWindowSizeClass()
     val usePermanentDrawer = windowSizeClass.widthSizeClass != WindowWidthSizeClass.Compact
     if (usePermanentDrawer) {
         PermanentNavigationDrawer(

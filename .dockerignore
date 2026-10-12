@@ -7,10 +7,13 @@ android-llama-cpp
 deploy
 !deploy/build/**
 local.properties
-.gradle
+**/.gradle
 **/iosApp/**
-.kotlin
+**/.kotlin
 .idea
 *.hprof
 dev/logs
 dev/reports
+
+# Exclude private test key material from deployment build contexts.
+dev/preset/secrets

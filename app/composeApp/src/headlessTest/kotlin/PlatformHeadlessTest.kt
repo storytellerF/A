@@ -4,4 +4,4 @@
 
 package com.storyteller_f.a.app
 
-expect open class PlatformHeadlessTest()
+expect abstract class PlatformHeadlessTest()

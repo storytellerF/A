@@ -37,6 +37,9 @@ import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.LocalDateTime
@@ -329,17 +332,24 @@ private suspend fun TestMate.runRtcCalls(
     vararg users: SessionOuterTuple<*>,
 ): CopyOnWriteArrayList<RoomFrame> {
     val list = CopyOnWriteArrayList<RoomFrame>()
+    val answeredPairs = MutableStateFlow(emptySet<Set<PrimaryKey>>())
+    val expectedPairs = users.size * (users.size - 1) / 2
     coroutineScope {
         users.forEach { tuple ->
             launch {
                 loginSession(tuple, { frame, _, session ->
                     list.add(frame)
+                    if (frame is RoomFrame.RespondAnswer && frame.roomId == roomId) {
+                        answeredPairs.update { it + setOf(setOf(tuple.uid, frame.uid)) }
+                    }
                     processRTCMessage(frame, session)
                 }) {
                     waitAndSend {
                         sendFrame(RoomFrame.StartCall(roomId))
                     }
-                    waitRTCAnswerCount(list, 3)
+                    // Duplicate answer messages do not imply every peer pair has negotiated.
+                    // Keep all sockets alive until the three distinct pairs are complete.
+                    withTimeout(30.seconds) { answeredPairs.first { it.size == expectedPairs } }
                 }
             }
         }

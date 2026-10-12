@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.PresignContext
 import com.storyteller_f.a.backend.core.service.UploadPack
 import com.storyteller_f.shared.utils.cancellableRunCatching
+import com.storyteller_f.shared.utils.combineCrc32c
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
@@ -137,13 +138,17 @@ class MinIoObjectStorageService(private val connection: MinIoConnection, private
                 }
                 uploadPacks.map { uploadPack ->
                     val resp =
-                        uploadObject(
-                            UploadObjectArgs.builder()
-                                .bucket(bucketName)
-                                .`object`(uploadPack.fullName)
-                                .filename(uploadPack.file.absolutePath)
-                                .build(),
-                        )
+                        uploadPack.file.inputStream().buffered().use { input ->
+                            putObject(
+                                PutObjectArgs.builder()
+                                    .bucket(bucketName)
+                                    .`object`(uploadPack.fullName)
+                                    .stream(input, uploadPack.size, -1)
+                                    .checksum(Checksum.Algorithm.CRC32C)
+                                    .extraHeaders(mapOf("x-amz-checksum-type" to "FULL_OBJECT"))
+                                    .build(),
+                            )
+                        }
                     ObjectStorageWriteRecord(resp.`object`())
                 }
             }
@@ -154,24 +159,34 @@ class MinIoObjectStorageService(private val connection: MinIoConnection, private
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>,
+        expectedSha256: String,
+        expectedCrc32c: String,
     ): Result<ObjectStorageWriteRecord> =
         useMinIoClient(connection) {
         if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
             makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
         }
+        var crc32c = "AAAAAA=="
         val sources =
-            sourceFullNames.map {
-                SourceObject.builder()
-                    .bucket(bucketName)
-                    .`object`(it)
-                    .build()
+            sourceFullNames.map { name ->
+                val metadata =
+                    statObject(
+                        StatObjectArgs.builder().bucket(bucketName).`object`(name)
+                            .extraHeaders(mapOf("x-amz-checksum-mode" to "ENABLED")).build(),
+                    )
+                check(metadata.headers()["x-amz-checksum-type"] == "FULL_OBJECT") { "full object checksum missing" }
+                val sourceChecksum =
+                    metadata.headers()["x-amz-checksum-crc32c"]
+                        ?: error("source crc32c missing")
+                crc32c = combineCrc32c(crc32c, sourceChecksum, metadata.size())
+                SourceObject.builder().bucket(bucketName).`object`(name).matchETag(metadata.etag()).build()
             }
+        check(crc32c == expectedCrc32c) { "file crc32c mismatch" }
+        // MinIO multipart-copy does not feed its checksum reader. Combine verified
+        // source CRCs instead, and pin each source's ETag so the checked bytes cannot change.
+        // https://github.com/minio/minio/blob/master/cmd/object-multipart-handlers.go
         composeObject(
-            ComposeObjectArgs.builder()
-                .bucket(bucketName)
-                .`object`(targetFullName)
-                .sources(sources)
-                .build(),
+            ComposeObjectArgs.builder().bucket(bucketName).`object`(targetFullName).sources(sources).build(),
         )
         ObjectStorageWriteRecord(targetFullName)
     }

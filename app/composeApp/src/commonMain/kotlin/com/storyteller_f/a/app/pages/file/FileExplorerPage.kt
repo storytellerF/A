@@ -46,7 +46,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
-import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -101,6 +100,7 @@ import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.shared.model.FileInfo
@@ -129,7 +129,7 @@ import kotlin.math.round
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun FileExplorerPage(mediaTarget: ObjectTuple) {
-    val size = calculateWindowSizeClass()
+    val size = CurrentWindowSizeClass()
     when (size.widthSizeClass) {
         WindowWidthSizeClass.Compact -> FileExplorerCompatPageInternal(mediaTarget)
         else -> FileExplorerNonCompatPageInternal(mediaTarget)

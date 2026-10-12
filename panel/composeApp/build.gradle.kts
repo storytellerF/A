@@ -36,8 +36,13 @@ kotlin {
         androidResources {
             enable = true
         }
+        packaging {
+            resources.merges.add("META-INF/LICENSE.md")
+        }
         withHostTest { }
-        withDeviceTest { }
+        withDeviceTest {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
     }
     if (buildIosTarget) {
         listOf(
@@ -61,6 +66,7 @@ kotlin {
 
         @OptIn(ExperimentalWasmDsl::class)
         wasmJs {
+            binaries.executable()
             browser()
         }
     }
@@ -102,6 +108,7 @@ kotlin {
             dependsOn(headlessTest)
         }
         getByName("androidDeviceTest") {
+            dependsOn(commonTest.get())
             dependencies {
                 implementation(libs.androidx.ui.test.junit4.android)
             }
@@ -205,7 +212,9 @@ buildkonfig {
                 }
             }
         }
-    val serverUrl = properties["SERVER_URL"] as? String
+    val serverUrl =
+        providers.gradleProperty("app.server.url").orNull
+            ?: properties["SERVER_URL"] as? String
     defaultConfigs {
         buildConfigField(STRING, "SERVER_URL", serverUrl ?: "", const = true)
         buildConfigField(STRING, "BUILD_TYPE", buildType, const = true)

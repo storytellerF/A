@@ -8,8 +8,8 @@ abstract class MergeServicesTask : DefaultTask() {
     @OutputDirectory
     lateinit var output: File
 
-    @InputFiles
-    lateinit var runtimeClasspath: List<File>
+    @get:Classpath
+    abstract val runtimeClasspath: ConfigurableFileCollection
 
     init {
         group = "build"
@@ -74,7 +74,7 @@ abstract class MergeServicesTask : DefaultTask() {
 
 tasks.register<MergeServicesTask>("mergeServiceFiles") {
     output = project.layout.buildDirectory.dir("merged/services").get().asFile
-    runtimeClasspath = project.configurations.getByName("runtimeClasspath").files.toList()
+    runtimeClasspath.from(project.configurations.named("runtimeClasspath"))
 }
 
 sourceSets {
