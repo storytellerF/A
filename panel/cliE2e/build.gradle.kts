@@ -48,5 +48,5 @@ tasks.register<Test>("e2eTest") {
         "panel.cli.app.install.dir",
         project(":panel:cliApp").layout.buildDirectory.dir("install/cliApp").get().asFile.absolutePath,
     )
-    maxParallelForks = 1
+    maxParallelForks = gradle.startParameter.maxWorkerCount
 }

@@ -1,0 +1,20 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+val platform = when (project.name) {
+    "androidAppium" -> "android"
+    "desktopAppium" -> "desktop"
+    "wasmAppium" -> "browser"
+    else -> error("Unsupported Appium runner: ${project.path}")
+}
+val platformTestService = gradle.sharedServices.registerIfAbsent(
+    "appium-$platform", AppiumTestBuildService::class,
+) {
+    maxParallelUsages = 1
+}
+
+tasks.withType<Test>().matching { it.name == "appiumTest" }.configureEach {
+    usesService(platformTestService)
+    maxParallelForks = 1
+}

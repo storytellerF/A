@@ -18,6 +18,9 @@ printf '%s\n' \
   'if [ -n "${BUILD_AND_TEST_MARKER:-}" ]; then' \
   '  printf "%s\n" "$*" >> "$BUILD_AND_TEST_MARKER"' \
   'fi' \
+  'case "$*" in' \
+  '  *:app:androidAppium:appiumTest*) exit "${BUILD_AND_TEST_APPIUM_EXIT:-0}" ;;' \
+  'esac' \
   > "$test_directory/gradlew"
 chmod +x "$test_directory/gradlew"
 
@@ -109,18 +112,6 @@ chmod +x "$test_directory/adb"
     ./scripts/test_scripts/build-and-test.sh --e2e --plain
 )
 
-expected_e2e_arguments=$(printf '%s\n' \
-  'COUNT=3' \
-  ':app:cliE2e:e2eTest' \
-  ':panel:cliE2e:e2eTest' \
-  '--console=plain')
-actual_e2e_arguments=$(sed -n '1,$p' "$argument_log")
-
-if [ "$actual_e2e_arguments" != "$expected_e2e_arguments" ]; then
-  echo "Unexpected CLI E2E Gradle arguments:"
-  printf '%s\n' "$actual_e2e_arguments"
-  exit 1
-fi
 
 for appium_task in \
   :app:androidAppium:appiumTest \
@@ -128,10 +119,67 @@ for appium_task in \
   :app:wasmAppium:appiumTest \
   :panel:androidAppium:appiumTest \
   :panel:desktopAppium:appiumTest \
-  :panel:wasmAppium:appiumTest
+  :panel:wasmAppium:appiumTest \
+  :app:cliE2e:e2eTest \
+  :panel:cliE2e:e2eTest
 do
   if ! grep -q "$appium_task" "$test_directory/e2e-gradle-tasks.log"; then
     echo "--e2e did not run $appium_task"
     exit 1
   fi
 done
+
+expected_appium_call=":app:androidAppium:appiumTest :app:desktopAppium:appiumTest :app:wasmAppium:appiumTest :panel:androidAppium:appiumTest :panel:desktopAppium:appiumTest :panel:wasmAppium:appiumTest :app:cliE2e:e2eTest :panel:cliE2e:e2eTest --continue --console=plain"
+actual_appium_call=$(sed -n '2p' "$test_directory/e2e-gradle-tasks.log")
+[ "$actual_appium_call" = "$expected_appium_call" ] || {
+  echo "All E2E targets must share one Gradle invocation with --continue"
+  exit 1
+}
+[ "$(wc -l < "$test_directory/e2e-gradle-tasks.log" | tr -d ' ')" = 2 ]
+
+filtered_marker="$test_directory/filtered-e2e.log"
+(
+  cd "$test_directory"
+  PATH="$test_directory:$PATH" \
+    BUILD_AND_TEST_LOG="$argument_log" \
+    BUILD_AND_TEST_MARKER="$filtered_marker" \
+    ./scripts/test_scripts/build-and-test.sh --e2e --tests 'com.example.*Test' --plain
+)
+filtered_appium_call=$(sed -n '2p' "$filtered_marker")
+expected_filtered_call=""
+for appium_task in \
+  :app:androidAppium:appiumTest \
+  :app:desktopAppium:appiumTest \
+  :app:wasmAppium:appiumTest \
+  :panel:androidAppium:appiumTest \
+  :panel:desktopAppium:appiumTest \
+  :panel:wasmAppium:appiumTest \
+  :app:cliE2e:e2eTest \
+  :panel:cliE2e:e2eTest
+do
+  expected_filtered_call="${expected_filtered_call}${appium_task} --tests com.example.*Test "
+done
+expected_filtered_call="${expected_filtered_call}--continue --console=plain"
+[ "$filtered_appium_call" = "$expected_filtered_call" ] || {
+  echo "Test filters must follow every E2E target"
+  exit 1
+}
+
+failure_marker="$test_directory/failed-e2e.log"
+failure_exit=0
+(
+  cd "$test_directory"
+  PATH="$test_directory:$PATH" \
+    BUILD_AND_TEST_LOG="$argument_log" \
+    BUILD_AND_TEST_MARKER="$failure_marker" \
+    BUILD_AND_TEST_APPIUM_EXIT=7 \
+    ./scripts/test_scripts/build-and-test.sh --e2e --plain
+) || failure_exit=$?
+[ "$failure_exit" = 7 ] || {
+  echo "Appium failure status must be preserved"
+  exit 1
+}
+[ "$(wc -l < "$failure_marker" | tr -d ' ')" = 2 ] || {
+  echo "All eight E2E targets must share the same invocation, including on failure"
+  exit 1
+}

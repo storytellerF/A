@@ -68,10 +68,22 @@ runGradleWithTests() {
       *f*) restore_globbing=false ;;
       *) restore_globbing=true; set -f ;;
     esac
-    IFS='
+    arguments_initialized=false
+    for gradle_argument do
+      if [ "$arguments_initialized" = false ]; then
+        set --
+        arguments_initialized=true
+      fi
+      set -- "$@" "$gradle_argument"
+      case "$gradle_argument" in
+        --*) continue ;;
+      esac
+      IFS='
 '
-    for test_filter in $TEST_FILTERS; do
-      set -- "$@" --tests "$test_filter"
+      for test_filter in $TEST_FILTERS; do
+        set -- "$@" --tests "$test_filter"
+      done
+      IFS=$original_ifs
     done
     IFS=$original_ifs
     [ "$restore_globbing" = true ] && set +f
@@ -204,32 +216,24 @@ fi
 
 # Running End-to-End Tests
 if [ "$RUN_E2E" = true ]; then
-    echo "Running Appium End-to-End Tests..."
+    echo "Running Appium and CLI End-to-End Tests..."
     rm -rf ./app/androidAppium/build/test/appium/sessions
     rm -rf ./app/desktopAppium/build/test/appium/sessions
     rm -rf ./panel/androidAppium/build/test/appium/sessions
     rm -rf ./panel/desktopAppium/build/test/appium/sessions
-    appium_exit=0
-    for appium_task in \
+    rm -rf ./app/cliE2e/build/test/e2e/sessions
+    rm -rf ./panel/cliE2e/build/test/e2e/sessions
+    runGradleWithTests \
         :app:androidAppium:appiumTest \
         :app:desktopAppium:appiumTest \
         :app:wasmAppium:appiumTest \
         :panel:androidAppium:appiumTest \
         :panel:desktopAppium:appiumTest \
-        :panel:wasmAppium:appiumTest
-    do
-        runGradleWithTests "$appium_task" || appium_exit=$?
-    done
-    if [ "$appium_exit" -ne 0 ]; then
-        exit "$appium_exit"
-    fi
+        :panel:wasmAppium:appiumTest \
+        :app:cliE2e:e2eTest \
+        :panel:cliE2e:e2eTest \
+        --continue
 fi
 
-if [ "$RUN_E2E" = true ]; then
-    echo "Running CLI End-to-End Tests..."
-    rm -rf ./app/cliE2e/build/test/e2e/sessions
-    rm -rf ./panel/cliE2e/build/test/e2e/sessions
-    runGradleWithTests :app:cliE2e:e2eTest :panel:cliE2e:e2eTest
-fi
 #./gradlew :composeApp:wasmJsTest
 #./gradlew :composeApp:iosSimulatorArm64Test

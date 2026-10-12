@@ -11,6 +11,31 @@ if [[ ${1:-} != --desktop-session ]]; then
 fi
 shift
 
+test_args=()
+gradle_args=()
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --tests)
+            [[ $# -ge 2 && -n "$2" && "$2" != --* ]] || { echo '--tests requires a pattern.' >&2; exit 1; }
+            test_args+=("$1" "$2")
+            shift 2
+            ;;
+        --tests=*)
+            [[ -n "${1#*=}" ]] || { echo '--tests requires a pattern.' >&2; exit 1; }
+            test_args+=("$1")
+            shift
+            ;;
+        --debug-jvm|--no-debug-jvm|--test-dry-run|--no-test-dry-run|--fail-fast|--no-fail-fast|--rerun)
+            test_args+=("$1")
+            shift
+            ;;
+        *)
+            gradle_args+=("$1")
+            shift
+            ;;
+    esac
+done
+
 for command in Xvfb openbox xdpyinfo xprop appium curl; do
     command -v "$command" >/dev/null || { echo "Missing desktop dependency: $command" >&2; exit 1; }
 done
@@ -61,8 +86,8 @@ for ((i=0; i<100; i++)); do
 done
 curl -sf "$APPIUM_DESKTOP_SERVER_URL/status" >/dev/null || { echo 'Appium did not become ready.' >&2; exit 1; }
 
-# Separate invocations guarantee one desktop target at a time, including on failure.
-result=0
-./gradlew :app:desktopAppium:appiumTest --console=plain "$@" || result=$?
-./gradlew :panel:desktopAppium:appiumTest --console=plain "$@" || result=$?
-exit "$result"
+# The platform BuildService serializes desktop tests; continue after either suite fails.
+./gradlew \
+    :app:desktopAppium:appiumTest "${test_args[@]}" \
+    :panel:desktopAppium:appiumTest "${test_args[@]}" \
+    --continue --console=plain "${gradle_args[@]}"

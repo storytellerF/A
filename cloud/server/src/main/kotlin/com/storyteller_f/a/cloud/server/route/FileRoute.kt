@@ -87,9 +87,8 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
 
     val userHome = System.getProperty("user.home")
     val root = File(userHome, "a-temp")
-    if (!root.exists() && !root.mkdir()) {
-        error("create a-temp failed")
-    }
+    root.mkdirs()
+    check(root.isDirectory) { "create a-temp failed" }
 
     CustomApi.Files.Id.extractAlbum(handleResult(backend)) { p, _ ->
         usePrincipal { uid ->
@@ -325,9 +324,9 @@ private suspend fun Backend.uploadFilesFromChannel(
     provider: () -> ByteReadChannel,
 ): List<FileInfo> {
     val newSavedName = newFileName(fileName)
-    val file = File(root, "$newSavedName.tmp")
-    provider().copyAndClose(file.writeChannel())
+    val file = File.createTempFile("upload-", ".tmp", root)
     return try {
+        provider().copyAndClose(file.writeChannel())
         val actual = sha256(file.readChannel().readBuffer())
         if (actual != expectedSha256) {
             throw CustomBadRequestException("file hash mismatch")
@@ -359,9 +358,9 @@ suspend fun uploadChunkFromChannel(
     provider: suspend () -> ByteReadChannel,
 ) = cancellableRunCatching {
     // 写入本地临时文件以校验哈希并上传到对象存储临时桶
-    val chunkTmp = File(root, "chunk_${path.id}_${path.index}.tmp")
-    provider().copyAndClose(chunkTmp.writeChannel())
+    val chunkTmp = File.createTempFile("upload-chunk-", ".tmp", root)
     try {
+        provider().copyAndClose(chunkTmp.writeChannel())
         val actual = sha256(chunkTmp.readChannel().readBuffer())
         val expected = query.hash
         if (actual != expected) {

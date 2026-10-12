@@ -8,7 +8,7 @@ RUN apt-get update && \
 
 WORKDIR /app
 COPY . .
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
 ARG FLAVOR
 ARG BUILD_TYPE

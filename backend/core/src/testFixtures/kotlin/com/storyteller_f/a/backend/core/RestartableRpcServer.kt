@@ -56,8 +56,11 @@ class RestartableRpcServer<Service : Any>(
     }
 
     suspend fun stop() {
-        withContext(Dispatchers.IO) { server?.stop(0, 1_000) }
-        server = null
-        withTimeout(5_000) { active.first { it == 0 } }
+        withContext(Dispatchers.IO) {
+            server?.stop(0, 1_000)
+            server = null
+            // RPC shutdown completes on real dispatchers, so use a wall-clock deadline.
+            withTimeout(5_000) { active.first { it == 0 } }
+        }
     }
 }

@@ -4,6 +4,7 @@
 
 plugins {
     alias(libs.plugins.kotlinJvm)
+    id("appium-test-concurrency")
     id("desktop-appium-agent")
 }
 
@@ -48,8 +49,6 @@ tasks.register<Test>("appiumTest") {
         accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath,
     )
     jvmArgs("--add-modules", "jdk.attach")
-    mustRunAfter(":app:desktopAppium:appiumTest")
-    maxParallelForks = 1
 }
 
 tasks.withType<JavaCompile>().configureEach {

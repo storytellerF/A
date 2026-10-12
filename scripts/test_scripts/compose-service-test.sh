@@ -41,6 +41,7 @@ for arg in "$@"; do
       ;;
   esac
 done
+exit "${MOCK_DOCKER_EXIT:-0}"
 EOF
 chmod +x "$MOCK_BIN/docker"
 
@@ -227,8 +228,10 @@ assert_contains "Dockerfile" "AS server"
 assert_contains "Dockerfile" "AS worker"
 assert_contains "Dockerfile" "AS ws"
 assert_contains "Dockerfile" "AS cli"
-assert_contains "Dockerfile" "org.gradle.parallel=false"
-assert_contains "wasm.Dockerfile" "org.gradle.parallel=false"
+assert_contains "gradle.properties" "org.gradle.parallel=true"
+assert_contains "gradle.properties" "detekt.use.worker.api = false"
+assert_not_contains "Dockerfile" "org.gradle.parallel=false"
+assert_not_contains "wasm.Dockerfile" "org.gradle.parallel=false"
 assert_not_contains "wasm.Dockerfile" "--no-parallel"
 assert_not_contains "wasm.Dockerfile" "flavor_env"
 assert_not_contains "wasm.Dockerfile" 'deploy/${FLAVOR}.env'
@@ -259,13 +262,8 @@ MOCK_GRADLE_ARGS="$TMP_DIR/docker-start.gradle.args" \
 EXPECT_DOCKER_BUILD=true \
 ./scripts/service_scripts/start-service-in-docker.sh "$local_backend_flavor" > "$TMP_DIR/docker-start.stdout"
 mapfile -t docker_builds < <(grep ' build ' "$docker_start_args")
-[[ ${#docker_builds[@]} -eq 6 ]] || fail "expected six sequential backend image builds"
-[[ "${docker_builds[0]}" == *"build filesystem" ]] || fail "filesystem must build first"
-[[ "${docker_builds[1]}" == *"build lucene" ]] || fail "lucene must build second"
-[[ "${docker_builds[2]}" == *"build cli" ]] || fail "cli must build third"
-[[ "${docker_builds[3]}" == *"build worker" ]] || fail "worker must build fourth"
-[[ "${docker_builds[4]}" == *"build server" ]] || fail "server must build fifth"
-[[ "${docker_builds[5]}" == *"build ws" ]] || fail "ws must build sixth"
+[[ ${#docker_builds[@]} -eq 1 ]] || fail "expected one parallel backend build submission"
+[[ "${docker_builds[0]}" == *"build filesystem lucene cli worker server ws" ]] || fail "backend targets missing"
 assert_contains "$docker_start_args" "up -d --no-build"
 assert_not_contains "$docker_start_args" "up -d --build"
 rm -f "deploy/$local_backend_flavor.env"
@@ -285,11 +283,8 @@ BUILD_ON=local \
 ./scripts/service_scripts/start-service-in-docker.sh "$app_flavor" > "$TMP_DIR/app-start.stdout"
 assert_contains "$app_start_args" "docker-compose.app.yml"
 mapfile -t app_builds < <(grep ' build ' "$app_start_args")
-[[ ${#app_builds[@]} -eq 4 ]] || fail "expected server, ws, app-wasm and panel-wasm builds"
-[[ "${app_builds[0]}" == *"build server" ]] || fail "server must build first"
-[[ "${app_builds[1]}" == *"build ws" ]] || fail "ws must build second"
-[[ "${app_builds[2]}" == *"build app-wasm" ]] || fail "app-wasm must build third"
-[[ "${app_builds[3]}" == *"build panel-wasm" ]] || fail "panel-wasm must build fourth"
+[[ ${#app_builds[@]} -eq 1 ]] || fail "expected one parallel backend/Wasm build submission"
+[[ "${app_builds[0]}" == *"build server ws app-wasm panel-wasm" ]] || fail "app targets missing"
 assert_contains "$app_start_args" "up -d --no-build"
 if [ -s "$app_start_gradle_args" ]; then
   fail "Docker deployment must not invoke host Gradle"
@@ -342,8 +337,8 @@ assert_contains "$external_generated" "path: '$external_directory/bunker.env'"
 (cd "$external_directory" && "$ROOT_DIR/scripts/service_scripts/compose-service.sh" alpha.env false config) > "$TMP_DIR/external-relative.stdout"
 assert_contains "$external_args" "APP_ENV_FILE=$external_env"
 EXPECT_DOCKER_BUILD=true ./scripts/service_scripts/start-service-in-docker.sh "$external_env" > "$TMP_DIR/external-start.stdout"
-assert_contains "$external_args" "build app-wasm"
-assert_contains "$external_args" "build panel-wasm"
+assert_contains "$external_args" "build filesystem lucene cli worker server ws app-wasm panel-wasm"
+assert_contains "$external_args" "app-wasm panel-wasm"
 assert_contains "$external_args" "up -d --no-build"
 if ./scripts/service_scripts/compose-service.sh "$external_directory/missing.env" false config > "$TMP_DIR/missing.stdout" 2>&1; then
   fail "missing explicit environment path must fail"
@@ -353,5 +348,18 @@ if find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -n
   find deploy/docker-compose -maxdepth 1 \( -name 'docker-compose._*.yml' -o -name 'docker-compose.generated.??????.yml' \)
   fail "stale generated or underscore compose files found"
 fi
+
+failed_flavor="compose-test-failed-build"
+write_env "$failed_flavor" "pg,server"
+failed_args="$TMP_DIR/failed-build.args"
+: > "$failed_args"
+failed_exit=0
+MOCK_DOCKER_ARGS="$failed_args" \
+MOCK_GENERATED_OUT="$TMP_DIR/failed-build.generated.yml" \
+MOCK_DOCKER_EXIT=7 \
+./scripts/service_scripts/start-service-in-docker.sh "$failed_flavor" > "$TMP_DIR/failed-build.stdout" 2>&1 || failed_exit=$?
+[[ $failed_exit == 7 ]] || fail "image-build failure status must be preserved"
+assert_not_contains "$failed_args" "up -d"
+rm -f "deploy/$failed_flavor.env"
 
 echo "compose-service-test: ok"

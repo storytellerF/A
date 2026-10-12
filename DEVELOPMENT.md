@@ -13,12 +13,14 @@ The ignore rule takes effect when this configuration reaches the repository defa
 ## Backend test images
 
 Each backend service applies `test-docker-image`. Its `buildTestDockerImage` task depends on
-`copyTestDockerDistribution`, which copies the `distTar` task output to `deploy/build`.
-Integration and E2E tasks depend on the image tasks they require; ordinary assembly does not.
-Images use the root Dockerfile with `BUILD_ON=local`, so tests package host-built distributions
-without recompiling them inside Docker. Testcontainers starts these images without building them.
-The copy and image tasks share one Gradle build-service permit: context writes cannot overlap
-another image's archive, and image builds run sequentially even with parallel Gradle enabled.
+`copyTestDockerDistribution`, a Sync task preparing this module's `build/test-docker-context`.
+The context contains only its distTar output, a copy of the canonical root Dockerfile and
+necessary staging/CLI helper scripts. Preparation finishes before its image build, and other
+modules never mutate that context. Image tasks have no global build-service permit and may run concurrently.
+Integration and E2E tasks depend on the images they require; ordinary assembly does not.
+Tests select `BUILDER_STAGE=prebuilt-builder`, which only extracts the distribution and does not
+mount shared Gradle caches. The root Dockerfile defaults to `source-builder` for deployment;
+source compilation remains inside Docker with shared writable cache locks. Testcontainers only starts images.
 
 With native Docker, run Gradle normally. With QEMU on Windows, compile the QEMU skill's generic
 Docker proxy once with `build-docker-proxy.sh`, then run Gradle through `run-testcontainers.sh`.
@@ -33,8 +35,7 @@ socket, using guest MAC `5a:94:ef:e4:0c:ee`, guest `192.168.127.2`, and gateway/
 `192.168.127.1`. The plugin registers SSH, Docker API and published-port forwards
 through the loopback services API; gvproxy does not discover Docker mappings itself.
 Guest and container DNS use gvproxy directly; Unbound and forced TCP DNS are removed.
-Keep the Docker automatic range and registered same-port range consistent. The current
-Windows pool remains `20000–20015`. Recovery coordinates QEMU/gvproxy stop and start
+Keep the Docker automatic range and registered same-port range consistent. The updated AgentStart1/me.codex QEMU 0.5.0 defaults to `20000–20127` on both platforms; the persistent test guest has been migrated to that 128-port pool. Always use the active skill profile's resolved range. Recovery coordinates QEMU/gvproxy stop and start
 and re-registers rules; upstream accepts one QEMU transport connection per process.
 Do not restart a VM used by another session, add connection-failure retries, or use
 SSH networking bridges to hide direct-forward failures.
@@ -189,10 +190,10 @@ Build `:app:desktopApp:writeAppiumRuntimeClasspath` and `:panel:desktopApp:write
 For Linux desktop E2E, install `xvfb`, `openbox`, `x11-utils`, `dbus`, the Linux driver dependencies above, and Appium on PATH, then run:
 
 ```bash
-bash scripts/test_scripts/run-linux-desktop-e2e.sh --max-workers=2 -Pserver.flavor=dev -Pserver.buildType=debug
+bash scripts/test_scripts/run-linux-desktop-e2e.sh -Pserver.flavor=dev -Pserver.buildType=debug
 ```
 
-The runner owns a 1600×1000 virtual X11 display, a window manager, a separate D-Bus/AT-SPI session, and a loopback Appium server. `APPIUM_DESKTOP_PORT` selects its port (default 4727). It runs every user and panel desktop E2E sequentially, propagates failures, and stops only the processes it started. Diagnostics remain under `build/linux-desktop-e2e.*`; raw logs can contain test credentials and must be sanitized before sharing. Application rendering settings, test cases, assertions, and timeouts are unchanged.
+The runner owns a 1600×1000 virtual X11 display, a window manager, a separate D-Bus/AT-SPI session, and a loopback Appium server. `APPIUM_DESKTOP_PORT` selects its port (default 4727). It submits user and panel desktop E2E tasks in one Gradle invocation with --continue. The shared desktop BuildService serializes the suites while preparation remains parallel. Test filters and supported Test task options apply to both suites; Gradle-wide arguments apply once. It propagates failures and stops only the processes it started. Diagnostics remain under `build/linux-desktop-e2e.*`; raw logs can contain test credentials and must be sanitized before sharing. Application rendering settings, test cases, assertions, and timeouts are unchanged.
 
 Do not use a disconnected user Xwayland session for unattended testing: the display can report 0×0 while Java and the X11 window remain alive. In the diagnosed failure, repeated thread dumps found the UI thread in Skiko `swapBuffers` and ATK waiting for UI dispatch; AT-SPI subsequently stopped exposing the application. An owned display removes that dependency rather than masking missing elements. See [Skiko's rendering properties](https://github.com/JetBrains/skiko/blob/master/skiko/src/jvmMain/kotlin/org/jetbrains/skiko/SkikoProperties.kt) for the independent rendering/vsync controls used during diagnosis.
 
@@ -245,3 +246,110 @@ When a fresh Docker Wasm build rejects the lock while an incremental host build 
 Deployment browser checks must load full Wasm responses and exercise actual rendering and authenticated operations. App and panel Permissions-Policy must allow cross-origin-isolated=(self) alongside COOP/COEP. Media CORS belongs to BunkerWeb: enable USE_CORS with an app/panel origin allowlist so OPTIONS returns 204 rather than reaching the object handler and triggering bad-behavior bans.
 For configuration-only refreshes of existing Docker-built artifacts, use scripts/service_scripts/start-service-in-docker.sh <environment> --no-build. The default command still builds artifacts inside Docker.
 Panel login uses the selected signing algorithm and its encryption key when required. Supply an explicit ViewModel initializer on Wasm; its default factory cannot construct the login ViewModel. PanelInputHost accepts coordination/worker dispatchers and owns input state until its parent lifecycle ends.
+
+### Redis sign-in authentication
+
+`cloud/runtime` registers independent user and panel session providers (`user_session`, `panel_session`).
+Cookies contain random session IDs; Redis keys hash the credentials and isolate the two namespaces.
+Pending sign-in/2FA challenges last five minutes. Completing sign-in rotates the credential. Successful
+sessions have 30-day idle and 90-day absolute limits. Redis TIME and atomic Lua operations own expiry,
+activity updates and revocation; ordinary reads never renew the session. Account indexes support all-device
+revocation. Redis must use persistent, non-evicting storage; restoring an older backup can restore revoked
+sessions, so disaster recovery must invalidate restored authentication data before accepting traffic.
+
+Native GUI session storage is separate from key history and is shared by HTTP and WS. Browser cookies
+are managed by the browser rather than the Ktor in-memory jar. Client 401 handling ends the account scope
+and requires explicit login; 503/network failures retain credentials. Mutations are never automatically
+replayed. Browser Origin values must appear in `SIGNIN_ALLOWED_ORIGINS`; missing Origin is allowed for
+native clients. Production Cookies use Secure, HttpOnly and SameSite=Strict. Test/dev HTTP is explicit
+through BUILD_TYPE; production requires HTTPS/WSS and same-site browser hosting.
+
+WS rechecks Redis before each business message and every five seconds while idle; these checks do not
+renew activity, while explicit outgoing business messages do. A Redis outage closes the WS temporarily.
+The client opens WS directly with its Cookie. Only a failed handshake probes the HTTPS session endpoint
+because browser handshake errors do not expose reliable HTTP status. Policy closes invalidate local login. Persistent handshake failures stop after three attempts and expose an explicit room-input refresh action; temporary HTTPS
+failures back off to one minute. No outgoing operation is replayed.
+
+Pointer/key input is reported through authenticated activity endpoints and updates are coalesced to
+five minutes. User/panel sign-out-all endpoints delete that account's Redis sessions atomically.
+`cloud/runtime` tests use an isolated Redis container; server integration fixtures also include Redis
+alongside PostgreSQL and the filesystem/Lucene RPC services. Run client host tests with
+`./gradlew :client:core:jvmTest :client:composeCore:jvmTest -Pserver.flavor=sample -Pserver.buildType=test`.
+Run Redis regression tests with `:cloud:runtime:test` through the QEMU Testcontainers wrapper on Windows.
+
+Authenticated Appium fixtures now inject the Cookie obtained by an explicit setup login along with the
+synthetic account key. Native fixtures load that Cookie into an isolated memory jar; browser fixtures
+install it through WebDriver on the owned bootstrap origin. The Wasm distribution server starts before
+the backend so its exact origin can be allowlisted. This replaces the old saved-key auto-login assumption
+without granting a production authentication bypass.
+
+Restored account addresses and the public X-Account-Id assertion prevent a shared browser Cookie from
+silently changing the identity of an existing page. Add X-Account-Id to the gateway's CORS allowed headers
+when upgrading. The assertion is never accepted as authentication and is only sent to the API origin.
+WS carries the public expected account ID in its URL and verifies it before registering subscriptions.
+
+Explicit sign-in obtains a fresh server-generated UUID challenge through get-data. Client timestamps
+are not accepted as authentication challenges. Starting reauthentication invalidates the current role's
+session; every get-data request requires X-Requested-With: A-client, preventing ordinary browser
+navigations from issuing a pending Cookie that overwrites an existing login. Old login
+signatures cannot mint another session using a caller-chosen timestamp. Normal 401 challenges never
+invalidate a different tab's valid session merely because its expected account ID no longer matches.
+
+
+### Protected client account history
+
+SessionHistoryManager operations are suspending. Account history, including all private keys and the
+selected account, uses the protected-value expect/actual boundary also used by native Cookies. The
+Settings dependency and AndroidKeyStoreUserPass are removed. Old Settings history is neither read,
+migrated nor deleted; users import their account keys again. New protected writes are read back and
+verified before reporting success. User and panel history have separate storage keys. Do not use a saved key to silently
+reauthenticate after Redis expiry/revocation.
+
+Android encrypts records with AES-GCM and an Android Keystore key, committing ciphertext to private
+SharedPreferences `protected-data`, excluded from cloud backup and device transfer in both Android
+apps because the Keystore key cannot be transferred with it. Windows stores DPAPI ciphertext under `~/.a/protected-storage/`
+using atomic file replacement, avoiding Java Preferences' per-value size limit. macOS stores secrets
+in Keychain; Linux uses Secret Service through `secret-tool`, with bounded, cancellable subprocesses.
+Account history persistence fails if protected storage is unavailable; Cookie persistence may retain
+an in-memory login but never falls back to plaintext. Browser account records and non-extractable
+AES-GCM keys use IndexedDB. Record names are authenticated as additional data. This protects stored
+key bytes, but scripts executing in that origin can still request decryption; it does not provide the
+HttpOnly boundary of the login Cookie. HTTPS or localhost is required for WebCrypto.
+
+Run the browser storage boundary regression with
+`python scripts/test_scripts/test-browser-protected-storage.py --browser <Chromium-or-Edge-executable>`.
+It uses an isolated headless profile under build/, checking durable reads, namespacing, key export
+rejection and authenticated ciphertext modification. Client host tests also cover protected history restoration
+and preservation of saved state on failed/unverifiable writes. Existing history tests use an isolated
+protected namespace and `app.protected.storage.dir` under the module build directory, avoiding real
+account storage and Java Preferences.
+
+Sign-in proofs are atomically consumed in Redis before account creation/first-factor sign-in and after
+successful TOTP verification. First-factor and TOTP transitions rotate Cookies; concurrent replay cannot
+issue another session from one proof. Anonymous public/401 requests do not create pending Cookies,
+preventing an older background response from overwriting a freshly signed-in browser Cookie.
+
+
+Sign-in storage uses `backend/core`'s SigninSessionService / SigninSessionServiceFactory contracts and the
+same ServiceLoader registration pattern as other backend services. `backend/redis` registers the Redis
+provider under META-INF/services. `SIGNIN_SESSION_SERVICE` defaults to `redis`; unknown providers or a
+missing endpoint fail at startup. `cloud/runtime` only adapts the service to Ktor SessionStorage and
+closes the registered services when the application stops. It does not construct a Redis driver client.
+The existing service-file merge includes this provider in server/WS distributions. Regression tests
+build the registered provider, exercising registration along with the Redis storage behavior.
+
+Gradle enables parallel project execution by default. Detekt Worker API remains disabled because Detekt 2.0.0-alpha.6 starts process-isolated workers without a configurable heap, and Compose analysis exhausts that heap. Detekt runs within the 6 GB Gradle daemon instead; its internal parallel AST analysis remains enabled. Worker capacity follows Gradle defaults; ordinary compilation should not force --max-workers=1. Run compilation and auto-correcting Detekt in separate invocations. Docker builds inherit the same project settings.
+
+Remaining concurrency boundaries: Appium tasks use one test fork and platform-specific single-use Gradle build services (android, desktop, browser), serializing App and Panel tests within each platform while allowing different platforms to run concurrently in one Gradle invocation. These services do not coordinate separate Gradle processes; shared-device leases remain required; the standard --e2e runner submits six Appium and two CLI targets together in one Gradle invocation with --continue, allowing independent platforms to proceed after a test failure. Test filters are applied to every target. CLI E2E tasks use the global Gradle worker count as fork capacity; App and Panel tasks and independent test classes may run concurrently. Each currently has one class containing one scenario, so the existing suites can run at most one process per target. Test Docker images use independent immutable contexts and build concurrently. Deployment submits all selected targets in one Compose build; the standalone image helper starts its four builds concurrently and waits for all results; BuildKit sharing=locked serializes builders sharing Gradle caches. CI concurrency cancels obsolete runs for the same workflow/ref and does not limit workers inside a build. Unit-test tasks outside the reviewed host-test allowlist retain Gradle's default single fork; independent project tasks can run concurrently.
+
+Reviewed host-test tasks in api, shared, client/core, client/composeCore, client/asciidoc-parser, backend/redis, app/composeApp, panel/composeApp, cloud/service, services/lucene-protocol, cloud/filesystem-service, cloud/lucene-service, dev/appiumCore and cloud/worker use Gradle's maximum worker count as their default fork capacity, without a separate fixed cap. The reviewed container-backed test tasks in backend/core, backend/filesystem, backend/lucene, backend/minio, cloud/runtime, cloud/server and cloud/cli also use the default worker capacity. Set -PunitTest.maxParallelForks=1 (or another positive count) to override these host-test tasks. UI, other persistence and Appium tasks retain their existing fork settings; all forks remain subject to Gradle worker capacity.
+
+Wasm compilation tasks have no dedicated concurrency cap and follow the global Gradle worker budget. Six production compilation tasks explicitly rerun together passed with the 8 GB Kotlin daemon in 1m29s. Heap sampling approached capacity with substantial full-GC activity, so this validates the current six-task graph rather than arbitrary future workloads.
+
+The default Kotlin daemon maximum heap is 8 GB (gradle.properties), raised from 6 GB after observing Wasm heap pressure on a 32 GB host. This is a maximum heap, not a reservation; keep enough memory for Gradle, test forks and native tools.
+
+The Gradle daemon maximum heap is 6 GB, raised from 4 GB to give in-process Compose Detekt analysis more headroom. Kotlin daemon heap remains independently configured at 8 GB.
+
+The expanded host-test allowlist includes in-process Ktor fixtures and local Lucene/filesystem tests with unique temporary directories. App JVM tests already exclude device_based UI tests; their protected-history test is confined to one class. dev/appiumCore tests exercise bridge/capability helpers rather than Appium suites. Modules mixing ordinary tests with Docker integration (backend/core, backend/minio, backend/filesystem, backend/lucene, cloud/runtime, cloud/server and cloud/cli) now use the same worker-based fork capacity after reviewing per-container mapped ports and isolated storage. cloud/worker is also allowlisted after reviewing all five test classes: its LiteRT tests substitute backend factories and do not initialize a native engine or execute model inference; remaining tests cover client construction, JSON/configuration and scheduling/moderation logic. Fork capacity does not reserve VM resources: unrestricted container startup on the 4 GB/4 CPU test guest produced Elasticsearch readiness timeouts. A seven-module validation with -PunitTest.maxParallelForks=4 passed 106 tests; this is a per-run override, not the project default. Increasing the local test VM to 8 GB subsequently passed the same 106-test selection with the default 28 workers and no fork override; guest memory peaked at 6290 MiB. To reproduce that resource setup, copy the installed skill dev.profile into an untracked local profile, set VM_MEMORY=8192, and pass that profile to lifecycle scripts and run-testcontainers.sh with --profile. Keep Docker and gvproxy port ranges aligned. client/kotbase and client/sqlite-now are not included in settings.gradle.kts.
+
+Signin lifecycle regression coverage is in cloud/runtime RedisSessionStorageTest and cloud/server SigninLifecycleTest. The latter uses the existing PostgreSQL/Redis/filesystem/Lucene fixtures and checks real HTTP/WS cookie sharing, policy-close after revocation and panel session restore/revoke. Administrator signup must issue the success Cookie immediately; signout is idempotent after expiry, while signout-all requires an authenticated account.

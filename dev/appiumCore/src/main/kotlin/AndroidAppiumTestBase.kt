@@ -56,7 +56,13 @@ suspend fun useLightweightBackendContainers(network: Network, block: suspend (Ge
                 waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
             }.use { lucene ->
                 lucene.start()
-                block(filesystem)
+                GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+                    withNetwork(network)
+                    withNetworkAliases("signin-redis")
+                }.use { redis ->
+                    redis.start()
+                    block(filesystem)
+                }
             }
         }
     }
@@ -202,6 +208,7 @@ fun buildContainerEnv(): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
     return envFromFile - "LOG_PATH" +
         mapOf(
+            "SIGNIN_REDIS_ENDPOINT" to "signin-redis:6379",
             "BUILD_TYPE" to "test",
             "FLAVOR" to "dev",
             "SERVER_PORT" to "8811",

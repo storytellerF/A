@@ -20,6 +20,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.cookies
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
@@ -131,7 +132,10 @@ class AppAppiumHelper : TargetAppiumHelper() {
         val passHolder = SimplePassHolder()
         val manager = createApiSessionManager(ports, passHolder)
         manager.userSignUp(session.toAuthKey(), passHolder)
-        return AuthenticatedSession(session, manager)
+        return AuthenticatedSession(
+            session.copy(cookies = manager.client.cookies("http://127.0.0.1:${ports.server}")),
+            manager,
+        )
     }
 
     private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): UserSessionManager =
@@ -144,7 +148,6 @@ class AppAppiumHelper : TargetAppiumHelper() {
                     defaultClientConfigure(
                         cookieStorage,
                         model,
-                        passHolder,
                         "http://127.0.0.1:${ports.server}",
                     )
                 }
@@ -204,7 +207,6 @@ class PanelAppiumHelper : TargetAppiumHelper() {
                 defaultClientConfigureForPanel(
                     cookieStorage,
                     model,
-                    passHolder,
                     "http://127.0.0.1:${ports.server}",
                 )
             }

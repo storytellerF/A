@@ -107,3 +107,25 @@
 - Resumable upload sessions require real SHA256 and CRC32C values. Keep generic file-operation quota locks separate; never fill required digest fields with dummy values. OSS compose owns backend-specific verification; follow DEVELOPMENT.md for MinIO's verified-source CRC32C combination and filesystem's streaming SHA256 check.
 
 - RPC adapters acquire a valid connection once per business operation. Pin upload/download sequences to that proxy, preserve caller cancellation, and never automatically replay failed operations. Recovery tests must reuse the same adapter across independent service restarts.
+
+- Authentication uses Redis-backed opaque Cookie sessions. Never restore revoked/expired sessions by silently
+  signing in with saved keys, replay mutations, or renew activity from background polling/WS heartbeats.
+  Keep user and panel session namespaces separate and use protected native Cookie storage.
+
+- Persist GUI private keys/account history through the protected-value boundary. Do not read or migrate old
+  Settings history; new records must verify encrypted writes before reporting success. Never
+  downgrade to plaintext when an OS secret store is unavailable. Browser private-key encryption does not
+  replace the HttpOnly Cookie boundary. Run Windows Detekt separately from compilation, with one worker.
+
+- Provide sign-in storage through backend/core's SigninSessionServiceFactory registration. Keep driver
+  dependencies and the Redis implementation in backend/redis; cloud/runtime owns only the Ktor adapter.
+
+- Keep host-test fork increases scoped to the reviewed allowlist in root build.gradle.kts. Preserve shared-device/desktop serialization. Test image contexts must be isolated per module and immutable during each build; keep source-build shared writable cache locks. Detekt 2.0.0-alpha.6 Worker API cannot configure its process heap and fails Compose analysis; keep it disabled until that upstream limitation is resolved.
+
+- Before expanding host-test concurrency, verify temporary paths, ports and persistent namespaces are isolated. A module with a pure test and Docker/native-model integration tests is not a pure-test module; do not expand its entire test task without reviewing those fixtures. Inactive modules excluded by settings.gradle.kts do not need concurrency configuration.
+
+- Compare build concurrency using the same explicit tasks and rerun/cache policy. Two-module compilation, six-module compilation and full assemble timings are different workloads and cannot establish a parallelism speedup or regression.
+
+- Verify VM state with sufficient read permissions before concluding it is stopped; sandbox probes can report inaccessible services. When applying skill templates to a legacy idle guest, normalize generated Linux scripts to LF and preserve the default Docker publish pool while restoring disjoint outbound ports. Never infer published plugin versions from a dirty local checkout; check the configured marketplace origin and branch.
+
+- Create upload and chunk staging files atomically with unique names per request; client filenames and upload IDs are not unique across processes. Keep body reception inside the cleanup boundary. Real RPC shutdown waits invoked from runTest must use a real dispatcher so virtual time cannot expire before IO completes; preserve the existing timeout duration.

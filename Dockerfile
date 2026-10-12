@@ -1,13 +1,15 @@
 # syntax=docker/dockerfile:1.7
 
-FROM eclipse-temurin:21-alpine AS builder
+ARG BUILDER_STAGE=source-builder
+
+FROM eclipse-temurin:21-alpine AS source-builder
 
 RUN apk add --no-cache bash curl
 
 WORKDIR /app
 COPY . .
 ENV HOST_TYPE=docker
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false"
 
 ARG BUILD_ON
 
@@ -21,13 +23,14 @@ RUN --mount=type=cache,id=cloud-gradle-alpine,target=/root/.gradle,sharing=locke
     --mount=type=cache,id=cloud-lucene-service-build,target=/app/cloud/lucene-service/build \
     ./scripts/build_scripts/build-on-condition.sh "$BUILD_ON" \
     "./scripts/build_scripts/build-cloud.sh" && \
-    for service in server worker ws cli filesystem-service lucene-service; do \
-        archive="deploy/build/$service.tar"; \
-        if [ -f "$archive" ]; then \
-            mkdir -p "deploy/staged/$service"; \
-            tar -xf "$archive" --strip-components=1 -C "deploy/staged/$service"; \
-        fi; \
-    done
+    sh scripts/build_scripts/stage-distributions.sh
+
+FROM eclipse-temurin:21-alpine AS prebuilt-builder
+WORKDIR /app
+COPY . .
+RUN sh scripts/build_scripts/stage-distributions.sh
+
+FROM ${BUILDER_STAGE} AS builder
 
 FROM eclipse-temurin:21-alpine AS server
 

@@ -30,8 +30,7 @@ has_profile() {
   return 1
 }
 
-# Build one image at a time. Gradle and Wasm builders are both memory-heavy,
-# and Compose otherwise builds independent services concurrently.
+# Submit all targets together so BuildKit can reuse their common builder stages.
 BUILD_SERVICES=()
 for service in filesystem lucene cli worker server ws minio; do
   if has_profile "$service" || { [[ "$service" == "ws" ]] && has_profile server; }; then
@@ -42,9 +41,8 @@ if has_profile app; then
   BUILD_SERVICES+=(app-wasm panel-wasm)
 fi
 
-for service in "${BUILD_SERVICES[@]}"; do
-  echo "build $service"
-  ./scripts/service_scripts/compose-service.sh "$ENV_FILE" false "build $service"
-done
+if [[ ${#BUILD_SERVICES[@]} -gt 0 ]]; then
+  ./scripts/service_scripts/compose-service.sh "$ENV_FILE" false "build ${BUILD_SERVICES[*]}"
+fi
 
 ./scripts/service_scripts/compose-service.sh "$ENV_FILE" false 'up -d --no-build'
