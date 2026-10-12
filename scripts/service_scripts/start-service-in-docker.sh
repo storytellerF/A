@@ -4,6 +4,15 @@ set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/service-env.sh"
 resolve_service_env "${1:-}"
 cd "$SERVICE_PROJECT_ROOT"
+# Configuration-only refresh keeps existing Docker-built artifacts.
+case "${2:-}" in
+  --no-build)
+    ./scripts/service_scripts/compose-service.sh "$ENV_FILE" false 'up -d --no-build'
+    exit 0
+    ;;
+  '') ;;
+  *) echo "Unknown option: $2" >&2; exit 1 ;;
+esac
 
 echo "build and start in Docker"
 export BUILD_ON=docker
