@@ -103,7 +103,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         prepareSessionDirectories(hostSessionPath)
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            useLightweightBackendContainers(network) { filesystem ->
+            useLightweightBackendContainers(network) { filesystem, _ ->
                 bindAndroidReverse(hostPort = filesystem.getMappedPort(8822), devicePort = 8822)
                 val commonEnv = buildContainerEnv() + ("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
                 useCliInitContainer(network, commonEnv, hostSessionPath) {

@@ -23,13 +23,16 @@ private const val POSTGRES_DATABASE = "a"
 private const val POSTGRES_USER = "a"
 private const val POSTGRES_PASSWORD = "a-test"
 
-data class AppiumPorts(val server: Int, val ws: Int)
+data class AppiumPorts(val server: Int, val ws: Int, val expireUserSessions: (() -> Unit)? = null)
 
 data class AuthenticatedSession(val session: InjectedSession, val sessionManager: UserSessionManager)
 
 data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useLightweightBackendContainers(network: Network, block: suspend (GenericContainer<*>) -> Unit) {
+suspend fun useLightweightBackendContainers(
+    network: Network,
+    block: suspend (GenericContainer<*>, GenericContainer<*>) -> Unit,
+) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
         withNetwork(network)
         withNetworkAliases("appium-postgresql")
@@ -61,7 +64,7 @@ suspend fun useLightweightBackendContainers(network: Network, block: suspend (Ge
                     withNetworkAliases("signin-redis")
                 }.use { redis ->
                     redis.start()
-                    block(filesystem)
+                    block(filesystem, redis)
                 }
             }
         }

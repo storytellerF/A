@@ -18,6 +18,8 @@ import java.time.Duration
 
 /** Drives Compose/Wasm through its transparent Appium-only HTML semantics overlay. */
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
+    internal fun socketProbe() = WasmSocketProbe(browser)
+
     private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
 
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))

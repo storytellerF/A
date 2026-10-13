@@ -56,7 +56,13 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
             }
             return
         }
-        val content = Files.readAllBytes(file.toPath())
+        val content =
+            if (relativePath == "index.html") {
+                val probe = checkNotNull(javaClass.getResource("/wasm-socket-probe.js")).readText()
+                file.readText().replace("<head>", "<head><script>$probe</script>").toByteArray(StandardCharsets.UTF_8)
+            } else {
+                Files.readAllBytes(file.toPath())
+            }
         exchange.responseHeaders.add("Content-Type", contentTypeFor(file.extension))
         exchange.responseHeaders.add("Cross-Origin-Opener-Policy", "same-origin")
         exchange.responseHeaders.add("Cross-Origin-Embedder-Policy", "require-corp")
