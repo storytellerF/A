@@ -255,6 +255,7 @@ App sign-out replaces the account modal with its confirmation; avoid nesting a c
 PanelSignoutHost owns confirmation on the injected serial coordinator; the account GlobalDialog owns the request, protected-history exit and success-only account reset.
 
 Bunker deployments attach signin-redis to the same bw-services network as Server and WebSocket.
+When upgrading an existing bunker.env, retain X-Account-Id in the API CORS_ALLOW_HEADERS list from deploy/bunker.env.example; authenticated browser requests require it.
 
 `cloud/runtime` registers independent user and panel session providers (`user_session`, `panel_session`).
 Cookies contain random session IDs; Redis keys hash the credentials and isolate the two namespaces.

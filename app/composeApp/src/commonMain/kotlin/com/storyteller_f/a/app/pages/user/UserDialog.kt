@@ -109,7 +109,6 @@ import dev.jordond.connectivity.Connectivity
 import dev.jordond.connectivity.compose.rememberConnectivityState
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 import nl.jacobras.humanreadable.HumanReadable
 import org.jetbrains.compose.resources.stringResource
 
@@ -553,7 +552,6 @@ fun SelfDialog(
 ) {
     val signOutController = remember { CustomAlertDialogController() }
     val signOutState by signOutController.state
-    val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     val uiViewModel = LocalUiViewModel.current
     if (showDialog) {
@@ -569,7 +567,7 @@ fun SelfDialog(
         } else {
             CustomAlertDialog(signOutController, signOutController::close) {
                 dismiss()
-                scope.launch {
+                globalDialogController.launch {
                     globalDialogController.signOut(uiViewModel)
                 }
             }
