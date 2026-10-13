@@ -78,7 +78,6 @@
 - For changes involving the configuration cache, avoid reading external environment state during Gradle configuration.
 - Configure shared Kotlin/JS and Wasm Yarn root extensions only in the root build; subprojects must not override lockfile locations. Keep JS and Wasm lockfiles separate under `kotlin-js-store` and regenerate the affected lockfile after npm dependency changes.
 - Keep existing tests compatible. If tests must be updated, explain the migration reason and steps.
-- Save knowledge learned while coding or scanning the project to `project.md`. Edit outdated or incorrect knowledge there when found.
 - Save rule-related knowledge learned while coding or scanning the project to this file.
 
 - Android KMP device tests must include `commonTest` when exercising shared Compose tests and declare their test-only host activity in `src/androidDeviceTest/AndroidManifest.xml`. Keep the device awake during UI testing and restore temporary power settings before releasing its lease.
