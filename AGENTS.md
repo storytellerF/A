@@ -140,3 +140,12 @@
 - Account-menu confirmations must replace the current modal instead of nesting another Dialog inside it. Keep sign-out request ownership outside the dismissed modal; clear protected active-session history only after server sign-out succeeds.
 
 - Keep private deployment host aliases, addresses, usernames, absolute host paths and session-specific verification records out of tracked files, commit messages and public PR text. Record reusable findings with generic environment names and placeholders.
+
+- Preserve raw ML-DSA/ML-KEM key bodies and ciphertext layout during crypto changes.
+  JVM KEM uses Java 21 `javax.crypto.KEM`; Android uses BC `KeyGenerator` with
+  `withNoKdf()` because its SDK lacks that API. Keep cross-platform compatibility
+  coverage in shared headless tests; do not silently introduce KDF or DER encoding changes.
+
+- Shared Android device tests reuse headless tests through the test source-set tree;
+  configure `withDeviceTestBuilder { sourceSetTreeName = "test" }` and provide
+  a device-specific abstract PlatformHeadlessTest actual without Robolectric.
