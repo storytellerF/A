@@ -439,8 +439,8 @@ potential-bugs:
   CastToNullableType:
     active: true
   Deprecation:
-    # Bouncy Castle marks the current standard ML-DSA/ML-KEM API deprecated in Java metadata;
-    # replacing it would require reverting to obsolete algorithms. Compiler warnings remain visible.
+    # Existing Markdown, Ktor IO/WebSocket, and Compose test APIs still need migration.
+    # ML-DSA/ML-KEM now use JCA; they no longer require this exception.
     active: false
   DontDowncastCollectionTypes:
     active: true

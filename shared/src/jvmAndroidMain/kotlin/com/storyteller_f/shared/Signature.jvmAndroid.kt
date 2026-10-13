@@ -13,21 +13,16 @@ import org.bouncycastle.asn1.x500.X500Name
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
-import org.bouncycastle.crypto.kems.MLKEMExtractor
-import org.bouncycastle.crypto.kems.MLKEMGenerator
-import org.bouncycastle.crypto.params.MLDSAParameters
-import org.bouncycastle.crypto.params.MLDSAPrivateKeyParameters
-import org.bouncycastle.crypto.params.MLDSAPublicKeyParameters
-import org.bouncycastle.crypto.params.MLKEMParameters
-import org.bouncycastle.crypto.params.MLKEMPrivateKeyParameters
-import org.bouncycastle.crypto.params.MLKEMPublicKeyParameters
-import org.bouncycastle.crypto.signers.MLDSASigner
 import org.bouncycastle.jcajce.interfaces.MLDSAPrivateKey
 import org.bouncycastle.jcajce.interfaces.MLDSAPublicKey
 import org.bouncycastle.jcajce.interfaces.MLKEMPrivateKey
 import org.bouncycastle.jcajce.interfaces.MLKEMPublicKey
 import org.bouncycastle.jcajce.spec.MLDSAParameterSpec
+import org.bouncycastle.jcajce.spec.MLDSAPrivateKeySpec
+import org.bouncycastle.jcajce.spec.MLDSAPublicKeySpec
 import org.bouncycastle.jcajce.spec.MLKEMParameterSpec
+import org.bouncycastle.jcajce.spec.MLKEMPrivateKeySpec
+import org.bouncycastle.jcajce.spec.MLKEMPublicKeySpec
 import org.bouncycastle.jce.interfaces.ECPrivateKey
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.jce.spec.ECPrivateKeySpec
@@ -36,7 +31,6 @@ import org.bouncycastle.openssl.PEMParser
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -50,6 +44,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
+import java.security.Signature
 import java.security.cert.X509Certificate
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -287,7 +282,6 @@ actual fun loadCryptoLibIfNeed() {
     if (getPlatform().name.startsWith("android", true)) {
         Security.removeProvider("BC")
     }
-    Security.addProvider(BouncyCastlePQCProvider())
     Security.addProvider(BouncyCastleProvider())
 }
 
@@ -298,18 +292,22 @@ actual val AlgoDilithium: Algo =
 
         override suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result<Boolean> =
             runCatching {
-                MLDSASigner().apply {
-                    init(false, MLDSAPublicKeyParameters(MLDSAParameters.ml_dsa_65, derPublicKey.hexToByteArray()))
-                    update(data.encodeToByteArray(), 0, data.encodeToByteArray().size)
-                }.verifySignature(derSignature.hexToByteArray())
+                val publicKey =
+                    KeyFactory.getInstance("ML-DSA", "BC").generatePublic(
+                        MLDSAPublicKeySpec(MLDSAParameterSpec.ml_dsa_65, derPublicKey.hexToByteArray()),
+                    )
+                Signature.getInstance("ML-DSA", "BC").apply {
+                    initVerify(publicKey)
+                    update(data.encodeToByteArray())
+                }.verify(derSignature.hexToByteArray())
             }
 
         override suspend fun signature(derPrivateKey: String, data: String): Result<String> =
             runCatching {
-            MLDSASigner().apply {
-                init(true, MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, derPrivateKey.hexToByteArray()))
-                update(data.encodeToByteArray(), 0, data.encodeToByteArray().size)
-            }.generateSignature().toHexString()
+            Signature.getInstance("ML-DSA", "BC").apply {
+                initSign(readSigningPrivateKey(derPrivateKey.hexToByteArray()), SecureRandom())
+                update(data.encodeToByteArray())
+            }.sign().toHexString()
         }
 
         override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> =
@@ -402,9 +400,7 @@ actual val AlgoDilithium: Algo =
                     .replace("\n", "")
                     .trim()
             val privateKeyBytes = Base64.decode(base64)
-            MLDSAPrivateKeyParameters(MLDSAParameters.ml_dsa_65, privateKeyBytes)
-                .publicKey
-                .toHexString()
+            readSigningPrivateKey(privateKeyBytes).publicKey.publicData.toHexString()
         }
 
         private fun createEncryptionAlgo(): EncryptionAlgo =
@@ -412,12 +408,11 @@ actual val AlgoDilithium: Algo =
             override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result<ByteArray> =
                 runCatching {
                     val publicKey =
-                        MLKEMPublicKeyParameters(
-                            MLKEMParameters.ml_kem_768,
-                            derPublicKeyStr.hexToByteArray(),
+                        KeyFactory.getInstance("ML-KEM", "BC").generatePublic(
+                            MLKEMPublicKeySpec(MLKEMParameterSpec.ml_kem_768, derPublicKeyStr.hexToByteArray()),
                         )
-                    val secret = MLKEMGenerator(SecureRandom()).generateEncapsulated(publicKey)
-                    secret.encapsulation + (aesKeyBytes xor secret.secret)
+                    val (encapsulation, secret) = encapsulateKem(publicKey)
+                    encapsulation + (aesKeyBytes xor secret)
                 }
 
             override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result<ByteArray> =
@@ -425,12 +420,8 @@ actual val AlgoDilithium: Algo =
                     require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
                     val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
                     val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
-                    val privateKey =
-                        MLKEMPrivateKeyParameters(
-                            MLKEMParameters.ml_kem_768,
-                            derPrivateKeyStr.hexToByteArray(),
-                        )
-                    encryptedAesKey xor MLKEMExtractor(privateKey).extractSecret(cipherText)
+                    val privateKey = readEncryptionPrivateKey(derPrivateKeyStr.hexToByteArray())
+                    encryptedAesKey xor decapsulateKem(privateKey, cipherText)
                 }
 
             @OptIn(ExperimentalEncodingApi::class)
@@ -468,9 +459,7 @@ actual val AlgoDilithium: Algo =
                             .replace("\n", "")
                             .trim()
                     val privateKeyBytes = Base64.decode(base64)
-                    MLKEMPrivateKeyParameters(MLKEMParameters.ml_kem_768, privateKeyBytes)
-                        .publicKey
-                        .toHexString()
+                    readEncryptionPrivateKey(privateKeyBytes).publicKey.publicData.toHexString()
                 }
 
             @OptIn(ExperimentalEncodingApi::class)
@@ -504,3 +493,20 @@ actual val AlgoDilithium: Algo =
             }
         }
     }
+
+// Stored PEM bodies contain long-form raw keys, not PKCS#8/X.509 encodings.
+private fun readSigningPrivateKey(privateData: ByteArray): MLDSAPrivateKey =
+    KeyFactory.getInstance("ML-DSA", "BC").generatePrivate(
+        MLDSAPrivateKeySpec(MLDSAParameterSpec.ml_dsa_65, privateData, null),
+    ) as MLDSAPrivateKey
+
+private fun readEncryptionPrivateKey(privateData: ByteArray): MLKEMPrivateKey =
+    KeyFactory.getInstance("ML-KEM", "BC").generatePrivate(
+        MLKEMPrivateKeySpec(MLKEMParameterSpec.ml_kem_768, privateData, null),
+    ) as MLKEMPrivateKey
+
+/** Returns the encapsulation and the unmodified 32-byte ML-KEM shared secret. */
+internal expect fun encapsulateKem(publicKey: PublicKey): Pair<ByteArray, ByteArray>
+
+/** Recovers the unmodified ML-KEM shared secret used by existing ciphertexts and Wasm. */
+internal expect fun decapsulateKem(privateKey: PrivateKey, encapsulation: ByteArray): ByteArray

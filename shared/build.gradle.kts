@@ -33,6 +33,14 @@ kotlin {
         withHostTest {
             isIncludeAndroidResources = true
         }
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
+            instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        }
+        packaging {
+            resources.merges.add("META-INF/LICENSE.md")
+        }
     }
 
     if (buildIosTarget) {
@@ -75,6 +83,12 @@ kotlin {
                 implementation(libs.robolectric)
             }
             dependsOn(headlessTest)
+        }
+        getByName("androidDeviceTest") {
+            dependsOn(headlessTest)
+            dependencies {
+                implementation(libs.androidx.test.runner)
+            }
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)
