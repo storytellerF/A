@@ -30,6 +30,7 @@ import com.storyteller_f.a.backend.exposed.tables.findRoomById
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -151,7 +152,7 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
                 val containerInfo = map[room.id]
                 RawRoom(
                     room,
-                    containerInfo?.member?.joinedTime,
+                    containerInfo?.member?.takeIf { it.status == MemberStatus.JOINED }?.joinedTime,
                     containerInfo?.userTopicRead?.topicId,
                     containerInfo?.memberCount,
                     containerInfo?.latestTopicId,

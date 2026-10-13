@@ -212,3 +212,6 @@ plaintext fallback. Saved private keys and account history also use protected st
 in IndexedDB with a non-extractable WebCrypto key; browser login Cookies remain HttpOnly. Old
 Settings login history is ignored; import the account private key again after upgrading.
 This migration invalidates older encrypted session Cookies; sign in once after upgrading.
+
+Read-only accounts can sign in and browse, but cannot publish changes.
+System notification rooms allow recipients to read messages; their message input is disabled.
