@@ -217,12 +217,7 @@ fun testPanelSigninLifecycleByHelper(testName: String, target: PanelAppiumHelper
             setup = { ports -> AppiumTestSetup(target.createAuthenticatedSession(ports)) },
         ) { scope, data ->
             try {
-                scope.driver.clickByText("Sign in")
-                scope.driver.clickByText("Input")
-                scope.driver.clickByDescription("Edit Private Key")
-                scope.driver.inputText(data.session.pemPrivateKey)
-                scope.driver.clickByText("Confirm")
-                scope.driver.clickByText("Start")
+                scenarioPanelSignin(scope.driver, data.session.pemPrivateKey)
                 scope.driver.assertVisibleByDescription("Menu")
                 scope.restart()
                 scope.driver.assertVisibleByDescription("Menu")
@@ -286,4 +281,33 @@ private suspend fun scenarioOpenSessionRoom(driver: AppTestDriver, data: Authent
     val community = data.sessionManager.createCommunity(NewCommunity(communityName, "sc$suffix")).getOrThrow()
     data.sessionManager.createRoom(NewRoom(roomName, "sr$suffix", communityId = community.id)).getOrThrow()
     scenarioPublishTopicInRoom(driver, communityName, roomName)
+}
+
+fun testPanelSignoutPersistenceByHelper(testName: String, target: PanelAppiumHelper, platform: PlatformAppiumHelper) =
+    runAppiumBlockingTest {
+        platform.runTest(
+            testName = testName,
+            target = target,
+            setup = { ports -> AppiumTestSetup(target.createPreRegisteredSession(ports)) },
+        ) { scope, data ->
+            scenarioPanelSignin(scope.driver, data.pemPrivateKey)
+            scope.driver.assertVisibleByDescription("Menu")
+            scope.restart()
+            scope.driver.assertVisibleByDescription("Menu")
+            if (platform !is DesktopAppiumHelper) scope.driver.clickByDescription("Menu")
+            scope.driver.clickByText("Sign out")
+            scope.driver.clickByText("Yes")
+            scope.driver.assertVisibleByText("Sign in")
+            scope.restart()
+            scope.driver.assertVisibleByText("Sign in")
+        }
+    }
+
+private suspend fun scenarioPanelSignin(driver: AppTestDriver, privateKey: String) {
+    driver.clickByText("Sign in")
+    driver.clickByText("Input")
+    driver.clickByDescription("Edit Private Key")
+    driver.inputText(privateKey)
+    driver.clickByText("Confirm")
+    driver.clickByText("Start")
 }

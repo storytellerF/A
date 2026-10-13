@@ -551,27 +551,26 @@ fun SelfDialog(
     clickCreate: () -> Unit,
     dismiss: () -> Unit,
 ) {
+    val signOutController = remember { CustomAlertDialogController() }
+    val signOutState by signOutController.state
+    val scope = rememberCoroutineScope()
+    val globalDialogController = LocalGlobalDialog.current
+    val uiViewModel = LocalUiViewModel.current
     if (showDialog) {
-        BasicAlertDialog({
-            dismiss()
-        }) {
-            val signOutController =
-                remember {
-                    CustomAlertDialogController()
+        // Replace the account modal instead of opening a second modal inside it.
+        if (signOutState == null) {
+            BasicAlertDialog(dismiss) {
+                val sessionManager = LocalSessionManager.current
+                LaunchedEffect(userInfo) {
+                    refreshMyInfo(userInfo, sessionManager)
                 }
-            val sessionManager = LocalSessionManager.current
-            LaunchedEffect(userInfo) {
-                refreshMyInfo(userInfo, sessionManager)
+                SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate, overviewHandler)
             }
-            SelfDialogInternal(signOutController, userInfo, dismiss, clickCreate, overviewHandler)
-            val scope = rememberCoroutineScope()
-            val globalDialogController = LocalGlobalDialog.current
-            val uIViewModel = LocalUiViewModel.current
-            CustomAlertDialog(signOutController, {
-                signOutController.close()
-            }) {
+        } else {
+            CustomAlertDialog(signOutController, signOutController::close) {
+                dismiss()
                 scope.launch {
-                    globalDialogController.signOut(uIViewModel)
+                    globalDialogController.signOut(uiViewModel)
                 }
             }
         }

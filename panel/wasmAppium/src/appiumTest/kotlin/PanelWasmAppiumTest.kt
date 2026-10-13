@@ -24,6 +24,10 @@ class PanelWasmAppiumTest : AppiumTestBase() {
         )
 
     @Test
+    fun `test explicit sign out survives restart`() =
+        testPanelSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test sign in survives restart and revocation requires explicit login`() =
         testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
 

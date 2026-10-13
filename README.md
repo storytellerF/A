@@ -191,6 +191,9 @@ This is a private project. All rights reserved.
 
 ### Login sessions
 
+Use **Sign out** in the App account menu or the Panel navigation drawer to end the current session.
+Refreshing after sign-out keeps the session signed out; saved account history remains available for explicit login.
+
 HTTP and WebSocket authentication use an HttpOnly session Cookie backed by Redis. A login expires after
 30 days without user activity or 90 days after sign-in. Background refresh, heartbeats and incoming
 notifications do not keep a login alive. Expired or revoked sessions require an explicit sign-in.
