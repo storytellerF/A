@@ -4,15 +4,20 @@
 
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.backend.core.ForbiddenException
+import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.updateUserStatus
+import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UserStatus
+import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 
 class UserStatusTest {
@@ -38,9 +43,15 @@ class UserStatusTest {
 
         // As READ_ONLY, creation should be forbidden
         loginSession(userTuple) {
-            assertFails {
-                createTopic(ObjectType.USER, it.uid, "Test topic 2").getOrThrow()
-            }
+            assertEquals(UserStatus.READ_ONLY, getUserOverview().getOrThrow().userInfo.status)
+            val error =
+                assertFailsWith<ServerErrorException> {
+                    createTopic(ObjectType.USER, it.uid, "Test topic 2").getOrThrow()
+                }
+            assertEquals(HttpStatusCode.Forbidden, error.status)
+            assertIs<ForbiddenException>(
+                workerBackend.checkRootWritePermission(ObjectType.USER, it.uid, it.uid).exceptionOrNull(),
+            )
         }
     }
 }

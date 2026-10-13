@@ -149,3 +149,5 @@
 - Shared Android device tests reuse headless tests through the test source-set tree;
   configure `withDeviceTestBuilder { sourceSetTreeName = "test" }` and provide
   a device-specific abstract PlatformHeadlessTest actual without Robolectric.
+
+- Read-only users retain authentication and read access. Enforce write restrictions for HTTP mutations and WebSocket topic creation; notification-room recipients remain invited, with disabled message input.

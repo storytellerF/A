@@ -80,8 +80,8 @@ suspend fun buildMemberForNotificationRoom(user: User, adminUid: PrimaryKey): Li
         ObjectType.ROOM,
         now(),
         MemberStatus.INVITED,
-        now(),
-        null,
+        joinedTime = null,
+        invitedTime = now(),
     ),
     Member(
         SnowflakeFactory.nextId(),
@@ -90,7 +90,7 @@ suspend fun buildMemberForNotificationRoom(user: User, adminUid: PrimaryKey): Li
         ObjectType.ROOM,
         now(),
         MemberStatus.JOINED,
-        null,
-        now(),
+        joinedTime = now(),
+        invitedTime = null,
     ),
 )

@@ -8,9 +8,13 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
+import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
+import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitRoom
 import com.storyteller_f.a.client.core.getCommunityRooms
 import com.storyteller_f.a.client.core.getRoomInfo
@@ -23,6 +27,7 @@ import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.a.client.core.updateRoomInfo
+import com.storyteller_f.a.cloud.core.service.checkRoomWritePermission
 import com.storyteller_f.a.cloud.ws.rtcSession
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -47,11 +52,37 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class RoomTest {
+    @Test
+    fun `test notification room is readable but cannot send`() =
+        test(mapOf("DISABLE_TEST_WS" to "true")) {
+        val sender = attachSession()
+        val recipient =
+            attachSession {
+                val user =
+                    requireNotNull(
+                        workerBackend.database.user.getRawUser(ObjectFetch.IdFetch(it.uid)).getOrThrow(),
+                    ).user
+                val room =
+                    workerBackend.database.room.createRoom(
+                        buildUserNotificationRoom(user, sender.uid),
+                        buildMemberForNotificationRoom(user, sender.uid),
+                    ).getOrThrow()
+                val info = getRoomInfo(room.id).getOrThrow()
+                assertTrue(!info.isJoined)
+                assertFails {
+                    createTopic(ObjectType.ROOM, room.id, "Notification reply").getOrThrow()
+                }
+                room.id
+            }
+        assertNotNull(workerBackend.checkRoomWritePermission(recipient.custom, sender.uid).getOrThrow())
+    }
+
     @Test
     fun `test get room`() =
         test {

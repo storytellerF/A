@@ -49,7 +49,7 @@ private fun HttpAuthHeader.Parameterized.customCredential(): CustomCredential? {
     }
 }
 
-data class CustomPrincipal(val uid: PrimaryKey)
+data class CustomPrincipal(val uid: PrimaryKey, val readOnly: Boolean = false)
 
 inline fun AuthenticationConfig.custom(name: String? = null, configure: CustomAuthProvider.Config.() -> Unit) {
     val provider = CustomAuthProvider(CustomAuthProvider.Config(name).apply(configure))
@@ -199,11 +199,7 @@ fun Application.configureAuth(backend: Backend) {
                 }.mapResultIfNotNull { principal ->
                     val uid = principal.uid
                     backend.database.user.getRawUser(ObjectFetch.IdFetch(uid)).mapResultIfNotNull {
-                        if (it.user.status == UserStatus.READ_ONLY) {
-                            Result.failure(Exception("User is ReadOnly"))
-                        } else {
-                            Result.success(principal)
-                        }
+                        Result.success(principal.copy(readOnly = it.user.status == UserStatus.READ_ONLY))
                     }
                 }
             }

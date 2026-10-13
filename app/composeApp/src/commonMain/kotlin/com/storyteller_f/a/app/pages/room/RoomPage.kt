@@ -353,8 +353,11 @@ private fun RoomInputGroupInternal(
             RoomInputTopContent(roomInfo)
         },
         {
-            RoomSendButton(input, roomInfo, parentTarget, controller, scrollToNew)
+            if (roomInfo.isJoined && !roomInfo.readOnly) {
+                RoomSendButton(input, roomInfo, parentTarget, controller, scrollToNew)
+            }
         },
+        enabled = roomInfo.isJoined && !roomInfo.readOnly,
     )
 }
 
@@ -381,6 +384,7 @@ private fun RoomInputTopContent(roomInfo: RoomInfo) {
 }
 
 private fun sendRoomTopic(roomInfo: RoomInfo, input: String, context: SendRoomTopicContext) {
+    if (!roomInfo.isJoined || roomInfo.readOnly) return
     val handler = context.keysViewModel.handler
     val keyState = handler.state.value
     val keyData = handler.data.value
@@ -521,6 +525,7 @@ fun InputGroupInternal(
     gotoCompose: () -> Unit,
     topContent: @Composable () -> Unit = {},
     sendButton: @Composable () -> Unit,
+    enabled: Boolean = true,
 ) {
     Column(
         Modifier.background(
@@ -538,14 +543,15 @@ fun InputGroupInternal(
             OutlinedTextField(
                 input,
                 updateInput,
+                enabled = enabled,
                 modifier =
                 Modifier.weight(1f).appiumSemantics(
                     input = true,
                     inputValue = input,
-                    onInputValueChange = updateInput,
+                    onInputValueChange = { if (enabled) updateInput(it) },
                 ),
                 suffix = {
-                    if (input.isNotEmpty()) {
+                    if (enabled && input.isNotEmpty()) {
                         Icon(
                             Icons.Default.Clear,
                             stringResource(Res.string.clear_input),
@@ -558,7 +564,9 @@ fun InputGroupInternal(
                 },
             )
 
-            InputGroupSuffix(input, updateInput, mediaTarget, gotoCompose)
+            if (enabled) {
+                InputGroupSuffix(input, updateInput, mediaTarget, gotoCompose)
+            }
 
             sendButton()
         }

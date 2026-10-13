@@ -13,6 +13,7 @@ import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentDisposition
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.log
 import io.ktor.server.auth.principal
@@ -20,6 +21,7 @@ import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.ContentTransformationException
 import io.ktor.server.plugins.MissingRequestParameterException
 import io.ktor.server.plugins.ParameterConversionException
+import io.ktor.server.request.httpMethod
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
@@ -52,8 +54,15 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(backend: Backend
     }
 }
 
-inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (uid: PrimaryKey?) -> Result<R?>?) =
-    block(call.principal<CustomPrincipal>()?.uid)
+inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (uid: PrimaryKey?) -> Result<R?>?): Result<R?>? {
+    val principal = call.principal<CustomPrincipal>()
+    val method = call.request.httpMethod
+    return if (principal?.readOnly == true && method !in listOf(HttpMethod.Get, HttpMethod.Head, HttpMethod.Options)) {
+        Result.failure(ForbiddenException("User is read only"))
+    } else {
+        block(principal?.uid)
+    }
+}
 
 suspend fun RoutingContext.respondError(e: Throwable, buildType: String) {
     when (e) {
