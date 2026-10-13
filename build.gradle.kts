@@ -171,3 +171,25 @@ subprojects {
         }
     }
 }
+
+val unitTestForks = providers.gradleProperty("unitTest.maxParallelForks").map {
+    it.toInt().also { forks -> require(forks > 0) { "unitTest.maxParallelForks must be positive" } }
+}.orElse(gradle.startParameter.maxWorkerCount)
+val parallelHostTestProjects = setOf(
+    ":api", ":shared", ":client:core", ":client:composeCore", ":client:asciidoc-parser", ":backend:redis",
+    ":app:composeApp", ":panel:composeApp", ":cloud:service", ":services:lucene-protocol",
+    ":cloud:filesystem-service", ":cloud:lucene-service", ":dev:appiumCore",
+    ":backend:core", ":backend:filesystem", ":backend:lucene", ":backend:minio",
+    ":cloud:runtime", ":cloud:server", ":cloud:cli", ":cloud:worker",
+)
+subprojects {
+    if (path in parallelHostTestProjects) {
+        tasks.withType<Test>().configureEach {
+            if (name == "test" || name == "jvmTest" || name == "testAndroidHostTest" ||
+                name.endsWith("UnitTest")
+            ) {
+                maxParallelForks = unitTestForks.get()
+            }
+        }
+    }
+}

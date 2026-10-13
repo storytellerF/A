@@ -412,7 +412,7 @@ private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppN
     }
 
     override fun back() {
-        backStack.removeLastOrNull()
+        if (backStack.size > 1) backStack.removeLastOrNull()
     }
 
     override fun gotoUserSetting() {

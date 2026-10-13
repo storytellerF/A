@@ -13,8 +13,6 @@ import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
-import com.storyteller_f.shared.type.toPrimaryKey
-import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -119,81 +117,51 @@ suspend fun ApplicationCall.respondUnauthorizedResponse() {
     respond(UnauthorizedResponse(HttpAuthHeader.Single("Custom", data)))
 }
 
-fun ApplicationCall.saveSuccessSession(session: UserSession.Pending, id: PrimaryKey) {
-    sessions.set<UserSession>(UserSession.Success(session.data, session.remote, id, session.label))
+suspend fun ApplicationCall.saveSuccessSession(session: UserSession.Pending, id: PrimaryKey) {
+    consumeSigninChallenge()
+    clearSigninSession()
+    setSession(UserSession.Success(session.data, session.remote, id, session.label))
 }
 
-fun ApplicationCall.saveTwoFactorPendingSession(session: UserSession.Pending, id: PrimaryKey) {
-    sessions.set<UserSession>(UserSession.TwoFactorPending(session.data, session.remote, id, session.label))
+suspend fun ApplicationCall.saveTwoFactorPendingSession(session: UserSession.Pending, id: PrimaryKey) {
+    consumeSigninChallenge()
+    clearSigninSession()
+    setSession(UserSession.TwoFactorPending(session.data, session.remote, id, session.label))
 }
 
-fun ApplicationCall.saveSuccessSession(session: UserSession.TwoFactorPending) {
-    sessions.set<UserSession>(UserSession.Success(session.data, session.remote, session.id, session.label))
-}
-
-private suspend fun Backend.checkDevWsLink(call: ApplicationCall): Result<CustomPrincipal?> {
-    val did = call.request.queryParameters["did"]
-    return if (did?.all { it.isDigit() } == true) {
-        val id = did.toPrimaryKey()
-        database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
-            CustomPrincipal(id)
-        }
-    } else {
-        Result.success(null)
-    }
+suspend fun ApplicationCall.saveSuccessSession(session: UserSession.TwoFactorPending) {
+    consumeSigninChallenge("two_factor_pending")
+    clearSigninSession()
+    setSession(UserSession.Success(session.data, session.remote, session.id, session.label))
 }
 
 fun ApplicationCall.getData(): String = getSession().data
 
+/** An explicit sign-in gets a fresh, single-use server challenge and rotates the current credential. */
+suspend fun ApplicationCall.beginSigninChallenge(): Result<String> {
+    if (request.headers["X-Requested-With"] != "A-client") {
+        return Result.failure(ForbiddenException())
+    }
+    clearSigninSession()
+    val pending = createPendingSession(request.origin.remoteAddress)
+    setSession(pending)
+    return Result.success(pending.data)
+}
+
+/** Anonymous/background requests never issue a pending cookie that could overwrite a new login. */
 fun ApplicationCall.getSession(): UserSession {
     val remote = request.origin.remoteAddress
-    return when (val session = sessions.get(UserSession::class)) {
-        null -> {
-            val newSession = createPendingSession(remote)
-            sessions.set<UserSession>(newSession)
-            newSession
-        }
-
-        is UserSession.Pending -> {
-            if (remote == session.remote) {
-                session
-            } else {
-                val value = createPendingSession(remote)
-                sessions.set<UserSession>(value)
-                value
-            }
-        }
-
-        is UserSession.TwoFactorPending -> {
-            if (remote == session.remote) {
-                session
-            } else {
-                val value = createPendingSession(remote)
-                sessions.set<UserSession>(value)
-                value
-            }
-        }
-
-        is UserSession.Success -> {
-            if (remote == session.remote) {
-                session
-            } else {
-                val value = createPendingSession(remote)
-                sessions.set<UserSession>(value)
-                value
-            }
-        }
+    return when (val session = readSession()) {
+        is UserSession.Success -> session
+        is UserSession.Pending -> if (remote == session.remote) session else createPendingSession(remote)
+        is UserSession.TwoFactorPending -> if (remote == session.remote) session else createPendingSession(remote)
+        null -> createPendingSession(remote)
     }
 }
 
 @OptIn(ExperimentalUuidApi::class, ExperimentalTime::class)
 private fun ApplicationCall.createPendingSession(remote: String): UserSession.Pending {
-    val aTs = request.header("a-ts")?.toLongOrNull()
-    val data =
-        when {
-            aTs != null && checkTsIsValid(aTs, 60 * 5).second -> aTs.toString()
-            else -> Uuid.random().toString()
-        }
+    val data = Uuid.random().toString()
     val type = if (request.path().startsWith("/admin")) "panel" else "user"
     val value = UserSession.Pending(data, remote, type)
     return value
@@ -211,19 +179,23 @@ fun ApplicationCall.getRateLimitKey(): Comparable<*> {
 fun Application.configureAuth(backend: Backend) {
     install(Authentication) {
         custom("user") {
-            validate { session, call, credential ->
+            validate { session, call, _ ->
                 when (session) {
-                    is UserSession.Success -> Result.success(CustomPrincipal(session.id))
+                    is UserSession.Success -> {
+                        val label = "user"
+                        if (session.label == label &&
+                            call.request.headers["X-Account-Id"]?.let { it.toLongOrNull() == session.id } != false &&
+                            call.isSigninSessionValid()
+                        ) {
+                            Result.success(CustomPrincipal(session.id))
+                        } else {
+                            Result.success(null)
+                        }
+                    }
 
                     is UserSession.TwoFactorPending -> Result.success(null)
 
-                    is UserSession.Pending -> {
-                        when {
-                            credential != null -> call.checkApiRequest(backend, credential, session)
-                            backend.customConfig.buildType == "prod" -> Result.success(null)
-                            else -> backend.checkDevWsLink(call)
-                        }
-                    }
+                    is UserSession.Pending -> Result.success(null)
                 }.mapResultIfNotNull { principal ->
                     val uid = principal.uid
                     backend.database.user.getRawUser(ObjectFetch.IdFetch(uid)).mapResultIfNotNull {
@@ -240,19 +212,23 @@ fun Application.configureAuth(backend: Backend) {
             }
         }
         custom("admin") {
-            validate { session, call, credential ->
+            validate { session, call, _ ->
                 when (session) {
-                    is UserSession.Success -> Result.success(CustomPrincipal(session.id))
-
-                    is UserSession.TwoFactorPending -> Result.success(null)
-
-                    is UserSession.Pending -> {
-                        if (credential != null) {
-                            call.checkAdminApiRequest(backend, credential, session)
+                    is UserSession.Success -> {
+                        val label = "panel"
+                        if (session.label == label &&
+                            call.request.headers["X-Account-Id"]?.let { it.toLongOrNull() == session.id } != false &&
+                            call.isSigninSessionValid()
+                        ) {
+                            Result.success(CustomPrincipal(session.id))
                         } else {
                             Result.success(null)
                         }
                     }
+
+                    is UserSession.TwoFactorPending -> Result.success(null)
+
+                    is UserSession.Pending -> Result.success(null)
                 }
             }
             challenge { _, call ->

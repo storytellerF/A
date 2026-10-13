@@ -96,10 +96,14 @@ fun CustomAlertDialogInternal(dialogState: CustomAlertDialogState?, dismiss: () 
                 Text("Copy")
             }
         } else {
-            Button({
+            val confirm = {
                 dismiss()
                 onClickOk()
-            }) {
+            }
+            Button(
+                confirm,
+                modifier = Modifier.appiumSemantics(text = dialogState.positiveButton, onClick = confirm),
+            ) {
                 Text(dialogState.positiveButton)
             }
         }

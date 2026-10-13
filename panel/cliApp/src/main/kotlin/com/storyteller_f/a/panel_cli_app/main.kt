@@ -357,7 +357,7 @@ fun main() {
                 AcceptAllCookiesStorage(),
             ) { model, cookieManager ->
                 HttpClient(OkHttp) {
-                    defaultClientConfigureForPanel(cookieManager, model, passHolder, httpUrl)
+                    defaultClientConfigureForPanel(cookieManager, model, httpUrl)
                 }
             }
 

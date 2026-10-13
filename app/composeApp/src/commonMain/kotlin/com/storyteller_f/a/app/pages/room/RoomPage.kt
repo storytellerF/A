@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.OpenInFull
 import androidx.compose.material.icons.filled.PermMedia
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -105,6 +106,7 @@ import com.storyteller_f.a.app.pages.topic.insertContent
 import com.storyteller_f.a.app.pages.user.ButtonBadgeSuffix
 import com.storyteller_f.a.app.permission_denied
 import com.storyteller_f.a.app.private_room_pub_key_loading
+import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.app.send
 import com.storyteller_f.a.app.settings_title
 import com.storyteller_f.a.app.start_call
@@ -439,7 +441,7 @@ fun RoomSendButton(
     val sendState by wsClient.localState.collectAsState()
     val isSending = sendState is LoadingState.Loading
     val keysViewModel = createRoomKeysViewModel(roomInfo.id, roomInfo)
-    CommonInputButton(state, input, isSending) {
+    CommonInputButton(state, input, isSending, retry = { wsClient.retryConnection() }) {
         if (roomInfo.isJoined) {
             sendRoomTopic(
                 roomInfo,
@@ -457,7 +459,13 @@ fun RoomSendButton(
 }
 
 @Composable
-fun CommonInputButton(state: LoadingState?, input: String, isSending: Boolean, send: () -> Unit) {
+fun CommonInputButton(
+    state: LoadingState?,
+    input: String,
+    isSending: Boolean,
+    retry: (() -> Unit)? = null,
+    send: () -> Unit,
+) {
     val alertDialogController = rememberAlertDialogController()
     val scope = rememberCoroutineScope()
     Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
@@ -487,9 +495,13 @@ fun CommonInputButton(state: LoadingState?, input: String, isSending: Boolean, s
 
             is LoadingState.Error -> {
                 IconButton({
-                    alertDialogController.showErrorMessage(state.e)
+                    if (retry != null) retry() else alertDialogController.showErrorMessage(state.e)
                 }) {
-                    Icon(Icons.Default.Error, stringResource(Res.string.error))
+                    if (retry != null) {
+                        Icon(Icons.Default.Refresh, stringResource(Res.string.refresh))
+                    } else {
+                        Icon(Icons.Default.Error, stringResource(Res.string.error))
+                    }
                 }
             }
 

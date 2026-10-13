@@ -20,6 +20,9 @@ interface AppiumTestScope {
     val driver: AppTestDriver
 
     suspend fun assertAsciidocPreviewOpened(source: String)
+
+    /** Restarts the target process while retaining its isolated persistent storage. */
+    suspend fun restart()
 }
 
 interface PlatformAppiumHelper {
@@ -45,48 +48,50 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
         // noReset keeps the previous process alive; stop it before replacing its reverse targets.
-        clearAppData(target.androidApp.packageName)
-        runAndroidTestEnvironment { ports ->
-            var driver: AndroidDriver? = null
-            var testFailed = false
-            try {
-                val prepared = setup(ports)
-                prepared.injectedSession?.let { session ->
-                    pushInjectedSessionToPrivateDir(
-                        packageName = target.androidApp.packageName,
-                        testName = testName,
-                        content = buildInjectedSessionJson(session),
-                    )
-                }
-                val options =
-                    UiAutomator2Options()
-                        .setAppPackage(target.androidApp.packageName)
-                        .setAppActivity(target.androidApp.mainActivityClassName)
-                        .setNoReset(true)
-                driver = AndroidDriver(URI("http://127.0.0.1:4723").toURL(), options)
-                driver.startRecordingScreen()
-                block(
-                    AndroidAppiumTestScope(
-                        driver = AndroidAppTestDriver(driver, ::runAdbCommand),
-                        packageName = target.androidApp.packageName,
-                    ),
-                    prepared.data,
-                )
-            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-                throw cancellation
-            } catch (throwable: Throwable) {
-                testFailed = true
-                throw throwable
-            } finally {
-                driver?.let { activeDriver ->
-                    saveRecording(activeDriver, target.suiteName, testName)
-                    copyAppLogToBuild(target.suiteName, testName, target.androidApp.packageName)
-                    if (testFailed) {
-                        collectBugreport(target.suiteName, testName)
+        withEnglishAndroidAppLocale(target.androidApp.packageName, ::runAdbCommand) {
+            runAndroidTestEnvironment { ports ->
+                var driver: AndroidDriver? = null
+                var testFailed = false
+                try {
+                    val prepared = setup(ports)
+                    prepared.injectedSession?.let { session ->
+                        pushInjectedSessionToPrivateDir(
+                            packageName = target.androidApp.packageName,
+                            testName = testName,
+                            content = buildInjectedSessionJson(session),
+                        )
                     }
-                    runCatching { activeDriver.quit() }
+                    val options =
+                        UiAutomator2Options()
+                            .setAppPackage(target.androidApp.packageName)
+                            .setAppActivity(target.androidApp.mainActivityClassName)
+                            .setNoReset(true)
+                    driver = AndroidDriver(URI("http://127.0.0.1:4723").toURL(), options)
+                    driver.startRecordingScreen()
+                    block(
+                        AndroidAppiumTestScope(
+                            driver = AndroidAppTestDriver(driver, ::runAdbCommand),
+                            packageName = target.androidApp.packageName,
+                            restartApp = { restartApp(target.androidApp) },
+                        ),
+                        prepared.data,
+                    )
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
+                } catch (throwable: Throwable) {
+                    testFailed = true
+                    throw throwable
+                } finally {
+                    driver?.let { activeDriver ->
+                        saveRecording(activeDriver, target.suiteName, testName)
+                        copyAppLogToBuild(target.suiteName, testName, target.androidApp.packageName)
+                        if (testFailed) {
+                            collectBugreport(target.suiteName, testName)
+                        }
+                        runCatching { activeDriver.quit() }
+                    }
+                    runAdbCommand(listOf("shell", "am", "force-stop", target.androidApp.packageName))
                 }
-                runAdbCommand(listOf("shell", "am", "force-stop", target.androidApp.packageName))
             }
         }
     }
@@ -98,7 +103,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         prepareSessionDirectories(hostSessionPath)
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            useLightweightBackendContainers(network) { filesystem ->
+            useLightweightBackendContainers(network) { filesystem, _ ->
                 bindAndroidReverse(hostPort = filesystem.getMappedPort(8822), devicePort = 8822)
                 val commonEnv = buildContainerEnv() + ("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
                 useCliInitContainer(network, commonEnv, hostSessionPath) {
@@ -118,8 +123,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         }
     }
 
-    private fun clearAppData(packageName: String) {
-        runAdbCommand(listOf("shell", "pm", "clear", packageName))
+    private fun restartApp(app: AppUnderTest) {
+        runAdbCommand(listOf("shell", "am", "force-stop", app.packageName))
+        runAdbCommand(listOf("shell", "run-as", app.packageName, "rm", "-f", INJECTED_SESSION_FILE))
+        runAdbCommand(listOf("shell", "am", "start", "-n", "${app.packageName}/${app.mainActivityClassName}"))
     }
 
     private fun pushInjectedSessionToPrivateDir(packageName: String, testName: String, content: String) {
@@ -278,8 +285,11 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 prepared
             },
             browserCapture = browserCapture,
-        ) { driver, prepared, processId ->
-            block(DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture), prepared.data)
+        ) { driver, prepared, processId, restartApp ->
+            block(
+                DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture, restartApp),
+                prepared.data,
+            )
         }
     }
 
@@ -288,7 +298,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         config: DesktopAppiumRuntimeConfig,
         beforeLaunch: suspend (ports: AppiumPorts, sessionFilePath: String) -> T,
         browserCapture: DesktopBrowserCapture?,
-        block: suspend (AppiumDriver, T, Long?) -> Unit,
+        block: suspend (AppiumDriver, T, Long?, suspend () -> DesktopAppTestDriver) -> Unit,
     ) {
         runAppiumTestEnvironment { ports ->
             val sessionFile = File("build/test/appium/tmp/desktop-session-$testName.json")
@@ -297,7 +307,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
             val appLogFile = File(logDir, "${safeName(testName)}.desktop.log")
             runtimeDir.deleteRecursively()
             runtimeDir.mkdirs()
-            sessionFile.parentFile?.mkdirs()
             appLogFile.delete()
 
             val setup = beforeLaunch(ports, sessionFile.canonicalPath)
@@ -319,7 +328,13 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 val caps = platform.createCapabilities(launchScript, config.windowWaitSeconds)
                 val serverUrl = System.getenv("APPIUM_DESKTOP_SERVER_URL") ?: "http://127.0.0.1:4723"
                 driver = AppiumDriver(URI(serverUrl).toURL(), caps)
-                block(driver, setup, readDesktopProcessId(sessionFile))
+                block(driver, setup, readDesktopProcessId(sessionFile)) {
+                    driver?.quit()
+                    sessionFile.delete()
+                    val restarted = AppiumDriver(URI(serverUrl).toURL(), caps)
+                    driver = restarted
+                    DesktopAppTestDriver(restarted, readDesktopProcessId(sessionFile))
+                }
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
@@ -448,6 +463,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 }
                 add("-Dappium.session.file=${sessionFile.canonicalPath}")
                 add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
+                add("-Dapp.protected.storage.dir=${File(prefsDir, "protected-storage").canonicalPath}")
                 if (platform == DesktopTestPlatform.Linux) {
                     add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
                 }
@@ -516,19 +532,29 @@ private fun String.escapeForDoubleQuotedShell(): String {
         .replace("`", "\\`")
 }
 
-private class AndroidAppiumTestScope(override val driver: AndroidAppTestDriver, private val packageName: String) :
-    AppiumTestScope {
+private class AndroidAppiumTestScope(
+    override val driver: AndroidAppTestDriver,
+    private val packageName: String,
+    private val restartApp: suspend () -> Unit,
+) : AppiumTestScope {
     override suspend fun assertAsciidocPreviewOpened(source: String) {
         driver.assertAsciidocPreviewOpened(packageName, source)
     }
+
+    override suspend fun restart() = restartApp()
 }
 
 private class DesktopAppiumTestScope(
-    override val driver: DesktopAppTestDriver,
+    override var driver: DesktopAppTestDriver,
     private val browserCapture: DesktopBrowserCapture?,
+    private val restartApp: suspend () -> DesktopAppTestDriver,
 ) : AppiumTestScope {
     override suspend fun assertAsciidocPreviewOpened(source: String) {
         browserCapture?.assertOpenedAsciidocPreview(source)
             ?: driver.assertAsciidocPreviewOpened()
+    }
+
+    override suspend fun restart() {
+        driver = restartApp()
     }
 }

@@ -70,12 +70,15 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
             inputWindowsText(text)
             return
         }
-        val elements =
-            WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
-                windows?.synchronizeWindow()
-                driver.findElements(By.xpath("//text-field")).takeIf(List<*>::isNotEmpty)
+        // A navigation transition can retire an editor after lookup; re-locate its current identity.
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+            .ignoring(StaleElementReferenceException::class.java)
+            .until {
+                val element = driver.findElements(By.xpath("//text-field")).lastOrNull() ?: return@until false
+                // Linux setValue replaces contents, so a stale editor never causes appended duplicate input.
+                element.sendKeys(text)
+                true
             }
-        elements.last().sendKeys(text)
     }
 
     private fun inputWindowsText(text: String) {
@@ -115,8 +118,15 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                         if (contains) value.contains(text) else value == text
                     }
                 } else {
+                    val named =
+                        if (contains) {
+                            null
+                        } else {
+                            driver.findElements(By.xpath("//*[contains(@name,'$text')]"))
+                                .lastOrNull { matchesDesktopLabel(it.getAttribute("name").orEmpty(), text) }
+                        }
                     val valuePredicate = if (contains) "contains(@value,'$text')" else "@value='$text'"
-                    driver.findElements(By.xpath("//*[$valuePredicate]")).lastOrNull()
+                    named ?: driver.findElements(By.xpath("//*[$valuePredicate]")).lastOrNull()
                 }
         }
 
@@ -135,6 +145,15 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         WebDriverWait(driver, Duration.ofSeconds(timeoutSeconds)).until {
             windows?.synchronizeWindow()
             driver.findElements(locator).isEmpty()
+        }
+    }
+
+    override suspend fun dismissDialog() {
+        if (platform == DesktopTestPlatform.Windows) {
+            windows?.synchronizeWindow()
+            driver.executeScript("windows: keys", mapOf("actions" to listOf(mapOf("virtualKeyCode" to 0x1B))))
+        } else {
+            driver.executeScript("linux: dismissDialog")
         }
     }
 
@@ -165,3 +184,7 @@ internal fun buildWindowsTextActions(text: String): List<Map<String, Any>> =
         if (line.isNotEmpty()) add(mapOf("text" to line))
     }
 }
+
+/** AT-SPI may append comma-separated suffix labels, including an empty badge suffix. */
+internal fun matchesDesktopLabel(name: String, label: String): Boolean =
+    name == label || name.split(", ").any { it == label }

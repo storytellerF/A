@@ -1,43 +1,30 @@
-#!/bin/sh
+#!/bin/bash
+set -euo pipefail
 
-set -e
-
-BUILD_ON=$1
-
-if [ -z "$BUILD_ON" ]; then
-  echo "BUILD_ON must be set"
-  exit 1
+BUILD_ON=${1:-}
+[[ -n "$BUILD_ON" ]] || { echo "BUILD_ON must be set" >&2; exit 1; }
+mkdir -p deploy/build
+if [[ "$BUILD_ON" != docker ]]; then
+  ./scripts/build_scripts/build-cloud.sh
 fi
 
-mkdir -p deploy/build
-./scripts/build_scripts/build-cloud.sh
+cleanup() {
+  local pid
+  for pid in $(jobs -pr); do kill "$pid" 2>/dev/null || true; done
+  wait || true
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
-echo "Building server image: a-server:latest"
-docker build --platform linux/amd64 \
-  --target server \
-  --build-arg BUILD_ON="$BUILD_ON" \
-  -t a-server:latest \
-  .
-
-echo "Building worker image: a-worker:latest"
-docker build --platform linux/amd64 \
-  --target worker \
-  --build-arg BUILD_ON="$BUILD_ON" \
-  -t a-worker:latest \
-  .
-
-echo "Building cli image: a-cli:latest"
-docker build --platform linux/amd64 \
-  --target cli \
-  --build-arg BUILD_ON="$BUILD_ON" \
-  -t a-cli:latest \
-  .
-
-echo "Building ws image: a-ws:latest"
-docker build --platform linux/amd64 \
-  --target ws \
-  --build-arg BUILD_ON="$BUILD_ON" \
-  -t a-ws:latest \
-  .
-
+build_pids=()
+for service in server worker cli ws; do
+  echo "Building $service image: a-$service:latest"
+  docker build --platform linux/amd64 --target "$service" \
+    --build-arg "BUILD_ON=$BUILD_ON" -t "a-$service:latest" . &
+  build_pids+=("$!")
+done
+result=0
+for pid in "${build_pids[@]}"; do wait "$pid" || result=$?; done
+[[ $result == 0 ]] || exit "$result"
 echo "Done. Built images: a-server:latest, a-worker:latest, a-cli:latest and a-ws:latest"

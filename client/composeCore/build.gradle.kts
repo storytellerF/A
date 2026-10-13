@@ -123,8 +123,6 @@ kotlin {
             implementation(libs.zoomimage.compose.coil3)
             implementation(libs.fonticons.core)
             implementation(libs.krop.ui)
-            implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.serialization)
 
             implementation(libs.haze)
             implementation(libs.haze.materials)
@@ -147,6 +145,7 @@ kotlin {
             implementation(libs.ui.test)
         }
         jvmMain.dependencies {
+            implementation(libs.jna.platform)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
 

@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 class WasmDistributionServer(private val root: File, backendUrl: String? = null) : AutoCloseable {
-    private val backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
+    @Volatile private var backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
     private val httpClient = HttpClient.newHttpClient()
     val requestedPaths = mutableListOf<String>()
     private val server =
@@ -27,6 +27,11 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
 
     val url: String = "http://127.0.0.1:${server.address.port}/"
     val bootstrapUrl: String = "${url}appium-bootstrap.html"
+
+    /** Set once before browser requests; HttpServer handlers read it on their own threads. */
+    fun setBackendUrl(url: String) {
+        backendUri = URI.create("${url.removeSuffix("/")}/")
+    }
 
     override fun close() {
         server.stop(0)
@@ -51,7 +56,13 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
             }
             return
         }
-        val content = Files.readAllBytes(file.toPath())
+        val content =
+            if (relativePath == "index.html") {
+                val probe = checkNotNull(javaClass.getResource("/wasm-socket-probe.js")).readText()
+                file.readText().replace("<head>", "<head><script>$probe</script>").toByteArray(StandardCharsets.UTF_8)
+            } else {
+                Files.readAllBytes(file.toPath())
+            }
         exchange.responseHeaders.add("Content-Type", contentTypeFor(file.extension))
         exchange.responseHeaders.add("Cross-Origin-Opener-Policy", "same-origin")
         exchange.responseHeaders.add("Cross-Origin-Embedder-Policy", "require-corp")

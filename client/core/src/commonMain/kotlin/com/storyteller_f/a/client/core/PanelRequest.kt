@@ -47,6 +47,14 @@ suspend fun PanelSessionManager.signIn(signInPack: SignInBody) =
     }
 }
 
+suspend fun PanelSessionManager.restoreSession() =
+    serviceCatching {
+    val session = AdminApi.session()
+    val expected = passHolder.currentUserPass?.address()?.getOrThrow()
+    if (expected != null && session.address != expected) throw SessionIdentityChangedException()
+    session.account
+}
+
 suspend fun PanelSessionManager.signOut() =
     serviceCatching {
     AdminApi.signOut(Unit) {
@@ -337,3 +345,15 @@ suspend fun PanelSessionManager.getTopicTopics(
 ) = serviceCatching {
     AdminApi.Topics.Id.Topics.get(TopicQuery(pinType, fillHasCommented = null, paginationQuery), CommonPath(topicId))
 }
+
+suspend fun SessionManager<*>.recordSigninActivity(panel: Boolean) =
+    serviceCatching {
+    if (panel) AdminApi.activity(Unit) {} else com.storyteller_f.a.api.CustomApi.Accounts.activity(Unit) {}
+}
+
+suspend fun UserSessionManager.signOutAll() =
+    serviceCatching {
+    com.storyteller_f.a.api.CustomApi.Accounts.signOutAll(Unit) {}
+}
+
+suspend fun PanelSessionManager.signOutAll() = serviceCatching { AdminApi.signOutAll(Unit) {} }

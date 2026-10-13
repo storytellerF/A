@@ -1101,6 +1101,16 @@ object CustomApi {
     }
 
     object Accounts {
+        val activity =
+            mutationEndpointBuilder("accounts/activity") {
+                resp(Unit::class)
+                body(Unit::class)
+            }
+
+        val signOutAll = mutationEndpointBuilder("accounts/sign-out-all", MutationMethodType.POST) { resp(Unit::class) }
+
+        val session = safeEndpointBuilder("accounts/session") { resp(UserInfo::class) }
+
         val signIn =
             mutationEndpointBuilder("/accounts/sign-in") {
                 resp(SignInResponse::class)

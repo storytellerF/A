@@ -4,11 +4,6 @@
 
 package com.storyteller_f.a.client.compose_core.utils
 
-import com.russhwolf.settings.ExperimentalSettingsApi
-import com.russhwolf.settings.Settings
-import com.russhwolf.settings.serialization.decodeValueOrNull
-import com.russhwolf.settings.serialization.encodeValue
-import com.russhwolf.settings.serialization.removeValue
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.RawUserPass
@@ -16,106 +11,137 @@ import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.shared.model.AlgoType
 import io.github.aakira.napier.Napier
-import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 interface SessionHistoryManager {
-    fun getSavedSession(): SavedSession
+    suspend fun getSavedSession(): SavedSession
 
     suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass
 
-    fun buildSession(alias: String): UserPass?
+    suspend fun buildSession(alias: String): UserPass?
 
-    fun removeSession(alias: String)
+    suspend fun removeSession(alias: String)
 
-    fun exitSession(alias: String)
+    suspend fun exitSession(alias: String)
 
-    fun logSession(alias: String)
+    suspend fun logSession(alias: String)
 }
 
-/**
- * 登录之后会修改last 和current，如果没有退出登录，再次打开时会读取current 重新登录
- * 如果退出登录current 会被删除.
- */
+/** Last selected account and the account whose cookie should be restored on startup. */
 @Serializable
 data class SessionHistory(val last: String? = null, val current: String? = null)
 
-class DefaultSessionHistoryManager(val settings: Settings) : SessionHistoryManager {
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun getSavedSession(): SavedSession {
-        val list =
-            settings.keys.asSequence().map {
-                it.split(".")[0]
-            }.distinct().filter {
-                it.startsWith(SESSION_USER_PREFIX)
-            }.mapNotNull {
-                settings.decodeValueOrNull<ConvertedRawUserPassInfo>(it)?.address
-            }.toList()
-        val history = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
-        return SavedSession(list, history)
+@Serializable
+internal data class ProtectedSessionHistory(
+    val accounts: List<ConvertedRawUserPassInfo> = emptyList(),
+    val history: SessionHistory? = null,
+)
+
+internal class ProtectedSessionHistoryManager(
+    private val storageKey: String,
+    private val read: suspend (String) -> String? = { readProtectedValue(it) },
+    private val write: suspend (String, String) -> Unit = { key, value -> writeProtectedValue(key, value) },
+) : SessionHistoryManager {
+    override suspend fun getSavedSession(): SavedSession =
+        gate.withLock {
+        val saved = loadHistory()
+        SavedSession(saved.accounts.map { it.address }, saved.history)
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass {
+    override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass =
+        gate.withLock {
+        val saved = loadHistory()
         val address = userPassInfo.address
-        settings.encodeValue(getUserKey(address), userPassInfo.toConverted())
-        settings.encodeValue(SESSION_HISTORY, SessionHistory(address, address))
-        return RawUserPass(userPassInfo)
+        saveHistory(
+            saved.copy(
+                accounts = saved.accounts.filter { it.address != address } + userPassInfo.toConverted(),
+                history = SessionHistory(address, address),
+            ),
+        )
+        RawUserPass(userPassInfo)
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun buildSession(alias: String): UserPass? {
-        val rawUserPass = settings.decodeValueOrNull<ConvertedRawUserPassInfo>(getUserKey(alias)) ?: return null
-        return RawUserPass(rawUserPass.toRawUserPassInfo())
+    override suspend fun buildSession(alias: String): UserPass? =
+        gate.withLock {
+        loadHistory().accounts.firstOrNull { it.address == alias }?.let { RawUserPass(it.toRawUserPassInfo()) }
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun removeSession(alias: String) {
-        settings.removeValue<ConvertedRawUserPassInfo>(getUserKey(alias))
-        val sessionHistory = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
-        if (sessionHistory != null && sessionHistory.last == alias) {
-            settings.removeValue<SessionHistory>(SESSION_HISTORY)
-        }
+    override suspend fun removeSession(alias: String) =
+        gate.withLock {
+        val saved = loadHistory()
+        val history =
+            saved.history?.let {
+                it.copy(
+                    last = it.last.takeUnless { value -> value == alias },
+                    current = it.current.takeUnless { value -> value == alias },
+                )
+            }
+        saveHistory(saved.copy(accounts = saved.accounts.filter { it.address != alias }, history = history))
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun exitSession(alias: String) {
-        val sessionHistory = settings.decodeValueOrNull<SessionHistory>(SESSION_HISTORY)
-        if (sessionHistory != null && sessionHistory.current == alias) {
-            settings.encodeValue(SESSION_HISTORY, sessionHistory.copy(current = null))
-        }
+    override suspend fun exitSession(alias: String) =
+        gate.withLock {
+        val saved = loadHistory()
+        if (saved.history?.current == alias) saveHistory(saved.copy(history = saved.history.copy(current = null)))
     }
 
-    @OptIn(ExperimentalSerializationApi::class, ExperimentalSettingsApi::class)
-    override fun logSession(alias: String) {
-        settings.encodeValue(SESSION_HISTORY, SessionHistory(alias, alias))
+    override suspend fun logSession(alias: String) =
+        gate.withLock {
+        val saved = loadHistory()
+        require(saved.accounts.any { it.address == alias }) { "Saved account does not exist" }
+        saveHistory(saved.copy(history = SessionHistory(alias, alias)))
+    }
+
+    private suspend fun loadHistory(): ProtectedSessionHistory =
+        read(storageKey)?.let { Json.decodeFromString<ProtectedSessionHistory>(it) } ?: ProtectedSessionHistory()
+
+    private suspend fun saveHistory(saved: ProtectedSessionHistory) {
+        val serialized = Json.encodeToString(saved)
+        write(storageKey, serialized)
+        check(read(storageKey) == serialized) { "Protected account storage could not be verified" }
     }
 
     companion object {
-        const val SESSION_HISTORY = "session_history"
-        const val SESSION_USER_PREFIX = "S_U"
-        fun getUserKey(address: String): String = "${SESSION_USER_PREFIX}_$address"
+        private val gate = Mutex()
     }
 }
 
+/** Account keys and history are stored with platform protection; old Settings history is ignored. */
+fun buildSessionHistoryFactory(namespace: String = "user"): SessionHistoryManager =
+    ProtectedSessionHistoryManager("account-history:$namespace")
+
+internal expect suspend fun readProtectedValue(key: String): String?
+internal expect suspend fun writeProtectedValue(key: String, value: String)
+
 data class SavedSession(val alias: List<String>, val history: SessionHistory?)
-
-expect fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager
-
-expect fun createSettings(name: String = "a-default"): Settings
 
 expect fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo?
 
-fun restoreFromStorage(settings: Settings): ClientSessionState? {
+suspend fun restoreFromStorage(namespace: String = "user"): ClientSessionState? {
     val injected = readInjectedSessionFromPrivateStorageOrNull()
     if (injected != null) {
         Napier.d("Found injected session, restoring...")
         Napier.d("APP_DESKTOP_SESSION_RESTORE source=injected address=${injected.address.shortForLog()}")
         val userPass = RawUserPass(injected.toRawUserPassInfo())
-        return ClientSessionState.Success(userPass)
+        return ClientSessionState.Success(userPass, injected.cookies)
     }
 
-    val sessionFactory = buildSessionHistoryFactory(settings)
+    return try {
+        restoreProtectedHistory(namespace)
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        Napier.w("Protected account history is unavailable; explicit sign-in is required")
+        null
+    }
+}
+
+private suspend fun restoreProtectedHistory(namespace: String): ClientSessionState? {
+    val sessionFactory = buildSessionHistoryFactory(namespace)
     val (alias, history) = sessionFactory.getSavedSession()
     val current = history?.current
     Napier.d(
@@ -147,6 +173,7 @@ data class ConvertedRawUserPassInfo(
     val pemEncryptionPrivateKey: String? = null,
     val derEncryptionPrivateKey: String? = null,
     val derEncryptionPublicKey: String? = null,
+    val cookies: List<io.ktor.http.Cookie> = emptyList(),
 ) {
     fun toRawUserPassInfo(): RawUserPassInfo {
         val key =

@@ -127,6 +127,8 @@ suspend fun scenarioPublishTopicInRoom(driver: AppTestDriver, communityName: Str
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText("Rooms")
     driver.clickByTextContaining(roomName)
+    // The room composer must replace the outgoing room-list editor before text input.
+    driver.assertVisibleByDescription("Send")
     driver.inputText(topicContent)
     driver.clickByDescription("Send")
     driver.assertVisibleByText(topicContent)

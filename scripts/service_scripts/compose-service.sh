@@ -102,6 +102,10 @@ GENERATED_COMPOSE_FILE="./deploy/docker-compose/docker-compose.generated-patch.y
                 echo "  minio:"
                 emit_bunker_network_if_needed
             fi
+            if has_profile server; then
+                echo "  signin-redis:"
+                emit_bunker_network_if_needed
+            fi
             if has_profile filesystem; then
                 echo "  filesystem:"
                 emit_bunker_network_if_needed

@@ -133,3 +133,13 @@ test('Python helper identity regressions', () => {
     [path.join(__dirname, 'atspi_helper_test.py')], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
+
+test('dialog dismissal sends Escape without changing page-back behavior', async () => {
+  const driver = new LinuxDriver();
+  const commands = [];
+  driver._xdotool = (...args) => commands.push(args);
+  await driver.execute('linux: dismissDialog');
+  await driver.back();
+  assert.deepEqual(commands, [['key', 'Escape'], ['key', 'alt+Left']]);
+  await assert.rejects(driver.execute('linux: unsupported'), errors.UnknownCommandError);
+});

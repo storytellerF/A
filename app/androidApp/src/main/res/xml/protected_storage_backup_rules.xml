@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keystore keys cannot be transferred with these encrypted account records. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="protected-data.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="protected-data.xml" />
+    </device-transfer>
+</data-extraction-rules>

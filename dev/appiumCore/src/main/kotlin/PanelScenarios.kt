@@ -4,9 +4,10 @@
 
 package com.storyteller_f.a.dev.appium
 
-suspend fun scenarioOpenAllUsersFromOverview(driver: AppTestDriver) {
-    driver.assertVisibleByText("Overview")
-    driver.clickByDescription("Menu")
+suspend fun scenarioOpenAllUsersFromOverview(driver: AppTestDriver, expandedNavigation: Boolean) {
+    driver.assertVisibleByDescription("Menu")
+    if (!expandedNavigation) driver.clickByDescription("Menu")
     driver.clickByText("All users")
     driver.assertVisibleByText("All users")
+    driver.assertNotVisibleByText("Sign in")
 }

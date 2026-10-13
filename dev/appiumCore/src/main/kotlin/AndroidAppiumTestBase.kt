@@ -23,13 +23,16 @@ private const val POSTGRES_DATABASE = "a"
 private const val POSTGRES_USER = "a"
 private const val POSTGRES_PASSWORD = "a-test"
 
-data class AppiumPorts(val server: Int, val ws: Int)
+data class AppiumPorts(val server: Int, val ws: Int, val expireUserSessions: (() -> Unit)? = null)
 
 data class AuthenticatedSession(val session: InjectedSession, val sessionManager: UserSessionManager)
 
 data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useLightweightBackendContainers(network: Network, block: suspend (GenericContainer<*>) -> Unit) {
+suspend fun useLightweightBackendContainers(
+    network: Network,
+    block: suspend (GenericContainer<*>, GenericContainer<*>) -> Unit,
+) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
         withNetwork(network)
         withNetworkAliases("appium-postgresql")
@@ -56,7 +59,13 @@ suspend fun useLightweightBackendContainers(network: Network, block: suspend (Ge
                 waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
             }.use { lucene ->
                 lucene.start()
-                block(filesystem)
+                GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+                    withNetwork(network)
+                    withNetworkAliases("signin-redis")
+                }.use { redis ->
+                    redis.start()
+                    block(filesystem, redis)
+                }
             }
         }
     }
@@ -202,6 +211,7 @@ fun buildContainerEnv(): Map<String, String> {
     val envFromFile = parseEnvFile(File("../../cloud/server/src/test/resources/test.env"))
     return envFromFile - "LOG_PATH" +
         mapOf(
+            "SIGNIN_REDIS_ENDPOINT" to "signin-redis:6379",
             "BUILD_TYPE" to "test",
             "FLAVOR" to "dev",
             "SERVER_PORT" to "8811",

@@ -11,6 +11,18 @@ class DesktopAppiumTest : AppiumTestBase() {
     private val platformHelper = DesktopAppiumHelper()
 
     @Test
+    fun `test explicit sign in and sign out survive restart`() =
+        testSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test child sign in stays in memory across restart`() =
+        testChildSigninByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test sign in survives restart and revocation requires explicit login`() =
+        testSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test

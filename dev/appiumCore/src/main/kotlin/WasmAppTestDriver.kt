@@ -6,6 +6,7 @@ package com.storyteller_f.a.dev.appium
 
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.Keys
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
@@ -17,6 +18,8 @@ import java.time.Duration
 
 /** Drives Compose/Wasm through its transparent Appium-only HTML semantics overlay. */
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
+    internal fun socketProbe() = WasmSocketProbe(browser)
+
     private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
 
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
@@ -68,6 +71,11 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) =
         assertNotVisible(textLocator(text), timeoutSeconds)
+
+    override suspend fun dismissDialog() {
+        Actions(browser).sendKeys(Keys.ESCAPE).perform()
+        waitForUiCommit()
+    }
 
     override suspend fun navigateBack() {
         val dismissDialogLocator = By.cssSelector("[aria-label='dialog'][data-appium-action='true']")

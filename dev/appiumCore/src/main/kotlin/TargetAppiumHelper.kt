@@ -20,6 +20,7 @@ import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.cookies
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
@@ -44,12 +45,11 @@ abstract class TargetAppiumHelper {
     abstract val suiteName: String
 
     protected suspend fun createPreRegisteredInjectedSession(
-        signUp: suspend (AuthKey, SimplePassHolder) -> Unit,
+        signUp: suspend (AuthKey, SimplePassHolder) -> List<io.ktor.http.Cookie>,
     ): InjectedSession {
         val session = createUnsignedInjectedSession()
         val passHolder = SimplePassHolder()
-        signUp(session.toAuthKey(), passHolder)
-        return session
+        return session.copy(cookies = signUp(session.toAuthKey(), passHolder))
     }
 
     protected suspend fun createUnsignedInjectedSession(): InjectedSession {
@@ -119,6 +119,7 @@ class AppAppiumHelper : TargetAppiumHelper() {
             val manager = createApiSessionManager(ports, passHolder)
             try {
                 manager.userSignUp(authKey, passHolder)
+                manager.client.cookies("http://127.0.0.1:${ports.server}")
             } finally {
                 manager.client.close()
             }
@@ -131,7 +132,10 @@ class AppAppiumHelper : TargetAppiumHelper() {
         val passHolder = SimplePassHolder()
         val manager = createApiSessionManager(ports, passHolder)
         manager.userSignUp(session.toAuthKey(), passHolder)
-        return AuthenticatedSession(session, manager)
+        return AuthenticatedSession(
+            session.copy(cookies = manager.client.cookies("http://127.0.0.1:${ports.server}")),
+            manager,
+        )
     }
 
     private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): UserSessionManager =
@@ -144,7 +148,6 @@ class AppAppiumHelper : TargetAppiumHelper() {
                     defaultClientConfigure(
                         cookieStorage,
                         model,
-                        passHolder,
                         "http://127.0.0.1:${ports.server}",
                     )
                 }
@@ -189,10 +192,20 @@ class PanelAppiumHelper : TargetAppiumHelper() {
             val manager = createApiSessionManager(ports, passHolder)
             try {
                 manager.panelSignUp(authKey, passHolder)
+                manager.client.cookies("http://127.0.0.1:${ports.server}/admin")
             } finally {
                 manager.client.close()
             }
         }
+    }
+
+    suspend fun createAuthenticatedSession(ports: AppiumPorts): PanelAuthenticatedSession {
+        loadCryptoLibIfNeed()
+        val session = createUnsignedInjectedSession()
+        val passHolder = SimplePassHolder()
+        val manager = createApiSessionManager(ports, passHolder)
+        manager.panelSignUp(session.toAuthKey(), passHolder)
+        return PanelAuthenticatedSession(session, manager)
     }
 
     private fun createApiSessionManager(ports: AppiumPorts, passHolder: SimplePassHolder): PanelSessionManager =
@@ -204,9 +217,10 @@ class PanelAppiumHelper : TargetAppiumHelper() {
                 defaultClientConfigureForPanel(
                     cookieStorage,
                     model,
-                    passHolder,
                     "http://127.0.0.1:${ports.server}",
                 )
             }
         }
 }
+
+data class PanelAuthenticatedSession(val session: InjectedSession, val sessionManager: PanelSessionManager)

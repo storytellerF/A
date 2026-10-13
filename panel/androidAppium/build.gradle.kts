@@ -4,6 +4,7 @@
 
 plugins {
     alias(libs.plugins.kotlinJvm)
+    id("appium-test-concurrency")
 }
 
 val appiumTest = sourceSets.create("appiumTest")
@@ -40,5 +41,4 @@ tasks.register<Test>("appiumTest") {
         ":cloud:lucene-service:buildTestDockerImage",
         ":panel:androidApp:installDebug",
     )
-    maxParallelForks = 1
 }

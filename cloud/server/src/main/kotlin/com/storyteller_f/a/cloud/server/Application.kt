@@ -183,7 +183,7 @@ private fun Application.configurePlugin(reader: DatabaseReader, backend: Backend
         generate()
     }
     install(Sessions) {
-        setupUserSessions(env)
+        setupUserSessions(env, this@configurePlugin)
     }
     if (backend.customConfig.buildType == "prod") {
         setupRateLimit()

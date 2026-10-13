@@ -5,6 +5,8 @@
 package com.storyteller_f.a.dev.appium
 
 import com.storyteller_f.a.client.core.AuthKey
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -13,6 +15,7 @@ data class InjectedSession(
     val pemPrivateKey: String,
     val derPrivateKey: String,
     val derPublicKey: String,
+    val cookies: List<io.ktor.http.Cookie> = emptyList(),
 ) {
     fun toAuthKey(): AuthKey =
         AuthKey.P256(
@@ -29,4 +32,12 @@ fun buildInjectedSessionJson(session: InjectedSession): String =
     put("pemPrivateKey", session.pemPrivateKey)
     put("derPrivateKey", session.derPrivateKey)
     put("derPublicKey", session.derPublicKey)
+    // The device uses localhost while host fixtures use 127.0.0.1; bind injected Cookies to the target origin.
+    put(
+        "cookies",
+        Json.encodeToJsonElement(
+            ListSerializer(io.ktor.http.Cookie.serializer()),
+            session.cookies.map { it.copy(domain = null) },
+        ),
+    )
 }.toString()

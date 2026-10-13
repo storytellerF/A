@@ -135,7 +135,7 @@ private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String
         usePostgresqlTestContainer(env) {
             useFilesystemTestContainer(env) {
                 useLuceneTestContainer(env) {
-                    doTest(uuid, env + overrideEnv, block)
+                    useSigninRedisContainer(env) { doTest(uuid, env + overrideEnv, block) }
                 }
             }
         }
@@ -320,7 +320,7 @@ suspend fun <R> TestMate.getAppSession(
             passHolder,
             { model, cookiesStorage ->
                 createClient {
-                    defaultClientConfigure(cookiesStorage, model, passHolder)
+                    defaultClientConfigure(cookiesStorage, model)
                 }
             },
             onReceive,
@@ -373,7 +373,7 @@ suspend fun <R2> TestMate.noneSession(block: suspend UserSessionManager.() -> R2
             passHolder,
             { model, cookiesStorage ->
                 createClient {
-                    defaultClientConfigure(cookiesStorage, model, passHolder)
+                    defaultClientConfigure(cookiesStorage, model)
                 }
             },
         ) { _, _, _ -> }
@@ -430,7 +430,7 @@ private suspend fun <R> TestMate.getPanelSession(
     val sessionManager =
         createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
             createClient {
-                defaultClientConfigureForPanel(cookiesStorage, model, passHolder)
+                defaultClientConfigureForPanel(cookiesStorage, model)
             }
         }
     val sessionModel = sessionManager.model
@@ -452,3 +452,13 @@ suspend fun <R1, R2> TestMate.loginPanelSession(
 suspend fun <R> TestMate.withWorkerBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
 
 suspend fun <R> TestMate.withCliBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
+
+private suspend fun useSigninRedisContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
+    GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+        withExposedPorts(6379)
+    }.use { container ->
+        container.start()
+        env["REDIS_ENDPOINT"] = "${container.host}:${container.getMappedPort(6379)}"
+        block()
+    }
+}

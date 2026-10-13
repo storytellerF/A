@@ -11,6 +11,14 @@ class PanelAndroidAppiumTest : AppiumTestBase() {
     private val platformHelper = AndroidAppiumHelper()
 
     @Test
+    fun `test explicit sign out survives restart`() =
+        testPanelSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test sign in survives restart and revocation requires explicit login`() =
+        testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test panel sign in by injected private session`() =
         testPanelInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
 }

@@ -20,9 +20,14 @@ import com.storyteller_f.a.cloud.core.service.signIn
 import com.storyteller_f.a.cloud.core.service.signUp
 import com.storyteller_f.a.cloud.core.service.verifyUserTotp
 import com.storyteller_f.a.cloud.server.auth.UserSession
+import com.storyteller_f.a.cloud.server.auth.beginSigninChallenge
+import com.storyteller_f.a.cloud.server.auth.clearAllSigninSessions
+import com.storyteller_f.a.cloud.server.auth.clearSigninSession
+import com.storyteller_f.a.cloud.server.auth.consumeSigninChallenge
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.getSession
 import com.storyteller_f.a.cloud.server.auth.handleResult
+import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.saveSuccessSession
 import com.storyteller_f.a.cloud.server.auth.saveTwoFactorPendingSession
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
@@ -39,17 +44,16 @@ import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
-import io.ktor.server.sessions.clear
-import io.ktor.server.sessions.sessions
 
 fun Route.bindUnprotectedAccountRoute(backend: Backend) {
     CustomApi.Accounts.getData(handleResult(backend)) {
-        Result.success(call.getData())
+        call.beginSigninChallenge()
     }
     CustomApi.Accounts.signUp(handleResult(backend)) { api ->
         if (!backend.customConfig.enableSignUp) {
             Result.failure(Exception("not support"))
         } else {
+            call.consumeSigninChallenge()
             val data = call.getData()
             val mapResult = backend.signUp(data, api.receiveBody())
             mapResult.onSuccess {
@@ -61,6 +65,7 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
     }
 
     CustomApi.Accounts.signIn(handleResult(backend)) { api ->
+        call.consumeSigninChallenge()
         backend.signIn(call.getData(), api.receiveBody()).map { signIn ->
             when (signIn) {
                 is com.storyteller_f.a.cloud.core.service.SignInServiceResponse.Success -> {
@@ -97,13 +102,33 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
 fun Route.bindAccountRoute(backend: Backend) {
     CustomApi.Accounts.signOut(handleResult(backend)) {
         usePrincipalOrNull {
-            call.sessions.clear(UserSession::class)
+            call.clearSigninSession()
             UNIT_RESULT
         }
     }
 }
 
 fun Route.bindProtectedAccountRoute(backend: Backend) {
+    CustomApi.Accounts.activity(handleResult(backend)) {
+        if (call.isSigninSessionValid(
+                active = true,
+            )
+        ) {
+            UNIT_RESULT
+        } else {
+            Result.failure(com.storyteller_f.a.backend.core.UnauthorizedException())
+        }
+    }
+
+    CustomApi.Accounts.signOutAll(handleResult(backend)) {
+        call.clearAllSigninSessions()
+        UNIT_RESULT
+    }
+
+    CustomApi.Accounts.session(handleResult(backend)) {
+        usePrincipal { uid -> backend.getUserInfo(ObjectFetch.IdFetch(uid)) }
+    }
+
     CustomApi.Accounts.ChildAccounts.add(handleResult(backend)) { api ->
         usePrincipal { uid ->
             val request: AddChildAccountRequest = api.receiveBody()
@@ -121,14 +146,18 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
     }
 }
 
-fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
+suspend fun RoutingContext.saveSuccessSessionOnFirst(id: PrimaryKey) {
     val session = call.getSession()
-    if (session is UserSession.Pending) {
-        call.saveSuccessSession(session, id)
-    }
+    val pending =
+        when (session) {
+            is UserSession.Pending -> session
+            is UserSession.Success -> return
+            is UserSession.TwoFactorPending -> return
+        }
+    call.saveSuccessSession(pending, id)
 }
 
-fun RoutingContext.saveTwoFactorPendingSession(id: PrimaryKey) {
+suspend fun RoutingContext.saveTwoFactorPendingSession(id: PrimaryKey) {
     val session = call.getSession()
     if (session is UserSession.Pending) {
         call.saveTwoFactorPendingSession(session, id)

@@ -97,8 +97,9 @@ import com.storyteller_f.a.client.compose_core.components.VideoViewFilled
 import com.storyteller_f.a.client.compose_core.components.rememberIsInPipMode
 import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
-import com.storyteller_f.a.client.compose_core.utils.createSettings
+import com.storyteller_f.a.client.compose_core.utils.createSigninCookies
 import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage
+import com.storyteller_f.a.client.compose_core.utils.signinActivity
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.ConstPassHolder
 import com.storyteller_f.a.client.core.RawUserPass
@@ -111,6 +112,7 @@ import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.login
 import com.storyteller_f.a.client.core.processEncryptedTopic
+import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.shared.model.FileInfo
@@ -133,10 +135,13 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 internal fun getAsyncImageLoader(context: PlatformContext): ImageLoader {
@@ -309,7 +314,7 @@ private fun MainPage(appNav: AppNavFactory, backStack: NavBackStack<NavKey>) {
     ) {
         ObserveMessage()
         val windowPosture = currentWindowAdaptiveInfoV2().windowPosture
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize().signinActivity(LocalSessionManager.current)) {
             val contentSize = DpSize(maxWidth, maxHeight)
             val directive =
                 remember(contentSize, windowPosture) {
@@ -389,6 +394,8 @@ fun CommonEntry(content: @Composable () -> Unit) {
 }
 
 sealed interface IAccountInstance {
+    val accountScope: CoroutineScope
+
     val database: ModelStorage
     val sessionManager: SimpleUserSessionManager
     val task: CustomGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>
@@ -397,22 +404,31 @@ sealed interface IAccountInstance {
 
     val passHolder: ConstPassHolder
 
+    fun close() {
+        accountScope.cancel()
+        sessionManager.client.close()
+    }
+
     val isAlreadySign get() = passHolder.currentUserPass != null
 
-    class None(scope: CoroutineScope, httpUrl: String, wsServerUrl: String) : IAccountInstance {
+    class None(parentScope: CoroutineScope, httpUrl: String, wsServerUrl: String) : IAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
         val events = MutableSharedFlow<Any>()
         override val sessionManager: SimpleUserSessionManager =
             createSimpleUserSessionManager(
                 buildWebSocketUrl(wsServerUrl),
-                AcceptAllCookiesStorage(),
+                createSigninCookies(httpUrl, "user"),
                 passHolder,
                 { m, c ->
                     buildHttpClient(
                         httpUrl,
                         c,
                         m,
-                        passHolder,
                     )
                 },
             ) { frame, _, _ ->
@@ -438,17 +454,22 @@ sealed interface IAccountInstance {
     }
 
     class Regular(
-        scope: CoroutineScope,
+        parentScope: CoroutineScope,
         override val address: String,
         httpUrl: String,
         wsServerUrl: String,
-        cookieManager: AcceptAllCookiesStorage,
+        cookieManager: CookiesStorage,
         override val passHolder: ConstPassHolder,
     ) : IAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         private val events = MutableSharedFlow<Any>()
         override val sessionManager: SimpleUserSessionManager =
             createSimpleUserSessionManager(buildWebSocketUrl(wsServerUrl), cookieManager, passHolder, { m, c ->
-                buildHttpClient(httpUrl, c, m, passHolder)
+                buildHttpClient(httpUrl, c, m)
             }) { frame, _, _ ->
                 if (frame is RoomFrame.NewTopicInfo) {
                     events.emit(OnTopicCreated(frame.topicInfo))
@@ -475,7 +496,7 @@ sealed interface IAccountInstance {
             }
             scope.launch {
                 if (passHolder.currentUserPass != null && sessionManager.model.userHandler.data.value == null) {
-                    sessionManager.login()
+                    sessionManager.restoreSession().onSuccess { sessionManager.model.updateUser(it) }
                 }
             }
             scope.launch {
@@ -492,13 +513,18 @@ sealed interface IAccountInstance {
     }
 
     class Child(
-        scope: CoroutineScope,
+        parentScope: CoroutineScope,
         override val address: String,
         httpUrl: String,
         wsServerUrl: String,
         val main: Regular,
         override val passHolder: ConstPassHolder,
     ) : IAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         val events = MutableSharedFlow<Any>()
         override val sessionManager: SimpleUserSessionManager =
             createSimpleUserSessionManager(
@@ -510,7 +536,6 @@ sealed interface IAccountInstance {
                         httpUrl,
                         c,
                         m,
-                        passHolder,
                     )
                 },
             ) { frame, _, _ ->
@@ -558,28 +583,46 @@ sealed interface IAccountInstance {
 
 class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, val httpUrl: String) {
     val instance: MutableStateFlow<IAccountInstance>
-    val settings = createSettings("main")
-    val historyManager = buildSessionHistoryFactory(settings)
+    val historyManager = buildSessionHistoryFactory("user")
 
     init {
         val value = IAccountInstance.None(viewModelScope, httpUrl, wsServerUrl)
         instance = MutableStateFlow(value)
-        val settings = createSettings("main")
-        val state = restoreFromStorage(settings)
-        if (state is ClientSessionState.Success) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            instance.collectLatest { account ->
+                account.sessionManager.model.sessionExpired.collect { expired ->
+                    if (expired && account !is IAccountInstance.None) {
+                        historyManager.exitSession(account.address)
+                        logout()
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            val state = restoreFromStorage("user")
+            if (state is ClientSessionState.Success) {
                 val address =
                     when (val userPass = state.userPass) {
                         is RawUserPass -> userPass.rawUSerPass.address
                         else -> userPass.address().getOrNull() ?: return@launch
                     }
+                val cookies =
+                    if (state.cookies.isEmpty()) {
+                        createSigninCookies(
+                            httpUrl,
+                            "user",
+                        )
+                    } else {
+                        AcceptAllCookiesStorage()
+                    }
+                state.cookies.forEach { cookies.addCookie(io.ktor.http.Url(httpUrl), it) }
                 val regular =
                     IAccountInstance.Regular(
                         viewModelScope,
                         address,
                         httpUrl,
                         wsServerUrl,
-                        AcceptAllCookiesStorage(),
+                        cookies,
                         ConstPassHolder(state.userPass),
                     )
                 instance.value = regular
@@ -588,10 +631,18 @@ class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, v
     }
 
     fun logout() {
+        val old = instance.value
+        if (old is IAccountInstance.Child) {
+            switchToMain()
+            return
+        }
+        old.close()
         instance.value = IAccountInstance.None(viewModelScope, httpUrl, wsServerUrl)
     }
 
     fun switchUser(main: IAccountInstance.Regular, rawUserPass: RawUserPass) {
+        val old = instance.value
+        if (old is IAccountInstance.Child) old.close()
         instance.value =
             IAccountInstance.Child(
                 viewModelScope,
@@ -626,6 +677,7 @@ class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, v
         if (old !is IAccountInstance.Child) {
             return
         }
+        old.close()
         instance.value = old.main
     }
 }
@@ -643,19 +695,14 @@ fun ProvideFontIcon(block: @Composable () -> Unit) {
     )
 }
 
-fun buildHttpClient(
-    httpUrl: String,
-    cookieManager: CookiesStorage,
-    model: UserSessionModel,
-    passHolder: ConstPassHolder,
-): HttpClient =
+fun buildHttpClient(httpUrl: String, cookieManager: CookiesStorage, model: UserSessionModel): HttpClient =
     if (httpUrl.isEmpty()) {
-    HttpClient { }
-} else {
-    getClient {
-        defaultClientConfigure(cookieManager, model, passHolder, httpUrl)
+        HttpClient { }
+    } else {
+        getClient {
+            defaultClientConfigure(cookieManager, model, httpUrl)
+        }
     }
-}
 
 @Composable
 private fun ObserveMessage() {

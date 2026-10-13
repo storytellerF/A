@@ -17,6 +17,10 @@ interface AppTestDriver {
     suspend fun assertVisibleByTextContaining(text: String)
 
     suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long = 5)
+
+    /** Dismisses an open modal using the platform back/Escape action. */
+    suspend fun dismissDialog()
+
     suspend fun navigateBack()
     suspend fun saveSnapshot(name: String)
 }

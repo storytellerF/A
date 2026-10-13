@@ -4,18 +4,9 @@
 
 package com.storyteller_f.a.client.compose_core.utils
 
-import com.russhwolf.settings.PreferencesSettings
-import com.russhwolf.settings.Settings
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
 import java.io.File
-
-actual fun buildSessionHistoryFactory(settings: Settings): SessionHistoryManager =
-    DefaultSessionHistoryManager(
-    settings,
-)
-
-actual fun createSettings(name: String): Settings = PreferencesSettings.Factory().create(name)
 
 actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassInfo? {
     val sessionFilePath =

@@ -24,6 +24,7 @@ import com.storyteller_f.a.api.UserSubscriptionInfoListResponse
 import com.storyteller_f.a.api.WorkerTaskListResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
+import com.storyteller_f.a.backend.core.types.toPanelAccountInfo
 import com.storyteller_f.a.cloud.core.service.addUser
 import com.storyteller_f.a.cloud.core.service.adminSignIn
 import com.storyteller_f.a.cloud.core.service.adminSignUp
@@ -65,9 +66,13 @@ import com.storyteller_f.a.cloud.core.service.updateRoomStatus
 import com.storyteller_f.a.cloud.core.service.updateTitleStatus
 import com.storyteller_f.a.cloud.core.service.updateTopicStatus
 import com.storyteller_f.a.cloud.core.service.updateUserStatus
-import com.storyteller_f.a.cloud.server.auth.UserSession
+import com.storyteller_f.a.cloud.server.auth.beginSigninChallenge
+import com.storyteller_f.a.cloud.server.auth.clearAllSigninSessions
+import com.storyteller_f.a.cloud.server.auth.clearSigninSession
+import com.storyteller_f.a.cloud.server.auth.consumeSigninChallenge
 import com.storyteller_f.a.cloud.server.auth.getData
 import com.storyteller_f.a.cloud.server.auth.handleResult
+import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
@@ -78,8 +83,6 @@ import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
-import io.ktor.server.sessions.clear
-import io.ktor.server.sessions.sessions
 import kotlinx.collections.immutable.toImmutableList
 
 fun Route.bindProtectedAdminRoute(backend: Backend) {
@@ -92,9 +95,33 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     bindAdminPanelLogRoutes(backend)
     bindAdminTaskRecordRoutes(backend)
     bindAdminWorkerTaskRoutes(backend)
-    AdminApi.signOut(handleResult(backend)) {
-        call.sessions.clear(UserSession::class)
+    AdminApi.session(handleResult(backend)) {
+        usePrincipal { uid ->
+            backend.database.panelAccount.getPanelAccount(
+                uid,
+            ).map {
+                it?.let { account ->
+                    com.storyteller_f.a.api.PanelSigninSessionInfo(
+                        account.toPanelAccountInfo(),
+                        account.address,
+                    )
+                }
+            }
+        }
+    }
+    AdminApi.signOutAll(handleResult(backend)) {
+        call.clearAllSigninSessions()
         UNIT_RESULT
+    }
+    AdminApi.activity(handleResult(backend)) {
+        if (call.isSigninSessionValid(
+                active = true,
+            )
+        ) {
+            UNIT_RESULT
+        } else {
+            Result.failure(com.storyteller_f.a.backend.core.UnauthorizedException())
+        }
     }
     AdminApi.overview(handleResult(backend)) {
         backend.getOverview()
@@ -405,15 +432,23 @@ private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
 }
 
 fun Routing.bindUnauthenticatedPanelRoute(backend: Backend) {
+    AdminApi.signOut(handleResult(backend)) {
+        call.clearSigninSession()
+        UNIT_RESULT
+    }
     AdminApi.signIn.invoke(handleResult(backend)) { api ->
+        call.consumeSigninChallenge()
         backend.adminSignIn(call.getData(), api.receiveBody()).onSuccess {
             saveSuccessSessionOnFirst(it.id)
         }
     }
     AdminApi.signUp.invoke(handleResult(backend)) {
-        backend.adminSignUp(call.getData(), it.receiveBody())
+        call.consumeSigninChallenge()
+        backend.adminSignUp(call.getData(), it.receiveBody()).onSuccess { account ->
+            saveSuccessSessionOnFirst(account.id)
+        }
     }
     AdminApi.getData.invoke(handleResult(backend)) {
-        Result.success(call.getData())
+        call.beginSigninChallenge()
     }
 }

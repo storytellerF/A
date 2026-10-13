@@ -157,8 +157,6 @@ kotlin {
             implementation(libs.zoomimage.compose.coil3)
             implementation(libs.fonticons.core)
             implementation(libs.krop.ui)
-            implementation(libs.multiplatform.settings)
-            implementation(libs.multiplatform.settings.serialization)
 
             implementation(libs.haze)
             implementation(libs.haze.materials)

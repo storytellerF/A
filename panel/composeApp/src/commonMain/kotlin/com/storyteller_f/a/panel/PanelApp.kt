@@ -10,10 +10,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.FilePresent
 import androidx.compose.material.icons.filled.Group
@@ -24,6 +28,8 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Title
 import androidx.compose.material.icons.filled.Topic
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -47,6 +53,7 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -74,13 +81,15 @@ import com.storyteller_f.a.client.compose_core.components.CustomGlobalTask
 import com.storyteller_f.a.client.compose_core.components.GlobalDialog
 import com.storyteller_f.a.client.compose_core.components.GlobalDialogContext
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
+import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.addPlatformImageDecoders
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
-import com.storyteller_f.a.client.compose_core.utils.createSettings
+import com.storyteller_f.a.client.compose_core.utils.createSigninCookies
 import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage
+import com.storyteller_f.a.client.compose_core.utils.signinActivity
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.ConstPassHolder
 import com.storyteller_f.a.client.core.PanelSessionManager
@@ -90,6 +99,8 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.createSimplePanelSessionManager
 import com.storyteller_f.a.client.core.defaultClientConfigureForPanel
 import com.storyteller_f.a.client.core.getClient
+import com.storyteller_f.a.client.core.restoreSession
+import com.storyteller_f.a.client.core.signOut
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.a.panel.common.OnCommunityStatusUpdated
 import com.storyteller_f.a.panel.common.OnFileStatusUpdated
@@ -115,7 +126,11 @@ import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UserCollection
 import com.storyteller_f.storage.update
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
+import io.ktor.client.plugins.cookies.CookiesStorage
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -219,7 +234,14 @@ private fun PanelNavigationDrawer(
 @Composable
 private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
     val windowPosture = currentWindowAdaptiveInfoV2().windowPosture
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val account by LocalPanelUiViewModel.current.instance.collectAsState()
+    BoxWithConstraints(
+        modifier =
+        Modifier.fillMaxSize().signinActivity(
+            account.sessionManager,
+            panel = true,
+        ),
+    ) {
         val contentSize = DpSize(maxWidth, maxHeight)
         val directive =
             remember(contentSize, windowPosture) {
@@ -263,63 +285,106 @@ internal fun calculatePanelPaneDirective(contentSize: DpSize, windowPosture: Pos
 
 @Composable
 private fun PanelDrawer(scope: CoroutineScope, drawerState: DrawerState, nav: PanelNav, permanent: Boolean) {
-    val content: @Composable ColumnScope.() -> Unit = {
-        DrawerHeader()
-        DrawerNavItem(
-            Icons.Default.Home,
-            stringResource(Res.string.overview),
-            onNavigate(scope, drawerState) { nav.gotoOverview() },
-        )
-        DrawerNavItem(
-            Icons.Default.People,
-            stringResource(Res.string.all_users),
-            onNavigate(scope, drawerState) { nav.gotoAllUsers() },
-        )
-        DrawerNavItem(
-            Icons.Default.Group,
-            stringResource(Res.string.all_communities),
-            onNavigate(scope, drawerState) { nav.gotoAllCommunities() },
-        )
-        DrawerNavItem(
-            Icons.Default.Public,
-            stringResource(Res.string.all_public_rooms),
-            onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() },
-        )
-        DrawerNavItem(
-            Icons.Default.Lock,
-            stringResource(Res.string.all_private_rooms),
-            onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() },
-        )
-        DrawerNavItem(
-            Icons.Default.Topic,
-            stringResource(Res.string.all_topics),
-            onNavigate(scope, drawerState) { nav.gotoAllTopics() },
-        )
-        DrawerNavItem(
-            Icons.Default.FilePresent,
-            stringResource(Res.string.all_files),
-            onNavigate(scope, drawerState) { nav.gotoAllFiles() },
-        )
-        DrawerNavItem(
-            Icons.Default.Title,
-            stringResource(Res.string.all_titles),
-            onNavigate(scope, drawerState) { nav.gotoAllTitles() },
-        )
-        DrawerNavItem(
-            Icons.Default.Build,
-            stringResource(Res.string.worker_records),
-            onNavigate(scope, drawerState) { nav.gotoTaskRecords() },
-        )
-        DrawerNavItem(
-            Icons.Default.Settings,
-            stringResource(Res.string.worker_task_configurations),
-            onNavigate(scope, drawerState) { nav.gotoWorkerTasks() },
-        )
+    val scrollContent: @Composable ColumnScope.() -> Unit = {
+        Column(Modifier.verticalScroll(rememberScrollState())) {
+            PanelDrawerContent(scope, drawerState, nav)
+        }
     }
     if (permanent) {
-        PermanentDrawerSheet(content = content)
+        PermanentDrawerSheet(content = scrollContent)
     } else {
-        ModalDrawerSheet(content = content)
+        ModalDrawerSheet(content = scrollContent)
+    }
+}
+
+@Composable
+private fun PanelDrawerContent(scope: CoroutineScope, drawerState: DrawerState, nav: PanelNav) {
+    DrawerHeader()
+    DrawerNavItem(
+        Icons.Default.Home,
+        stringResource(Res.string.overview),
+        onNavigate(scope, drawerState) { nav.gotoOverview() },
+    )
+    DrawerNavItem(
+        Icons.Default.People,
+        stringResource(Res.string.all_users),
+        onNavigate(scope, drawerState) { nav.gotoAllUsers() },
+    )
+    DrawerNavItem(
+        Icons.Default.Group,
+        stringResource(Res.string.all_communities),
+        onNavigate(scope, drawerState) { nav.gotoAllCommunities() },
+    )
+    DrawerNavItem(
+        Icons.Default.Public,
+        stringResource(Res.string.all_public_rooms),
+        onNavigate(scope, drawerState) { nav.gotoAllPublicRooms() },
+    )
+    DrawerNavItem(
+        Icons.Default.Lock,
+        stringResource(Res.string.all_private_rooms),
+        onNavigate(scope, drawerState) { nav.gotoAllPrivateRooms() },
+    )
+    DrawerNavItem(
+        Icons.Default.Topic,
+        stringResource(Res.string.all_topics),
+        onNavigate(scope, drawerState) { nav.gotoAllTopics() },
+    )
+    DrawerNavItem(
+        Icons.Default.FilePresent,
+        stringResource(Res.string.all_files),
+        onNavigate(scope, drawerState) { nav.gotoAllFiles() },
+    )
+    DrawerNavItem(
+        Icons.Default.Title,
+        stringResource(Res.string.all_titles),
+        onNavigate(scope, drawerState) { nav.gotoAllTitles() },
+    )
+    DrawerNavItem(
+        Icons.Default.Build,
+        stringResource(Res.string.worker_records),
+        onNavigate(scope, drawerState) { nav.gotoTaskRecords() },
+    )
+    DrawerNavItem(
+        Icons.Default.Settings,
+        stringResource(Res.string.worker_task_configurations),
+        onNavigate(scope, drawerState) { nav.gotoWorkerTasks() },
+    )
+    PanelSignoutEntry(scope)
+}
+
+@Composable
+private fun PanelSignoutEntry(scope: CoroutineScope) {
+    val uiViewModel = LocalPanelUiViewModel.current
+    val account by uiViewModel.instance.collectAsState()
+    val signoutHost =
+        remember(uiViewModel) {
+            PanelSignoutHost(scope, panelUiCoordination, uiViewModel::requestSignout)
+        }
+    DisposableEffect(signoutHost) {
+        onDispose { signoutHost.close() }
+    }
+    val confirming by signoutHost.confirming.collectAsState()
+    val title = stringResource(Res.string.sign_out_prompt)
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = signoutHost::cancel,
+            title = { Text(title) },
+            confirmButton = {
+                Button(
+                    signoutHost::confirm,
+                    modifier = Modifier.appiumSemantics(text = "Yes", onClick = signoutHost::confirm),
+                ) { Text("Yes") }
+            },
+        )
+    }
+    if (account.isAlreadySign) {
+        HorizontalDivider()
+        DrawerNavItem(
+            Icons.AutoMirrored.Filled.Logout,
+            stringResource(Res.string.sign_out),
+            signoutHost::request,
+        )
     }
 }
 
@@ -355,6 +420,8 @@ class CustomPanelSessionManager(val proxy: SimplePanelSessionManager, val histor
 }
 
 sealed interface IPanelAccountInstance {
+    val accountScope: CoroutineScope
+
     val database: ModelStorage
     val sessionManager: CustomPanelSessionManager
     val task: CustomGlobalTask<GlobalTaskContext<CustomPanelSessionManager>>
@@ -363,9 +430,19 @@ sealed interface IPanelAccountInstance {
 
     val passHolder: ConstPassHolder
 
+    fun close() {
+        accountScope.cancel()
+        sessionManager.client.close()
+    }
+
     val isAlreadySign get() = passHolder.currentUserPass != null
 
-    class None(scope: CoroutineScope, httpUrl: String) : IPanelAccountInstance {
+    class None(parentScope: CoroutineScope, httpUrl: String) : IPanelAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         val events = MutableSharedFlow<Any>()
         override val passHolder: ConstPassHolder = ConstPassHolder(null)
 
@@ -373,7 +450,7 @@ sealed interface IPanelAccountInstance {
             createPanelSessionManager(
                 httpUrl,
                 passHolder,
-                AcceptAllCookiesStorage(),
+                createSigninCookies(httpUrl, "panel"),
             )
         override val database = getRoomModelStorage("guest")
         val context: GlobalTaskContext<CustomPanelSessionManager> =
@@ -387,12 +464,17 @@ sealed interface IPanelAccountInstance {
     }
 
     class Regular(
-        scope: CoroutineScope,
+        parentScope: CoroutineScope,
         override val address: String,
         httpUrl: String,
         override val passHolder: ConstPassHolder,
-        cookiesStorage: AcceptAllCookiesStorage,
+        cookiesStorage: CookiesStorage,
     ) : IPanelAccountInstance {
+        override val accountScope =
+            CoroutineScope(
+                parentScope.coroutineContext + Job(parentScope.coroutineContext[Job]),
+            )
+        private val scope = accountScope
         val events = MutableSharedFlow<Any>()
         override val sessionManager: CustomPanelSessionManager =
             createPanelSessionManager(httpUrl, passHolder, cookiesStorage)
@@ -406,6 +488,9 @@ sealed interface IPanelAccountInstance {
             CustomGlobalDialogController(scope, dialogContext)
 
         init {
+            scope.launch {
+                sessionManager.restoreSession().onSuccess { sessionManager.model.updateUser(it) }
+            }
             scope.launch {
                 events.collectLatest {
                     processEvent(it, database)
@@ -506,7 +591,7 @@ sealed interface IPanelAccountInstance {
 fun createPanelSessionManager(
     httpUrl: String,
     passHolder: ConstPassHolder,
-    cookiesStorage: AcceptAllCookiesStorage,
+    cookiesStorage: CookiesStorage,
 ): CustomPanelSessionManager {
     val simpleManager =
         createSimplePanelSessionManager(
@@ -514,13 +599,14 @@ fun createPanelSessionManager(
             cookiesStorage,
         ) { m, c ->
             getClient {
-                defaultClientConfigureForPanel(c, m, passHolder, httpUrl)
+                defaultClientConfigureForPanel(c, m, httpUrl)
             }
         }
-    val settings = createSettings("main")
-    val historyManager = buildSessionHistoryFactory(settings)
+    val historyManager = buildSessionHistoryFactory("panel")
     return CustomPanelSessionManager(simpleManager, historyManager)
 }
+
+private val panelUiCoordination = Dispatchers.Default.limitedParallelism(1)
 
 class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) {
     val instance: MutableStateFlow<IPanelAccountInstance>
@@ -528,25 +614,59 @@ class PanelUIViewModel(val viewModelScope: CoroutineScope, val httpUrl: String) 
     init {
         val value = IPanelAccountInstance.None(viewModelScope, httpUrl)
         instance = MutableStateFlow(value)
-        val settings = createSettings("main")
-        val state = restoreFromStorage(settings)
-        if (state is ClientSessionState.Success) {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            instance.collectLatest { account ->
+                account.sessionManager.model.sessionExpired.collect { expired ->
+                    if (expired && account !is IPanelAccountInstance.None) {
+                        account.sessionManager.historyFactory.exitSession(account.address)
+                        logout()
+                    }
+                }
+            }
+        }
+        viewModelScope.launch {
+            val state = restoreFromStorage("panel")
+            if (state is ClientSessionState.Success) {
                 val address = state.userPass.address().getOrNull() ?: return@launch
+                val cookies =
+                    if (state.cookies.isEmpty()) {
+                        createSigninCookies(
+                            httpUrl,
+                            "panel",
+                        )
+                    } else {
+                        AcceptAllCookiesStorage()
+                    }
+                state.cookies.forEach { cookies.addCookie(io.ktor.http.Url(httpUrl), it) }
                 val regular =
                     IPanelAccountInstance.Regular(
                         viewModelScope,
                         address,
                         httpUrl,
                         ConstPassHolder(state.userPass),
-                        AcceptAllCookiesStorage(),
+                        cookies,
                     )
                 instance.value = regular
             }
         }
     }
 
+    internal fun requestSignout() {
+        val account = instance.value
+        if (!account.isAlreadySign) return
+        account.controller.launch {
+            useResult {
+                request { signOut() }.onSuccess {
+                    account.sessionManager.historyFactory.exitSession(account.address)
+                }
+            }.onSuccess {
+                if (instance.value === account) logout()
+            }
+        }
+    }
+
     fun logout() {
+        instance.value.close()
         instance.value = IPanelAccountInstance.None(viewModelScope, httpUrl)
     }
 

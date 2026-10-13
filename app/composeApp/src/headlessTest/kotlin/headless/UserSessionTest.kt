@@ -7,7 +7,6 @@ package headless
 import com.storyteller_f.a.app.PlatformHeadlessTest
 import com.storyteller_f.a.client.compose_core.utils.SessionHistoryManager
 import com.storyteller_f.a.client.compose_core.utils.buildSessionHistoryFactory
-import com.storyteller_f.a.client.compose_core.utils.createSettings
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.shared.encryptDataByAES
@@ -84,9 +83,8 @@ class LoginUserSessionTest : PlatformHeadlessTest() {
 fun loginSessionTest(block: suspend (String, SessionHistoryManager, AuthKey) -> Unit) =
     runTest {
     loadCryptoLibIfNeed()
-    val settings = createSettings("settings-test")
-    settings.clear()
-    val sessionFactory = buildSessionHistoryFactory(settings)
+    val sessionFactory = buildSessionHistoryFactory("settings-test")
+    sessionFactory.getSavedSession().alias.forEach { sessionFactory.removeSession(it) }
     assertEquals(0, sessionFactory.getSavedSession().alias.size)
     getAlgo(AlgoType.P256).run {
         val privateKey = generatePemKeyPair().getOrThrow().first

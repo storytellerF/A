@@ -188,7 +188,7 @@ private fun PrivateKeyAuthContent(
     }
 }
 
-private fun kotlinx.coroutines.CoroutineScope.completePendingTotpSignIn(
+internal fun kotlinx.coroutines.CoroutineScope.completePendingTotpSignIn(
     globalDialogController: AppGlobalDialogController,
     appNavFactory: AppNavFactory,
     pending: PendingTotpSignIn,
@@ -239,63 +239,70 @@ private suspend fun AppGlobalDialogController.performSignInAuth(
     uiViewModel: UIViewModel,
 ): PendingTotpSignIn? {
     if (privateKey.isBlank()) return null
-    return useResult {
-        val sessionManager = context.sessionManager
-        request {
-            val authKey = getAuthKey(algo, privateKey, encryptionPrivateKey)
-            prepareSignInFromPrivateKey(authKey) {
-                sessionManager.getData()
-            }.mapResult { param ->
-                sessionManager.signIn(SignInBody(param.address, param.signature))
-                    .map { response ->
-                        when (response) {
-                            is SignInResponse.Success -> {
-                                val userPassInfo = RawUserPassInfo(param.address, param.authKey)
-                                val userPass =
-                                    uiViewModel.historyManager.addSession(userPassInfo)
-                                val signResult =
-                                    SignResult(
-                                        response.userInfo,
-                                        param.data,
-                                        param.signature,
-                                        param.address,
-                                        param.authKey,
-                                    )
-                                UserAuthResult.Success(signResult, userPass)
-                            }
-
-                            SignInResponse.RequiresTotp ->
-                                UserAuthResult.RequiresTotp(
-                                    PendingTotpSignIn(
-                                        param.authKey,
-                                        param.data,
-                                        param.signature,
-                                        param.address,
-                                    ),
-                                )
-                        }
-                    }
-            }
-        }
-    }.map { result ->
-        when (result) {
-            is UserAuthResult.Success -> {
-                val signResult = result.signResult
-                uiViewModel.login(
-                    signResult.address,
-                    signResult.data,
-                    signResult.signature,
-                    result.userPass,
-                    signResult.userInfo,
-                )
-                appNav.newAppNav().gotoHome()
-                null
-            }
-
-            is UserAuthResult.RequiresTotp -> result.pending
-        }
-    }.getOrNull()
+    return performKeySignInAuth(appNav, uiViewModel) { getAuthKey(algo, privateKey, encryptionPrivateKey) }
 }
+
+internal suspend fun AppGlobalDialogController.performKeySignInAuth(
+    appNav: AppNavFactory,
+    uiViewModel: UIViewModel,
+    loadKey: suspend () -> AuthKey,
+): PendingTotpSignIn? =
+    useResult {
+    val sessionManager = context.sessionManager
+    request {
+        val authKey = loadKey()
+        prepareSignInFromPrivateKey(authKey) {
+            sessionManager.getData()
+        }.mapResult { param ->
+            sessionManager.signIn(SignInBody(param.address, param.signature))
+                .map { response ->
+                    when (response) {
+                        is SignInResponse.Success -> {
+                            val userPassInfo = RawUserPassInfo(param.address, param.authKey)
+                            val userPass =
+                                uiViewModel.historyManager.addSession(userPassInfo)
+                            val signResult =
+                                SignResult(
+                                    response.userInfo,
+                                    param.data,
+                                    param.signature,
+                                    param.address,
+                                    param.authKey,
+                                )
+                            UserAuthResult.Success(signResult, userPass)
+                        }
+
+                        SignInResponse.RequiresTotp ->
+                            UserAuthResult.RequiresTotp(
+                                PendingTotpSignIn(
+                                    param.authKey,
+                                    param.data,
+                                    param.signature,
+                                    param.address,
+                                ),
+                            )
+                    }
+                }
+        }
+    }
+}.map { result ->
+    when (result) {
+        is UserAuthResult.Success -> {
+            val signResult = result.signResult
+            uiViewModel.login(
+                signResult.address,
+                signResult.data,
+                signResult.signature,
+                result.userPass,
+                signResult.userInfo,
+            )
+            appNav.newAppNav().gotoHome()
+            null
+        }
+
+        is UserAuthResult.RequiresTotp -> result.pending
+    }
+}.getOrNull()
 
 private suspend fun AppGlobalDialogController.performSignUpAuth(
     appNav: AppNavFactory,
@@ -356,7 +363,7 @@ private suspend fun AppGlobalDialogController.performSignUpAuth(
 }
 
 @Composable
-private fun TotpSignInDialog(
+internal fun TotpSignInDialog(
     pending: PendingTotpSignIn?,
     onDismiss: () -> Unit,
     onConfirm: (PendingTotpSignIn, String) -> Unit,

@@ -35,6 +35,7 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
 import com.storyteller_f.a.panel.PanelListDetailPane
@@ -470,6 +471,7 @@ private fun PanelSelectLoginPage(gotoInput: () -> Unit) {
             ) {
                 OutlinedButton(
                     gotoInput,
+                    modifier = Modifier.appiumSemantics(text = stringResource(Res.string.input), onClick = gotoInput),
                     shape = ButtonDefaults.outlinedShape,
                 ) {
                     Text(stringResource(Res.string.input))

@@ -228,6 +228,13 @@ class LinuxDriver extends BaseDriver {
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
+  async execute(script) {
+    if (script !== 'linux: dismissDialog') {
+      throw new errors.UnknownCommandError(`Unsupported execute command: ${script}`);
+    }
+    this._xdotool('key', 'Escape');
+  }
+
   async back() {
     this._xdotool('key', 'alt+Left');
   }

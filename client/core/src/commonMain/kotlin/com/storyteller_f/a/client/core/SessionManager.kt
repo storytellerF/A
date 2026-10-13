@@ -4,8 +4,10 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
+import com.storyteller_f.endpoint4k.ktor.client.invoke
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -28,7 +30,8 @@ import kotlin.time.ExperimentalTime
 
 sealed interface ClientSessionState {
     data object None : ClientSessionState
-    data class Success(val userPass: UserPass) : ClientSessionState
+    data class Success(val userPass: UserPass, val cookies: List<io.ktor.http.Cookie> = emptyList()) :
+        ClientSessionState
 }
 
 interface PassHolder {
@@ -36,6 +39,7 @@ interface PassHolder {
 }
 
 interface SessionModel<U> {
+    val sessionExpired: MutableStateFlow<Boolean>
     val uid: PrimaryKey?
     val dataAndSignature: Pair<String, String?>?
     val userHandler: FixedLoadingHandler<U?>
@@ -59,6 +63,8 @@ class SimplePassHolder : PassHolder {
 data class ConstPassHolder(override val currentUserPass: UserPass?) : PassHolder
 
 class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
+    override val sessionExpired = MutableStateFlow(false)
+
     // 用于header 和server 协商被签名的数据
     private var currentStamp = 0L
     override val userHandler = FixedLoadingHandler<U?>()
@@ -85,6 +91,7 @@ class SimpleSessionModel<U : PrimaryKeyIdentifiable> : SessionModel<U> {
     }
 
     override fun updateUser(u: U) {
+        sessionExpired.value = false
         userHandler.done(u)
     }
 
@@ -119,7 +126,7 @@ data class SimpleUserSessionManager(
     override val client: HttpClient,
     override val webSocketClient: WebSocketClientImpl,
     override val model: SessionModel<UserInfo>,
-    val cookieManager: AcceptAllCookiesStorage,
+    val cookieManager: CookiesStorage,
     override val passHolder: PassHolder,
 ) : UserSessionManager
 
@@ -128,13 +135,13 @@ interface PanelSessionManager : SessionManager<PanelAccountInfo>
 data class SimplePanelSessionManager(
     override val client: HttpClient,
     override val model: SessionModel<PanelAccountInfo>,
-    val cookieManager: AcceptAllCookiesStorage,
+    val cookieManager: CookiesStorage,
     override val passHolder: PassHolder,
 ) : PanelSessionManager
 
 fun createSimpleUserSessionManager(
     webSocketUrl: String,
-    cookieManager: AcceptAllCookiesStorage = AcceptAllCookiesStorage(),
+    cookieManager: CookiesStorage = AcceptAllCookiesStorage(),
     passHolder: PassHolder,
     createClient: (UserSessionModel, CookiesStorage) -> HttpClient,
     onReceiveFrame: suspend (RoomFrame, UserSessionModel, DefaultClientWebSocketSession) -> Unit,
@@ -145,9 +152,16 @@ fun createSimpleUserSessionManager(
         WebSocketClientImpl(
             model,
             passHolder,
-            { userInfo, sig ->
-                client.webSocketSession(webSocketUrl) {
-                    addRequestHeadersFromInfo(userInfo, sig)
+            { user, _ ->
+                try {
+                    client.webSocketSession(webSocketUrl) {
+                        url.parameters.append("account", user.id.toString())
+                    }
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
+                } catch (_: Exception) {
+                    restoreSessionForSocket(client, user)
+                    throw SocketHandshakeException()
                 }
             },
         ) { frame, session ->
@@ -158,7 +172,7 @@ fun createSimpleUserSessionManager(
 
 fun createSimplePanelSessionManager(
     passHolder: PassHolder,
-    cookieManager: AcceptAllCookiesStorage = AcceptAllCookiesStorage(),
+    cookieManager: CookiesStorage = AcceptAllCookiesStorage(),
     createClient: (PanelSessionModel, CookiesStorage) -> HttpClient,
 ): SimplePanelSessionManager {
     val model = PanelSessionModel()
@@ -329,3 +343,10 @@ suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: UserSess
         }
     }
 }
+
+private suspend fun restoreSessionForSocket(client: HttpClient, expected: UserInfo) {
+    val user = with(client) { CustomApi.Accounts.session() }
+    if (user.id != expected.id) throw SessionIdentityChangedException()
+}
+
+internal class SocketHandshakeException : Exception("WebSocket handshake failed; check connection settings")
