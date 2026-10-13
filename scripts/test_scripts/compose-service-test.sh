@@ -190,6 +190,7 @@ assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  bw-services:"
 assert_not_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    external: true"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "    name: bw-services"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  server:"
+assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" $'  signin-redis:\n    networks:\n      - bw-services'
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  worker:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  cli:"
 assert_contains "$TMP_DIR/$bunker_flavor.generated.yml" "  pg:"

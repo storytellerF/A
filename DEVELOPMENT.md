@@ -251,6 +251,8 @@ Panel login uses the selected signing algorithm and its encryption key when requ
 
 ### Redis sign-in authentication
 
+Bunker deployments attach signin-redis to the same bw-services network as Server and WebSocket.
+
 `cloud/runtime` registers independent user and panel session providers (`user_session`, `panel_session`).
 Cookies contain random session IDs; Redis keys hash the credentials and isolate the two namespaces.
 Pending sign-in/2FA challenges last five minutes. Completing sign-in rotates the credential. Successful
