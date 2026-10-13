@@ -21,6 +21,7 @@ import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
@@ -132,6 +133,19 @@ suspend fun Backend.checkUserWritePermission(userId: PrimaryKey, uid: PrimaryKey
     }
 
 suspend fun Backend.checkRootWritePermission(
+    parentType: ObjectType,
+    parentId: PrimaryKey,
+    uid: PrimaryKey,
+): Result<RootWritePermission?> =
+    database.user.getRawUser(IdFetch(uid)).mapResultIfNotNull { user ->
+    if (user.user.status == UserStatus.READ_ONLY) {
+        Result.failure(ForbiddenException("User is read only"))
+    } else {
+        checkRootWritePermissionForUser(parentType, parentId, uid)
+    }
+}
+
+private suspend fun Backend.checkRootWritePermissionForUser(
     parentType: ObjectType,
     parentId: PrimaryKey,
     uid: PrimaryKey,

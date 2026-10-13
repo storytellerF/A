@@ -31,7 +31,6 @@ import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.saveSuccessSession
 import com.storyteller_f.a.cloud.server.auth.saveTwoFactorPendingSession
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
-import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
@@ -101,10 +100,8 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
 
 fun Route.bindAccountRoute(backend: Backend) {
     CustomApi.Accounts.signOut(handleResult(backend)) {
-        usePrincipalOrNull {
-            call.clearSigninSession()
-            UNIT_RESULT
-        }
+        call.clearSigninSession()
+        UNIT_RESULT
     }
 }
 
