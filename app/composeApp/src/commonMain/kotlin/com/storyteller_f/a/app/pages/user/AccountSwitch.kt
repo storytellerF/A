@@ -52,6 +52,7 @@ import com.storyteller_f.a.client.compose_core.components.SheetContainer
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.UserIcon
 import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.supportsChildAccountSwitching
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
@@ -151,7 +152,10 @@ private fun AccountSwitchInternal(viewModel: ChildAccountsViewModel) {
 fun ChildAccountCell(childAccountInfo: ChildAccountInfo, onClick: () -> Unit) {
     val userInfo = childAccountInfo.userInfo
     Row(
-        modifier = Modifier.padding(8.dp).clickable(onClick = onClick),
+        modifier =
+        Modifier.padding(8.dp)
+            .appiumSemantics(text = userInfo.address, onClick = onClick)
+            .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {

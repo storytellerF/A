@@ -22,9 +22,23 @@ class WasmAppiumTest : AppiumTestBase() {
         )
 
     @Test
+    fun `test explicit sign in and sign out survive restart`() =
+        testSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test sign in survives restart and revocation requires explicit login`() =
+        testSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test html semantics bridge mounts`() {
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            val driver = FirefoxDriver(FirefoxOptions().addArguments("-headless"))
+            val driver =
+                FirefoxDriver(
+                    FirefoxOptions().addPreference(
+                        "intl.accept_languages",
+                        "en-US,en",
+                    ).addPreference("intl.locale.requested", "en-US").addArguments("-headless"),
+                )
             try {
                 driver.get("${server.url}?appium=true")
                 runCatching {

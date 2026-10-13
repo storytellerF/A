@@ -6,6 +6,7 @@ package com.storyteller_f.a.dev.appium
 
 import org.openqa.selenium.By
 import org.openqa.selenium.JavascriptExecutor
+import org.openqa.selenium.Keys
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
@@ -68,6 +69,11 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) =
         assertNotVisible(textLocator(text), timeoutSeconds)
+
+    override suspend fun dismissDialog() {
+        Actions(browser).sendKeys(Keys.ESCAPE).perform()
+        waitForUiCommit()
+    }
 
     override suspend fun navigateBack() {
         val dismissDialogLocator = By.cssSelector("[aria-label='dialog'][data-appium-action='true']")

@@ -24,9 +24,22 @@ class PanelWasmAppiumTest : AppiumTestBase() {
         )
 
     @Test
+    fun `test sign in survives restart and revocation requires explicit login`() =
+        testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test html semantics bridge mounts`() {
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            val browser = FirefoxDriver(FirefoxOptions().addArguments("-headless", "--width=500", "--height=800"))
+            val browser =
+                FirefoxDriver(
+                    FirefoxOptions().addPreference(
+                        "intl.accept_languages",
+                        "en-US,en",
+                    ).addPreference(
+                        "intl.locale.requested",
+                        "en-US",
+                    ).addArguments("-headless", "--width=500", "--height=800"),
+                )
             try {
                 browser.get("${server.url}?appium=true")
                 runCatching {

@@ -88,7 +88,7 @@
 - Paging errors: check how `RemoteKeyStorage`/`RemoteKeyRoomStorage` saves and reads cursors.
 - Data not persisted: check `*RoomStorage.save`/`observeData` implementations and `commonJson` serialization.
 
-- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data.
+- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data. Set app.protected.storage.dir inside the test runtime directory; the Preferences factory does not isolate protected-value files.
 - Linux Appium element handles must retain stable AT-SPI object paths. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target. Text input must pass and resolve the saved object path directly; never reselect by result index or fall back to another editable control.
 - Shared Wasm browser test configuration belongs to the wasm-browser-test-interop convention. A later useKarma call replaces the framework configuration, so do not override it in consuming modules; track loader files as task inputs and preserve the configuration cache.
 
@@ -120,6 +120,8 @@
 - Provide sign-in storage through backend/core's SigninSessionServiceFactory registration. Keep driver
   dependencies and the Redis implementation in backend/redis; cloud/runtime owns only the Ktor adapter.
 
+- Keep host E2E runtime JARs immutable for the entire test process. Finish compilation before UI execution; do not rebuild shared fixtures from another command while tests run in the same checkout.
+
 - Keep host-test fork increases scoped to the reviewed allowlist in root build.gradle.kts. Preserve shared-device/desktop serialization. Test image contexts must be isolated per module and immutable during each build; keep source-build shared writable cache locks. Detekt 2.0.0-alpha.6 Worker API cannot configure its process heap and fails Compose analysis; keep it disabled until that upstream limitation is resolved.
 
 - Before expanding host-test concurrency, verify temporary paths, ports and persistent namespaces are isolated. A module with a pure test and Docker/native-model integration tests is not a pure-test module; do not expand its entire test task without reviewing those fixtures. Inactive modules excluded by settings.gradle.kts do not need concurrency configuration.
@@ -129,3 +131,9 @@
 - Verify VM state with sufficient read permissions before concluding it is stopped; sandbox probes can report inaccessible services. When applying skill templates to a legacy idle guest, normalize generated Linux scripts to LF and preserve the default Docker publish pool while restoring disjoint outbound ports. Never infer published plugin versions from a dirty local checkout; check the configured marketplace origin and branch.
 
 - Create upload and chunk staging files atomically with unique names per request; client filenames and upload IDs are not unique across processes. Keep body reception inside the cleanup boundary. Real RPC shutdown waits invoked from runTest must use a real dispatcher so virtual time cannot expire before IO completes; preserve the existing timeout duration.
+
+- Linux AT-SPI can append comma-separated badge suffixes to accessible labels. Match whole labels within the merged name, not arbitrary substrings. Authentication E2E needs secret-tool and an unlocked native keyring on the isolated test D-Bus session with isolated data directories.
+
+- Keep E2E selector text in English and configure test locales explicitly. Restore temporary app-language overrides; preserve product translations. Capture Android app locales before clearing data, because pm clear also removes the override.
+
+- Never pop the last root navigation entry. Dismiss modals through platform back/Escape; do not make an entire dialog surface clickable solely for tests, because the Wasm overlay can intercept child controls.

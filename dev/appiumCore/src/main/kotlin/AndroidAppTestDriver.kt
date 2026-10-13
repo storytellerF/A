@@ -81,6 +81,8 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
         assertElementNotVisible("""new UiSelector().text("$text")""", timeoutSeconds)
     }
 
+    override suspend fun dismissDialog() = navigateBack()
+
     override suspend fun navigateBack() {
         driver.navigate().back()
     }

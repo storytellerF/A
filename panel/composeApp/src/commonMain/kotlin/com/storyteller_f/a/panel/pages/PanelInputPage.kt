@@ -23,6 +23,7 @@ import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.getPanelUserSignInPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
@@ -92,7 +93,10 @@ fun PanelInputPage(back: () -> Unit) {
                 },
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Button(startSign) {
+                Button(
+                    startSign,
+                    modifier = Modifier.appiumSemantics(text = CoreStrings.start(), onClick = startSign),
+                ) {
                     Text(CoreStrings.start())
                 }
             }

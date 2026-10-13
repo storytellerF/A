@@ -32,5 +32,12 @@ fun buildInjectedSessionJson(session: InjectedSession): String =
     put("pemPrivateKey", session.pemPrivateKey)
     put("derPrivateKey", session.derPrivateKey)
     put("derPublicKey", session.derPublicKey)
-    put("cookies", Json.encodeToJsonElement(ListSerializer(io.ktor.http.Cookie.serializer()), session.cookies))
+    // The device uses localhost while host fixtures use 127.0.0.1; bind injected Cookies to the target origin.
+    put(
+        "cookies",
+        Json.encodeToJsonElement(
+            ListSerializer(io.ktor.http.Cookie.serializer()),
+            session.cookies.map { it.copy(domain = null) },
+        ),
+    )
 }.toString()
