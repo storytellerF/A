@@ -54,8 +54,9 @@ import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.common.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.pages.ActivityMessageContent
 import com.storyteller_f.a.app.pages.ObserveActivityEvents
+import com.storyteller_f.a.app.pages.RememberActivityPreviewHost
+import com.storyteller_f.a.app.pages.RememberUnreadBadgeRefresh
 import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.pages.rememberActivityPreviewHost
 import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.app.room_community
 import com.storyteller_f.a.app.room_members
@@ -72,7 +73,6 @@ import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
 import com.storyteller_f.a.client.compose_core.components.topPrepend
-import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import kotlinx.coroutines.FlowPreview
@@ -88,10 +88,11 @@ fun MyRoomsPage() {
 @OptIn(FlowPreview::class)
 @Composable
 fun RoomList(roomsViewModel: PagingViewModel<RoomInfo>, onClick: ((RoomInfo) -> Unit)? = null) {
-    val host = if (LocalUserInfo.current != null) rememberActivityPreviewHost() else null
+    val host = if (LocalUserInfo.current != null) RememberActivityPreviewHost() else null
     val activityState = host?.let { key(it) { it.rows.collectAsStateWithLifecycle().value } }
     if (host != null) ObserveActivityEvents(host)
     val owner = LocalLifecycleOwner.current
+    val refreshBadge = RememberUnreadBadgeRefresh()
     val listState = rememberLazyListState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 760.dp
@@ -105,7 +106,10 @@ fun RoomList(roomsViewModel: PagingViewModel<RoomInfo>, onClick: ((RoomInfo) -> 
             StateView(
                 roomsViewModel,
                 Modifier.weight(1f).fillMaxWidth(),
-                onRefresh = { host?.refreshRows() },
+                onRefresh = {
+                    host?.refreshRows()
+                    refreshBadge()
+                },
             ) { items ->
                 LaunchedEffect(host, items, owner) {
                     if (host != null) {
@@ -167,8 +171,8 @@ fun PrimaryRoomCell(
             .clip(shape)
             .clickable { openRoom?.invoke() }
             .padding(10.dp)
-            .appiumSemantics(
-                text = currentRoom?.name,
+            .roomCellSemantics(
+                label = currentRoom?.name,
                 onClick = openRoom,
             ),
         wide,

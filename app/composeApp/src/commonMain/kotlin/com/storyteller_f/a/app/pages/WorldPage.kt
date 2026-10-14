@@ -62,8 +62,9 @@ private fun HomeContext(selectSection: (Int) -> Unit) {
         }
         return
     }
-    val host = rememberActivityPreviewHost()
+    val host = RememberActivityPreviewHost()
     ObserveActivityEvents(host, context = true)
+    val refreshBadge = RememberUnreadBadgeRefresh()
     val unread by key(host) { host.unread.collectAsStateWithLifecycle() }
     val pinned by key(host) { host.pinned.collectAsStateWithLifecycle() }
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -71,7 +72,10 @@ private fun HomeContext(selectSection: (Int) -> Unit) {
             ActivityPreviewSection(
                 stringResource(Res.string.activity_unread_rooms),
                 unread,
-                { host.refreshUnread() },
+                {
+                    host.refreshUnread()
+                    refreshBadge()
+                },
                 action = { TextButton({ selectSection(2) }) { Text(stringResource(Res.string.rooms)) } },
             ) { preview ->
                 RoomActivityPreviewContent(preview) { nav.newAppNav().gotoRoom(preview.room.id, false) }

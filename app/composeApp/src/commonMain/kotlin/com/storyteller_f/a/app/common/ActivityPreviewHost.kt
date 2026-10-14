@@ -123,18 +123,7 @@ internal class ActivityPreviewHost(
     }
 
     fun onEvent(event: Any, context: Boolean) {
-        val roomsChanged =
-            when (event) {
-                is OnTopicCreated -> event.topicInfo.rootType == ObjectType.ROOM
-
-                is OnTopicChanged -> event.topicInfo.rootType == ObjectType.ROOM
-
-                is OnRoomRead, is OnRoomCreated, is OnRoomJoined, is OnRoomExited, is OnRoomUpdated,
-                is OnCommunityJoined, is OnCommunityExited,
-                -> true
-
-                else -> false
-            }
+        val roomsChanged = event.changesRoomActivity()
         if (roomsChanged) {
             if (context) refreshUnread() else refreshRows()
         }
@@ -208,4 +197,17 @@ private fun summarizeMessage(text: String, hasFiles: Boolean): MessageSummary {
         hasFiles -> MessageSummary.Attachment
         else -> MessageSummary.Empty
     }
+}
+
+internal fun Any.changesRoomActivity(): Boolean =
+    when (this) {
+    is OnTopicCreated -> topicInfo.rootType == ObjectType.ROOM
+
+    is OnTopicChanged -> topicInfo.rootType == ObjectType.ROOM
+
+    is OnRoomRead, is OnRoomCreated, is OnRoomJoined, is OnRoomExited, is OnRoomUpdated,
+    is OnCommunityJoined, is OnCommunityExited,
+    -> true
+
+    else -> false
 }

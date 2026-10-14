@@ -20,6 +20,7 @@ val desktopBridgeLibraries by configurations.creating
 
 dependencies {
     implementation(libs.asm)
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.jna.platform)
     desktopBridgeLibraries(libs.asm)
     api(kotlin("test"))

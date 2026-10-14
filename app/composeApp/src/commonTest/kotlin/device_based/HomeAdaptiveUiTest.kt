@@ -28,6 +28,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -47,9 +48,11 @@ import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.activity_unread_rooms
 import com.storyteller_f.a.app.common.ActivityPreviewHost
 import com.storyteller_f.a.app.common.MessagePreview
 import com.storyteller_f.a.app.common.MessageSummary
+import com.storyteller_f.a.app.common.OnRoomActivityRefreshRequested
 import com.storyteller_f.a.app.common.OnRoomRead
 import com.storyteller_f.a.app.common.PreviewState
 import com.storyteller_f.a.app.common.RoomActivityPreview
@@ -59,6 +62,7 @@ import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
 import com.storyteller_f.a.app.pages.ObserveActivityEvents
+import com.storyteller_f.a.app.pages.ObserveUnreadRoomsEvents
 import com.storyteller_f.a.app.pages.RoomActivityPreviewContent
 import com.storyteller_f.a.app.pages.room.RoomRowContent
 import com.storyteller_f.a.app.pages.search.DesktopSearchLayout
@@ -66,6 +70,8 @@ import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.RoomInfo
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
@@ -73,6 +79,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.compose.resources.getString
 import kotlin.test.Test
@@ -375,5 +382,78 @@ class HomeAdaptiveUiTest {
             host.close()
             scope.cancel()
         }
+    }
+
+    @Test
+    fun unreadBadgeRefreshesAfterReadAndResume() =
+        runComposeUiTest {
+        val owner =
+            object : LifecycleOwner {
+                override val lifecycle = LifecycleRegistry.createUnsafe(this)
+            }
+        val events = MutableSharedFlow<Any>(extraBufferCapacity = 1)
+        val refreshes = MutableStateFlow(0)
+        val handler =
+            object : LoadingHandler<Boolean> {
+                override val state = MutableStateFlow<LoadingState?>(LoadingState.Loading)
+                override val data = MutableStateFlow<Boolean?>(false)
+                override fun refresh() {
+                    refreshes.value++
+                }
+            }
+        setContent {
+            CompositionLocalProvider(LocalLifecycleOwner provides owner) {
+                ObserveUnreadRoomsEvents(handler, events)
+            }
+        }
+        runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+        awaitIdle()
+        runOnIdle { assertEquals(0, refreshes.value) }
+        runOnIdle { handler.state.value = LoadingState.Done }
+        waitUntil { events.subscriptionCount.value == 1 && refreshes.value == 1 }
+        runOnIdle { handler.state.value = LoadingState.Loading }
+        assertTrue(events.tryEmit(OnRoomRead(1)))
+        awaitIdle()
+        runOnIdle { assertEquals(1, refreshes.value) }
+        runOnIdle { handler.state.value = LoadingState.Done }
+        waitUntil { refreshes.value == 2 }
+        assertTrue(events.tryEmit(OnRoomActivityRefreshRequested))
+        waitUntil { refreshes.value == 3 }
+        runOnIdle { owner.lifecycle.currentState = Lifecycle.State.CREATED }
+        awaitIdle()
+        waitUntil { events.subscriptionCount.value == 0 }
+        assertTrue(events.tryEmit(OnRoomRead(1)))
+        runOnIdle { assertEquals(3, refreshes.value) }
+        runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+        awaitIdle()
+        waitUntil { refreshes.value == 4 }
+        runOnIdle { owner.lifecycle.currentState = Lifecycle.State.DESTROYED }
+    }
+
+    @Test
+    fun unreadNavigationDescriptionSurvivesResize() =
+        runComposeUiTest {
+        val width = mutableStateOf(900.dp)
+        val unread = mutableStateOf(true)
+        val unreadLabel = getString(Res.string.activity_unread_rooms)
+        setContent {
+            MaterialTheme {
+                val pager = rememberPagerState { 1 }
+                Box(Modifier.requiredSize(width.value, 600.dp)) {
+                    AdaptiveSectionScaffold(
+                        pager,
+                        listOf(NavRoute("/rooms", Icons.Default.Public, "Rooms")),
+                        unread.value,
+                        search = { _, _ -> },
+                    ) { Text("Room content") }
+                }
+            }
+        }
+        onNodeWithContentDescription("Rooms, $unreadLabel").assertExists()
+        runOnIdle { width.value = 390.dp }
+        onNodeWithContentDescription("Rooms, $unreadLabel").assertExists()
+        runOnIdle { unread.value = false }
+        onNodeWithContentDescription("Rooms, $unreadLabel").assertDoesNotExist()
+        onNodeWithContentDescription("Rooms").assertExists()
     }
 }

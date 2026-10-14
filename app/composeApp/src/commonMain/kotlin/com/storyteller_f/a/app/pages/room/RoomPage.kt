@@ -60,7 +60,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.LocalPlatformContext
 import com.storyteller_f.a.app.AppGlobalDialogController
@@ -144,7 +143,6 @@ import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
@@ -206,7 +204,7 @@ private fun RoomPageInternal(room: IdRoomViewModel, needShowDialog: Boolean, roo
                 val items = viewModel.flow.collectAsLazyPagingItems()
                 Box(Modifier.weight(1f)) {
                     RoomTopicList(items, viewModel, lazyListState)
-                    NewTopicView(lazyListState, it, items)
+                    NewTopicView(lazyListState, it)
                 }
             }
             val scope = rememberCoroutineScope()
@@ -224,7 +222,7 @@ private fun RoomPageInternal(room: IdRoomViewModel, needShowDialog: Boolean, roo
 }
 
 @Composable
-private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomInfo, items: LazyPagingItems<TopicInfo>) {
+private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomInfo) {
     val firstVisibleItemScrollOffset by remember {
         derivedStateOf {
             lazyListState.firstVisibleItemScrollOffset
@@ -233,17 +231,18 @@ private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomIn
     val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
     val sessionManager = LocalSessionManager.current
     val events = LocalGlobalDialog.current.context.events
-    LaunchedEffect(firstVisibleItemIndex, roomInfo) {
+    val visibleTopicId by remember(lazyListState) {
+        derivedStateOf {
+            lazyListState.layoutInfo.visibleItemsInfo.firstNotNullOfOrNull { it.key as? PrimaryKey }
+        }
+    }
+    LaunchedEffect(visibleTopicId, roomInfo.id) {
+        val topicId = visibleTopicId ?: return@LaunchedEffect
         delay(1000)
         try {
-            if (items.itemCount > 0) {
-                val info = items[firstVisibleItemIndex]
-                if (info != null) {
-                    sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
-                        .getOrThrow()
-                    events.emit(OnRoomRead(roomInfo.id))
-                }
-            }
+            sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), topicId))
+                .getOrThrow()
+            events.emit(OnRoomRead(roomInfo.id))
         } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
             throw cancellation
         } catch (e: Exception) {

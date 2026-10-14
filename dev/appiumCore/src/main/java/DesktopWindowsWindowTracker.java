@@ -5,6 +5,8 @@
 package com.storyteller_f.a.dev.appium;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Function;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.ptr.IntByReference;
@@ -39,6 +41,19 @@ public final class DesktopWindowsWindowTracker {
         if (!handle.equals(currentHandle) || !belongsToApp(foreground)) {
             driver.switchTo().window(handle);
             currentHandle = handle;
+        }
+    }
+
+    /** Java-agent roots cannot use DesktopDriver's UIA resize path. */
+    public void resizeWindow(int width, int height) {
+        int dpi = NativeLibrary.getInstance("user32").getFunction("GetDpiForWindow", Function.ALT_CONVENTION)
+                .invokeInt(new Object[] {mainWindow});
+        if (dpi <= 0) throw new IllegalStateException("The owned test window has no DPI");
+        int physicalWidth = Math.round(width * dpi / 96.0f);
+        int physicalHeight = Math.round(height * dpi / 96.0f);
+        User32.INSTANCE.ShowWindow(mainWindow, 9);
+        if (!User32.INSTANCE.SetWindowPos(mainWindow, null, 0, 0, physicalWidth, physicalHeight, 0x0002 | 0x0004)) {
+            throw new IllegalStateException("Failed to resize the owned test window");
         }
     }
 

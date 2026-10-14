@@ -56,6 +56,14 @@ class DesktopAppiumTest : AppiumTestBase() {
         testPublishTopicInCommunityByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
+    fun `test activity previews track reading sending and navigation`() =
+        testActivityPreviewByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test room refresh clears unread after another session reads`() =
+        testRoomActivityRefreshByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test publish topic in community room`() =
         testPublishTopicInCommunityRoomByHelper(name.methodName, targetHelper, platformHelper)
 }

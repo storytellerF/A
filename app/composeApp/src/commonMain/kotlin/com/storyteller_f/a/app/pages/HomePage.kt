@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
@@ -85,7 +87,8 @@ fun HomePage() {
             NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
         )
     val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
-    val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
+    ObserveUnreadRoomsEvents(unreadRoomsViewModel.handler)
+    val hasUnread by key(unreadRoomsViewModel) { unreadRoomsViewModel.handler.data.collectAsStateWithLifecycle() }
     val scope = rememberCoroutineScope()
     AdaptiveSectionScaffold(pagerState, homeNavRoutes, hasUnread == true, Modifier.testTag("home"), { page, compact ->
         val searchScope =

@@ -172,3 +172,15 @@
 - Activity previews must remain ephemeral and session-keyed. Reuse the framework-independent preview
   Host and lifecycle binding; never fetch per row or persist decrypted previews. Keep loaded batches
   stable across row-height changes, and route successful pin/read changes through the existing event bus.
+
+- Update room read markers from visible topic item keys, not LazyColumn indices; paging spacers and
+  loading rows occupy indices. New messages can replace the visible topic without changing the scroll index.
+- Verify an interactive, unlocked foreground desktop before Windows Appium keyboard tests. An accessible
+  AWT tree does not prove OS input is available; do not bypass empty-editor failures with fake content.
+- Refresh the Home unread navigation badge on read/message/membership events and lifecycle resume;
+  keep badge labels localized and test their presence/absence alongside row counts.
+- Keep read-marker upserts monotonic and atomic; history navigation and late requests must not rewind
+  the stored marker. Verify both exact counts and the legacy unread-room aggregate.
+- Native room-cell accessibility must preserve merged visible content; keep platform-specific browser
+  test-overlay labels separate. Resize Windows Java-agent test windows through their verified native
+  handle and convert viewport dimensions for window DPI.

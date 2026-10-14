@@ -49,6 +49,18 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
         assertElementVisible("""new UiSelector().text("$expectedTitle")""")
     }
 
+    fun isWideViewport(): Boolean {
+        val density =
+            runAdbCommand(listOf("shell", "wm", "density"))
+                .lineSequence().last { it.isNotBlank() }.substringAfter(": ").trim().toInt()
+        return driver.manage().window().size.width * 160 / density >= 1400
+    }
+
+    fun assertUnreadRoomsIndicator(visible: Boolean) {
+        val selector = """new UiSelector().descriptionContains("Unread rooms")"""
+        if (visible) assertElementVisible(selector) else assertElementNotVisible(selector, 5)
+    }
+
     override suspend fun clickByDescription(description: String) {
         clickElement("""new UiSelector().description("$description")""")
     }
@@ -79,6 +91,25 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
         assertElementNotVisible("""new UiSelector().text("$text")""", timeoutSeconds)
+    }
+
+    override suspend fun refreshList() {
+        val viewport = driver.manage().window().size
+        driver.executeScript(
+            "mobile: swipeGesture",
+            mapOf(
+                "left" to viewport.width / 4,
+                "top" to viewport.height / 3,
+                "width" to viewport.width / 2,
+                "height" to viewport.height / 3,
+                "direction" to "down",
+                "percent" to 0.8,
+            ),
+        )
+    }
+
+    override suspend fun dismissKeyboard() {
+        if (driver.isKeyboardShown) driver.hideKeyboard()
     }
 
     override suspend fun dismissDialog() = navigateBack()

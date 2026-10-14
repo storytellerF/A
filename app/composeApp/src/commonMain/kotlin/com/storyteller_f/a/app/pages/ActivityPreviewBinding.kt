@@ -15,17 +15,24 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.ActivityPreviewHost
+import com.storyteller_f.a.app.common.OnRoomActivityRefreshRequested
+import com.storyteller_f.a.app.common.changesRoomActivity
+import com.storyteller_f.a.client.core.LoadingHandler
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.getJoinedPinnedTopics
 import com.storyteller_f.a.client.core.getRoomActivities
 import com.storyteller_f.a.client.core.getUnreadRoomActivities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 // One application-owned coordination dispatcher; requests and preview processing use worker threads.
 private val previewCoordination = Dispatchers.Default.limitedParallelism(1)
 
 @Composable
-internal fun rememberActivityPreviewHost(): ActivityPreviewHost {
+internal fun RememberActivityPreviewHost(): ActivityPreviewHost {
     val session = LocalSessionManager.current
     val scope = rememberCoroutineScope()
     val host =
@@ -65,4 +72,35 @@ internal fun ObserveActivityEvents(
             }
         }
     }
+}
+
+/** Keeps the navigation badge aligned with read/membership events while Home is active. */
+@Composable
+internal fun ObserveUnreadRoomsEvents(
+    handler: LoadingHandler<Boolean>,
+    events: Flow<Any> = LocalGlobalDialog.current.context.events,
+) {
+    val owner = LocalLifecycleOwner.current
+    LaunchedEffect(handler, owner, events) {
+        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            handler.refreshAfterLoading()
+            events.collectLatest {
+                if (it is OnRoomActivityRefreshRequested || it.changesRoomActivity()) handler.refreshAfterLoading()
+            }
+        }
+    }
+}
+
+private suspend fun LoadingHandler<Boolean>.refreshAfterLoading() {
+    // SimpleLoadingHandler drops refreshes while loading; preserve the latest read/membership update.
+    state.first { it !is LoadingState.Loading }
+    refresh()
+}
+
+/** Explicit source refresh also updates navigation without restarting the row preview request. */
+@Composable
+internal fun RememberUnreadBadgeRefresh(): () -> Unit {
+    val events = LocalGlobalDialog.current.context.events
+    val scope = rememberCoroutineScope()
+    return remember(events, scope) { { scope.launch { events.emit(OnRoomActivityRefreshRequested) } } }
 }

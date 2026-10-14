@@ -16,8 +16,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.Res
+import com.storyteller_f.a.client.compose_core.unread_rooms
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
+import org.jetbrains.compose.resources.stringResource
 
 data class NavRoute(val path: String, val icon: ImageVector, val label: String)
 
@@ -30,6 +35,7 @@ fun CustomRailNav(
     unreadRoomsBadge: Boolean = false,
     navigate: (String) -> Unit = {},
 ) {
+    val unreadLabel = stringResource(Res.string.unread_rooms)
     NavigationRail(modifier = Modifier.padding(horizontal = 8.dp)) {
         navRoutes.forEach { route ->
             val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
@@ -48,7 +54,9 @@ fun CustomRailNav(
                 },
                 label = { Text(route.label) },
                 modifier =
-                Modifier.appiumSemantics(
+                Modifier.semantics {
+                    contentDescription = if (showBadge) "${route.label}, $unreadLabel" else route.label
+                }.appiumSemantics(
                     testTag = route.label,
                     text = route.label,
                     onClick = onClick,
@@ -65,6 +73,7 @@ fun CustomBottomNav(
     unreadRoomsBadge: Boolean = false,
     navigate: (String) -> Unit = { },
 ) {
+    val unreadLabel = stringResource(Res.string.unread_rooms)
     NavigationBar {
         navRoutes.forEach { route ->
             val showBadge = route.path == HOME_START_DESTINATION_ROOMS && unreadRoomsBadge
@@ -83,7 +92,9 @@ fun CustomBottomNav(
                 },
                 label = { Text(route.label) },
                 modifier =
-                Modifier.appiumSemantics(
+                Modifier.semantics {
+                    contentDescription = if (showBadge) "${route.label}, $unreadLabel" else route.label
+                }.appiumSemantics(
                     testTag = route.label,
                     text = route.label,
                     onClick = onClick,

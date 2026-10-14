@@ -7,8 +7,8 @@ history. The former root list/detail metadata and list-pane replacement tests we
 navigation contract no longer applies. Home, Community and User each share one page-local pager across rail/bottom navigation.
 Room and Topic detail content and composers share a centered reading column capped at 900dp.
 Keep content-width adaptation in the section or shared presentation component, after navigation and
-padding are deducted. Home context belongs only to World and uses a bounded existing community source;
-room message previews and exact unread counts still require additional data support.
+padding are deducted. Home context belongs only to World and uses bounded unread-room, pinned-topic and joined-community
+previews. Room summaries and exact unread counts use the activity endpoints described below.
 
 Run `./gradlew :app:composeApp:jvmTest :app:composeApp:adaptiveUiTest -Pserver.flavor=dev
 -Pserver.buildType=debug --console=plain` on one line. `adaptiveUiTest` runs only the runtime-free Home
@@ -41,7 +41,9 @@ notification-room recipients keep their existing read access; these new lists de
 rooms, rather than changing invitation or notification semantics. Read-only joined rooms remain included.
 
 Counts include all existing direct messages after the user's room read marker (or all direct messages
-when no marker exists), including the user's own messages; replies are excluded. IDs are compared only
+when no marker exists), including the user's own messages; replies are excluded. Read markers advance
+with an atomic database maximum, so viewing history or receiving an older request late cannot make
+already-read messages unread again. IDs are compared only
 as ordered read markers, never subtracted to calculate a count. `UnreadRoomsResponse.unreadCount`
 continues to count distinct unread rooms and shares the server-filtered grouped query. A page's total is
 its complete eligible room/topic count, not the page length.
@@ -84,9 +86,31 @@ topic-change event from their request boundary, including dialog and menu caller
 Pure snapshot fixtures cover compact/wide activity rows, larger text, unavailable private summaries and
 context errors. Headless tests cover batching, worker selection, supersession, cancellation, source
 independence and event filtering. Adaptive UI tests cover preview retry/navigation, exact counts during
-resizing, list refresh callbacks, and active/inactive lifecycle binding. Real-account/device acceptance
-for complete navigation/read/send flows remains pending; do not close issue #60 based solely on these
-isolated checks.
+resizing, list refresh callbacks, and active/inactive lifecycle binding. Home's unread navigation badge
+refreshes on active read/message/membership events, explicit source refresh and return to Home. Refresh
+waits for an existing query to complete so an update cannot be dropped while loading; its localized label
+identifies the unread state in both rail and bottom navigation. Native room cells retain their merged
+content text for assistive technology; the browser test overlay keeps its room-name navigation label.
+
+The `test activity previews track reading sending and navigation` Appium scenario registers two synthetic
+accounts against the isolated real backend and explicitly signs in through the UI. Messages use the
+production WebSocket channel. It verifies the latest summary, exact unread count, room/topic navigation,
+read-marker clearing, keyboard send, updated preview and navigation-badge clearing. The private-room
+variant verifies real encrypted message delivery and client decryption. A separate refresh scenario
+marks the room read through another session, then verifies that UI refresh clears rows and navigation
+together. On wide Android
+viewports it also verifies unread/pinned context; the desktop variant adds repeated narrow/medium/wide/
+short-window resizing and draft retention. Existing room-publication E2E remains compatible. Windows
+viewport changes target the verified test JVM's native window, with DPI conversion; Java-agent elements
+cannot use the driver's UIA window-resize path.
+
+Run `:app:androidAppium:appiumTest --tests '*test activity previews*'` with the usual dev/debug properties
+through the configured Docker test environment and a leased device. Temporary Android size/density,
+power and locale changes must be restored. Desktop acceptance uses the same named test under
+`:app:desktopAppium:appiumTest` after preparing its runtime classpath. It requires an interactive unlocked
+desktop for native keyboard/Escape input; an AWT accessibility tree alone is insufficient. Do not claim
+native desktop or browser acceptance from Android/host results, and keep issue #60 open until the
+remaining platform checks pass.
 
 ## Temporary dependency pins
 
