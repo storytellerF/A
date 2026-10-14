@@ -116,6 +116,11 @@ class DatabaseTest {
         val user = createTestUser(db)
         val rawUser = db.user.getRawUser(ObjectFetch.IdFetch(user.id)).getOrThrow()
         assertNotNull(rawUser)
+
+        db.clean()
+        db.init()
+
+        assertNull(db.user.getRawUser(ObjectFetch.IdFetch(user.id)).getOrThrow())
     }
 
     @Test

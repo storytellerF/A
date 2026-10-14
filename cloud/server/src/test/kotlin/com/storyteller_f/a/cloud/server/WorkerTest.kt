@@ -94,38 +94,67 @@ class WorkerTest {
                 val taskRecord = backend.database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).getOrThrow()
                 assertEquals(topicIds.last(), taskRecord?.objectId)
                 backend.assertAcgNotificationCount(userId, topicIds.size)
-
-                val missingTopicId = topicIds.first() - 1
-                val missingTopicRetry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, missingTopicId)
-                val existingTopicRetry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, topicIds.first())
-                backend.database.admin.createTaskRecord(missingTopicRetry).getOrThrow()
-                backend.database.admin.createTaskRecord(existingTopicRetry).getOrThrow()
-
-                backend.doAcgTask()
-
-                val taskRecords =
-                    backend.database.admin.getTaskRecords(
-                        type = TaskRecordType.TOPIC_ACG,
-                        isSuccess = null,
-                        failureType = null,
-                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
-                    ).getOrThrow().list
-                assertTrue(taskRecords.any { it.objectId == missingTopicId && !it.isSuccess })
-                assertTrue(taskRecords.any { it.objectId == topicIds.first() && it.isSuccess })
-                assertEquals(false, taskRecords.single { it.id == missingTopicRetry.id }.isRetryRequested)
-                assertEquals(false, taskRecords.single { it.id == existingTopicRetry.id }.isRetryRequested)
-
-                val retriedUserAcg =
-                    backend.database.user.getUserAcgByIds(
-                        com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(userId)),
-                    ).getOrThrow().find { it.first == userId }?.second
-                assertEquals(topicIds.size + 1L, retriedUserAcg)
             }
         }
     }
 
     @Test
-    fun `test intro task sends welcome message`() {
+    fun `acg retry fails for missing topic`() =
+        test {
+        attachSession()
+        withWorkerBackend { backend ->
+            val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, -1L)
+            backend.database.admin.createTaskRecord(retry).getOrThrow()
+
+            backend.doAcgTask()
+
+            val records =
+                backend.database.admin.getTaskRecords(
+                    type = TaskRecordType.TOPIC_ACG,
+                    isSuccess = null,
+                    failureType = null,
+                    fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                ).getOrThrow().list
+            assertTrue(records.any { it.objectId == -1L && !it.isSuccess })
+            assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
+        }
+    }
+
+    @Test
+    fun `acg retry awards existing topic`() =
+        test {
+        val owner =
+            attachSession {
+                val community = createCommunityForTest()
+                createTopic(ObjectType.COMMUNITY, community.id, "Retry topic").getOrThrow().id
+            }
+        withWorkerBackend { backend ->
+            backend.createSystemUser(1L)
+            backend.doAcgTask()
+            val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, owner.custom)
+            backend.database.admin.createTaskRecord(retry).getOrThrow()
+
+            backend.doAcgTask()
+
+            val records =
+                backend.database.admin.getTaskRecords(
+                    type = TaskRecordType.TOPIC_ACG,
+                    isSuccess = null,
+                    failureType = null,
+                    fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                ).getOrThrow().list
+            assertTrue(records.any { it.objectId == owner.custom && it.isSuccess })
+            assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
+            val acg =
+                backend.database.user.getUserAcgByIds(
+                    com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(owner.uid)),
+                ).getOrThrow().single { it.first == owner.uid }.second
+            assertEquals(2L, acg)
+        }
+    }
+
+    @Test
+    fun `intro task records each processed user`() {
         test {
             val userIds =
                 (1..3).map {
@@ -202,7 +231,7 @@ class WorkerTest {
     }
 
     @Test
-    fun `test title task sends notification`() {
+    fun `title task records each processed title`() {
         test {
             val titleIds =
                 attachSession { session ->
@@ -239,45 +268,48 @@ class WorkerTest {
     }
 
     @Test
-    fun `test all worker tasks run without error`() {
+    fun `worker tasks persist results on shared backend`() =
         test {
-            // 创建测试数据（这会初始化 Backend）
-            attachSession { session ->
-                val c = createCommunity(com.storyteller_f.a.api.NewCommunity("test community", "tc1")).getOrThrow()
-                val cId = c.id
-                createTopic(ObjectType.COMMUNITY, cId, "Test topic").getOrThrow()
-
-                // 创建 title
-                createTitle(
-                    com.storyteller_f.a.api.NewTitle(
-                        "Test Title",
-                        com.storyteller_f.shared.model.TitleType.REGULAR,
-                        session.uid,
-                        cId,
-                        ObjectType.COMMUNITY,
-                        "Test title description",
-                    ),
-                ).getOrThrow()
+        val owner =
+            attachSession {
+                val community = createCommunityForTest()
+                val topic = createTopic(ObjectType.COMMUNITY, community.id, "Worker topic").getOrThrow()
+                val title =
+                    createTitle(
+                        com.storyteller_f.a.api.NewTitle(
+                            "Worker title",
+                            com.storyteller_f.shared.model.TitleType.REGULAR,
+                            it.uid,
+                            community.id,
+                            ObjectType.COMMUNITY,
+                            "Worker title notification",
+                        ),
+                    ).getOrThrow()
+                topic.id to title.id
             }
+        withWorkerBackend { backend ->
+            backend.createSystemUser(1L)
+            backend.doAcgTask()
+            backend.doIntroTask()
+            backend.doSubscriptionTask()
+            backend.doTitleTask()
 
-            // 依次执行所有 worker 任务
-            withWorkerBackend { backend ->
-                backend.createSystemUser(1L)
-
-                // 执行 ACG 任务
-                backend.doAcgTask()
-
-                // 执行 Intro 任务
-                backend.doIntroTask()
-
-                // 执行 Subscription 任务
-                backend.doSubscriptionTask()
-
-                // 执行 Title 任务
-                backend.doTitleTask()
-
-                // 验证所有任务都能正常完成
-                assertTrue(true, "All worker tasks should complete without error")
+            val expected =
+                mapOf(
+                    TaskRecordType.TOPIC_ACG to owner.custom.first,
+                    TaskRecordType.INTRO to owner.uid,
+                    TaskRecordType.SUBSCRIPTION to owner.custom.first,
+                    TaskRecordType.TITLE to owner.custom.second,
+                )
+            expected.forEach { (type, objectId) ->
+                val records =
+                    backend.database.admin.getTaskRecords(
+                        type = type,
+                        isSuccess = true,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                    ).getOrThrow().list
+                assertTrue(records.any { it.objectId == objectId }, "Missing successful $type result")
             }
         }
     }

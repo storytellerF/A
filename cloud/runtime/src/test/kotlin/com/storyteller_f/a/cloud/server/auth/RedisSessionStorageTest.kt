@@ -38,7 +38,7 @@ import kotlin.test.assertTrue
 
 internal class RedisSessionStorageTest {
     @Test
-    fun rotatesCredentialAndRejectsUntrustedBrowserOrigin() =
+    fun signInRotatesCredential() =
         withRedis { endpoint ->
         testApplication {
             application { configureSessionRoutes(endpoint) }
@@ -51,12 +51,34 @@ internal class RedisSessionStorageTest {
             assertTrue(signed.contains("HttpOnly", ignoreCase = true))
             assertTrue(signed.substringBefore(';') != pending)
             assertEquals(HttpStatusCode.OK, browser.get("/protected").status)
+        }
+    }
+
+    @Test
+    fun rejectsUntrustedBrowserOrigin() =
+        withRedis { endpoint ->
+        testApplication {
+            application { configureSessionRoutes(endpoint) }
+            val browser = createClient { install(HttpCookies) }
+            browser.get("/challenge") { headers.append("X-Requested-With", "A-client") }
+            browser.post("/login")
             assertEquals(
                 HttpStatusCode.Forbidden,
                 browser.get("/protected") {
                     headers.append(HttpHeaders.Origin, "https://untrusted.example.test")
                 }.status,
             )
+        }
+    }
+
+    @Test
+    fun logoutRevokesCredential() =
+        withRedis { endpoint ->
+        testApplication {
+            application { configureSessionRoutes(endpoint) }
+            val browser = createClient { install(HttpCookies) }
+            browser.get("/challenge") { headers.append("X-Requested-With", "A-client") }
+            browser.post("/login")
             assertEquals(HttpStatusCode.OK, browser.post("/logout").status)
             assertEquals(HttpStatusCode.Unauthorized, browser.get("/protected").status)
         }

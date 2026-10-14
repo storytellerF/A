@@ -60,34 +60,66 @@ class LuceneIndexTest {
     }
 
     @Test
-    fun `generic fields filter sort and paginate`() =
-        runBlocking {
-        val service = LuceneRpcImpl(createTempDirectory("generic-index-"))
-        val first = product("red apple", 2)
-        val second = product("green apple", 3)
-        service.save("products", listOf(first, second))
+    fun `generic fields filter text and numbers`() =
+        withProducts { service, _, second ->
         val query =
             RpcLuceneQuery(
                 mustLong = mapOf("stock" to 3),
                 text = listOf(RpcLuceneTextQuery("apple", listOf("title"))),
             )
         assertEquals(listOf(second.stored()), service.search("products", query).documents)
+    }
+
+    @Test
+    fun `generic fields sort numerically`() =
+        withProducts { service, first, second ->
         val descending =
             RpcLuceneQuery(
                 sort = listOf(RpcLuceneSort("stock", RpcLuceneSortType.LONG, descending = true)),
             )
         assertEquals(listOf(second.stored(), first.stored()), service.search("products", descending).documents)
+    }
+
+    @Test
+    fun `generic fields paginate sorted results`() =
+        withProducts { service, first, _ ->
+        val descending =
+            RpcLuceneQuery(
+                sort = listOf(RpcLuceneSort("stock", RpcLuceneSortType.LONG, descending = true)),
+            )
         assertEquals(
             listOf(first.stored()),
             service.search("products", descending.copy(offset = 1, size = 1)).documents,
         )
+    }
+
+    @Test
+    fun `generic fields sort alphabetically`() =
+        withProducts { service, first, second ->
         val alphabetical = RpcLuceneQuery(sort = listOf(RpcLuceneSort("title", RpcLuceneSortType.STRING)))
         assertEquals(listOf(second.stored(), first.stored()), service.search("products", alphabetical).documents)
-        assertEquals(0L, service.search("another", RpcLuceneQuery()).total)
+    }
+
+    @Test
+    fun `delete removes only matching documents`() =
+        withProducts { service, first, _ ->
+        val query = RpcLuceneQuery(mustLong = mapOf("stock" to 3))
         service.delete("products", query)
         assertEquals(listOf(first.stored()), service.search("products", RpcLuceneQuery()).documents)
+    }
+
+    @Test
+    fun `missing index has no search results`() =
+        runBlocking {
+        val service = LuceneRpcImpl(createTempDirectory("missing-index-"))
+        assertEquals(0L, service.search("another", RpcLuceneQuery()).total)
+    }
+
+    @Test
+    fun `clean rejects paths outside index root`() =
+        runBlocking<Unit> {
+        val service = LuceneRpcImpl(createTempDirectory("index-path-"))
         assertFailsWith<IllegalArgumentException> { service.clean("../outside") }
-        Unit
     }
 
     @Test
@@ -211,6 +243,15 @@ class LuceneIndexTest {
         assertEquals(listOf(replacement.stored()), service.search("products", RpcLuceneQuery()).documents)
         assertEquals(listOf(previous.stored()), service.search("other", RpcLuceneQuery()).documents)
     }
+
+    private fun withProducts(block: suspend (LuceneRpcImpl, RpcLuceneDocument, RpcLuceneDocument) -> Unit) =
+        runBlocking {
+            val service = LuceneRpcImpl(createTempDirectory("generic-index-"))
+            val first = product("red apple", 2)
+            val second = product("green apple", 3)
+            service.save("products", listOf(first, second))
+            block(service, first, second)
+        }
 
     private fun product(title: String, stock: Long) =
         RpcLuceneDocument(

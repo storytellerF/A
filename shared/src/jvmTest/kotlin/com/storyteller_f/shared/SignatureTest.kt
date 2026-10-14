@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 
 class SignatureTest {
     @Test
-    fun algorithmsSignAndEncrypt() =
+    fun algorithmsSignAndVerify() =
         runTest {
         loadCryptoLibIfNeed()
         listOf(AlgoP256, AlgoDilithium).forEach { algorithm ->
@@ -23,7 +23,17 @@ class SignatureTest {
             val signature = algorithm.signature(privateKey, "signed message").getOrThrow()
 
             assertTrue(algorithm.verify(publicKey, signature, "signed message").getOrThrow())
+        }
+    }
 
+    @Test
+    fun algorithmsEncryptAndDecrypt() =
+        runTest {
+        loadCryptoLibIfNeed()
+        listOf(AlgoP256, AlgoDilithium).forEach { algorithm ->
+            val (privatePem, publicPem) = algorithm.generatePemKeyPair().getOrThrow()
+            val privateKey = algorithm.getDerPrivateKey(privatePem).getOrThrow()
+            val publicKey = algorithm.getDerPublicKeyFromPem(publicPem).getOrThrow()
             val (encrypted, aesKey) = encryptDataByAES("encrypted message").getOrThrow()
             val (encryptionPrivateKey, encryptionPublicKey) =
                 if (algorithm == AlgoDilithium) {

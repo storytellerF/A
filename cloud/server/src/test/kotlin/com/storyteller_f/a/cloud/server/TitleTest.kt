@@ -126,6 +126,27 @@ class TitleTest {
                     TitleSearchType.RECEIVER,
                 ).getOrThrow().data.first { t -> t.id == titleId }
             assertNotNull(titleInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove title favorite`() =
+        test {
+        attachSession { session ->
+            val c = createCommunity(NewCommunity("fav1", "fav1")).getOrThrow()
+            val cId = c.id
+            createTitle(
+                NewTitle("c KOL fav", TitleType.REGULAR, session.uid, cId, ObjectType.COMMUNITY, "hello fav"),
+            ).getOrThrow()
+
+            val titleId =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.name == "c KOL fav" }.id
+
+            addFavorite(NewFavorite(ObjectType.TITLE, titleId)).getOrThrow()
 
             removeFavorite(titleId, ObjectType.TITLE).getOrThrow()
             assertListTotalSize(0, getFavorites(PaginationQuery()))
@@ -159,6 +180,27 @@ class TitleTest {
                     TitleSearchType.RECEIVER,
                 ).getOrThrow().data.first { t -> t.id == titleId }
             assertNotNull(titleInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove title subscription`() =
+        test {
+        attachSession { session ->
+            val c = createCommunity(NewCommunity("sub1", "sub1")).getOrThrow()
+            val cId = c.id
+            createTitle(
+                NewTitle("c KOL sub", TitleType.REGULAR, session.uid, cId, ObjectType.COMMUNITY, "hello sub"),
+            ).getOrThrow()
+
+            val titleId =
+                userTitles(
+                    session.uid,
+                    10,
+                    TitleSearchType.RECEIVER,
+                ).getOrThrow().data.first { t -> t.name == "c KOL sub" }.id
+
+            addSubscription(NewSubscription(titleId, ObjectType.TITLE)).getOrThrow()
 
             removeSubscription(titleId, ObjectType.TITLE).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))

@@ -77,8 +77,24 @@ class GeneratePresetKeysCommandTest {
             assertFailsWith<IllegalArgumentException> {
                 generatePresetDilithiumKeys(tempDir, overwrite = false)
             }
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `overwrite replaces existing preset keys`() =
+        runTest {
+        setLogPath()
+        loadCryptoLibIfNeed()
+        val tempDir = createTempDirectory(prefix = "preset-keys-existing-").toFile()
+        try {
+            generatePresetDilithiumKeys(tempDir, overwrite = false)
+
+            val original = File(tempDir, "p-user1").readText()
             val overwritten = generatePresetDilithiumKeys(tempDir, overwrite = true)
             assertEquals(names.size * 2, overwritten.size)
+            assertTrue(original != File(tempDir, "p-user1").readText())
         } finally {
             tempDir.deleteRecursively()
         }

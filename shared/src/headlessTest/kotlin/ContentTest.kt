@@ -17,6 +17,10 @@ class ContentTest : PlatformHeadlessTest() {
         checkContent("\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66").getOrThrow()
         checkContent("\n").getOrThrow()
         checkContent("\uf092").getOrThrow()
+    }
+
+    @Test
+    fun `first unicode preserves complete code point`() {
         assertEquals("👌", safeFirstUnicode("👌abc"))
     }
 }

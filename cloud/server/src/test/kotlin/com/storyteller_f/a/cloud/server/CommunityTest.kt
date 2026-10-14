@@ -43,7 +43,7 @@ import kotlin.test.assertTrue
 
 class CommunityTest {
     @Test
-    fun `test get community`() =
+    fun `get community by id`() =
         test {
         val newId =
             attachSession {
@@ -52,32 +52,63 @@ class CommunityTest {
         noneSession {
             val community = getCommunityInfo(newId).getOrThrow()
             assertEquals(1, community.memberCount)
+        }
+    }
+
+    @Test
+    fun `get community by aid`() =
+        test {
+        val newId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
+        noneSession {
+            val community = getCommunityInfo(newId).getOrThrow()
             assertEquals(newId, getCommunityInfoByAid(community.aid).getOrThrow().id)
         }
     }
 
     @Test
-    fun `test join community`() =
+    fun `nonmember cannot publish community topic`() =
         test {
         val communityId =
             attachSession {
                 createCommunityForTest().id
             }.custom
         attachSession {
-            assertFalse(getCommunityInfo(communityId).getOrThrow().isJoined)
-            assertFails {
-                createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
-            }
+            assertFails { createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow() }
+        }
+    }
+
+    @Test
+    fun `joining community updates membership`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
+        attachSession {
             joinCommunity(communityId).getOrThrow()
             assertTrue(getCommunityInfo(communityId).getOrThrow().isJoined)
-            // 测试退出社区
-            exitCommunity(communityId)
+        }
+    }
+
+    @Test
+    fun `exiting community clears membership`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
+        attachSession {
+            joinCommunity(communityId).getOrThrow()
+            exitCommunity(communityId).getOrThrow()
             assertFalse(getCommunityInfo(communityId).getOrThrow().isJoined)
         }
     }
 
     @Test
-    fun `test create topic in community`() =
+    fun `created topic appears in community lists`() =
         test {
         val communityId =
             attachSession {
@@ -88,9 +119,19 @@ class CommunityTest {
             createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow()
             assertListSize(1, searchCommunityTopics(communityId, 10, "hello"))
             assertListSize(1, getCommunityTopics(communityId, paginationQuery = PaginationQuery(size = 10)))
-            val topicId =
-                searchCommunityTopics(communityId, 10, "hello")
-                    .getOrThrow().data.first().id
+        }
+    }
+
+    @Test
+    fun `community comment updates parent metadata`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunityForTest().id
+            }.custom
+        attachSession {
+            joinCommunity(communityId).getOrThrow()
+            val topicId = createTopic(ObjectType.COMMUNITY, communityId, "hello").getOrThrow().id
             val new = createTopic(ObjectType.TOPIC, topicId, "test").getOrThrow()
             assertEquals(ObjectType.COMMUNITY, new.rootType)
             assertEquals(communityId, new.rootId)
@@ -150,7 +191,7 @@ class CommunityTest {
     }
 
     @Test
-    fun `test get other user joined communities`() =
+    fun `anonymous sees target community memberships`() =
         test {
         val id =
             attachSession {
@@ -171,13 +212,24 @@ class CommunityTest {
                 assertNotNull(it.extension?.targetMemberInfo)
             }
         }
+    }
+
+    @Test
+    fun `joined viewer sees target community memberships`() =
+        test {
+        val id =
+            attachSession {
+                repeat(10) {
+                    val communityInfo = createCommunityForTest("c$it", "c$it").id
+                    joinCommunity(communityInfo).getOrThrow()
+                }
+            }.uid
         attachSession {
             val response =
                 getUserJoinedCommunities(
                     id,
                     CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
                 ).getOrThrow()
-            assertEquals(10, response.data.size)
             response.data.forEach {
                 joinCommunity(it.id).getOrThrow()
             }

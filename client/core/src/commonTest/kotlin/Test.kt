@@ -30,9 +30,6 @@ import kotlin.test.assertEquals
 
 class Test {
     @Test
-    fun `test request`() = Unit
-
-    @Test
     fun `concurrent 401 responses share an auth refresh`() =
         runTest {
         val initialResponsesReleased = CompletableDeferred<Unit>()
