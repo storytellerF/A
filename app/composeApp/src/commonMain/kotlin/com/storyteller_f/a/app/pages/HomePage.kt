@@ -4,20 +4,13 @@
 
 package com.storyteller_f.a.app.pages
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,11 +24,8 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,19 +39,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
-import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.common.createWorldViewModel
 import com.storyteller_f.a.app.common.getUnreadRoomsStateViewModel
 import com.storyteller_f.a.app.communities
 import com.storyteller_f.a.app.design_spec
@@ -74,34 +56,24 @@ import com.storyteller_f.a.app.pages.community.MyCommunitiesPage
 import com.storyteller_f.a.app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.app.pages.topic.TopicList
 import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.utils.rememberStringPreference
 import com.storyteller_f.a.app.world
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.CenterBox
-import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
-import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SignInButton
-import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class, ExperimentalFoundationApi::class)
 fun HomePage() {
-    val size = CurrentWindowSizeClass()
     val homeStartDestination by rememberStringPreference(
         HOME_START_DESTINATION_PREFERENCE_KEY,
         HOME_START_DESTINATION_WORLD,
     )
-    val defaultHomeRoute = homeRouteFromPreference(homeStartDestination)
-    val defaultHomePage = homePageFromPreference(homeStartDestination)
+    val pagerState = rememberPagerState(initialPage = homePageFromPreference(homeStartDestination)) { 3 }
     val homeNavRoutes =
         listOf(
             NavRoute(HOME_START_DESTINATION_WORLD, Icons.Default.Public, stringResource(Res.string.world)),
@@ -112,64 +84,19 @@ fun HomePage() {
             ),
             NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
         )
-    val modifier = Modifier.testTag("home")
-    when (size.widthSizeClass) {
-        WindowWidthSizeClass.Compact -> {
-            HomeCompatPage(homeNavRoutes, modifier, defaultHomePage)
-        }
-
-        else -> {
-            HomeNonCompatPage(modifier, homeNavRoutes, defaultHomeRoute)
-        }
-    }
-}
-
-@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
-@Composable
-private fun HomeNonCompatPage(modifier: Modifier, homeNavRoutes: List<NavRoute>, defaultHomeRoute: HomeRoute) {
     val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
     val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
-    Scaffold(modifier = modifier) {
-        Row(Modifier) {
-            val config =
-                remember {
-                    SavedStateConfiguration {
-                        serializersModule =
-                            SerializersModule {
-                                polymorphic(NavKey::class) {
-                                    subclass(HomeRoute.World::class)
-                                    subclass(HomeRoute.Communities::class)
-                                    subclass(HomeRoute.Rooms::class)
-                                }
-                            }
-                    }
-                }
-            val backStack = rememberNavBackStack(config, defaultHomeRoute)
-            val currentEntry = backStack.last()
-            CustomRailNav(
-                currentEntry = currentEntry.toString(),
-                navRoutes = homeNavRoutes,
-                unreadRoomsBadge = hasUnread == true,
-            ) { path ->
-                val targetRoute =
-                    when (path) {
-                        HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
-                        HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
-                        else -> HomeRoute.World
-                    }
-                if (backStack.last() != targetRoute) {
-                    val i = backStack.indexOf(targetRoute)
-                    if (i >= 0) {
-                        repeat(backStack.size - i - 1) {
-                            backStack.removeLastOrNull()
-                        }
-                    } else {
-                        backStack.add(targetRoute)
-                    }
-                }
+    val scope = rememberCoroutineScope()
+    HomeSectionScaffold(pagerState, homeNavRoutes, hasUnread == true, Modifier.testTag("home"), { page, compact ->
+        val searchScope =
+            when (page) {
+                1 -> SearchScope.MyCommunity
+                2 -> SearchScope.MyRoom
+                else -> SearchScope.World
             }
-            HomeNavDisplay(backStack, modifier = Modifier.weight(1f))
-        }
+        CustomSearchBar(searchScope, title = if (compact) null else homeNavRoutes[page].label) { ProjectIcon() }
+    }) { page ->
+        HomeSection(page) { destination -> scope.launch { pagerState.animateScrollToPage(destination) } }
     }
 }
 
@@ -219,49 +146,6 @@ internal fun homeStartDestinationLabel(value: String?): String =
 }
 
 @Composable
-private fun HomeCompatPage(homeNavRoutes: List<NavRoute>, modifier: Modifier, defaultHomePage: Int) {
-    val pagerState =
-        rememberPagerState(initialPage = defaultHomePage) {
-            3
-        }
-    val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
-    val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
-    Scaffold(bottomBar = {
-        val scope = rememberCoroutineScope()
-        CustomBottomNav(
-            path = homeNavRoutes[pagerState.currentPage].path,
-            navRoutes = homeNavRoutes,
-            unreadRoomsBadge = hasUnread == true,
-        ) { path ->
-            scope.launch {
-                pagerState.animateScrollToPage(
-                    homeNavRoutes.indexOfFirst {
-                        it.path == path
-                    },
-                )
-            }
-        }
-    }, modifier = modifier) { paddingValues ->
-        Column(
-            Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            val scope =
-                when (pagerState.currentPage) {
-                    1 -> SearchScope.MyCommunity
-                    2 -> SearchScope.MyRoom
-                    else -> SearchScope.World
-                }
-            CustomSearchBar(scope) {
-                ProjectIcon()
-            }
-            Spacer(modifier = Modifier.height(10.dp))
-            HomePager(Modifier.weight(1f).padding(bottom = paddingValues.calculateBottomPadding()), pagerState)
-        }
-    }
-}
-
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun ProjectIcon() {
     var showDialog by remember {
@@ -291,63 +175,11 @@ private fun ProjectIcon() {
 }
 
 @Composable
-private fun HomeNavDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier) {
-    Column(modifier = modifier) {
-        val current = backStack.last()
-        val scope =
-            when (current) {
-                HomeRoute.Communities -> SearchScope.MyCommunity
-                HomeRoute.Rooms -> SearchScope.MyRoom
-                else -> SearchScope.World
-            }
-        CustomSearchBar(scope) {
-            ProjectIcon()
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-        NavDisplay(
-            backStack,
-            entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-            entryProvider =
-            entryProvider {
-                entry<HomeRoute.World> {
-                    WorldPage()
-                }
-                entry<HomeRoute.Communities> {
-                    UserHost {
-                        MyCommunitiesPage()
-                    }
-                }
-                entry<HomeRoute.Rooms> {
-                    UserHost {
-                        MyRoomsPage()
-                    }
-                }
-            },
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun HomePager(modifier: Modifier, pagerState: PagerState) {
-    HorizontalPager(pagerState, modifier) {
-        when (it) {
-            0 -> WorldPage()
-
-            1 ->
-                UserHost {
-                    MyCommunitiesPage()
-                }
-
-            else ->
-                UserHost {
-                    MyRoomsPage()
-                }
-        }
+private fun HomeSection(page: Int, selectSection: (Int) -> Unit) {
+    when (page) {
+        0 -> WorldPage(selectSection)
+        1 -> UserHost { MyCommunitiesPage() }
+        else -> UserHost { MyRoomsPage() }
     }
 }
 
@@ -402,10 +234,4 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
             }
         }
     }
-}
-
-@Composable
-fun WorldPage() {
-    val viewModel = createWorldViewModel()
-    TopicList(viewModel)
 }

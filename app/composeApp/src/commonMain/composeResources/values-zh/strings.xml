@@ -66,4 +66,14 @@
     <string name="home_start_destination_world">原来的首页</string>
     <string name="home_start_destination_communities">加入的社区</string>
     <string name="home_start_destination_rooms">加入的聊天室</string>
+    <string name="home_context_description">快速查看已加入的社区。</string>
+    <string name="view_all">查看全部</string>
+    <string name="community_view_all">全部</string>
+    <string name="community_view_poster">海报</string>
+    <string name="room_members">成员</string>
+    <string name="room_status">状态</string>
+    <string name="room_unread">未读</string>
+    <string name="room_read_only">只读</string>
+    <string name="room_community">社区</string>
+    <string name="room_no_community">私人房间</string>
 </resources>

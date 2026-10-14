@@ -5,13 +5,16 @@
 package com.storyteller_f.a.app.pages.topic
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
@@ -48,19 +51,21 @@ fun CommonTopicList(
     topicsViewModel: PagingViewModel<TopicInfo>,
     block: @Composable (index: Int, info: TopicInfo?, Int) -> Unit,
 ) {
-    StateView(topicsViewModel) { items ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            topPrepend(items.loadState)
-            pagingItems(items, {
-                it.id
-            }) {
-                block(it, items[it], items.itemCount)
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        StateView(topicsViewModel, Modifier.widthIn(max = 900.dp).fillMaxSize()) { items ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                topPrepend(items.loadState)
+                pagingItems(items, {
+                    it.id
+                }) {
+                    block(it, items[it], items.itemCount)
+                }
+                bottomAppending(items.loadState)
             }
-            bottomAppending(items.loadState)
         }
     }
 }

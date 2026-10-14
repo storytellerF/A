@@ -358,6 +358,7 @@ testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.
 testcontainers = { module = "org.testcontainers:testcontainers", version.ref = "testContainer" }
 tika-core = { module = "org.apache.tika:tika-core", version.ref = "tikaCore" }
 ui = { module = "org.jetbrains.compose.ui:ui", version.ref = "ui" }
+ui-backhandler = { module = "org.jetbrains.compose.ui:ui-backhandler", version.ref = "ui" }
 ui-test = { module = "org.jetbrains.compose.ui:ui-test", version.ref = "ui" }
 ui-tooling = { module = "org.jetbrains.compose.ui:ui-tooling", version.ref = "ui" }
 ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "ui" }

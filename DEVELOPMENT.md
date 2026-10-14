@@ -1,5 +1,21 @@
 # Development
 
+## Adaptive Home UI
+
+Home is an independent root destination; entering a community, room, topic or user pushes normal back
+history. The former root list/detail metadata and list-pane replacement tests were removed because that
+navigation contract no longer applies. Home sections share one pager across rail/bottom navigation.
+Keep content-width adaptation in the section or shared presentation component, after navigation and
+padding are deducted. Home context belongs only to World and uses a bounded existing community source;
+room message previews and exact unread counts still require additional data support.
+
+Run `./gradlew :app:composeApp:jvmTest :app:composeApp:adaptiveUiTest -Pserver.flavor=dev
+-Pserver.buildType=debug --console=plain` on one line. `adaptiveUiTest` runs only the runtime-free Home
+layout fixtures, separately from the regular host suite and without a backend or device. It checks section,
+search and scroll retention during resizing, context visibility, and result width/short-window scrolling.
+Use `./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
+for presentation snapshots. Snapshot fixtures must remain independent of app runtime CompositionLocals.
+
 ## Temporary dependency pins
 
 PostgreSQL R2DBC is pinned to `1.1.2.RELEASE` while

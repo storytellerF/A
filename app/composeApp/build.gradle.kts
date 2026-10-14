@@ -150,6 +150,7 @@ kotlin {
             implementation(libs.material3)
             implementation(libs.material.icons.extended)
             implementation(libs.ui)
+            implementation(libs.ui.backhandler)
             implementation(libs.components.resources)
             implementation(libs.ui.tooling.preview)
             implementation(libs.androidx.lifecycle.common)
@@ -418,4 +419,14 @@ tasks.named<Test>("jvmTest") {
         "app.protected.storage.dir",
         layout.buildDirectory.dir("test-protected-storage").get().asFile.absolutePath,
     )
+}
+
+// UI fixtures run separately from the regular host suite and share no backend/device state.
+tasks.register<Test>("adaptiveUiTest") {
+    dependsOn("jvmTestClasses")
+    val hostTest = tasks.named<Test>("jvmTest").get()
+    testClassesDirs = hostTest.testClassesDirs
+    classpath = hostTest.classpath
+    include("device_based/HomeAdaptiveUiTest*")
+    maxParallelForks = 1
 }

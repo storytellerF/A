@@ -5,7 +5,7 @@
 package com.storyteller_f.a.app.pages.search
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -31,25 +34,33 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.LocalListDetailSceneScope
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.close
 import com.storyteller_f.a.app.common.FileSearchViewModel
 import com.storyteller_f.a.app.common.createFileSearchViewModel
 import com.storyteller_f.a.app.common.createMemberSearchInCommunityViewModel
@@ -66,6 +77,7 @@ import com.storyteller_f.a.app.common.createTopicSearchInUserViewModel
 import com.storyteller_f.a.app.common.createTopicSearchViewModel
 import com.storyteller_f.a.app.common.createUserTitlesViewModel
 import com.storyteller_f.a.app.common.getUserOverviewViewModel
+import com.storyteller_f.a.app.create
 import com.storyteller_f.a.app.input_search_community
 import com.storyteller_f.a.app.input_search_files
 import com.storyteller_f.a.app.input_search_members
@@ -116,15 +128,20 @@ sealed interface SearchScope {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomSearchBar(scope: SearchScope, showSelfIcon: Boolean = true, leadingIcon: @Composable () -> Unit) {
+fun CustomSearchBar(
+    scope: SearchScope,
+    showSelfIcon: Boolean = true,
+    title: String? = null,
+    leadingIcon: @Composable () -> Unit,
+) {
     val appNavFactory = LocalAppNavFactory.current
-    var query by remember {
+    var query by rememberSaveable {
         mutableStateOf("")
     }
-    var searchQuery by remember {
+    var searchQuery by rememberSaveable {
         mutableStateOf("")
     }
-    var active by remember {
+    var active by rememberSaveable {
         mutableStateOf(false)
     }
     var showSheet by remember {
@@ -132,6 +149,7 @@ fun CustomSearchBar(scope: SearchScope, showSelfIcon: Boolean = true, leadingIco
     }
     CustomSearchBarInternal(
         scope = scope,
+        title = title,
         query = query,
         updateQuery = { updatedQuery ->
             query = updatedQuery
@@ -167,20 +185,16 @@ fun CustomSearchBar(scope: SearchScope, showSelfIcon: Boolean = true, leadingIco
     }
 }
 
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 internal fun detailSearchBar(scope: SearchScope, leadingIcon: @Composable () -> Unit) {
-    CustomSearchBar(
-        scope = scope,
-        showSelfIcon = LocalListDetailSceneScope.current == null,
-        leadingIcon = leadingIcon,
-    )
+    CustomSearchBar(scope = scope, leadingIcon = leadingIcon)
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 private fun CustomSearchBarInternal(
     scope: SearchScope,
+    title: String?,
     query: String,
     updateQuery: (String) -> Unit,
     searchQuery: String,
@@ -191,37 +205,63 @@ private fun CustomSearchBarInternal(
     leadingIcon: @Composable (() -> Unit),
     onClickCreate: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        SearchBar(
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = query,
-                    onQueryChange = updateQuery,
-                    onSearch = updateSearch,
-                    expanded = active,
-                    onExpandedChange = onActiveChange,
-                    leadingIcon = {
-                        MergedLeadingIcon(leadingIcon, active) {
-                            onActiveChange(it)
-                        }
-                    },
-                    trailingIcon = {
-                        if (showSelfIcon) {
-                            SelfIcon(onClickCreate)
-                        }
-                    },
-                    placeholder = {
-                        SearchPlaceholder(scope)
-                    },
+    val results =
+        remember {
+            movableContentOf<SearchScope, String> { searchScope, text ->
+                SearchContent(
+                    searchScope,
+                    text,
                 )
-            },
-            expanded = active,
-            onExpandedChange = onActiveChange,
-            modifier = Modifier.align(Alignment.Center),
-            content = {
-                SearchContent(scope, searchQuery)
-            },
-        )
+            }
+        }
+    val canCreate = showSelfIcon && LocalUserInfo.current != null
+    BackHandler(enabled = active) { onActiveChange(false) }
+    BoxWithConstraints(
+        Modifier.fillMaxWidth().then(if (active) Modifier.imePadding() else Modifier).onPreviewKeyEvent { event ->
+            if (active && event.key == Key.Escape && event.type == KeyEventType.KeyDown) {
+                onActiveChange(false)
+                true
+            } else {
+                false
+            }
+        },
+    ) {
+        val desktop = maxWidth >= 600.dp
+        val inputField: @Composable () -> Unit = {
+            SearchBarDefaults.InputField(
+                query = query,
+                onQueryChange = updateQuery,
+                onSearch = updateSearch,
+                expanded = active,
+                onExpandedChange = onActiveChange,
+                leadingIcon = { MergedLeadingIcon(leadingIcon, active, onActiveChange) },
+                trailingIcon = {
+                    if (showSelfIcon) SelfIcon(onClickCreate)
+                },
+                placeholder = { SearchPlaceholder(scope) },
+            )
+        }
+        if (desktop) {
+            DesktopSearchLayout(title, active, inputField, {
+                if (canCreate && title != null) {
+                    IconButton(onClick = onClickCreate) {
+                        Icon(Icons.Default.Add, stringResource(Res.string.create))
+                    }
+                }
+                if (active) {
+                    IconButton(onClick = { onActiveChange(false) }) {
+                        Icon(Icons.Default.Close, stringResource(Res.string.close))
+                    }
+                }
+            }) { results(scope, searchQuery) }
+        } else {
+            SearchBar(
+                inputField = inputField,
+                expanded = active,
+                onExpandedChange = onActiveChange,
+                modifier = Modifier.align(Alignment.Center),
+            ) { results(scope, searchQuery) }
+        }
     }
 }
 
@@ -268,7 +308,7 @@ private fun SearchPlaceholder(scope: SearchScope) {
             when (scope) {
                 SearchScope.World -> Res.string.input_search_topics_and_users
                 SearchScope.MyCommunity -> Res.string.input_search_community
-                SearchScope.MyRoom -> Res.string.input_search_topics
+                SearchScope.MyRoom -> Res.string.input_search_room
                 is SearchScope.CommunityTopic -> Res.string.input_search_topics
                 is SearchScope.CommunityRoom -> Res.string.input_search_room
                 is SearchScope.RoomTopic -> Res.string.input_search_topics
@@ -398,15 +438,14 @@ private fun CommunityTopicSearchContent(current: String, scope: SearchScope.Comm
 @OptIn(ExperimentalLayoutApi::class)
 private fun MyRoomSearchContent(current: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        var currentOption by remember {
-            mutableStateOf(JoinStatusSearch.JOINED)
-        }
+        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
+        var selectedOption by rememberSaveable { mutableIntStateOf(0) }
+        val currentOption = options[selectedOption]
 
         val instance by LocalUiViewModel.current.instance.collectAsState()
         val isAlreadySignUp = instance !is IAccountInstance.None
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
-            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -416,7 +455,7 @@ private fun MyRoomSearchContent(current: String) {
                         SegmentedButton(
                             currentOption == e,
                             {
-                                currentOption = e
+                                selectedOption = i
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size),
                         ) {
@@ -437,14 +476,13 @@ private fun MyRoomSearchContent(current: String) {
 @OptIn(ExperimentalLayoutApi::class)
 private fun MyCommunitySearchContent(query: String) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        var currentOption by remember {
-            mutableStateOf(JoinStatusSearch.JOINED)
-        }
+        val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
+        var selectedOption by rememberSaveable { mutableIntStateOf(0) }
+        val currentOption = options[selectedOption]
         val instance by LocalUiViewModel.current.instance.collectAsState()
         val isAlreadySignUp = instance !is IAccountInstance.None
         val finalOption = if (isAlreadySignUp) currentOption else JoinStatusSearch.UNSPECIFIED
         if (isAlreadySignUp) {
-            val options = listOf(JoinStatusSearch.JOINED, JoinStatusSearch.UNSPECIFIED)
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -454,7 +492,7 @@ private fun MyCommunitySearchContent(query: String) {
                         SegmentedButton(
                             currentOption == e,
                             {
-                                currentOption = e
+                                selectedOption = i
                             },
                             shape = SegmentedButtonDefaults.itemShape(index = i, count = options.size),
                         ) {
@@ -479,15 +517,11 @@ private fun WorldSearchContent(current: String) {
             rememberPagerState {
                 2
             }
-        var selected by remember {
-            mutableIntStateOf(0)
-        }
         val tabs = listOf("Topics", "Users")
         val coroutineScope = rememberCoroutineScope()
-        PrimaryTabRow(selected) {
+        PrimaryTabRow(pagerState.currentPage) {
             tabs.forEachIndexed { i, e ->
-                Tab(selected = selected == i, onClick = {
-                    selected = i
+                Tab(selected = pagerState.currentPage == i, onClick = {
                     coroutineScope.launch {
                         pagerState.scrollToPage(i)
                     }

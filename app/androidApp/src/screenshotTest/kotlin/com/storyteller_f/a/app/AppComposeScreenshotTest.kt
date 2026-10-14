@@ -7,12 +7,19 @@ package com.storyteller_f.a.app
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,18 +30,26 @@ import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
+import com.storyteller_f.a.app.pages.AdaptiveItemGrid
+import com.storyteller_f.a.app.pages.HomeFeedLayout
+import com.storyteller_f.a.app.pages.HomeSectionScaffold
 import com.storyteller_f.a.app.pages.file.FixedProgress
 import com.storyteller_f.a.app.pages.room.PrimaryRoomCell
+import com.storyteller_f.a.app.pages.room.RoomRowContent
 import com.storyteller_f.a.app.pages.room.UnboundedRoomCell
+import com.storyteller_f.a.app.pages.search.DesktopSearchLayout
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.InfoTable
 import com.storyteller_f.a.client.compose_core.components.MediaObjectBlock
+import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.Pill
 import com.storyteller_f.a.client.compose_core.components.PrivateKeyEditor
 import com.storyteller_f.a.client.compose_core.components.SheetContainer
 import com.storyteller_f.a.client.compose_core.components.SignInButton
+import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.type.ObjectStatus
 import kotlinx.datetime.LocalDateTime
 
 @PreviewTest
@@ -222,3 +237,129 @@ private fun sampleRoom() =
 )
 
 private fun fixedTime() = LocalDateTime(2026, 1, 2, 3, 4, 5)
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 200)
+@Composable
+fun WideRoomRowScreenshot() {
+    ScreenshotAppTheme {
+        RoomRowContent(
+            sampleRoom().copy(
+                name = "A room with a long name that should wrap cleanly",
+                latestTopic = 12,
+                lastRead = 3,
+            ),
+            CommunityInfo.EMPTY.copy(name = "Design community"),
+            true,
+            Modifier.padding(20.dp),
+            { Icon(Icons.Default.Groups, null, Modifier.size(60.dp)) },
+            {},
+        )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1280, heightDp = 600)
+@Preview(showBackground = true, widthDp = 720, heightDp = 600)
+@Composable
+fun HomeFeedLayoutScreenshot() {
+    ScreenshotAppTheme {
+        HomeFeedLayout(context = {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                Column(Modifier.fillMaxSize().padding(16.dp)) {
+                    Text("Communities", style = MaterialTheme.typography.titleMedium)
+                    Text("Design community")
+                    Text("Developer community")
+                }
+            }
+        }) {
+            LazyColumn(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                items(6) { index ->
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                            Text("Topic ${index + 1}", style = MaterialTheme.typography.titleMedium)
+                            Text("A single reading flow with bounded content width.")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 320)
+@Composable
+fun DesktopSearchResultsScreenshot() {
+    ScreenshotAppTheme {
+        DesktopSearchLayout("Communities", true, {
+            BasicTextField("Design", {}, Modifier.fillMaxWidth().padding(16.dp))
+        }, {}) {
+            LazyColumn(Modifier.fillMaxSize()) {
+                items(8) { index -> Text("Community ${index + 1}", Modifier.fillMaxWidth().padding(16.dp)) }
+            }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 600)
+@Preview(showBackground = true, widthDp = 390, heightDp = 600)
+@Composable
+fun HomeNavigationScreenshot() {
+    ScreenshotAppTheme {
+        val routes =
+            listOf(
+                "World",
+                "Communities",
+                "Rooms",
+            ).map { NavRoute("/${it.lowercase()}", Icons.Default.Groups, it) }
+        HomeSectionScaffold(rememberPagerState { 3 }, routes, true, search = { page, compact ->
+            Text(
+                routes[page].label,
+                Modifier.padding(if (compact) 12.dp else 24.dp),
+                style = MaterialTheme.typography.titleLarge,
+            )
+        }) { page ->
+            Column(Modifier.fillMaxSize().padding(16.dp)) { Text("${routes[page].label} content") }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 400)
+@Preview(showBackground = true, widthDp = 390, heightDp = 400)
+@Composable
+fun CommunityGridScreenshot() {
+    ScreenshotAppTheme {
+        AdaptiveItemGrid {
+            items(12) { index ->
+                Surface(color = MaterialTheme.colorScheme.secondaryContainer) {
+                    Row(Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.Groups, null, Modifier.size(50.dp))
+                        Text("Community ${index + 1}", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 240, fontScale = 1.5f)
+@Composable
+fun LargeTextRoomRowScreenshot() {
+    ScreenshotAppTheme {
+        RoomRowContent(
+            sampleRoom().copy(
+                name = "A private room with a long name and larger text",
+                status = ObjectStatus.READ_ONLY,
+            ),
+            null,
+            true,
+            Modifier.padding(20.dp),
+            { Icon(Icons.Default.Groups, null, Modifier.size(60.dp)) },
+            {},
+        )
+    }
+}

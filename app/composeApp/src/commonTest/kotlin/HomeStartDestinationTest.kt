@@ -4,18 +4,13 @@
 
 package com.storyteller_f.a.app
 
-import androidx.compose.material3.adaptive.Posture
-import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.storyteller_f.a.app.common.AboutScreen
 import com.storyteller_f.a.app.common.CommunityScreen
 import com.storyteller_f.a.app.common.HomeScreen
 import com.storyteller_f.a.app.common.RoomScreen
 import com.storyteller_f.a.app.common.TopicScreen
 import com.storyteller_f.a.app.common.UserScreen
-import com.storyteller_f.a.app.common.createListPaneAppNavFactory
 import com.storyteller_f.a.app.common.newAppNav
 import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_COMMUNITIES
 import com.storyteller_f.a.app.pages.HOME_START_DESTINATION_ROOMS
@@ -25,7 +20,6 @@ import com.storyteller_f.a.app.pages.homePageFromPreference
 import com.storyteller_f.a.app.pages.homeRouteFromPreference
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class HomeStartDestinationTest {
     @Test
@@ -45,35 +39,21 @@ class HomeStartDestinationTest {
     }
 
     @Test
-    fun homeAndContentRoutesUseMatchingListDetailScene() {
-        assertEquals(
-            AppListDetailDestination(AppListDetailScene.Home, AppListDetailPane.List),
-            HomeScreen.appListDetailDestination(),
-        )
-        listOf(
-            CommunityScreen(1),
-            RoomScreen(1),
-            TopicScreen(1),
-            UserScreen(1),
-        ).forEach { detail ->
-            assertEquals(
-                AppListDetailDestination(AppListDetailScene.Home, AppListDetailPane.Detail),
-                detail.appListDetailDestination(),
-            )
-        }
-        assertNull(AboutScreen.appListDetailDestination())
-    }
-
-    @Test
-    fun listPaneSelectionReplacesCurrentDetail() {
-        val backStack = NavBackStack<NavKey>(HomeScreen, RoomScreen(1))
-
-        createListPaneAppNavFactory(newAppNav(backStack)).newAppNav().gotoTopic(2)
-
-        assertEquals(
-            listOf(HomeScreen, TopicScreen(2)),
-            backStack.toList(),
-        )
+    fun homeNavigationPushesIndependentDestinations() {
+        listOf<(com.storyteller_f.a.app.common.AppNav) -> Unit>(
+            { it.gotoCommunity(2, false) },
+            { it.gotoRoom(2, false) },
+            { it.gotoTopic(2) },
+            { it.gotoUser(2) },
+        ).zip(listOf(CommunityScreen(2, false), RoomScreen(2, false), TopicScreen(2), UserScreen(2)))
+            .forEach { (navigate, destination) ->
+                val backStack = NavBackStack<NavKey>(HomeScreen)
+                val nav = newAppNav(backStack)
+                navigate(nav)
+                assertEquals(listOf(HomeScreen, destination), backStack.toList())
+                nav.back()
+                assertEquals(listOf(HomeScreen), backStack.toList())
+            }
     }
 
     @Test
@@ -89,33 +69,9 @@ class HomeStartDestinationTest {
     }
 
     @Test
-    fun unpairedListSelectionPreservesHistory() {
-        val backStack = NavBackStack<NavKey>(HomeScreen, AboutScreen)
-
-        backStack.selectAppDetail(UserScreen(2))
-
-        assertEquals(
-            listOf(HomeScreen, AboutScreen, UserScreen(2)),
-            backStack.toList(),
-        )
-    }
-
-    @Test
-    fun appListDetailUsesContentWidth() {
-        val compactDirective =
-            calculateAppPaneDirective(
-                contentSize = DpSize(600.dp, 900.dp),
-                windowPosture = Posture(),
-            )
-        val expandedDirective =
-            calculateAppPaneDirective(
-                contentSize = DpSize(840.dp, 900.dp),
-                windowPosture = Posture(),
-            )
-
-        assertEquals(1, compactDirective.maxHorizontalPartitions)
-        assertEquals(2, expandedDirective.maxHorizontalPartitions)
-        assertEquals(420.dp, compactDirective.defaultPanePreferredWidth)
-        assertEquals(420.dp, expandedDirective.defaultPanePreferredWidth)
+    fun rootBackKeepsHome() {
+        val backStack = NavBackStack<NavKey>(HomeScreen)
+        newAppNav(backStack).back()
+        assertEquals(listOf(HomeScreen), backStack.toList())
     }
 }

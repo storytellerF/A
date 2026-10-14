@@ -4,13 +4,12 @@
 
 package com.storyteller_f.a.app.pages.user
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
@@ -33,9 +32,9 @@ import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.common.ContainerMemberViewModel
 import com.storyteller_f.a.app.common.UserSearchViewModel
 import com.storyteller_f.a.app.common.createMemberViewModel
+import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
-import com.storyteller_f.a.client.compose_core.components.LayoutDefaults
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
@@ -96,21 +95,16 @@ fun MemberPage(objectId: PrimaryKey, objectType: ObjectType) {
 @Composable
 fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
-    StateView(memberViewModel) { items ->
-        LazyColumn(
-            contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = LayoutDefaults.pagingVerticalArrangement,
-        ) {
+    StateView(memberViewModel, Modifier.fillMaxSize()) { items ->
+        AdaptiveItemGrid {
             topPrepend(items.loadState)
-            pagingItems(items, {
-                it.id
-            }) { index ->
-                UserCell(items[index]?.userInfo, onClickCell = {
-                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
-                })
-                Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemCount - 1) {
-                    HorizontalDivider()
+            pagingItems(items, { it.id }) { index ->
+                Column {
+                    UserCell(items[index]?.userInfo, onClickCell = {
+                        onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
+                    })
+                    Spacer(modifier = Modifier.height(20.dp))
+                    if (index != items.itemCount - 1) HorizontalDivider()
                 }
             }
             bottomAppending(items.loadState)
@@ -121,21 +115,16 @@ fun MemberList(memberViewModel: ContainerMemberViewModel, onClick: ((UserInfo) -
 @Composable
 fun MemberList(memberViewModel: UserSearchViewModel, onClick: ((UserInfo) -> Unit)? = null) {
     val appNavFactory = LocalAppNavFactory.current
-    StateView(memberViewModel) { items ->
-        LazyColumn(
-            contentPadding = LayoutDefaults.contentPadding,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
+    StateView(memberViewModel, Modifier.fillMaxSize()) { items ->
+        AdaptiveItemGrid {
             topPrepend(items.loadState)
-            pagingItems(items, {
-                it.id
-            }) { index ->
-                UserCell(items[index], onClickCell = {
-                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
-                })
-                Spacer(modifier = Modifier.height(20.dp))
-                if (index != items.itemCount - 1) {
-                    HorizontalDivider()
+            pagingItems(items, { it.id }) { index ->
+                Column {
+                    UserCell(items[index], onClickCell = {
+                        onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoUser(it.id)
+                    })
+                    Spacer(modifier = Modifier.height(20.dp))
+                    if (index != items.itemCount - 1) HorizontalDivider()
                 }
             }
             bottomAppending(items.loadState)
