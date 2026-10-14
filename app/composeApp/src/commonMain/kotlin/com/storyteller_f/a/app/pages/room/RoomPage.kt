@@ -80,6 +80,7 @@ import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.common.IdRoomViewModel
 import com.storyteller_f.a.app.common.OnRoomExited
 import com.storyteller_f.a.app.common.OnRoomJoined
+import com.storyteller_f.a.app.common.OnRoomRead
 import com.storyteller_f.a.app.common.RoomKeysViewModel
 import com.storyteller_f.a.app.common.RoomScreen
 import com.storyteller_f.a.app.common.createRoomKeysViewModel
@@ -231,6 +232,7 @@ private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomIn
     }
     val firstVisibleItemIndex by remember { derivedStateOf { lazyListState.firstVisibleItemIndex } }
     val sessionManager = LocalSessionManager.current
+    val events = LocalGlobalDialog.current.context.events
     LaunchedEffect(firstVisibleItemIndex, roomInfo) {
         delay(1000)
         try {
@@ -239,6 +241,7 @@ private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomIn
                 if (info != null) {
                     sessionManager.addReadLog(UpdateUserRead(roomInfo.tuple(), info.id))
                         .getOrThrow()
+                    events.emit(OnRoomRead(roomInfo.id))
                 }
             }
         } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {

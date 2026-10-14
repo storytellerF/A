@@ -58,15 +58,35 @@ Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTes
 Lucene RPC containers cover batch ordering, direct-message counts/read markers, both cursor directions,
 read-only rooms, deletion, private wire/client content, membership loss, pinned scope and request limits.
 
-## Remaining adaptive UI work in PR #88
+## Activity preview integration
 
-The layout/detail work and context data boundaries are implemented. Keep the next integration work in
-the same PR: connect activity previews/counts to room rows, connect unread-room and pinned previews to
-World, and refresh their state through existing actions/events. Cover unavailable private previews and
-independent loading/error/empty states. Then verify real-account navigation/read/send flows, keyboard,
-compact/medium/wide/short windows and repeated resizing. A general activity feed remains a separate
-product contract; pinned topics do not represent all activity. Do not close issue #60 before integration
-and its acceptance checks are complete.
+Shared `RoomList` retains its paging/scroll owner and augments joined rows with batched activity data.
+The Host selects at most 100 loaded rooms around the current reading anchor, then filters joined rooms.
+Stable batches prevent request/row-height feedback when summaries appear. A short scrolling debounce
+coalesces viewport changes. Explicit list refresh also refreshes activity; supplementary failure leaves
+room navigation and paging usable, with a separate retry action. Search and community callers reuse the
+same presentation. Unjoined and signed-out rows do not fetch private activity data.
+
+World's wide-only context independently shows at most three unread rooms and three pinned topics,
+with actual source totals when the preview is partial, plus the joined-community preview. Context scrolling
+is independent of the feed. Room/topic entries open existing root detail destinations; the Rooms action
+opens the existing Home section. No new route-level splitting or general activity-feed contract is added.
+
+`ActivityPreviewHost` is UI-framework-independent and uses an injected application-owned serial
+coordination dispatcher. Requests, decryption and bounded text/date preparation run on the worker
+dispatcher. Results are immutable, ephemeral presentation state; decrypted previews are not stored.
+Superseded jobs are cancelled and cannot publish late results. Session-keyed UI collectors reset on
+account changes; lifecycle stop pauses/cancels requests and resume fetches current data. Closing the
+composition cancels its Host. Room create/change/read/join/exit and community membership events update
+eligible data; room events do not restart pinned previews. Successful pin/unpin mutations emit the shared
+topic-change event from their request boundary, including dialog and menu callers.
+
+Pure snapshot fixtures cover compact/wide activity rows, larger text, unavailable private summaries and
+context errors. Headless tests cover batching, worker selection, supersession, cancellation, source
+independence and event filtering. Adaptive UI tests cover preview retry/navigation, exact counts during
+resizing, list refresh callbacks, and active/inactive lifecycle binding. Real-account/device acceptance
+for complete navigation/read/send flows remains pending; do not close issue #60 based solely on these
+isolated checks.
 
 ## Temporary dependency pins
 

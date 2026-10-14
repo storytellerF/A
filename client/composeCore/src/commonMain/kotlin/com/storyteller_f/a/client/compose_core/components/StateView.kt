@@ -59,14 +59,19 @@ fun <T : Any> StateView(
     pagingViewModel: PagingViewModel<T>,
     modifier: Modifier = Modifier,
     showRefresh: Boolean = false,
+    onRefresh: () -> Unit = {},
     content: @Composable (LazyPagingItems<T>) -> Unit,
 ) {
     val pagingItems = pagingViewModel.flow.collectAsLazyPagingItems()
+    val refresh = {
+        onRefresh()
+        pagingItems.refresh()
+    }
     var pullRefreshing by remember { mutableStateOf(false) }
     val refreshState =
         rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
             pullRefreshing = true
-            pagingItems.refresh()
+            refresh()
         })
     val refreshLoadState = pagingItems.loadState.refresh
     LaunchedEffect(key1 = pullRefreshing, key2 = refreshLoadState) {
@@ -82,7 +87,7 @@ fun <T : Any> StateView(
         Column(Modifier.fillMaxSize()) {
             if (desktopRefresh) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { pagingItems.refresh() }, enabled = refreshLoadState !is LoadState.Loading) {
+                    TextButton(onClick = refresh, enabled = refreshLoadState !is LoadState.Loading) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
                         Text(stringResource(Res.string.refresh), Modifier.padding(start = 4.dp))
                     }
@@ -91,13 +96,13 @@ fun <T : Any> StateView(
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (pagingItems.itemCount > 0) {
                     content(pagingItems)
-                    StateViewTopIndicator(pagingItems, pullRefreshing)
+                    StateViewTopIndicator(pagingItems, pullRefreshing, refresh)
                 } else {
                     CenterBox {
                         when (val state = pagingItems.loadState.refresh.toLoadingState()) {
                             is LoadingState.Error ->
                                 ExceptionCell(state.e) {
-                                    pagingItems.refresh()
+                                    refresh()
                                 }
 
                             is LoadingState.Done ->
@@ -172,7 +177,11 @@ private fun <T> StateViewTopIndicator(state: LoadingState?, handler: LoadingHand
 }
 
 @Composable
-private fun <T : Any> StateViewTopIndicator(pagingItems: LazyPagingItems<T>, pullRefreshing: Boolean) {
+private fun <T : Any> StateViewTopIndicator(
+    pagingItems: LazyPagingItems<T>,
+    pullRefreshing: Boolean,
+    refresh: () -> Unit,
+) {
     val combinedLoadStates = pagingItems.loadState
     val refreshState = combinedLoadStates.refresh.toLoadingState()
     val newState =
@@ -184,7 +193,7 @@ private fun <T : Any> StateViewTopIndicator(pagingItems: LazyPagingItems<T>, pul
     StateViewTopIndicatorInternal(
         newState,
     ) {
-        pagingItems.refresh()
+        refresh()
     }
 }
 

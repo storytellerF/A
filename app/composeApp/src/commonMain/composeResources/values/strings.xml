@@ -144,4 +144,13 @@
     <string name="room_read_only">Read only</string>
     <string name="room_community">Community</string>
     <string name="room_no_community">Private room</string>
+    <string name="activity_empty">Nothing here yet</string>
+    <string name="activity_unavailable">Message preview unavailable</string>
+    <string name="activity_load_failed">Could not load activity. Refresh to try again.</string>
+    <string name="activity_no_messages">No messages yet</string>
+    <string name="activity_empty_message">Empty message</string>
+    <string name="activity_attachments">Attachments</string>
+    <string name="activity_preview_count">Showing %1$d of %2$d</string>
+    <string name="activity_unread_rooms">Unread rooms</string>
+    <string name="activity_pinned_topics">Pinned topics</string>
 </resources>

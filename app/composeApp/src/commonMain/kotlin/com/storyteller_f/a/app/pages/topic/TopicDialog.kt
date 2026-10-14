@@ -222,7 +222,7 @@ suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): Res
     } else {
         request { pinTopic(topicInfo.id) }
     }
-}
+}.onSuccess { context.emitEvent(com.storyteller_f.a.app.common.OnTopicChanged(it)) }
 
 @OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class)
 @Composable

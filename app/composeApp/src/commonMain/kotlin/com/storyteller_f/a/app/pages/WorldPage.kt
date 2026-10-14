@@ -4,11 +4,13 @@
 
 package com.storyteller_f.a.app.pages
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,19 +21,23 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.paging.compose.itemKey
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.activity_pinned_topics
+import com.storyteller_f.a.app.activity_unread_rooms
 import com.storyteller_f.a.app.common.createJoinedCommunitiesViewModel
 import com.storyteller_f.a.app.common.createWorldViewModel
 import com.storyteller_f.a.app.communities
 import com.storyteller_f.a.app.home_context_description
 import com.storyteller_f.a.app.pages.community.CommunityCell
 import com.storyteller_f.a.app.pages.topic.TopicList
+import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.view_all
 import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.client.compose_core.components.StateView
@@ -40,15 +46,57 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun WorldPage(selectSection: (Int) -> Unit = {}) {
     val viewModel = createWorldViewModel()
-    HomeFeedLayout(context = { HomeCommunityContext { selectSection(1) } }) {
+    HomeFeedLayout(context = { HomeContext(selectSection) }) {
         TopicList(viewModel)
+    }
+}
+
+@Composable
+private fun HomeContext(selectSection: (Int) -> Unit) {
+    val instance by LocalUiViewModel.current.instance.collectAsState()
+    val nav = LocalAppNavFactory.current
+    if (instance is IAccountInstance.None) {
+        Column(Modifier.padding(16.dp)) {
+            Text(stringResource(Res.string.home_context_description))
+            SignInButton { nav.newAppNav().gotoSignIn() }
+        }
+        return
+    }
+    val host = rememberActivityPreviewHost()
+    ObserveActivityEvents(host, context = true)
+    val unread by key(host) { host.unread.collectAsStateWithLifecycle() }
+    val pinned by key(host) { host.pinned.collectAsStateWithLifecycle() }
+    LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        item("unread-rooms") {
+            ActivityPreviewSection(
+                stringResource(Res.string.activity_unread_rooms),
+                unread,
+                { host.refreshUnread() },
+                action = { TextButton({ selectSection(2) }) { Text(stringResource(Res.string.rooms)) } },
+            ) { preview ->
+                RoomActivityPreviewContent(preview) { nav.newAppNav().gotoRoom(preview.room.id, false) }
+            }
+        }
+        item("pinned-topics") {
+            ActivityPreviewSection(
+                stringResource(Res.string.activity_pinned_topics),
+                pinned,
+                { host.refreshPinned() },
+            ) { preview ->
+                ActivityMessageContent(
+                    preview.message,
+                    Modifier.fillMaxWidth().clickable { nav.newAppNav().gotoTopic(preview.id) }.padding(8.dp),
+                )
+            }
+        }
+        item("joined-communities") { HomeCommunityContext { selectSection(1) } }
     }
 }
 
 @Composable
 private fun HomeCommunityContext(openCommunities: () -> Unit) {
     Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceContainerLow) {
-        Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth()) {
                 Text(
                     stringResource(Res.string.communities),
@@ -57,14 +105,7 @@ private fun HomeCommunityContext(openCommunities: () -> Unit) {
                 )
                 TextButton(onClick = openCommunities) { Text(stringResource(Res.string.view_all)) }
             }
-            Text(stringResource(Res.string.home_context_description), style = MaterialTheme.typography.bodySmall)
-            val instance by LocalUiViewModel.current.instance.collectAsState()
-            if (instance is IAccountInstance.None) {
-                val appNavFactory = LocalAppNavFactory.current
-                SignInButton { appNavFactory.newAppNav().gotoSignIn() }
-            } else {
-                HomeCommunityPreview(Modifier.weight(1f))
-            }
+            HomeCommunityPreview(Modifier.height(300.dp))
         }
     }
 }
@@ -73,10 +114,8 @@ private fun HomeCommunityContext(openCommunities: () -> Unit) {
 private fun HomeCommunityPreview(modifier: Modifier) {
     val viewModel = createJoinedCommunitiesViewModel()
     StateView(viewModel, modifier.fillMaxSize(), showRefresh = true) { items ->
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(count = minOf(items.itemCount, 5), key = items.itemKey { it.id }) { index ->
-                CommunityCell(items[index])
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            repeat(minOf(items.itemCount, 3)) { index -> CommunityCell(items[index]) }
         }
     }
 }

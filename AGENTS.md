@@ -168,3 +168,7 @@
   grouped unread pagination; apply activity cursors to the per-room maximum message ID, not individual
   message rows. Preserve unread-room versus unread-message count meanings and existing private-topic
   decryption. See DEVELOPMENT.md for the data contract and integration checks.
+
+- Activity previews must remain ephemeral and session-keyed. Reuse the framework-independent preview
+  Host and lifecycle binding; never fetch per row or persist decrypted previews. Keep loaded batches
+  stable across row-height changes, and route successful pin/read changes through the existing event bus.

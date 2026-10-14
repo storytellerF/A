@@ -38,7 +38,6 @@ import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.add_reaction
-import com.storyteller_f.a.app.common.OnTopicChanged
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.components.InteractionRow
 import com.storyteller_f.a.app.invalid_content
@@ -51,7 +50,6 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.app.unpin
 import com.storyteller_f.a.client.compose_core.components.CustomIcon
 import com.storyteller_f.a.client.compose_core.components.IconRes
-import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -301,7 +299,6 @@ fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest:
                 scope.launch {
                     globalDialogController.pinOrUnpinTopic(topicInfo).onSuccess {
                         onDismissRequest()
-                        globalDialogController.emitEvent(OnTopicChanged(it))
                     }
                 }
             },

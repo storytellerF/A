@@ -39,6 +39,8 @@ data class OnCommunityJoined(val info: CommunityInfo)
 data class OnCommunityExited(val info: CommunityInfo)
 
 data class OnCommunityUpdated(val info: CommunityInfo)
+data class OnRoomRead(val roomId: com.storyteller_f.shared.type.PrimaryKey)
+
 data class OnRoomCreated(val info: RoomInfo)
 data class OnRoomJoined(val info: RoomInfo)
 data class OnRoomExited(val info: RoomInfo)

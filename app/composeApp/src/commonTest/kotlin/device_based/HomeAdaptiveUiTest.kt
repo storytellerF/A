@@ -7,6 +7,8 @@ package device_based
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.rememberPagerState
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -31,13 +35,48 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
+import com.storyteller_f.a.api.RoomActivityInfo
+import com.storyteller_f.a.api.RoomActivityListResponse
+import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.app.Res
+import com.storyteller_f.a.app.common.ActivityPreviewHost
+import com.storyteller_f.a.app.common.MessagePreview
+import com.storyteller_f.a.app.common.MessageSummary
+import com.storyteller_f.a.app.common.OnRoomRead
+import com.storyteller_f.a.app.common.PreviewState
+import com.storyteller_f.a.app.common.RoomActivityPreview
+import com.storyteller_f.a.app.pages.ActivityPreviewSection
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
+import com.storyteller_f.a.app.pages.ObserveActivityEvents
+import com.storyteller_f.a.app.pages.RoomActivityPreviewContent
+import com.storyteller_f.a.app.pages.room.RoomRowContent
 import com.storyteller_f.a.app.pages.search.DesktopSearchLayout
+import com.storyteller_f.a.app.refresh
+import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.components.NavRoute
+import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.shared.model.RoomInfo
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flowOf
+import org.jetbrains.compose.resources.getString
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
@@ -187,5 +226,154 @@ class HomeAdaptiveUiTest {
         runOnIdle { width.value = 1280.dp }
         onNodeWithTag("composer").assertTextEquals("Saved draft")
         onNodeWithText("Message 20").assertExists()
+    }
+
+    @Test
+    fun contextRetryDoesNotHideOtherSource() =
+        runComposeUiTest {
+        val room = RoomInfo.EMPTY.copy(name = "Room preview")
+        val preview =
+            RoomActivityPreview(
+                room,
+                42,
+                MessagePreview(MessageSummary.Unavailable, "Sample author", "2026-01-01 12:00"),
+            )
+        val unread = mutableStateOf<PreviewState<RoomActivityPreview>>(PreviewState.Failed)
+        var opened = 0
+        setContent {
+            MaterialTheme {
+                Column(Modifier.requiredSize(300.dp, 600.dp)) {
+                    ActivityPreviewSection("Unread", unread.value, {
+                        unread.value = PreviewState.Ready(persistentListOf(preview), 1)
+                    }) { RoomActivityPreviewContent(it, open = { opened++ }) }
+                    ActivityPreviewSection("Pinned", PreviewState.Ready(persistentListOf("Pin preview"), 1), {}) {
+                        Text(it)
+                    }
+                }
+            }
+        }
+        onNodeWithText("Pin preview").assertExists()
+        onAllNodesWithText(getString(Res.string.refresh))[0].performClick()
+        onNodeWithText("Pin preview").assertExists()
+        onNodeWithText("42").assertExists()
+        onNodeWithText("Room preview").performClick()
+        runOnIdle { assertEquals(1, opened) }
+    }
+
+    @Test
+    fun roomSummaryAndExactCountSurviveResizing() =
+        runComposeUiTest {
+        val width = mutableStateOf(1000.dp)
+        val room = RoomInfo.EMPTY.copy(name = "Room preview")
+        val preview =
+            RoomActivityPreview(
+                room,
+                42,
+                MessagePreview(MessageSummary.Text("Recent message"), "Sample author", "2026-01-01 12:00"),
+            )
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(width.value, 240.dp)) {
+                    RoomRowContent(
+                        room,
+                        null,
+                        width.value >= 760.dp,
+                        Modifier.fillMaxWidth().padding(16.dp),
+                        { Box(Modifier.requiredSize(60.dp, 60.dp)) },
+                        {},
+                        preview,
+                    )
+                }
+            }
+        }
+        onNodeWithText("Recent message").assertExists()
+        onNodeWithText("42").assertExists()
+        runOnIdle { width.value = 390.dp }
+        onNodeWithText("Recent message").assertExists()
+        onNodeWithText("42").assertExists()
+        onNodeWithText("Sample author").assertExists()
+        onNodeWithText("2026-01-01 12:00").assertExists()
+    }
+
+    @Test
+    fun listRefreshAlsoRefreshesSupplementalActivity() =
+        runComposeUiTest {
+        var refreshes = 0
+        val model =
+            object : PagingViewModel<RoomInfo>() {
+                override val flow =
+                    flowOf(
+                        PagingData.from(
+                            listOf(RoomInfo.EMPTY),
+                            sourceLoadStates =
+                            LoadStates(
+                                LoadState.NotLoading(false),
+                                LoadState.NotLoading(true),
+                                LoadState.NotLoading(true),
+                            ),
+                        ),
+                    )
+            }
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(800.dp, 300.dp)) {
+                    StateView(model, showRefresh = true, onRefresh = { refreshes++ }) { Text("Loaded room") }
+                }
+            }
+        }
+        onNodeWithText("Loaded room").assertExists()
+        onNodeWithText(getString(Res.string.refresh)).performClick()
+        runOnIdle { assertEquals(1, refreshes) }
+    }
+
+    @Test
+    fun previewBindingRefreshesOnlyWhilePageIsActive() =
+        runComposeUiTest {
+        val owner =
+            object : LifecycleOwner {
+                override val lifecycle = LifecycleRegistry.createUnsafe(this)
+            }
+        val events = MutableSharedFlow<Any>(extraBufferCapacity = 1)
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        val host =
+            ActivityPreviewHost(scope, Dispatchers.Default.limitedParallelism(1), Dispatchers.Default, {
+                Result.success(RoomActivityListResponse(persistentListOf()))
+            }, {
+                Result.success(
+                    RoomActivityListResponse(
+                        persistentListOf(RoomActivityInfo(RoomInfo.EMPTY.copy(name = "Live room"), null, null, 5)),
+                    ),
+                )
+            }, { Result.success(TopicInfoListResponse(persistentListOf())) })
+        try {
+            setContent {
+                CompositionLocalProvider(LocalLifecycleOwner provides owner) {
+                    MaterialTheme {
+                        ObserveActivityEvents(host, context = true, events = events)
+                        val unread by host.unread.collectAsStateWithLifecycle()
+                        ActivityPreviewSection(
+                            "Unread",
+                            unread,
+                            { host.refreshUnread() },
+                        ) { RoomActivityPreviewContent(it) }
+                    }
+                }
+            }
+            runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+            awaitIdle()
+            waitUntil { host.unread.value is PreviewState.Ready }
+            onNodeWithText("Live room").assertExists()
+            runOnIdle { owner.lifecycle.currentState = Lifecycle.State.CREATED }
+            awaitIdle()
+            waitUntil { host.unread.value is PreviewState.Idle }
+            assertTrue(events.tryEmit(OnRoomRead(1)))
+            runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+            awaitIdle()
+            waitUntil { host.unread.value is PreviewState.Ready }
+            onNodeWithText("Live room").assertExists()
+        } finally {
+            host.close()
+            scope.cancel()
+        }
     }
 }

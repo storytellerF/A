@@ -5,6 +5,7 @@
 package com.storyteller_f.a.app
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,12 +29,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.android.tools.screenshot.PreviewTest
+import com.storyteller_f.a.app.common.MessagePreview
+import com.storyteller_f.a.app.common.MessageSummary
+import com.storyteller_f.a.app.common.PreviewState
+import com.storyteller_f.a.app.common.RoomActivityPreview
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
+import com.storyteller_f.a.app.pages.ActivityPreviewSection
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
+import com.storyteller_f.a.app.pages.RoomActivityPreviewContent
 import com.storyteller_f.a.app.pages.file.FixedProgress
 import com.storyteller_f.a.app.pages.room.PrimaryRoomCell
 import com.storyteller_f.a.app.pages.room.RoomRowContent
@@ -51,6 +58,7 @@ import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.ObjectStatus
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.datetime.LocalDateTime
 
 @PreviewTest
@@ -379,6 +387,71 @@ fun DetailReadingScreenshot() {
             Surface(color = MaterialTheme.colorScheme.tertiaryContainer) {
                 BasicTextField("Message draft", {}, Modifier.fillMaxWidth().padding(20.dp))
             }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1000, heightDp = 200)
+@Preview(showBackground = true, widthDp = 390, heightDp = 260, fontScale = 1.5f)
+@Composable
+fun ActivityRoomRowScreenshot() {
+    ScreenshotAppTheme {
+        BoxWithConstraints {
+            val room = sampleRoom().copy(name = "Room with recent activity", latestTopic = 10)
+            RoomRowContent(
+                room,
+                null,
+                maxWidth >= 760.dp,
+                Modifier.padding(20.dp),
+                { Icon(Icons.Default.Groups, null, Modifier.size(60.dp)) },
+                {},
+                RoomActivityPreview(
+                    room,
+                    42,
+                    MessagePreview(
+                        MessageSummary.Text("A recent message that wraps within the reading column."),
+                        "Sample author",
+                        "2026-01-01 12:00",
+                    ),
+                ),
+            )
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 300, heightDp = 340)
+@Composable
+fun UnreadActivityContextScreenshot() {
+    ScreenshotAppTheme {
+        val room = sampleRoom().copy(name = "Private room")
+        ActivityPreviewSection(
+            "Unread rooms",
+            PreviewState.Ready(
+                persistentListOf(
+                    RoomActivityPreview(
+                        room,
+                        12,
+                        MessagePreview(MessageSummary.Unavailable, "Sample author", "2026-01-01 12:00"),
+                    ),
+                ),
+                9,
+            ),
+            {},
+        ) {
+            RoomActivityPreviewContent(it)
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 300, heightDp = 240)
+@Composable
+fun ActivityErrorContextScreenshot() {
+    ScreenshotAppTheme {
+        ActivityPreviewSection<RoomActivityPreview>("Unread rooms", PreviewState.Failed, {}) {
+            RoomActivityPreviewContent(it)
         }
     }
 }

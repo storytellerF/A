@@ -16,6 +16,10 @@ available content area independently of the input.
 Resizing preserves the selected section and its reading state. Wide lists provide an explicit Refresh action.
 Community and user detail sections preserve selection when resizing; room and topic details keep their
 reading content and message input aligned in a bounded column.
+Joined room rows include the latest message preview, author/time and an exact unread-message count.
+Wide World's context includes bounded unread-room and joined-community pinned-topic previews, each
+with its own refresh and loading/error state. Unavailable private messages show a neutral unavailable
+label; previews stay in memory and are not saved as plaintext.
 
 ## Storage and Search Availability
 
