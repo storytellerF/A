@@ -23,12 +23,12 @@ import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import kotlinx.coroutines.launch
 
-/** Both navigation presentations share one pager and keep section content mounted across resizes. */
+/** Page-local navigation shares one pager and preserves section state across resizes. */
 @Composable
-fun HomeSectionScaffold(
+fun AdaptiveSectionScaffold(
     pagerState: PagerState,
     routes: List<NavRoute>,
-    hasUnread: Boolean,
+    hasUnread: Boolean = false,
     modifier: Modifier = Modifier,
     search: @Composable (Int, Boolean) -> Unit,
     section: @Composable (Int) -> Unit,

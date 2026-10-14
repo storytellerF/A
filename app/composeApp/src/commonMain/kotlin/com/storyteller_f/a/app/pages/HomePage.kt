@@ -87,7 +87,7 @@ fun HomePage() {
     val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
     val hasUnread by unreadRoomsViewModel.handler.data.collectAsState()
     val scope = rememberCoroutineScope()
-    HomeSectionScaffold(pagerState, homeNavRoutes, hasUnread == true, Modifier.testTag("home"), { page, compact ->
+    AdaptiveSectionScaffold(pagerState, homeNavRoutes, hasUnread == true, Modifier.testTag("home"), { page, compact ->
         val searchScope =
             when (page) {
                 1 -> SearchScope.MyCommunity

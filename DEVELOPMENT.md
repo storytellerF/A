@@ -4,7 +4,8 @@
 
 Home is an independent root destination; entering a community, room, topic or user pushes normal back
 history. The former root list/detail metadata and list-pane replacement tests were removed because that
-navigation contract no longer applies. Home sections share one pager across rail/bottom navigation.
+navigation contract no longer applies. Home, Community and User each share one page-local pager across rail/bottom navigation.
+Room and Topic detail content and composers share a centered reading column capped at 900dp.
 Keep content-width adaptation in the section or shared presentation component, after navigation and
 padding are deducted. Home context belongs only to World and uses a bounded existing community source;
 room message previews and exact unread counts still require additional data support.
@@ -15,6 +16,33 @@ layout fixtures, separately from the regular host suite and without a backend or
 search and scroll retention during resizing, context visibility, and result width/short-window scrolling.
 Use `./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
 for presentation snapshots. Snapshot fixtures must remain independent of app runtime CompositionLocals.
+
+## Remaining adaptive UI work in PR #88
+
+Keep subsequent changes on the same PR, with focused commits and validation per milestone:
+
+1. **Detail continuity:** share page-local section state across narrow/wide Community and User layouts;
+   align Room/Topic reading content and composers; verify draft, selection and scroll retention.
+2. **Room activity contract:** add batched request-boundary data for visible joined rooms, with an explicit
+   latest message/type, author and timestamp. Use existing membership/visibility checks. Private-room
+   content must stay encrypted in transit and be decrypted through the existing client boundary; failed
+   decryption must never display ciphertext as a summary. Define deletion and no-activity behavior.
+3. **Unread contract:** `UnreadRoomsResponse.unreadCount` currently counts distinct unread rooms, not
+   unread messages. Preserve this meaning. Add explicit per-room message counts using database counts
+   after the read marker; never subtract identifiers. Specify whether replies count and apply the same
+   visibility rules as room reading. Cover read, join/leave, deletion and read-only membership.
+4. **Unread-room context:** query the complete joined unread set on the server, with deterministic
+   activity ordering and a bounded page. Do not filter only the first joined-room page. Refresh through
+   existing user actions/events without keeping authentication alive through background polling.
+5. **Pinned context:** define the joined-community scope, permission filtering and deterministic ordering
+   before adding a bounded preview. Cover unpin, deletion and lost membership. Treat a general activity
+   feed as a separate product contract rather than assuming pinned topics represent all activity.
+6. **Integrated acceptance:** verify compact/medium/wide/short windows, large text, keyboard, repeated
+   resize, shared-list callers, and real-account critical navigation/read/send flows. Keep runtime-free
+   screenshots separate from backend-dependent UI tests.
+
+The data milestones are pending until their end-to-end contract, implementation and tests are complete.
+Do not close issue #60 based only on the phase-one layout checks.
 
 ## Temporary dependency pins
 

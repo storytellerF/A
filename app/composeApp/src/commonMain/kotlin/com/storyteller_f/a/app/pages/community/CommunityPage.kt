@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,11 +25,8 @@ import androidx.compose.material.icons.filled.Topic
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Typography
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -44,14 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
-import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.runtime.entryProvider
-import androidx.navigation3.runtime.rememberNavBackStack
-import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
-import androidx.navigation3.ui.NavDisplay
-import androidx.savedstate.serialization.SavedStateConfiguration
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalClientFileProvider
@@ -72,6 +59,7 @@ import com.storyteller_f.a.app.common.hasRouteFlow
 import com.storyteller_f.a.app.components.FontView
 import com.storyteller_f.a.app.exit_community
 import com.storyteller_f.a.app.join_community
+import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.room.RoomList
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.search.detailSearchBar
@@ -83,8 +71,6 @@ import com.storyteller_f.a.app.topics
 import com.storyteller_f.a.app.ui.theme.AppTheme
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.CommunityIcon
-import com.storyteller_f.a.client.compose_core.components.CustomBottomNav
-import com.storyteller_f.a.client.compose_core.components.CustomRailNav
 import com.storyteller_f.a.client.compose_core.components.DialogContainer
 import com.storyteller_f.a.client.compose_core.components.FavoriteButton
 import com.storyteller_f.a.client.compose_core.components.IconRes
@@ -92,7 +78,6 @@ import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SubscriptionButton
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
-import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.shared.model.CommunityInfo
@@ -100,24 +85,14 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
-import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun CommunityPage(communityId: PrimaryKey, showDialog: Boolean) {
-    val size = CurrentWindowSizeClass()
     val model = createCommunityViewModel(communityId)
     val typography = getCommunityFont(communityId)
-
     AppTheme(typography = typography) {
-        when (size.widthSizeClass) {
-            WindowWidthSizeClass.Compact -> CommunityCompatPageInternal(communityId, showDialog, model)
-            else -> CommunityNonCompatPageInternal(communityId, showDialog, model)
-        }
+        CommunityPageInternal(communityId, showDialog, model)
     }
 }
 
@@ -162,214 +137,35 @@ fun getFontSettings(communityId: PrimaryKey): CommunityFontSettings {
     )
 }
 
-@Serializable
-sealed interface CommunityRoute : NavKey {
-    @Serializable
-    data object Topics : CommunityRoute {
-        override fun toString(): String = "/topics"
-    }
-
-    @Serializable
-    data object Rooms : CommunityRoute {
-        override fun toString(): String = "/rooms"
-    }
-}
-
-private fun buildSearchScope(pagerState: PagerState, communityId: PrimaryKey) =
-    when (pagerState.currentPage) {
-    0 -> SearchScope.CommunityTopic(communityId)
-    else -> SearchScope.CommunityRoom(communityId)
-}
-
-private fun buildSearchScope(currentRoute: NavKey?, communityId: PrimaryKey) =
-    when (currentRoute) {
-    CommunityRoute.Topics -> SearchScope.CommunityTopic(communityId)
-    else -> SearchScope.CommunityRoom(communityId)
-}
-
 @Composable
-private fun CommunityNonCompatPageInternal(
-    communityId: PrimaryKey,
-    needShowDialog: Boolean,
-    model: CommunityViewModel,
-) {
+private fun CommunityPageInternal(communityId: PrimaryKey, needShowDialog: Boolean, model: CommunityViewModel) {
     val community by model.handler.data.collectAsState()
     val dialogShown by model.dialog.dialogShown.collectAsState()
-    val navRoutes = communityNavRoutes()
-    val config =
-        remember {
-            SavedStateConfiguration {
-                serializersModule =
-                    SerializersModule {
-                        polymorphic(NavKey::class) {
-                            subclass(CommunityRoute.Topics::class)
-                            subclass(CommunityRoute.Rooms::class)
-                        }
-                    }
-            }
-        }
-    val backStack = rememberNavBackStack(config, CommunityRoute.Topics)
-    val current = backStack.last()
-    val searchScope = buildSearchScope(current, communityId)
-    Scaffold { paddingValues ->
-        Row(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
-            CommunityRailNav(backStack, current, navRoutes)
-            CommunityNonCompatContent(
-                communityId,
-                needShowDialog,
-                dialogShown,
-                model,
-                community,
-                searchScope,
-                backStack,
-            )
+    val pagerState = rememberPagerState { 2 }
+    var showDialog by remember { mutableStateOf(false) }
+    LaunchedEffect(needShowDialog, dialogShown) {
+        if (needShowDialog && !dialogShown) {
+            model.dialog.markDialogShown()
+            showDialog = true
         }
     }
-}
-
-@Composable
-private fun CommunityRailNav(backStack: NavBackStack<NavKey>, current: NavKey, navRoutes: List<NavRoute>) {
-    CustomRailNav(current.toString(), navRoutes) { path ->
-        val target =
-            when (path) {
-                "/rooms" -> CommunityRoute.Rooms
-                else -> CommunityRoute.Topics
-            }
-        if (backStack.last() != target) {
-            val i = backStack.indexOf(target)
-            if (i >= 0) {
-                repeat(backStack.size - i - 1) {
-                    backStack.removeLastOrNull()
-                }
+    AdaptiveSectionScaffold(pagerState, communityNavRoutes(), search = { page, _ ->
+        val searchScope =
+            if (page == 0) {
+                SearchScope.CommunityTopic(
+                    communityId,
+                )
             } else {
-                backStack.add(target)
+                SearchScope.CommunityRoom(communityId)
             }
-        }
-    }
-}
-
-@Composable
-@Suppress("LongParameterList")
-private fun CommunityNonCompatContent(
-    communityId: PrimaryKey,
-    needShowDialog: Boolean,
-    dialogShown: Boolean,
-    model: CommunityViewModel,
-    community: CommunityInfo?,
-    searchScope: SearchScope,
-    backStack: NavBackStack<NavKey>,
-) {
-    Column(
-        modifier = Modifier,
-    ) {
         detailSearchBar(searchScope) {
-            var showDialog by remember {
-                mutableStateOf(false)
-            }
-            LaunchedEffect(needShowDialog, dialogShown) {
-                if (needShowDialog && !dialogShown) {
-                    model.dialog.markDialogShown()
-                    showDialog = true
-                }
-            }
-            CommunityIconWithDialog(
-                community,
-                showDialog,
-            ) {
-                showDialog = it
-            }
+            CommunityIconWithDialog(community, showDialog) { showDialog = it }
         }
-
-        NavDisplay(
-            backStack,
-            entryDecorators =
-            listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberViewModelStoreNavEntryDecorator(),
-            ),
-            entryProvider =
-            entryProvider {
-                entry<CommunityRoute.Topics> {
-                    val viewModel = createCommunityTopicsViewModel(communityId)
-                    TopicList(viewModel)
-                }
-                entry<CommunityRoute.Rooms> {
-                    val viewModel = createCommunityRoomsViewModel(communityId)
-                    RoomList(viewModel)
-                }
-            },
-        )
-    }
-}
-
-@Suppress("UnusedMaterial3ScaffoldPaddingParameter")
-@Composable
-private fun CommunityCompatPageInternal(communityId: PrimaryKey, needShowDialog: Boolean, model: CommunityViewModel) {
-    val community by model.handler.data.collectAsState()
-    val dialogShown by model.dialog.dialogShown.collectAsState()
-    val pagerState =
-        rememberPagerState {
-            2
-        }
-    val searchScope = buildSearchScope(pagerState, communityId)
-    val navRoutes = communityNavRoutes()
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-    Scaffold(bottomBar = {
-        CommunityBottomNav(navRoutes, pagerState)
-    }) { paddingValues ->
-        Column(modifier = Modifier.padding(bottom = paddingValues.calculateBottomPadding())) {
-            detailSearchBar(searchScope) {
-                LaunchedEffect(needShowDialog) {
-                    if (needShowDialog && !dialogShown) {
-                        model.dialog.markDialogShown()
-                        showDialog = true
-                    }
-                }
-                CommunityIconWithDialog(
-                    community,
-                    showDialog,
-                ) {
-                    showDialog = it
-                }
-            }
-
-            CommunityPageInternal(pagerState, communityId)
-        }
-    }
-}
-
-@Composable
-private fun CommunityBottomNav(navRoutes: List<NavRoute>, pagerState: PagerState) {
-    val scope = rememberCoroutineScope()
-    CustomBottomNav(
-        navRoutes[pagerState.currentPage].path,
-        navRoutes,
-    ) { path ->
-        scope.launch {
-            pagerState.animateScrollToPage(
-                navRoutes.indexOfFirst {
-                    it.path == path
-                },
-            )
-        }
-    }
-}
-
-@Composable
-private fun CommunityPageInternal(pagerState: PagerState, communityId: PrimaryKey) {
-    HorizontalPager(pagerState) {
-        when (it) {
-            0 -> {
-                val viewModel = createCommunityTopicsViewModel(communityId)
-                TopicList(viewModel)
-            }
-
-            else -> {
-                val viewModel = createCommunityRoomsViewModel(communityId)
-                RoomList(viewModel)
-            }
+    }) { page ->
+        if (page == 0) {
+            TopicList(createCommunityTopicsViewModel(communityId))
+        } else {
+            RoomList(createCommunityRoomsViewModel(communityId))
         }
     }
 }

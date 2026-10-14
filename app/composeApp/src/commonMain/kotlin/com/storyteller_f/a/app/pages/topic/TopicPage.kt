@@ -7,11 +7,9 @@ package com.storyteller_f.a.app.pages.topic
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -58,6 +56,7 @@ import com.storyteller_f.a.app.common.createTopicsInTopicViewModel
 import com.storyteller_f.a.app.common.createUserViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.components.InteractionRow
+import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.room.CommonInputButton
 import com.storyteller_f.a.app.pages.room.InputGroupInternal
 import com.storyteller_f.a.app.pages.room.RoomInputGroup
@@ -141,7 +140,7 @@ private fun TopicPageInternal(
     startAddReaction: () -> Unit,
 ) {
     val topicInfo by viewModel.handler.data.collectAsState()
-    Column(modifier = modifier.fillMaxSize()) {
+    DetailReadingColumn(modifier) {
         var showDialog by remember {
             mutableStateOf(false)
         }

@@ -96,6 +96,7 @@ import com.storyteller_f.a.app.join_room
 import com.storyteller_f.a.app.join_room_prompt
 import com.storyteller_f.a.app.need_sign_in
 import com.storyteller_f.a.app.open_in_full
+import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.pages.search.detailSearchBar
@@ -175,7 +176,7 @@ private fun RoomPageInternal(room: IdRoomViewModel, needShowDialog: Boolean, roo
     Scaffold(snackbarHost = {
         SnackbarHost(snackBarHost)
     }) { paddingValues ->
-        Column(modifier = Modifier.horizontalSafeArea(paddingValues, LocalLayoutDirection.current)) {
+        DetailReadingColumn(Modifier.horizontalSafeArea(paddingValues, LocalLayoutDirection.current)) {
             var showDialog by remember {
                 mutableStateOf(false)
             }

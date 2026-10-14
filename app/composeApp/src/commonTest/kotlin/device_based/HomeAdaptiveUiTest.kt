@@ -32,8 +32,9 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
+import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
+import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
-import com.storyteller_f.a.app.pages.HomeSectionScaffold
 import com.storyteller_f.a.app.pages.search.DesktopSearchLayout
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import kotlin.test.Test
@@ -54,7 +55,7 @@ class HomeAdaptiveUiTest {
         setContent {
             MaterialTheme {
                 Box(Modifier.requiredSize(width.value, 600.dp)) {
-                    HomeSectionScaffold(rememberPagerState { 3 }, routes, false, search = { page, _ ->
+                    AdaptiveSectionScaffold(rememberPagerState { 3 }, routes, false, search = { page, _ ->
                         var query by rememberSaveable { mutableStateOf("") }
                         BasicTextField(query, { query = it }, Modifier.testTag("query-$page"))
                     }) { page ->
@@ -155,5 +156,36 @@ class HomeAdaptiveUiTest {
         onNodeWithText("Community 20").assertExists()
         runOnIdle { width.value = 540.dp }
         onNodeWithText("Community 20").assertExists()
+    }
+
+    @Test
+    fun detailReadingAndComposerStayAlignedAcrossResizes() =
+        runComposeUiTest {
+        val width = mutableStateOf(1280.dp)
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(width.value, 320.dp)) {
+                    DetailReadingColumn {
+                        LazyColumn(Modifier.weight(1f).fillMaxSize().testTag("detail-list")) {
+                            items(100) { Text("Message $it", Modifier.requiredSize(200.dp, 48.dp)) }
+                        }
+                        var draft by rememberSaveable { mutableStateOf("") }
+                        BasicTextField(draft, { draft = it }, Modifier.fillMaxSize().weight(0.2f).testTag("composer"))
+                    }
+                }
+            }
+        }
+        val reading = onNodeWithTag("detail-list").getUnclippedBoundsInRoot()
+        val composer = onNodeWithTag("composer").getUnclippedBoundsInRoot()
+        assertTrue(reading.right - reading.left <= 900.dp)
+        assertTrue(reading.left == composer.left && reading.right == composer.right)
+        onNodeWithTag("composer").performTextReplacement("Saved draft")
+        onNodeWithTag("detail-list").performScrollToIndex(20)
+        runOnIdle { width.value = 390.dp }
+        onNodeWithTag("composer").assertTextEquals("Saved draft")
+        onNodeWithText("Message 20").assertExists()
+        runOnIdle { width.value = 1280.dp }
+        onNodeWithTag("composer").assertTextEquals("Saved draft")
+        onNodeWithText("Message 20").assertExists()
     }
 }

@@ -14,6 +14,8 @@ single reading flow with a joined-community preview, Communities uses more colum
 additional existing metadata. Community and member search results adapt their column count to the
 available content area independently of the input.
 Resizing preserves the selected section and its reading state. Wide lists provide an explicit Refresh action.
+Community and user detail sections preserve selection when resizing; room and topic details keep their
+reading content and message input aligned in a bounded column.
 
 ## Storage and Search Availability
 

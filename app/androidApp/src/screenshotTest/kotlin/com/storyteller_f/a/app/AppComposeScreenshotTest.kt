@@ -31,8 +31,9 @@ import com.android.tools.screenshot.PreviewTest
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
+import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
+import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
-import com.storyteller_f.a.app.pages.HomeSectionScaffold
 import com.storyteller_f.a.app.pages.file.FixedProgress
 import com.storyteller_f.a.app.pages.room.PrimaryRoomCell
 import com.storyteller_f.a.app.pages.room.RoomRowContent
@@ -314,7 +315,7 @@ fun HomeNavigationScreenshot() {
                 "Communities",
                 "Rooms",
             ).map { NavRoute("/${it.lowercase()}", Icons.Default.Groups, it) }
-        HomeSectionScaffold(rememberPagerState { 3 }, routes, true, search = { page, compact ->
+        AdaptiveSectionScaffold(rememberPagerState { 3 }, routes, true, search = { page, compact ->
             Text(
                 routes[page].label,
                 Modifier.padding(if (compact) 12.dp else 24.dp),
@@ -361,5 +362,23 @@ fun LargeTextRoomRowScreenshot() {
             { Icon(Icons.Default.Groups, null, Modifier.size(60.dp)) },
             {},
         )
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 1280, heightDp = 400)
+@Preview(showBackground = true, widthDp = 390, heightDp = 400)
+@Composable
+fun DetailReadingScreenshot() {
+    ScreenshotAppTheme {
+        DetailReadingColumn {
+            Text("Room / topic", Modifier.padding(16.dp), style = MaterialTheme.typography.titleLarge)
+            LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+                items(10) { Text("Message ${it + 1}", Modifier.fillMaxWidth().padding(16.dp)) }
+            }
+            Surface(color = MaterialTheme.colorScheme.tertiaryContainer) {
+                BasicTextField("Message draft", {}, Modifier.fillMaxWidth().padding(20.dp))
+            }
+        }
     }
 }
