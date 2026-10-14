@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
 import com.storyteller_f.a.api.ReactionRecordInfoListResponse
+import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
@@ -28,8 +29,11 @@ import com.storyteller_f.a.cloud.core.service.enableTotp
 import com.storyteller_f.a.cloud.core.service.generateRecoveryCodes
 import com.storyteller_f.a.cloud.core.service.getAllUsers
 import com.storyteller_f.a.cloud.core.service.getFavorites
+import com.storyteller_f.a.cloud.core.service.getJoinedPinnedTopics
+import com.storyteller_f.a.cloud.core.service.getRoomActivities
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getTwoFactorSettings
+import com.storyteller_f.a.cloud.core.service.getUnreadRoomActivities
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.getUserJoinedCommunities
@@ -51,6 +55,7 @@ import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
+import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
 import com.storyteller_f.shared.type.ObjectType
@@ -135,6 +140,31 @@ private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
                 TopicInfoListResponse(l, p)
             }) { fetch ->
                 backend.getUserCommentedTopics(uid, fetch)
+            }
+        }
+    }
+    CustomApi.Users.RoomActivities.get(handleResult(backend)) { query ->
+        usePrincipal { uid -> backend.getRoomActivities(uid, query) }
+    }
+    CustomApi.Users.Unread.activities(handleResult(backend)) { query ->
+        usePrincipal { uid ->
+            query.pagination(
+                pagingGenerator { activity: com.storyteller_f.a.api.RoomActivityInfo ->
+                    requireNotNull(activity.latestMessageId)
+                },
+                { list, pagination -> RoomActivityListResponse(list, pagination) },
+            ) { fetch ->
+                backend.getUnreadRoomActivities(uid, fetch)
+            }
+        }
+    }
+    CustomApi.Users.PinnedTopics.get(handleResult(backend)) { query ->
+        usePrincipal { uid ->
+            query.pagination(
+                IdentifiablePagingGenerator,
+                { list, pagination -> TopicInfoListResponse(list, pagination) },
+            ) { fetch ->
+                backend.getJoinedPinnedTopics(uid, fetch)
             }
         }
     }

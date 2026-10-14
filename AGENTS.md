@@ -163,3 +163,8 @@
 
 - On Windows, run assembly, Detekt and screenshot/host UI verification sequentially when they share
   Android runtime JARs. R8 and preview renderers can hold those files open during another build.
+
+- Room activity is an API projection, not a RoomInfo schema extension. Filter joined membership before
+  grouped unread pagination; apply activity cursors to the per-room maximum message ID, not individual
+  message rows. Preserve unread-room versus unread-message count meanings and existing private-topic
+  decryption. See DEVELOPMENT.md for the data contract and integration checks.

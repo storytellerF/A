@@ -17,32 +17,56 @@ search and scroll retention during resizing, context visibility, and result widt
 Use `./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
 for presentation snapshots. Snapshot fixtures must remain independent of app runtime CompositionLocals.
 
+## Room activity and Home context data
+
+The protected read endpoints use the current opaque Cookie session, with no target-user parameter:
+
+| Endpoint | Client request | Result / ordering |
+| --- | --- | --- |
+| `GET /users/room-activities?roomIds=<comma-separated IDs>` | `getRoomActivities(ids)` | At most 100 input IDs; deduplicated, requested order; only existing joined rooms |
+| `GET /users/unread/room-activities` | `getUnreadRoomActivities(PaginationQuery(...))` | Complete joined unread set, filtered before paging; latest direct-message ID descending |
+| `GET /users/pinned-topics` | `getJoinedPinnedTopics(PaginationQuery(...))` | Direct pinned topics in joined communities, topic ID descending |
+
+Both paged endpoints accept existing next/pre tokens and page sizes 1–100. Previous pages are returned
+in the same descending presentation order. Room activity cursors use `latestMessageId`, not the room ID;
+this avoids returning a room again for its older unread messages. Concurrent activity may move items
+between pages, so consumers refresh to obtain the current ordering; these are live queries, not snapshots.
+
+`RoomActivityInfo` is a request-boundary projection and does not change `RoomInfo`. It contains room
+metadata, a nullable latest message ID/body and an explicit `Long` unread-message count. `TopicInfo`
+provides the content/type, author information and stored creation timestamp. Consumers derive a bounded
+preview after decryption rather than requiring a server-generated plain summary. Empty rooms have no
+latest message and a zero count. Deleted messages disappear from the projection and count. Invited
+notification-room recipients keep their existing read access; these new lists deliberately cover joined
+rooms, rather than changing invitation or notification semantics. Read-only joined rooms remain included.
+
+Counts include all existing direct messages after the user's room read marker (or all direct messages
+when no marker exists), including the user's own messages; replies are excluded. IDs are compared only
+as ordered read markers, never subtracted to calculate a count. `UnreadRoomsResponse.unreadCount`
+continues to count distinct unread rooms and shares the server-filtered grouped query. A page's total is
+its complete eligible room/topic count, not the page length.
+
+The server reads room/member/count/topic/author data in batches. Inaccessible or unjoined room IDs are
+omitted without disclosing whether they exist. Private bodies remain encrypted on the wire, with only
+the current member's encrypted key. Client requests reuse `processEncryptedTopic`; missing keys or
+failed decryption preserve the existing unavailable/failure representation, never a plaintext fallback.
+There is no new background polling or session renewal. Consumers request fresh data on explicit refresh
+or existing feature events; after read, exit, unpin or deletion the next request reflects current state.
+
+Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest` through the QEMU skill's
+`run-testcontainers.sh`, with the usual dev/debug properties. PostgreSQL plus the existing filesystem and
+Lucene RPC containers cover batch ordering, direct-message counts/read markers, both cursor directions,
+read-only rooms, deletion, private wire/client content, membership loss, pinned scope and request limits.
+
 ## Remaining adaptive UI work in PR #88
 
-Keep subsequent changes on the same PR, with focused commits and validation per milestone:
-
-1. **Detail continuity:** share page-local section state across narrow/wide Community and User layouts;
-   align Room/Topic reading content and composers; verify draft, selection and scroll retention.
-2. **Room activity contract:** add batched request-boundary data for visible joined rooms, with an explicit
-   latest message/type, author and timestamp. Use existing membership/visibility checks. Private-room
-   content must stay encrypted in transit and be decrypted through the existing client boundary; failed
-   decryption must never display ciphertext as a summary. Define deletion and no-activity behavior.
-3. **Unread contract:** `UnreadRoomsResponse.unreadCount` currently counts distinct unread rooms, not
-   unread messages. Preserve this meaning. Add explicit per-room message counts using database counts
-   after the read marker; never subtract identifiers. Specify whether replies count and apply the same
-   visibility rules as room reading. Cover read, join/leave, deletion and read-only membership.
-4. **Unread-room context:** query the complete joined unread set on the server, with deterministic
-   activity ordering and a bounded page. Do not filter only the first joined-room page. Refresh through
-   existing user actions/events without keeping authentication alive through background polling.
-5. **Pinned context:** define the joined-community scope, permission filtering and deterministic ordering
-   before adding a bounded preview. Cover unpin, deletion and lost membership. Treat a general activity
-   feed as a separate product contract rather than assuming pinned topics represent all activity.
-6. **Integrated acceptance:** verify compact/medium/wide/short windows, large text, keyboard, repeated
-   resize, shared-list callers, and real-account critical navigation/read/send flows. Keep runtime-free
-   screenshots separate from backend-dependent UI tests.
-
-The data milestones are pending until their end-to-end contract, implementation and tests are complete.
-Do not close issue #60 based only on the phase-one layout checks.
+The layout/detail work and context data boundaries are implemented. Keep the next integration work in
+the same PR: connect activity previews/counts to room rows, connect unread-room and pinned previews to
+World, and refresh their state through existing actions/events. Cover unavailable private previews and
+independent loading/error/empty states. Then verify real-account navigation/read/send flows, keyboard,
+compact/medium/wide/short windows and repeated resizing. A general activity feed remains a separate
+product contract; pinned topics do not represent all activity. Do not close issue #60 before integration
+and its acceptance checks are complete.
 
 ## Temporary dependency pins
 

@@ -5,6 +5,7 @@
 package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.CombinedDatabase
+import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
@@ -21,12 +22,14 @@ import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.EncryptedKeys
+import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -40,6 +43,8 @@ import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.inSubQuery
+import org.jetbrains.exposed.v1.core.isNotNull
 import org.jetbrains.exposed.v1.core.statements.api.ExposedBlob
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.andWhere
@@ -149,6 +154,22 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
             }
         }
     }
+
+    override suspend fun getJoinedCommunityPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+        getTopicPaginationByPredicate(fetch) {
+            where {
+                Topics.pinned eq true and (Topics.parentType eq ObjectType.COMMUNITY) and
+                    (
+                        Topics.parentId inSubQuery
+                            Members.select(Members.objectId).where {
+                                Members.uid eq uid and (Members.objectType eq ObjectType.COMMUNITY) and
+                                    (Members.status eq MemberStatus.JOINED) and Members.joinedTime.isNotNull()
+                            }
+                        )
+            }
+        }.map { page ->
+            if (fetch.cursor is Cursor.AscCursor) page.copy(list = page.list.reversed()) else page
+        }
 
     override suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>> =
         getTopicListByPredicate {
