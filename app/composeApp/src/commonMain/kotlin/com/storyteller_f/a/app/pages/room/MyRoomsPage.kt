@@ -73,6 +73,7 @@ import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.rememberCommonDialogController
 import com.storyteller_f.a.client.compose_core.components.topPrepend
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import kotlinx.coroutines.FlowPreview
@@ -266,12 +267,22 @@ fun RoomRowContent(
             )
             Box(Modifier.width(64.dp), contentAlignment = Alignment.Center) {
                 if (activity?.unreadCount?.let { it > 0 } ?: (roomInfo?.hasUnread == true)) {
-                    Badge { Text(activity?.unreadCount?.toString() ?: stringResource(Res.string.room_unread)) }
+                    Badge {
+                        val label = activity?.unreadCount?.toString() ?: stringResource(Res.string.room_unread)
+                        Text(label, Modifier.appiumSemantics(text = label))
+                    }
                 }
             }
         } else {
             if (roomInfo?.communityId != null) communityIcon()
-            if (activity != null && activity.unreadCount > 0) Badge { Text(activity.unreadCount.toString()) }
+            if (activity != null && activity.unreadCount > 0) {
+                Badge {
+                    Text(
+                        activity.unreadCount.toString(),
+                        Modifier.appiumSemantics(text = activity.unreadCount.toString()),
+                    )
+                }
+            }
         }
     }
 }
@@ -288,7 +299,7 @@ private fun RoomTableHeader() {
         )
         Text(
             stringResource(Res.string.room_members),
-            Modifier.width(88.dp),
+            Modifier.width(88.dp).appiumSemantics(text = stringResource(Res.string.room_members)),
             style = MaterialTheme.typography.labelMedium,
         )
         Text(

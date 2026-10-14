@@ -109,8 +109,46 @@ through the configured Docker test environment and a leased device. Temporary An
 power and locale changes must be restored. Desktop acceptance uses the same named test under
 `:app:desktopAppium:appiumTest` after preparing its runtime classpath. It requires an interactive unlocked
 desktop for native keyboard/Escape input; an AWT accessibility tree alone is insufficient. Do not claim
-native desktop or browser acceptance from Android/host results, and keep issue #60 open until the
-remaining platform checks pass.
+native desktop or browser acceptance from Android/host results. Keep issue #60 open through review and
+remaining platform checks.
+
+
+The browser runner now reuses the same public/private activity and cross-session refresh scenarios.
+Real Firefox acceptance covers explicit sign-in, encrypted previews, exact counts and navigation badges,
+unread/pinned context navigation, reading, sending and draft retention across 500/900/1600px widths
+and a 500px-high window. The existing publication, registration and sign-in/sign-out restart scenarios
+provide selector and authentication regression coverage. Capture the rendered page as well as the HTML
+semantics overlay; new preview text/actions must use the existing Appium-only bridge without changing
+native accessibility. Overlay nodes have equal stacking indices, so the driver selects the last matching
+visible node to respect foreground dialog order when a background page has the same button label.
+Bridge metadata updates during recomposition even when control dimensions do not change. Both activity
+variants revisit the same room three additional times after sending. Failure artifacts include HTTP and
+SQLite worker operation counts, without credentials, addresses, SQL or message bodies.
+
+Firefox's native window may enforce a 500px minimum width. Browser compact coverage uses that real
+viewport; desktop coverage remains 480px. Browser chrome changes height during resizing, so establish
+the width before measuring its frame and verify the resulting content dimensions exactly. Verify drafts
+against the current HTML input value and Compose acknowledgement after every viewport transition.
+Run the activity tests with `:app:wasmAppium:appiumTest --tests '*test activity previews*'`
+and the refresh test with `--tests '*test room refresh clears*'`, using the same dev/debug and Docker
+prerequisites. When using an already installed Firefox, set Selenium's `SE_BROWSER_PATH` to its
+executable and `SE_OFFLINE=true` to avoid unrelated browser-download checks; do not skip product tests
+or change their timeouts to hide environment failures.
+
+
+Collection refresh in `client/room` deletes only the requested list's named collection. Room and title
+refreshes preserve their default detail caches and other lists; clearing the defaults can invalidate an
+open detail page when the underlying Home list refreshes. `:client:room:jvmTest` runs two shared
+headless tests against real SQLite for this boundary, including detail aliases. Its temporary database
+and native-driver files stay under the module build directory and use unique test scopes.
+
+Wasm SQLite cancellation waits for pending worker responses. If an allocation cannot be delivered to
+its cancelled caller, close the new connection/statement. Rollback/commit/savepoint-release preparation
+and stepping must finish non-cancellably: Room's pool cleanup performs rollback before recycling its
+permit, and cancelling that rollback can strand the single connection and leave later detail pages
+loading forever. Normal statements still reject cancellation and no business operation is replayed.
+`:client:room:wasmJsBrowserTest` covers response waiting, discarded allocation cleanup and cancelled
+finalization; repeated real Firefox navigation exercises the complete Room/worker boundary.
 
 ## Temporary dependency pins
 

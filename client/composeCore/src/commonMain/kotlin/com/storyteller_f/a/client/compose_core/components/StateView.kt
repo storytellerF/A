@@ -44,6 +44,7 @@ import com.storyteller_f.a.client.compose_core.Res
 import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.no_content_yet
 import com.storyteller_f.a.client.compose_core.refresh
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
@@ -87,7 +88,15 @@ fun <T : Any> StateView(
         Column(Modifier.fillMaxSize()) {
             if (desktopRefresh) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = refresh, enabled = refreshLoadState !is LoadState.Loading) {
+                    TextButton(
+                        onClick = refresh,
+                        modifier =
+                        Modifier.appiumSemantics(
+                            text = stringResource(Res.string.refresh),
+                            onClick = refresh,
+                        ),
+                        enabled = refreshLoadState !is LoadState.Loading,
+                    ) {
                         Icon(Icons.Default.Refresh, contentDescription = null)
                         Text(stringResource(Res.string.refresh), Modifier.padding(start = 4.dp))
                     }

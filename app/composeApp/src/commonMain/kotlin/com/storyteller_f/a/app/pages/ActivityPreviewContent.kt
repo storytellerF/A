@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.common.MessageSummary
 import com.storyteller_f.a.app.common.PreviewState
 import com.storyteller_f.a.app.common.RoomActivityPreview
 import com.storyteller_f.a.app.refresh
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import org.jetbrains.compose.resources.stringResource
 
 /** Runtime-free preview state and refresh action, shared by both Home context cards. */
@@ -49,10 +50,18 @@ fun <T> ActivityPreviewSection(
     Surface(modifier, color = MaterialTheme.colorScheme.surfaceContainerLow, shape = MaterialTheme.shapes.large) {
         Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth()) {
-                Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    title,
+                    Modifier.weight(1f).appiumSemantics(text = title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
                 action()
             }
-            TextButton(refresh, enabled = state !is PreviewState.Loading) { Text(stringResource(Res.string.refresh)) }
+            TextButton(
+                refresh,
+                modifier = Modifier.appiumSemantics(text = stringResource(Res.string.refresh), onClick = refresh),
+                enabled = state !is PreviewState.Loading,
+            ) { Text(stringResource(Res.string.refresh)) }
             when (state) {
                 PreviewState.Idle, PreviewState.Loading -> CircularProgressIndicator(Modifier.size(20.dp))
 
@@ -76,7 +85,8 @@ fun <T> ActivityPreviewSection(
 @Composable
 fun RoomActivityPreviewContent(preview: RoomActivityPreview, modifier: Modifier = Modifier, open: () -> Unit = {}) {
     Column(
-        modifier.fillMaxWidth().clickable(onClick = open).padding(8.dp),
+        modifier.fillMaxWidth().clickable(onClick = open)
+            .appiumSemantics(text = preview.room.name, onClick = open).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -87,7 +97,14 @@ fun RoomActivityPreviewContent(preview: RoomActivityPreview, modifier: Modifier 
                 overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.titleSmall,
             )
-            if (preview.unreadCount > 0) Badge { Text(preview.unreadCount.toString()) }
+            if (preview.unreadCount > 0) {
+                Badge {
+                    Text(
+                        preview.unreadCount.toString(),
+                        Modifier.appiumSemantics(text = preview.unreadCount.toString()),
+                    )
+                }
+            }
         }
         ActivityMessageContent(preview.message)
     }
@@ -96,14 +113,17 @@ fun RoomActivityPreviewContent(preview: RoomActivityPreview, modifier: Modifier 
 @Composable
 fun ActivityMessageContent(message: MessagePreview?, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
+        val summaryText =
             when (val summary = message?.summary) {
                 is MessageSummary.Text -> summary.value
                 MessageSummary.Unavailable -> stringResource(Res.string.activity_unavailable)
                 MessageSummary.Attachment -> stringResource(Res.string.activity_attachments)
                 MessageSummary.Empty -> stringResource(Res.string.activity_empty_message)
                 null -> stringResource(Res.string.activity_no_messages)
-            },
+            }
+        Text(
+            summaryText,
+            Modifier.appiumSemantics(text = summaryText),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.bodySmall,

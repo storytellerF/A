@@ -29,6 +29,7 @@ actual fun Modifier.appiumSemantics(
     onInputValueChange: ((String) -> Unit)?,
     onClick: (() -> Unit)?,
 ): Modifier {
+    if (!window.location.search.contains("appium=true")) return this
     val semanticsModifier =
         composed {
             val id = remember { nextAppiumSemanticsId++ }
@@ -36,6 +37,7 @@ actual fun Modifier.appiumSemantics(
                 onDispose { AppiumHtmlSemantics.remove(id) }
             }
             SideEffect {
+                AppiumHtmlSemantics.updateMetadata(id, testTag, description, text)
                 AppiumHtmlSemantics.updateAction(id, onClick)
                 if (input) {
                     AppiumHtmlSemantics.updateInput(
@@ -68,6 +70,7 @@ actual fun Modifier.appiumSemantics(
 private object AppiumHtmlSemantics {
     private const val OVERLAY_ID = "appium-html-semantics"
     private val elements = mutableMapOf<Long, HTMLElement>()
+
     private val inputCallbacks = mutableMapOf<Long, (String) -> Unit>()
     private val inputValues = mutableMapOf<Long, String>()
     private val actionCallbacks = mutableMapOf<Long, () -> Unit>()
@@ -87,13 +90,18 @@ private object AppiumHtmlSemantics {
         if (!isEnabled()) return
         val element = elements.getOrPut(id) { createElement(id, input) }
         element.setAttribute("data-appium-semantics", id.toString())
-        element.setOrRemoveAttribute("data-testid", testTag)
-        element.setOrRemoveAttribute("aria-label", description)
-        element.setOrRemoveAttribute("data-appium-text", text)
+        updateMetadata(id, testTag, description, text)
         element.updateInputAttributes(id, input)
         element.setBooleanAttribute("data-appium-action", action)
         element.updateLayout(input, action, left, top, width, height)
         element.updateAttachment(isInViewport(left, top, width, height))
+    }
+
+    fun updateMetadata(id: Long, testTag: String?, description: String?, text: String?) {
+        val element = elements[id] ?: return
+        element.setOrRemoveAttribute("data-testid", testTag)
+        element.setOrRemoveAttribute("aria-label", description)
+        element.setOrRemoveAttribute("data-appium-text", text)
     }
 
     private fun createElement(id: Long, input: Boolean): HTMLElement =

@@ -184,3 +184,18 @@
 - Native room-cell accessibility must preserve merged visible content; keep platform-specific browser
   test-overlay labels separate. Resize Windows Java-agent test windows through their verified native
   handle and convert viewport dimensions for window DPI.
+
+- Browser Appium previews need explicit text/action bridge nodes; keep the bridge disabled outside test
+  mode and preserve native merged accessibility. Select equal-stack overlay nodes in foreground paint
+  order so dialog controls win over identically labelled background controls.
+- Measure actual browser content dimensions after responsive chrome settles. Native Firefox compact
+  windows may be limited to 500px; keep strict viewport/draft assertions and document the tested sizes.
+
+- Collection refresh must clean the requested named collection, never its default detail cache. Verify
+  selected-list deletion while preserving detail IDs/aliases and unrelated lists using real SQLite.
+  Keep host-test database scopes unique and temporary storage under the module build directory.
+
+- Browser semantics must publish changed labels even when geometry is unchanged.
+- Async SQLite transaction finalizers must complete under cancellation so Room can recycle its pool
+  permit. Close allocated connections/statements when cancellation prevents delivery; new operations
+  still honor cancellation, and cleanup must not replay business writes.

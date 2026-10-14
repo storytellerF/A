@@ -41,6 +41,7 @@ import com.storyteller_f.a.app.rooms
 import com.storyteller_f.a.app.view_all
 import com.storyteller_f.a.client.compose_core.components.SignInButton
 import com.storyteller_f.a.client.compose_core.components.StateView
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -89,7 +90,12 @@ private fun HomeContext(selectSection: (Int) -> Unit) {
             ) { preview ->
                 ActivityMessageContent(
                     preview.message,
-                    Modifier.fillMaxWidth().clickable { nav.newAppNav().gotoTopic(preview.id) }.padding(8.dp),
+                    Modifier.fillMaxWidth().clickable { nav.newAppNav().gotoTopic(preview.id) }
+                        .appiumSemantics(
+                            description = "pinned topic preview",
+                            onClick = { nav.newAppNav().gotoTopic(preview.id) },
+                        )
+                        .padding(8.dp),
                 )
             }
         }

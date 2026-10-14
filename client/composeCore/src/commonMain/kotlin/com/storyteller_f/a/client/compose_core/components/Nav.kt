@@ -58,6 +58,7 @@ fun CustomRailNav(
                     contentDescription = if (showBadge) "${route.label}, $unreadLabel" else route.label
                 }.appiumSemantics(
                     testTag = route.label,
+                    description = if (showBadge) "${route.label}, $unreadLabel" else route.label,
                     text = route.label,
                     onClick = onClick,
                 ),
@@ -96,6 +97,7 @@ fun CustomBottomNav(
                     contentDescription = if (showBadge) "${route.label}, $unreadLabel" else route.label
                 }.appiumSemantics(
                     testTag = route.label,
+                    description = if (showBadge) "${route.label}, $unreadLabel" else route.label,
                     text = route.label,
                     onClick = onClick,
                 ),

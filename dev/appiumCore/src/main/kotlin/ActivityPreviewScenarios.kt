@@ -106,21 +106,16 @@ private suspend fun prepareActivityScenario(createSession: suspend () -> Authent
 }
 
 private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: ActivityScenario) {
+    // Native Firefox windows enforce a 500px minimum; this still exercises bottom navigation.
+    val compactWidth = if (driver is WasmAppTestDriver) 500 else 480
     driver.clickByText("Rooms")
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertVisibleByText("3")
-    if (driver is AndroidAppTestDriver) driver.assertUnreadRoomsIndicator(true)
-    if (driver is DesktopAppTestDriver) {
-        listOf(480 to 800, 900 to 800, 1600 to 1000, 1600 to 500, 480 to 800, 1600 to 1000).forEach { (width, height) ->
-            driver.resizeWindow(width, height)
-            if (width >= 900) driver.assertVisibleByText("Members") else driver.assertNotVisibleByText("Members")
-            driver.assertVisibleByTextContaining(data.latestMessage)
-            driver.assertVisibleByText("3")
-        }
-    }
+    driver.assertActivityUnreadIndicator(true)
+    scenarioResizeActivityRooms(driver, data, compactWidth)
     val showContext =
         when (driver) {
-            is DesktopAppTestDriver -> true
+            is DesktopAppTestDriver, is WasmAppTestDriver -> true
             is AndroidAppTestDriver -> driver.isWideViewport()
             else -> false
         }
@@ -135,16 +130,21 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.navigateBack()
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertNotVisibleByText("3")
-    if (driver is AndroidAppTestDriver) driver.assertUnreadRoomsIndicator(false)
+    driver.assertActivityUnreadIndicator(false)
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     val sentMessage = "activity-sent-${System.currentTimeMillis()}"
     driver.inputText(sentMessage)
-    if (driver is DesktopAppTestDriver) {
-        listOf(480 to 800, 900 to 800, 1600 to 500, 1600 to 1000).forEach { (width, height) ->
-            driver.resizeWindow(width, height)
-            driver.assertVisibleByText(sentMessage)
+    if (driver is DesktopAppTestDriver || driver is WasmAppTestDriver) {
+        listOf(compactWidth to 800, 900 to 800, 1600 to 500, 1600 to 1000).forEach { (width, height) ->
+            driver.resizeActivityViewport(width, height)
+            if (driver is WasmAppTestDriver) {
+                driver.assertInputText(sentMessage)
+            } else {
+                driver.assertVisibleByText(sentMessage)
+            }
             driver.assertVisibleByDescription("Send")
+            driver.saveSnapshot("activity-draft-$width-$height")
         }
     }
     driver.assertVisibleByDescription("Send")
@@ -154,7 +154,8 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.dismissKeyboard()
     driver.navigateBack()
     driver.assertVisibleByTextContaining(sentMessage)
-    if (driver is AndroidAppTestDriver) driver.assertUnreadRoomsIndicator(false)
+    driver.assertActivityUnreadIndicator(false)
+    scenarioRevisitActivityRoom(driver, data.roomName, sentMessage)
     driver.saveSnapshot("activity-after-read-send")
 }
 
@@ -207,8 +208,18 @@ private suspend fun scenarioOpenActivityContext(driver: AppTestDriver, data: Act
     driver.clickByText("World")
     driver.assertVisibleByText("Unread rooms")
     driver.assertVisibleByText("Pinned topics")
+    driver.clickByTextContaining(data.roomName)
+    driver.assertVisibleByDescription("Send")
+    driver.assertVisibleByText(data.latestMessage)
+    waitUntilRoomRead(data)
+    driver.navigateBack()
+    driver.assertVisibleByText("Unread rooms")
     driver.assertVisibleByTextContaining(pinnedTopic)
-    driver.clickByTextContaining(pinnedTopic)
+    if (driver is WasmAppTestDriver) {
+        driver.clickByDescription("pinned topic preview")
+    } else {
+        driver.clickByTextContaining(pinnedTopic)
+    }
     driver.assertVisibleByDescription("topic")
     driver.navigateBack()
     driver.assertVisibleByText("Unread rooms")
@@ -260,6 +271,8 @@ fun testRoomActivityRefreshByHelper(testName: String, target: AppAppiumHelper, p
                 driver.assertNotVisibleByText("3")
                 if (driver is AndroidAppTestDriver) {
                     driver.assertUnreadRoomsIndicator(false)
+                } else if (driver is WasmAppTestDriver) {
+                    driver.assertUnreadRoomsIndicator(false)
                 } else {
                     driver.assertNotVisibleByText("Unread rooms")
                 }
@@ -268,3 +281,51 @@ fun testRoomActivityRefreshByHelper(testName: String, target: AppAppiumHelper, p
             }
         }
     }
+
+private fun AppTestDriver.resizeActivityViewport(width: Int, height: Int) {
+    when (this) {
+        is DesktopAppTestDriver -> resizeWindow(width, height)
+        is WasmAppTestDriver -> resizeViewport(width, height)
+        else -> error("The current test platform does not support window resizing")
+    }
+}
+
+private fun AppTestDriver.assertActivityUnreadIndicator(visible: Boolean) {
+    when (this) {
+        is AndroidAppTestDriver -> assertUnreadRoomsIndicator(visible)
+        is WasmAppTestDriver -> assertUnreadRoomsIndicator(visible)
+    }
+}
+
+private suspend fun scenarioResizeActivityRooms(driver: AppTestDriver, data: ActivityScenario, compactWidth: Int) {
+    if (driver is DesktopAppTestDriver || driver is WasmAppTestDriver) {
+        val viewports =
+            listOf(
+                compactWidth to 800,
+                900 to 800,
+                1600 to 1000,
+                1600 to 500,
+                compactWidth to 800,
+                1600 to 1000,
+            )
+        viewports.forEach { (width, height) ->
+            driver.resizeActivityViewport(width, height)
+            if (width >= 900) driver.assertVisibleByText("Members") else driver.assertNotVisibleByText("Members")
+            driver.assertVisibleByTextContaining(data.latestMessage)
+            driver.assertVisibleByText("3")
+            if (driver is WasmAppTestDriver) driver.assertUnreadRoomsIndicator(true)
+            driver.saveSnapshot("activity-rooms-$width-$height")
+        }
+    }
+}
+
+private suspend fun scenarioRevisitActivityRoom(driver: AppTestDriver, roomName: String, latestMessage: String) {
+    repeat(3) {
+        driver.clickByTextContaining(roomName)
+        driver.assertVisibleByDescription("Send")
+        driver.assertVisibleByText(latestMessage)
+        driver.navigateBack()
+        driver.assertVisibleByTextContaining(latestMessage)
+        driver.assertActivityUnreadIndicator(false)
+    }
+}
