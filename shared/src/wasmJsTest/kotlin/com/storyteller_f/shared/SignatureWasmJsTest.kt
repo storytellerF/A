@@ -37,16 +37,31 @@ class SignatureWasmJsTest {
     }
 
     @Test
-    fun p256CanSignEncryptAndDerivePublicKey() =
+    fun p256DerivesPublicKey() =
+        runTest {
+        val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow()
+        val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow()
+
+        assertEquals(publicDer, getDerPublicKeyFromPrivateKeyP256(privatePem).getOrThrow())
+    }
+
+    @Test
+    fun p256SignsAndVerifies() =
         runTest {
         val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow()
         val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow()
         val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow()
 
-        assertEquals(publicDer, getDerPublicKeyFromPrivateKeyP256(privatePem).getOrThrow())
-
         val signature = AlgoP256.signature(privateDer, "wasm signature").getOrThrow()
         assertTrue(AlgoP256.verify(publicDer, signature, "wasm signature").getOrThrow())
+    }
+
+    @Test
+    fun p256EncryptsAndDecrypts() =
+        runTest {
+        val (privatePem, publicPem) = AlgoP256.generatePemKeyPair().getOrThrow()
+        val privateDer = AlgoP256.getDerPrivateKey(privatePem).getOrThrow()
+        val publicDer = AlgoP256.getDerPublicKeyFromPem(publicPem).getOrThrow()
 
         val (encrypted, aesKey) = encryptDataByAES("wasm content").getOrThrow()
         assertEquals("wasm content", decryptDataByAES(encrypted, aesKey).getOrThrow())
@@ -59,7 +74,7 @@ class SignatureWasmJsTest {
     }
 
     @Test
-    fun mlDsaAndMlKemCanSignAndEncrypt() =
+    fun mlDsaSignsAndVerifies() =
         runTest {
         val (privatePem, publicPem) = AlgoDilithium.generatePemKeyPair().getOrThrow()
         val privateKey = AlgoDilithium.getDerPrivateKey(privatePem).getOrThrow()
@@ -67,7 +82,11 @@ class SignatureWasmJsTest {
         val signature = AlgoDilithium.signature(privateKey, "wasm ML-DSA").getOrThrow()
 
         assertTrue(AlgoDilithium.verify(publicKey, signature, "wasm ML-DSA").getOrThrow())
+    }
 
+    @Test
+    fun mlKemEncryptsAndDecrypts() =
+        runTest {
         val encryptionAlgorithm = AlgoDilithium.encryptionAlgo as Type2Algo
         val (encryptionPrivatePem, encryptionPublicPem) =
             encryptionAlgorithm.generateEncryptionPemKeyPair().getOrThrow()

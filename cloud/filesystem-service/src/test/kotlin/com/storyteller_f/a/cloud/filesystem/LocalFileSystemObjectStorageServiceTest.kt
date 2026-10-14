@@ -35,17 +35,19 @@ class LocalFileSystemObjectStorageServiceTest {
     }
 
     @Test
-    fun `object lifecycle uses independent storage models`() =
-        runBlocking {
-        val base = createTempDirectory("filesystem-lifecycle-")
-        val source = Files.createTempFile("filesystem-upload-", ".txt").toFile()
-        source.writeText("content")
-        val service = LocalFileSystemObjectStorageService("https://example.invalid", base)
+    fun `upload returns independent storage model`() =
+        withTestStorage { service, source ->
         assertEquals(
             "original.txt",
             service.upload("objects", listOf(UploadPack(source, "original.txt")))
                 .getOrThrow().single().fullName,
         )
+    }
+
+    @Test
+    fun `copy creates a separate object`() =
+        withTestStorage { service, source ->
+        service.upload("objects", listOf(UploadPack(source, "original.txt"))).getOrThrow()
         val copied = service.copy("objects", listOf(CopyPack("original.txt", "copy.txt"))).getOrThrow().single()
         assertEquals("https://example.invalid/objects/objects/copy.txt", copied.url)
         assertEquals(
@@ -53,6 +55,13 @@ class LocalFileSystemObjectStorageServiceTest {
             service.list("objects", "").getOrThrow()
                 .map { it.fullName }.toSet(),
         )
+    }
+
+    @Test
+    fun `compose concatenates object contents`() =
+        withTestStorage { service, source ->
+        service.upload("objects", listOf(UploadPack(source, "original.txt"))).getOrThrow()
+        service.copy("objects", listOf(CopyPack("original.txt", "copy.txt"))).getOrThrow()
         service.compose(
             "objects",
             "combined.txt",
@@ -64,8 +73,22 @@ class LocalFileSystemObjectStorageServiceTest {
         service.getInputStream("objects", "combined.txt").getOrThrow().use {
             assertEquals("contentcontent", it.readBytes().decodeToString())
         }
+    }
+
+    @Test
+    fun `delete removes selected object`() =
+        withTestStorage { service, source ->
+        service.upload("objects", listOf(UploadPack(source, "original.txt"))).getOrThrow()
+        service.copy("objects", listOf(CopyPack("original.txt", "copy.txt"))).getOrThrow()
         service.delete("objects", listOf("copy.txt")).getOrThrow()
         assertTrue(service.get("objects", listOf("copy.txt")).getOrThrow().isEmpty())
+        assertEquals(listOf("original.txt"), service.list("objects", "").getOrThrow().map { it.fullName })
+    }
+
+    @Test
+    fun `clean removes bucket objects`() =
+        withTestStorage { service, source ->
+        service.upload("objects", listOf(UploadPack(source, "original.txt"))).getOrThrow()
         service.clean("objects").getOrThrow()
         assertTrue(service.list("objects", "").getOrThrow().isEmpty())
     }
@@ -99,4 +122,16 @@ class LocalFileSystemObjectStorageServiceTest {
         assertTrue(service.delete("files", listOf("../escaped.txt")).isFailure)
         assertNull(service.getPathResponse(listOf("files", "..", "escaped.txt")))
     }
+    private fun withTestStorage(block: suspend (LocalFileSystemObjectStorageService, java.io.File) -> Unit) =
+        runBlocking {
+            val root = Files.createDirectories(java.nio.file.Path.of("build/test/filesystem-lifecycle"))
+            val base = Files.createTempDirectory(root, "storage-")
+            val source = Files.createTempFile(base, "source-", ".txt").toFile()
+            try {
+                source.writeText("content")
+                block(LocalFileSystemObjectStorageService("https://example.invalid", base), source)
+            } finally {
+                base.toFile().deleteRecursively()
+            }
+        }
 }

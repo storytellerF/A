@@ -84,7 +84,7 @@ class RoomTest {
     }
 
     @Test
-    fun `test get room`() =
+    fun `get room by id`() =
         test {
         val roomId =
             attachSession {
@@ -93,7 +93,19 @@ class RoomTest {
             }.custom
         noneSession {
             assertEquals(1, getRoomInfo(roomId).getOrThrow().memberCount)
-            getRoomInfoByAid("r1").getOrThrow()
+        }
+    }
+
+    @Test
+    fun `get room by aid`() =
+        test {
+        val roomId =
+            attachSession {
+                val id = createCommunityForTest().id
+                createPublicRoomForTest(id, "r1", "name1").id
+            }.custom
+        noneSession {
+            assertEquals(roomId, getRoomInfoByAid("r1").getOrThrow().id)
         }
     }
 
@@ -121,32 +133,66 @@ class RoomTest {
     }
 
     @Test
-    fun `test join public room count`() =
+    fun `joining public room updates joined list`() =
         test {
-        val firstTuple =
-            attachSession {
-                val communityId = createCommunityForTest().id
-                val publicRoom1Id = createPublicRoomForTest(communityId, "r1", "name1").id
-                val publicRoom2Id = createPublicRoomForTest(communityId, "r2", "name2").id
-                communityId to listOf(publicRoom1Id, publicRoom2Id)
-            }
-        val (publicRoom1Id, publicRoom2Id) = firstTuple.custom.second
-        val communityId = firstTuple.custom.first
+        val (communityId, rooms) = createCommunityRooms()
+        val (publicRoom1Id, _) = rooms
         attachSession {
             joinCommunity(communityId).getOrThrow()
             joinRoom(publicRoom1Id).getOrThrow()
             expectedRoomCountForJoinedRoomList(1)
+        }
+    }
+
+    @Test
+    fun `joining room preserves community room list`() =
+        test {
+        val (communityId, rooms) = createCommunityRooms()
+        val (publicRoom1Id, _) = rooms
+        attachSession {
+            joinCommunity(communityId).getOrThrow()
+            joinRoom(publicRoom1Id).getOrThrow()
             expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
+        }
+    }
+
+    @Test
+    fun `exiting room removes only its membership`() =
+        test {
+        val (communityId, rooms) = createCommunityRooms()
+        val (publicRoom1Id, publicRoom2Id) = rooms
+        attachSession {
+            joinCommunity(communityId).getOrThrow()
+            joinRoom(publicRoom1Id).getOrThrow()
             joinRoom(publicRoom2Id).getOrThrow()
-            expectedRoomCountForJoinedRoomList(2)
-            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
-            exitRoom(publicRoom1Id).getOrThrow()
-            // 测试幂等
             exitRoom(publicRoom1Id).getOrThrow()
             expectedRoomCountForJoinedRoomList(1)
             expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
         }
     }
+
+    @Test
+    fun `exiting room twice is idempotent`() =
+        test {
+        val (communityId, rooms) = createCommunityRooms()
+        val (publicRoom1Id, publicRoom2Id) = rooms
+        attachSession {
+            joinCommunity(communityId).getOrThrow()
+            joinRoom(publicRoom1Id).getOrThrow()
+            joinRoom(publicRoom2Id).getOrThrow()
+            exitRoom(publicRoom1Id).getOrThrow()
+            exitRoom(publicRoom1Id).getOrThrow()
+            expectedRoomCountForJoinedRoomList(1)
+        }
+    }
+
+    private suspend fun TestMate.createCommunityRooms(): Pair<PrimaryKey, List<PrimaryKey>> =
+        attachSession {
+        val communityId = createCommunityForTest().id
+        val first = createPublicRoomForTest(communityId, "r1", "name1").id
+        val second = createPublicRoomForTest(communityId, "r2", "name2").id
+        communityId to listOf(first, second)
+    }.custom
 
     @Test
     fun `test private room join`() =

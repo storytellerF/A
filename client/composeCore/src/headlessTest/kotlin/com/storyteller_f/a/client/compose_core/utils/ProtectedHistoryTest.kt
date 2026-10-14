@@ -16,7 +16,7 @@ import kotlin.test.assertTrue
 
 internal class ProtectedHistoryTest {
     @Test
-    fun restoresSavedKeysAndClearsCurrentOnLogout() =
+    fun restoresSavedPrivateKeys() =
         runTest {
         var protected: String? = null
         val manager = ProtectedSessionHistoryManager("test", { protected }, { _, value -> protected = value })
@@ -28,15 +28,31 @@ internal class ProtectedHistoryTest {
             "private",
             (assertNotNull(restored.buildSession("account")) as RawUserPass).rawUSerPass.authKey.pemPrivateKey,
         )
-        restored.exitSession("account")
-        assertEquals(null, restored.getSavedSession().history?.current)
-        assertEquals("account", restored.getSavedSession().history?.last)
-        restored.removeSession("account")
-        assertTrue(restored.getSavedSession().alias.isEmpty())
     }
 
     @Test
-    fun unavailableStorageDoesNotUpdateSavedHistory() =
+    fun logoutClearsCurrentAndRetainsLastAccount() =
+        runTest {
+        var protected: String? = null
+        val manager = ProtectedSessionHistoryManager("test", { protected }, { _, value -> protected = value })
+        manager.addSession(ACCOUNT.toRawUserPassInfo())
+        manager.exitSession("account")
+        assertEquals(null, manager.getSavedSession().history?.current)
+        assertEquals("account", manager.getSavedSession().history?.last)
+    }
+
+    @Test
+    fun removeClearsSavedAccount() =
+        runTest {
+        var protected: String? = null
+        val manager = ProtectedSessionHistoryManager("test", { protected }, { _, value -> protected = value })
+        manager.addSession(ACCOUNT.toRawUserPassInfo())
+        manager.removeSession("account")
+        assertTrue(manager.getSavedSession().alias.isEmpty())
+    }
+
+    @Test
+    fun failedWritePreservesSavedHistory() =
         runTest {
         val protected =
             Json.encodeToString(
@@ -45,7 +61,16 @@ internal class ProtectedHistoryTest {
         val manager = ProtectedSessionHistoryManager("test", { protected }, { _, _ -> error("Unavailable") })
         assertFailsWith<IllegalStateException> { manager.exitSession("account") }
         assertEquals("account", manager.getSavedSession().history?.current)
-        val unverified = ProtectedSessionHistoryManager("test", { protected }, { _, _ -> Unit })
+    }
+
+    @Test
+    fun unverifiedWritePreservesSavedHistory() =
+        runTest {
+        val protected =
+            Json.encodeToString(
+                ProtectedSessionHistory(listOf(ACCOUNT), SessionHistory("account", "account")),
+            )
+        val unverified = ProtectedSessionHistoryManager("test", { protected }, { _, _ -> })
         assertFailsWith<IllegalStateException> { unverified.exitSession("account") }
         assertEquals("account", unverified.getSavedSession().history?.current)
     }

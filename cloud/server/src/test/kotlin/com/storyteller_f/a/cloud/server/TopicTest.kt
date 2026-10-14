@@ -165,15 +165,25 @@ class TopicTest {
         attachSession {
             val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
             val topicInfo = createTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
-            // 测试并发
-            repeat(4) {
-                val reactionInfo = addReaction(topicInfo.id, emoji).getOrThrow()
-                assertEquals(emoji, reactionInfo.emoji)
-                assertTrue(reactionInfo.hasReacted)
-            }
-            // 测试幂等
-            addReaction(topicInfo.id, emoji).getOrThrow()
-            topicInfo
+            val reaction = addReaction(topicInfo.id, emoji).getOrThrow()
+            assertEquals(emoji, reaction.emoji)
+            assertTrue(reaction.hasReacted)
+            assertEquals(1, reaction.count)
+        }
+    }
+
+    @Test
+    fun `repeated reaction is idempotent`() =
+        test {
+        val emoji = "\uD83D\uDE00"
+        attachSession {
+            val c = createCommunity(NewCommunity("name", "aid")).getOrThrow()
+            val topicInfo = createTopic(ObjectType.COMMUNITY, c.id, "hello").getOrThrow()
+            repeat(4) { addReaction(topicInfo.id, emoji).getOrThrow() }
+            val reaction = addReaction(topicInfo.id, emoji).getOrThrow()
+            assertEquals(1, reaction.count)
+            assertTrue(reaction.hasReacted)
+            assertListSize(1, getReactions(topicInfo.id, 10))
         }
     }
 
@@ -321,30 +331,6 @@ class TopicTest {
     }
 
     @Test
-    fun `test private room join`() =
-        test {
-        val user1 =
-            attachSession {
-                val id = createRoom(NewRoom("room-private-join", "room-private-join")).getOrThrow().id
-                id
-            }
-        val privateRoomId = user1.custom
-
-        val user2 =
-            attachSession {
-                assertFails {
-                    joinRoom(privateRoomId).getOrThrow()
-                }
-            }
-        loginSession(user1) {
-            createTitle(NewTitle("join", TitleType.JOIN, user2.uid, privateRoomId, ObjectType.ROOM, ""))
-        }
-        loginSession(user2) {
-            joinRoom(privateRoomId).getOrThrow()
-        }
-    }
-
-    @Test
     fun `test create in user`() =
         test {
         attachSession {
@@ -422,6 +408,15 @@ class TopicTest {
             val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
             addReadLog(UpdateUserRead(communityInfo.tuple(), topic.id)).getOrThrow()
             assertEquals(topic.id, getCommunityInfo(communityInfo.id).getOrThrow().lastRead)
+        }
+    }
+
+    @Test
+    fun `reading comment updates topic last read`() =
+        test {
+        attachSession {
+            val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+            val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
             val subTopic = createTopic(ObjectType.TOPIC, topic.id, "world").getOrThrow()
             addReadLog(UpdateUserRead(topic.tuple(), subTopic.id)).getOrThrow()
             assertEquals(subTopic.id, getTopicInfo(topic.id).getOrThrow().lastRead)
@@ -429,20 +424,42 @@ class TopicTest {
     }
 
     @Test
-    fun `test pin topic`() =
+    fun `pinning community topic marks it pinned`() =
         test {
         attachSession {
-            val communityInfo = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
-            val topic = createTopic(ObjectType.COMMUNITY, communityInfo.id, "hello").getOrThrow()
-            val pinned = pinTopic(topic.id).getOrThrow()
-            assertTrue(pinned.isPin)
-            val unpinned = unpinTopic(topic.id).getOrThrow()
-            assertFalse(unpinned.isPin)
-            val userTopic = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
-            val userPinned = pinTopic(userTopic.id).getOrThrow()
-            assertTrue(userPinned.isPin)
-            val userUnpinned = unpinTopic(userTopic.id).getOrThrow()
-            assertFalse(userUnpinned.isPin)
+            val community = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+            val topic = createTopic(ObjectType.COMMUNITY, community.id, "hello").getOrThrow()
+            assertTrue(pinTopic(topic.id).getOrThrow().isPin)
+        }
+    }
+
+    @Test
+    fun `unpinning community topic clears pin`() =
+        test {
+        attachSession {
+            val community = createCommunity(NewCommunity("r1", "r1")).getOrThrow()
+            val topic = createTopic(ObjectType.COMMUNITY, community.id, "hello").getOrThrow()
+            pinTopic(topic.id).getOrThrow()
+            assertFalse(unpinTopic(topic.id).getOrThrow().isPin)
+        }
+    }
+
+    @Test
+    fun `pinning user topic marks it pinned`() =
+        test {
+        attachSession {
+            val topic = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            assertTrue(pinTopic(topic.id).getOrThrow().isPin)
+        }
+    }
+
+    @Test
+    fun `unpinning user topic clears pin`() =
+        test {
+        attachSession {
+            val topic = createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            pinTopic(topic.id).getOrThrow()
+            assertFalse(unpinTopic(topic.id).getOrThrow().isPin)
         }
     }
 

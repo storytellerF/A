@@ -61,11 +61,18 @@ class UserTest {
     }
 
     @Test
-    fun `test update user nickname and aid`() =
+    fun `test update user aid`() =
         test {
         attachSession {
             val updateRow = updateUserInfo(UpdateUserBody(aid = "aid")).getOrThrow()
             assertEquals(updateRow.aid, "aid")
+        }
+    }
+
+    @Test
+    fun `test update user nickname`() =
+        test {
+        attachSession {
             updateUserInfo(UpdateUserBody(nickname = "test")).getOrThrow()
             assertEquals("test", getUserInfo(it.uid).getOrThrow().nickname)
         }
@@ -92,75 +99,98 @@ class UserTest {
     }
 
     @Test
-    fun `test add alternative account`() =
+    fun `child account creation supports algorithm pairs`() =
         test {
-        testChildAccount(1, com.storyteller_f.shared.model.AlgoType.P256, com.storyteller_f.shared.model.AlgoType.P256)
-        testChildAccount(
-            2,
-            com.storyteller_f.shared.model.AlgoType.P256,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-        )
-        testChildAccount(
-            3,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-            com.storyteller_f.shared.model.AlgoType.P256,
-        )
-        testChildAccount(
-            4,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-            com.storyteller_f.shared.model.AlgoType.DILITHIUM,
-        )
-    }
-
-    private suspend fun TestMate.testChildAccount(
-        index: Int,
-        hostAlgo: com.storyteller_f.shared.model.AlgoType,
-        childAlgo: com.storyteller_f.shared.model.AlgoType,
-    ) {
-        val outerTuple =
-            attachSession(hostAlgo) {
-                val childAccountInfo = addChildAccount(childAlgo).getOrThrow()
-                assertEquals(it.uid, childAccountInfo.hostId)
+        forEachChildAccount { host, child ->
+            loginSession(host) {
                 val response = getChildAccounts(null, 10).getOrThrow()
                 assertEquals(1, response.pagination?.total)
-                assertEquals(childAccountInfo.id, response.data.first().id)
-                assertFalse(response.data.first().hasUnreadRoomMessage)
+                val account = response.data.single()
+                assertEquals(host.uid, account.hostId)
+                assertEquals(child.uid, account.id)
+                assertFalse(account.hasUnreadRoomMessage)
                 assertFalse(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
-                childAccountInfo
             }
-
-        val childAccountInfo = outerTuple.custom
-        val childAuthKey = buildChildAuthKey(hostAlgo, outerTuple.authKey, childAccountInfo)
-        val receivedFrame = mutableListOf<com.storyteller_f.shared.obj.RoomFrame>()
-        loginSession(
-            SessionOuterTuple(childAuthKey, childAccountInfo.id, Unit),
-            onReceive = { roomFrame, _, _ -> receivedFrame.add(roomFrame) },
-        ) { childSession ->
-            createTopic(ObjectType.USER, childSession.uid, "user topic $index").getOrThrow()
-
-            val community = createCommunity(NewCommunity("test com $index", "test_com_$index")).getOrThrow()
-            createTopic(ObjectType.COMMUNITY, community.id, "community topic $index").getOrThrow()
-
-            createRoomTopic(
-                roomName = "com room $index",
-                roomAid = "test_com_room_$index",
-                topicName = "com room topic $index",
-                communityId = community.id,
-                receivedFrame = receivedFrame,
-            )
-            createRoomTopic(
-                roomName = "prv room $index",
-                roomAid = "test_prv_room_$index",
-                topicName = "private room topic $index",
-                communityId = null,
-                receivedFrame = receivedFrame,
-            )
         }
+    }
 
-        loginSession(SessionOuterTuple(outerTuple.authKey, outerTuple.uid, Unit)) {
-            val response = getChildAccounts(null, 10).getOrThrow()
-            assertTrue(response.data.first().hasUnreadRoomMessage)
-            assertTrue(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
+    @Test
+    fun `child account can sign in`() =
+        test {
+        forEachChildAccount { _, child ->
+            loginSession(child) { assertEquals(child.uid, it.uid) }
+        }
+    }
+
+    @Test
+    fun `child account can create user topic`() =
+        test {
+        forEachChildAccount { _, child ->
+            loginSession(child) {
+                val topic = createTopic(ObjectType.USER, it.uid, "child user topic").getOrThrow()
+                assertEquals(child.uid, topic.rootId)
+                assertEquals(ObjectType.USER, topic.rootType)
+            }
+        }
+    }
+
+    @Test
+    fun `child account can create community topic`() =
+        test {
+        forEachChildAccount { _, child ->
+            loginSession(child) {
+                val community = createCommunity(NewCommunity("child community", "c${child.uid}")).getOrThrow()
+                val topic = createTopic(ObjectType.COMMUNITY, community.id, "child community topic").getOrThrow()
+                assertEquals(community.id, topic.rootId)
+                assertEquals(ObjectType.COMMUNITY, topic.rootType)
+            }
+        }
+    }
+
+    @Test
+    fun `child account can send public room topic`() =
+        test {
+        forEachChildAccount { _, child ->
+            val frames = mutableListOf<RoomFrame>()
+            loginSession(child, onReceive = { frame, _, _ -> frames.add(frame) }) {
+                val community = createCommunity(NewCommunity("child community", "c${child.uid}")).getOrThrow()
+                createRoomTopic("child room", "r${child.uid}", "public topic", community.id, frames)
+                assertTrue(frames.single() is RoomFrame.NewTopicInfo)
+            }
+        }
+    }
+
+    @Test
+    fun `child room activity updates host unread state`() =
+        test {
+        forEachChildAccount { host, child ->
+            val frames = mutableListOf<RoomFrame>()
+            loginSession(child, onReceive = { frame, _, _ -> frames.add(frame) }) {
+                createRoomTopic("child room", "r${child.uid}", "private topic", null, frames)
+                assertTrue(frames.single() is RoomFrame.NewTopicInfo)
+            }
+            loginSession(host) {
+                assertTrue(getChildAccounts(null, 10).getOrThrow().data.single().hasUnreadRoomMessage)
+                assertTrue(getUserOverview().getOrThrow().hasUnreadChildRoomMessage)
+            }
+        }
+    }
+
+    private suspend fun TestMate.forEachChildAccount(
+        block: suspend TestMate.(SessionOuterTuple<Unit>, SessionOuterTuple<Unit>) -> Unit,
+    ) {
+        val algorithms =
+            listOf(
+                com.storyteller_f.shared.model.AlgoType.P256,
+                com.storyteller_f.shared.model.AlgoType.DILITHIUM,
+            )
+        algorithms.forEach { hostAlgo ->
+            algorithms.forEach { childAlgo ->
+                val host = attachSession(hostAlgo) { addChildAccount(childAlgo).getOrThrow() }
+                val account = host.custom
+                val key = buildChildAuthKey(hostAlgo, host.authKey, account)
+                block(SessionOuterTuple(host.authKey, host.uid, Unit), SessionOuterTuple(key, account.id, Unit))
+            }
         }
     }
 
@@ -252,6 +282,19 @@ class UserTest {
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
             assertNotNull(topicInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove favorite`() =
+        test {
+        val outerTuple =
+            attachSession {
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            }
+        attachSession {
+            val topicId = outerTuple.custom.id
+            addFavorite(NewFavorite(ObjectType.TOPIC, topicId)).getOrThrow()
 
             removeFavorite(topicId, ObjectType.TOPIC).getOrThrow()
 
@@ -273,6 +316,19 @@ class UserTest {
 
             val topicInfo = getTopicInfo(topicId).getOrThrow()
             assertNotNull(topicInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove subscription`() =
+        test {
+        val outerTuple =
+            attachSession {
+                createTopic(ObjectType.USER, it.uid, "hello").getOrThrow()
+            }
+        attachSession {
+            val topicId = outerTuple.custom.id
+            addSubscription(NewSubscription(topicId, ObjectType.TOPIC)).getOrThrow()
 
             removeSubscription(topicId, ObjectType.TOPIC).getOrThrow()
 
@@ -290,6 +346,15 @@ class UserTest {
 
             val userInfo = getUserInfo(targetUid).getOrThrow()
             assertNotNull(userInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove user favorite`() =
+        test {
+        val targetUid = attachSession {}.uid
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.USER, targetUid)).getOrThrow()
 
             removeFavorite(targetUid, ObjectType.USER).getOrThrow()
             assertListTotalSize(0, getFavorites(PaginationQuery()))
@@ -309,6 +374,18 @@ class UserTest {
 
             val communityInfo = getCommunityInfo(communityId).getOrThrow()
             assertNotNull(communityInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove community favorite`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunity(NewCommunity("test", "test")).getOrThrow().id
+            }.custom
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.COMMUNITY, communityId)).getOrThrow()
 
             removeFavorite(communityId, ObjectType.COMMUNITY).getOrThrow()
             assertListTotalSize(0, getFavorites(PaginationQuery()))
@@ -328,6 +405,18 @@ class UserTest {
 
             val roomInfo = getRoomInfo(roomId).getOrThrow()
             assertNotNull(roomInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove room favorite`() =
+        test {
+        val roomId =
+            attachSession {
+                createRoom(NewRoom("test", "test")).getOrThrow().id
+            }.custom
+        attachSession {
+            addFavorite(NewFavorite(ObjectType.ROOM, roomId)).getOrThrow()
 
             removeFavorite(roomId, ObjectType.ROOM).getOrThrow()
             assertListTotalSize(0, getFavorites(PaginationQuery()))
@@ -344,6 +433,15 @@ class UserTest {
 
             val userInfo = getUserInfo(targetUid).getOrThrow()
             assertNotNull(userInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove user subscription`() =
+        test {
+        val targetUid = attachSession {}.uid
+        attachSession {
+            addSubscription(NewSubscription(targetUid, ObjectType.USER)).getOrThrow()
 
             removeSubscription(targetUid, ObjectType.USER).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))
@@ -363,6 +461,18 @@ class UserTest {
 
             val communityInfo = getCommunityInfo(communityId).getOrThrow()
             assertNotNull(communityInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove community subscription`() =
+        test {
+        val communityId =
+            attachSession {
+                createCommunity(NewCommunity("test", "test")).getOrThrow().id
+            }.custom
+        attachSession {
+            addSubscription(NewSubscription(communityId, ObjectType.COMMUNITY)).getOrThrow()
 
             removeSubscription(communityId, ObjectType.COMMUNITY).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))
@@ -382,6 +492,18 @@ class UserTest {
 
             val roomInfo = getRoomInfo(roomId).getOrThrow()
             assertNotNull(roomInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove room subscription`() =
+        test {
+        val roomId =
+            attachSession {
+                createRoom(NewRoom("test", "test")).getOrThrow().id
+            }.custom
+        attachSession {
+            addSubscription(NewSubscription(roomId, ObjectType.ROOM)).getOrThrow()
 
             removeSubscription(roomId, ObjectType.ROOM).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))

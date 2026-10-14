@@ -73,7 +73,30 @@ import kotlin.test.assertTrue
 
 class FileTest {
     @Test
-    fun `test upload file`() =
+    fun `upload adds file and consumes quota`() =
+        test {
+        attachSession { session ->
+            val response =
+                upload(
+                    ObjectTuple(session.uid, ObjectType.USER),
+                    getUploadDataFromText("hello"),
+                ).getOrThrow()
+            assertEquals("${session.uid}/hello.txt", response.data.first().fullName)
+            val fileList = getFileList(session.uid, ObjectType.USER, null, 10)
+            assertListSize(1, fileList)
+            val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
+            val fileInfo = fileList.getOrThrow().data.first()
+            HttpClient().use { downloadClient ->
+                assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
+            }
+            assertEquals(fileInfo.size, quotaInfo.used)
+            assertEquals(null, quotaInfo.lockId)
+            fileInfo
+        }
+    }
+
+    @Test
+    fun `copy creates file for new owner and consumes quota`() =
         test {
         val firstTuple =
             attachSession { session ->
@@ -82,17 +105,7 @@ class FileTest {
                         ObjectTuple(session.uid, ObjectType.USER),
                         getUploadDataFromText("hello"),
                     ).getOrThrow()
-                assertEquals("${session.uid}/hello.txt", response.data.first().fullName)
-                val fileList = getFileList(session.uid, ObjectType.USER, null, 10)
-                assertListSize(1, fileList)
-                val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
-                val fileInfo = fileList.getOrThrow().data.first()
-                HttpClient().use { downloadClient ->
-                    assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
-                }
-                assertEquals(fileInfo.size, quotaInfo.used)
-                assertEquals(null, quotaInfo.lockId)
-                fileInfo
+                response.data.first()
             }
         attachSession { session ->
             val response = copy(firstTuple.custom.id).getOrThrow()
@@ -512,6 +525,21 @@ class FileTest {
 
             val fileInfo = getFileInfo(fileId).getOrThrow()
             assertNotNull(fileInfo.favoriteId)
+        }
+    }
+
+    @Test
+    fun `test remove file favorite`() =
+        test {
+        attachSession { session ->
+            val response =
+                upload(
+                    ObjectTuple(session.uid, ObjectType.USER),
+                    getUploadDataFromText("hello favorite"),
+                ).getOrThrow()
+            val fileId = response.data.first().id
+
+            addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
 
             removeFavorite(fileId, ObjectType.FILE).getOrThrow()
             assertListTotalSize(0, getFavorites(PaginationQuery()))
@@ -534,6 +562,21 @@ class FileTest {
 
             val fileInfo = getFileInfo(fileId).getOrThrow()
             assertNotNull(fileInfo.subscriptionId)
+        }
+    }
+
+    @Test
+    fun `test remove file subscription`() =
+        test {
+        attachSession { session ->
+            val response =
+                upload(
+                    ObjectTuple(session.uid, ObjectType.USER),
+                    getUploadDataFromText("hello subscription"),
+                ).getOrThrow()
+            val fileId = response.data.first().id
+
+            addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
 
             removeSubscription(fileId, ObjectType.FILE).getOrThrow()
             assertListTotalSize(0, getSubscriptions(PaginationQuery()))

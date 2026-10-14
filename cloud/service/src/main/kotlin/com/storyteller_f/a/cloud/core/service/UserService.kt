@@ -343,7 +343,7 @@ suspend fun Backend.getUserAlternateUserInfoList(
         results.mapNotNull {
             userInfoMap[it.rawUser.user.id]?.let { userInfo ->
                 ChildAccountInfo(
-                    hostId = it.rawUser.user.id,
+                    hostId = it.childAccount.hostId,
                     encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
                     encryptedAesKey = it.childAccount.encryptedAesKey,
                     userInfo = userInfo,

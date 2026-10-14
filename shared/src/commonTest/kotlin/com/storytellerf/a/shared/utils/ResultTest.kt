@@ -61,7 +61,7 @@ internal class ResultTest {
     }
 
     @Test
-    fun `transforms rethrow wrapped cancellation`(): TestResult {
+    fun `recoverResult rethrows wrapped cancellation`(): TestResult {
         val cancellation = CancellationException("cancelled")
         return runTest {
             val result = Result.failure<Unit>(cancellation)
@@ -72,6 +72,15 @@ internal class ResultTest {
                     result.recoverResult { Result.success(Unit) }
                 },
             )
+        }
+    }
+
+    @Test
+    fun `unit rethrows wrapped cancellation`(): TestResult {
+        val cancellation = CancellationException("cancelled")
+        return runTest {
+            val result = Result.failure<Unit>(cancellation)
+
             assertSame(
                 cancellation,
                 assertFailsWith<CancellationException> {

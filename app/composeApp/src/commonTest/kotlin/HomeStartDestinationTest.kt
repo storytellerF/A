@@ -29,12 +29,15 @@ import kotlin.test.assertNull
 
 class HomeStartDestinationTest {
     @Test
-    fun shouldMapPreferenceToExpectedHomeDestination() {
+    fun shouldMapPreferenceToHomeRoute() {
         assertEquals(HomeRoute.World, homeRouteFromPreference(HOME_START_DESTINATION_WORLD))
         assertEquals(HomeRoute.Communities, homeRouteFromPreference(HOME_START_DESTINATION_COMMUNITIES))
         assertEquals(HomeRoute.Rooms, homeRouteFromPreference(HOME_START_DESTINATION_ROOMS))
         assertEquals(HomeRoute.World, homeRouteFromPreference("unknown"))
+    }
 
+    @Test
+    fun shouldMapPreferenceToHomePage() {
         assertEquals(0, homePageFromPreference(HOME_START_DESTINATION_WORLD))
         assertEquals(1, homePageFromPreference(HOME_START_DESTINATION_COMMUNITIES))
         assertEquals(2, homePageFromPreference(HOME_START_DESTINATION_ROOMS))

@@ -76,7 +76,7 @@ class EventTest {
     }
 
     @Test
-    fun testProcessTopicChanged() =
+    fun topicChangedUpdatesRecommend() =
         runTest {
         val fakeTopicStorage = FakeTopicStorage()
         val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
@@ -109,21 +109,32 @@ class EventTest {
         assertTrue(recommendUpdate != null, "Should update Recommend collection")
         assertEquals(topicInfo, recommendUpdate.second)
 
-        // Check update on ChildTopicList
-        fakeTopicStorage.documents[TopicCollection.ChildTopicList(parentId) to topicId.toString()] = topicInfo
+        job.cancel()
+    }
 
-        // Reset and try again to capture update
-        fakeTopicStorage.updatedDocuments.clear()
+    @Test
+    fun topicChangedUpdatesChildTopicList() =
+        runTest {
+        val fakeTopicStorage = FakeTopicStorage()
+        val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
+        val bus = MutableSharedFlow<Any>()
+        val parentId: PrimaryKey = 100L
+        val topicId: PrimaryKey = 2L
+        val topicInfo =
+            TopicInfo.EMPTY.copy(
+                id = topicId,
+                parentId = parentId,
+                content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
+            )
+
+        fakeTopicStorage.documents[TopicCollection.ChildTopicList(parentId) to topicId.toString()] = topicInfo
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { processEvent(fakeStorage, bus) }
 
         bus.emit(OnTopicChanged(topicInfo))
 
-        val childListUpdate =
-            fakeTopicStorage.updatedDocuments.find {
-                it.first == TopicCollection.ChildTopicList(parentId)
-            }
-        assertTrue(childListUpdate != null, "Should update ChildTopicList collection")
-        assertEquals(topicInfo, childListUpdate.second)
-
+        val update = fakeTopicStorage.updatedDocuments.single { it.first == TopicCollection.ChildTopicList(parentId) }
+        assertEquals(topicInfo, update.second)
+        assertEquals(listOf(topicInfo), fakeTopicStorage.savedDefault)
         job.cancel()
     }
 
