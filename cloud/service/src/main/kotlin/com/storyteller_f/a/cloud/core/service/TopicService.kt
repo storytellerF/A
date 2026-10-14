@@ -332,7 +332,7 @@ private suspend fun Backend.createTopicSnapshot(
                 creatorInfo,
                 topicInfo,
                 customConfig.snapshotKeyStore?.let {
-                    SnapshotGeneration.KeyStoreGeneration(it.path, it.pass, pdfFile, signedFile)
+                    SnapshotGeneration.KeyStoreGeneration(it.base64, it.pass, pdfFile, signedFile)
                 } ?: SnapshotGeneration.SimpleGeneration(pdfFile),
             )
         }.mapResultIfNotNull {

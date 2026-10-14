@@ -134,7 +134,7 @@ private fun signPdfWithKeyStore(
     pdfGenerationSpec: PdfGenerationSpec,
 ) {
     val ks = java.security.KeyStore.getInstance("PKCS12")
-    java.io.FileInputStream(snapshotGeneration.keyStorePath).use { input ->
+    java.util.Base64.getDecoder().decode(snapshotGeneration.keyStoreBase64).inputStream().buffered().use { input ->
         ks.load(input, snapshotGeneration.password.toCharArray())
     }
     val alias = ks.aliases().nextElement()

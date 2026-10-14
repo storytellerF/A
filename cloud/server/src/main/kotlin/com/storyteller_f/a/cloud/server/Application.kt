@@ -10,7 +10,6 @@ import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CombinedDatabase
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.CustomConfig
-import com.storyteller_f.a.backend.core.CustomKeyStore
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.buildCommunitySearchService
 import com.storyteller_f.a.backend.core.buildFileSearchService
@@ -54,7 +53,6 @@ import com.storyteller_f.a.cloud.server.route.bindUnauthenticatedRoute
 import com.storyteller_f.a.cloud.server.route.bindUnprotectedAccountRoute
 import com.storyteller_f.a.cloud.server.route.bindUserRoute
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
-import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
 import io.github.aakira.napier.Napier
@@ -91,7 +89,6 @@ import io.ktor.utils.io.close
 import io.sentry.Sentry
 import kotlinx.coroutines.runBlocking
 import org.slf4j.event.Level
-import java.io.File
 import java.io.OutputStreamWriter
 import kotlin.time.Duration.Companion.seconds
 
@@ -302,17 +299,7 @@ fun buildBackendFromEnv(env: MergedEnv): Backend {
     val fileSearchService = buildFileSearchService(env)
     val mediaService = mediaService(env)
 
-    val snapshotKeyStorePath = env["SNAPSHOT_KEYSTORE_PATH"]
-    val snapshotKeyStorePassword = env["SNAPSHOT_KEYSTORE_PASS"]
-    val snapshotKeyStore =
-        if (!snapshotKeyStorePath.isNullOrBlank() && !snapshotKeyStorePassword.isNullOrBlank()) {
-            if (!File(snapshotKeyStorePath).exists()) {
-                CryptoJvm.createKeystore(snapshotKeyStorePassword.toCharArray(), snapshotKeyStorePath)
-            }
-            CustomKeyStore(snapshotKeyStorePath, snapshotKeyStorePassword)
-        } else {
-            null
-        }
+    val snapshotKeyStore = loadSnapshotKeyStore(env)
     val customConfig = CustomConfig(buildType, flavor, snapshotKeyStore, enableSignUp)
 
     return ServerBackend(

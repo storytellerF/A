@@ -17,7 +17,7 @@ import java.io.File
 
 sealed class SnapshotGeneration(open val path: File) {
     class KeyStoreGeneration(
-        val keyStorePath: String,
+        val keyStoreBase64: String,
         val password: String,
         override val path: File,
         val signedFile: File,
