@@ -303,7 +303,7 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
     )
 
     override suspend fun clean(collection: TitleCollection) {
-        impl.clean(TitleCollection.Titles.getName())
+        impl.clean(collection.getName())
     }
 
     override fun observeDatum(key: String): Flow<TitleInfo?> = impl.observeDatum(TitleCollection.Titles.getName(), key)
@@ -424,7 +424,7 @@ class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
     }
 
     override suspend fun clean(collection: RoomCollection) {
-        impl.clean(RoomCollection.Rooms.getName())
+        impl.clean(collection.getName())
     }
 
     override suspend fun updateDocument(collection: RoomCollection, item: RoomInfo) {

@@ -41,6 +41,15 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     sourceSets {
+        val headlessTest =
+            create("headlessTest") {
+                dependsOn(commonTest.get())
+                dependencies {
+                    implementation(kotlin("test"))
+                    implementation(libs.kotlinx.coroutines.test)
+                }
+            }
+        jvmTest.get().dependsOn(headlessTest)
         commonMain.dependencies {
             implementation(libs.napier)
             implementation(projects.shared)
@@ -95,4 +104,9 @@ dependencies {
 
 room3 {
     schemaDirectory("$projectDir/schemas")
+}
+
+// Keep synthetic database and native-driver temporary files within the module's ignored build directory.
+tasks.named<Test>("jvmTest") {
+    systemProperty("java.io.tmpdir", layout.buildDirectory.get().asFile.absolutePath)
 }
