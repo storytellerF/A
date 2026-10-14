@@ -92,6 +92,10 @@ class RoomActivityTest {
             addReadLog(UpdateUserRead(room.tuple(), second.id)).getOrThrow()
             assertEquals(0L, getOnlyRoomActivity(room.id).unreadMessageCount)
             assertEquals(0, hasUnreadRooms().getOrThrow().unreadCount)
+            addReadLog(UpdateUserRead(room.tuple(), first.id)).getOrThrow()
+            assertEquals(second.id, getOnlyRoomActivity(room.id).room.lastRead)
+            assertEquals(0L, getOnlyRoomActivity(room.id).unreadMessageCount)
+            assertEquals(0, hasUnreadRooms().getOrThrow().unreadCount)
             exitRoom(room.id).getOrThrow()
             assertTrue(getRoomActivities(listOf(room.id)).getOrThrow().data.isEmpty())
         }
