@@ -4,7 +4,9 @@
 
 package com.storyteller_f.a.backend.core
 
-data class CustomKeyStore(val path: String, val pass: String)
+data class CustomKeyStore(val base64: String, val pass: String) {
+    override fun toString(): String = "CustomKeyStore(<redacted>)"
+}
 
 data class CustomConfig(
     val buildType: String,

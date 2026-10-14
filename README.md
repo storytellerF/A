@@ -215,3 +215,5 @@ This migration invalidates older encrypted session Cookies; sign in once after u
 
 Read-only accounts can sign in and browse, but cannot publish changes.
 System notification rooms allow recipients to read messages; their message input is disabled.
+
+Snapshot PDF signing accepts `SNAPSHOT_KEYSTORE_BASE64` (the single-line Base64 encoding of the existing PKCS#12 file) and `SNAPSHOT_KEYSTORE_PASS` in the selected environment file. The server validates and uses the key in memory; no keystore mount is required. Base64 is encoding, not encryption: protect the environment file and never commit or log its contents. `SNAPSHOT_KEYSTORE_BASE64` takes precedence over the legacy `SNAPSHOT_KEYSTORE_PATH`; malformed data or an incorrect/missing password fails startup without falling back or generating a replacement key. To migrate, encode the existing file with `base64 -w 0 < existing.p12`, save the output privately in the environment file, retain the password, and remove `SNAPSHOT_KEYSTORE_PATH`. With neither source configured, snapshot signing is disabled.

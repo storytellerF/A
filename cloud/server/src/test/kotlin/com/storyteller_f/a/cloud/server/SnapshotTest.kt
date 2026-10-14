@@ -33,7 +33,12 @@ class SnapshotTest {
             UserInfo.EMPTY,
             "hello world",
             emptyMap(),
-            SnapshotGeneration.KeyStoreGeneration(path1, password1, pdfFile, signedFile),
+            SnapshotGeneration.KeyStoreGeneration(
+                java.util.Base64.getEncoder().encodeToString(File(path1).readBytes()),
+                password1,
+                pdfFile,
+                signedFile,
+            ),
             PdfGenerationSpec(
                 LocalDateTime.parse("2023-01-01T00:00:00"),
                 LocalDateTime.parse("2023-01-01T00:00:00"),

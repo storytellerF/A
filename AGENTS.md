@@ -151,3 +151,5 @@
   a device-specific abstract PlatformHeadlessTest actual without Robolectric.
 
 - Read-only users retain authentication and read access. Enforce write restrictions for HTTP mutations and WebSocket topic creation; notification-room recipients remain invited, with disabled message input.
+
+- Snapshot PKCS#12 Base64 is secret configuration. Preserve existing key bytes during migration, validate supplied credentials without a file fallback or replacement-key generation, and keep decoded Base64 key material in memory.

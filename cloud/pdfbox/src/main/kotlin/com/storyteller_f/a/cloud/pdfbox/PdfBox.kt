@@ -43,7 +43,6 @@ import rst.pdfbox.layout.text.StyledText
 import rst.pdfbox.layout.text.TextFlow
 import java.awt.Color
 import java.io.File
-import java.io.FileInputStream
 import java.security.KeyStore
 
 class PdfBox : PdfService {
@@ -99,7 +98,7 @@ private fun signPdfWithDss(
         insertBlankPageAtBeginning(saveToFile, tempFileWithBlankPage)
 
         val password = snapshotGeneration.password
-        FileInputStream(snapshotGeneration.keyStorePath).use { keyStoreInput ->
+        java.util.Base64.getDecoder().decode(snapshotGeneration.keyStoreBase64).inputStream().buffered().use { keyStoreInput ->
             val token = Pkcs12SignatureToken(
                 keyStoreInput,
                 KeyStore.PasswordProtection(password.toCharArray())
