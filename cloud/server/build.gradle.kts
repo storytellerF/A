@@ -58,6 +58,7 @@ dependencies {
     implementation(projects.backend.exposed)
     implementation(projects.cloud.service)
     implementation(libs.bundles.ktor.server)
+    implementation(libs.ktor.server.netty)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)

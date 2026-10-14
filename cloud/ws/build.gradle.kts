@@ -36,6 +36,7 @@ dependencies {
     implementation(projects.cloud.runtime)
     implementation(projects.cloud.wsApi)
     implementation(libs.bundles.ktor.server)
+    implementation(libs.ktor.server.netty)
     implementation(libs.bundles.ktor.server.client)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.kotlinx.datetime)

@@ -435,7 +435,6 @@ ktor-server = [
     "ktor-server-content-negotiation",
     "ktor-server-core",
     "ktor-server-metrics-micrometer",
-    "ktor-server-netty",
     "ktor-server-partial-content",
     "ktor-server-rate-limit",
     "ktor-server-sessions",
