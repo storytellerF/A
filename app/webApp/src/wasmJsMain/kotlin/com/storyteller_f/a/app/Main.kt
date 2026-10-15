@@ -25,9 +25,17 @@ import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.configureWebResources
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalResourceApi::class)
 fun main() {
+    val resourceVersion = document.querySelector("meta[name='compose-resource-version']")?.getAttribute("content")
+    if (!resourceVersion.isNullOrEmpty()) {
+        configureWebResources {
+            resourcePathMapping { path -> "$path?v=$resourceVersion" }
+        }
+    }
     ComposeViewport(document.body!!) {
         val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: getWasmServerUrl()
         val wsUrl = wasmQueryParameter("appiumWsUrl") ?: getWasmWsServerUrl()

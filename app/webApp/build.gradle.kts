@@ -23,6 +23,7 @@ kotlin {
             implementation(projects.app.composeApp)
             implementation(projects.client.composeCore)
             implementation(libs.ui)
+            implementation(libs.components.resources)
         }
     }
 }

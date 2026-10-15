@@ -41,6 +41,8 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
 RUN for site in app-wasm panel-wasm; do \
         entry="deploy/build/$site/webApp.js"; \
         digest="$(sha256sum "$entry" | cut -c1-16)"; \
+        resource_digest="$(find "deploy/build/$site/composeResources" -type f -exec sha256sum {} + | sort | sha256sum | cut -c1-16)"; \
+        sed -i "s|</head>|<meta name=\"compose-resource-version\" content=\"$resource_digest\">\n</head>|" "deploy/build/$site/index.html" && \
         mv "$entry" "deploy/build/$site/webApp.$digest.js" && \
         sed -i "s/webApp\.js/webApp.$digest.js/g" "deploy/build/$site/index.html" || exit 1; \
     done
