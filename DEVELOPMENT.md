@@ -627,6 +627,9 @@ synthetic audio/video sources and real time. Compile Android, desktop and Wasm a
 use macOS with `-Ptarget.ios=true` for iOS, whose Xcode target links WebRTC 137.7151.04.
 Real multi-client checks must cover permissions, media, joining/leaving, mute state, camera
 switching and scrolling beyond four participants. Pure audio joins negotiate audio tracks.
+Use `requestVideoFrameCallback` and increasing `presentedFrames` for browser presentation
+checks. Firefox can leave `getVideoPlaybackQuality().totalVideoFrames` at zero for a live
+MediaStream even as frames reach the compositor. Verify inbound audio packets separately.
 
 The browser origin needs HTTPS and `Permissions-Policy` allowing camera, microphone and
 autoplay for `self`; keep unrelated origins restricted. After deployment compare the browser's

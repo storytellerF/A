@@ -257,3 +257,7 @@
 - Shared RTC dispatch must distinguish a recipient channel cancellation from caller cancellation.
   Check the caller context before propagating cancellation; one closed WebSocket must not
   cancel the global signaling or negotiation jobs.
+
+- Verify browser WebRTC presentation with requestVideoFrameCallback presentedFrames. Firefox can
+  report zero VideoPlaybackQuality totalVideoFrames for a MediaStream while actual frames
+  are being presented; do not infer a frozen stream from that counter alone.
