@@ -571,3 +571,8 @@ and Lucene bind-mount directories before the first `up`; they resolve relative t
 that checkout, unlike named PostgreSQL volumes. Preserve newly created directories
 separately while correcting a mistaken mount. The Compose wrapper reloads BunkerWeb
 Nginx after `up` to resolve current service addresses after container replacement.
+
+Dockerfile base images and build frontends retain readable version tags and pin their
+manifest digests. For upgrades, resolve each upstream manifest with
+`docker buildx imagetools inspect <image>:<version>` and update its digest explicitly.
+Retry transient registry connection failures a few times before investigating further.

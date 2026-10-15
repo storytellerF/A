@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-alpine AS builder
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS builder
 
 RUN apk add --no-cache bash curl
 
@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.gradle \
 RUN mkdir -p ./bot/builtin-bot/build/decompressed && \
     tar -xf ./deploy/build/builtin-bot.tar -C ./bot/builtin-bot/build/decompressed
 
-FROM eclipse-temurin:21-alpine
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159
 
 WORKDIR /app
 
