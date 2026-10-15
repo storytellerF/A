@@ -277,6 +277,12 @@ configuration. After editing the host configuration, reload Nginx or recreate th
 no image rebuild is required. Standalone image runs must supply the same configuration to
 enable the required COOP/COEP headers.
 
+Docker builds rename each Wasm entry script with its SHA256 content prefix and update
+its index reference. Keep HTML and mutable resource URLs subject to cache validation
+(`Cache-Control: no-cache`); otherwise a browser can retain an old entry script across
+deployments and load a different client than fresh HTTP probes. Verify the browser's
+loaded Wasm filenames against the deployed image when accepting an upgrade.
+
 ## Adminer reverse proxy
 
 The Bunker Adminer site uses the regex location `~ ^/` instead of the ordinary `/` location.
@@ -557,3 +563,9 @@ Signin lifecycle regression coverage is in cloud/runtime RedisSessionStorageTest
 Run the real Firefox WebSocket regressions with `./gradlew :app:wasmAppium:appiumTest --tests '*test browser socket*' -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` in the configured Docker test environment. These use explicit UI sign-in and a test-only observer of native WebSocket connection and message counts. They cover transport disconnection and recovery without message replay, authenticated browser restart, sign-out, removed/expired browser Cookies, server revocation and expiry, replay of revoked/expired Cookies and rejection of an unapproved browser Origin. The observer stores no credentials, URLs or message bodies. The server-expiry test moves the isolated Redis session deadline into the past while keeping the browser Cookie and stored key; it does not shorten production timeouts. Redis idle/absolute expiry also has storage-level coverage.
 
 Snapshot signing configuration is loaded at the cloud/server boundary into an in-memory Base64 PKCS#12 value shared with the PDF adapters. Both OpenPDF and PdfBox read buffered in-memory streams. The legacy file configuration is converted at startup; Base64 configuration never writes a decoded private-key file. SnapshotKeyStoreTest covers source precedence, legacy input, malformed Base64, missing/wrong passwords and redacted diagnostics. SnapshotTest exercises signed PDF generation using Base64 input.
+
+When deploying from an isolated source checkout, reconnect the existing filesystem
+and Lucene bind-mount directories before the first `up`; they resolve relative to
+that checkout, unlike named PostgreSQL volumes. Preserve newly created directories
+separately while correcting a mistaken mount. The Compose wrapper reloads BunkerWeb
+Nginx after `up` to resolve current service addresses after container replacement.

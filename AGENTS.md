@@ -209,3 +209,11 @@
   range and placeholder counts, and atomically replace room rows before publishing preview state.
   Anchor-preserving mapped PagingSources calculate refresh keys from previous-generation pages
   without relying on per-instance caches. Verify multi-page event refresh with shuffled IDs and opaque tokens.
+
+- Fingerprint deployed Wasm entry scripts and require cache validation for HTML. During
+  upgrade acceptance, compare browser-loaded Wasm filenames with the image; a successful
+  fresh HTTP probe does not prove an existing tab has loaded the new client.
+
+- Isolated deployment checkouts must reconnect existing filesystem/Lucene bind mounts
+  before startup. Reload BunkerWeb upstream resolution after container replacement;
+  container health alone cannot establish correct domain routing or data continuity.

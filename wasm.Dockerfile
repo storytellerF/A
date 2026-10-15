@@ -37,6 +37,14 @@ RUN --mount=type=cache,target=/root/.gradle,sharing=locked \
     cp -a app/webApp/build/dist/wasmJs/productionExecutable/. deploy/build/app-wasm/ && \
     cp -a panel/webApp/build/dist/wasmJs/productionExecutable/. deploy/build/panel-wasm/
 
+# Entry URLs change with their contents so previously cached clients load the new Wasm bundle.
+RUN for site in app-wasm panel-wasm; do \
+        entry="deploy/build/$site/webApp.js"; \
+        digest="$(sha256sum "$entry" | cut -c1-16)"; \
+        mv "$entry" "deploy/build/$site/webApp.$digest.js" && \
+        sed -i "s/webApp\.js/webApp.$digest.js/g" "deploy/build/$site/index.html" || exit 1; \
+    done
+
 FROM nginx:1.27-alpine AS app-wasm
 
 COPY --from=builder /app/deploy/build/app-wasm/ /usr/share/nginx/html/

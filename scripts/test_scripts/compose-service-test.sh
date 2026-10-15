@@ -337,10 +337,12 @@ assert_not_contains "$external_args" "--env-file $external_directory/bunker.env"
 assert_contains "$external_generated" "path: '$external_directory/bunker.env'"
 (cd "$external_directory" && "$ROOT_DIR/scripts/service_scripts/compose-service.sh" alpha.env false config) > "$TMP_DIR/external-relative.stdout"
 assert_contains "$external_args" "APP_ENV_FILE=$external_env"
+assert_not_contains "$external_args" "exec -T bunkerweb nginx -s reload"
 EXPECT_DOCKER_BUILD=true ./scripts/service_scripts/start-service-in-docker.sh "$external_env" > "$TMP_DIR/external-start.stdout"
 assert_contains "$external_args" "build filesystem lucene cli worker server ws app-wasm panel-wasm"
 assert_contains "$external_args" "app-wasm panel-wasm"
 assert_contains "$external_args" "up -d --no-build"
+assert_contains "$external_args" "exec -T bunkerweb nginx -s reload"
 if ./scripts/service_scripts/compose-service.sh "$external_directory/missing.env" false config > "$TMP_DIR/missing.stdout" 2>&1; then
   fail "missing explicit environment path must fail"
 fi
