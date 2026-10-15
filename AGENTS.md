@@ -235,3 +235,7 @@
   track disposal. Keep native negotiation tests on a real dispatcher, including cancellation cleanup.
 - Android Ktor remote tracks are owned by native receivers. Remove renderer sinks before
   PeerConnection disposal and avoid separately disposing those receiver-owned tracks.
+
+- Normalize browser RTC capture `JsException` at the platform boundary; it is not an `Exception`.
+  DOM failures can lack JavaScript stacks, so preserve their message without retaining an unsafe
+  JS cause. Verify missing-device errors exit the joining state and cancellation remains cancellation.

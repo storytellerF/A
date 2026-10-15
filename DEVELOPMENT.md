@@ -603,6 +603,9 @@ remove video sinks before disposing tracks, and explicitly close the media facto
 audio track. Remote JVM tracks are borrowed from their connection. Frame conversion runs on
 a worker and balances retained native frames. Android's EGL/media factory is application-owned.
 Browser audio belongs to the peer rather than a lazy video tile so scrolling cannot mute audio.
+Browser media capture normalizes Wasm `JsException` failures into Ktor device exceptions.
+A missing capture device must return the call to its failed ready state; DOM exceptions can lack
+JavaScript stacks, so do not retain them as causes in Kotlin-formatted diagnostic exceptions.
 
 Run `./gradlew :app:composeApp:jvmTest --tests "*Rtc*Test" :app:composeApp:testAndroidHostTest --tests "*Rtc*Test" -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
 for shared state/signaling and native SDP/ICE/cleanup coverage. The native JVM fixture uses

@@ -25,7 +25,7 @@ import web.mediastreams.MediaStream
 
 internal actual fun createRtcEngine(): RtcEngine =
     KtorRtcEngine(Dispatchers.Main) {
-    KtorRtcRuntime(WebRtcClient(JsWebRtc), switchCamera = true)
+    KtorRtcRuntime(WebRtcClient(JsWebRtc) { mediaTrackFactory = BrowserRtcMediaDevices() }, switchCamera = true)
 }
 
 private class BrowserRtcVideo(val track: WebRtcMedia.VideoTrack) : RtcVideo

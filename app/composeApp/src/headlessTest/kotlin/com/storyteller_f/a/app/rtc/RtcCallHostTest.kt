@@ -37,6 +37,20 @@ class RtcCallHostTest {
     }
 
     @Test
+    fun mediaFailureReturnsToReady() =
+        runTest {
+        val fixture = CallFixture(this)
+        fixture.engine.pending =
+            CompletableDeferred<RtcMedia>().apply {
+                completeExceptionally(IllegalStateException("No capture device"))
+            }
+        fixture.join()
+        assertTrue(assertIs<RtcCallState.Ready>(fixture.host.state.value).failed)
+        assertTrue(fixture.sent.isEmpty())
+        fixture.close()
+    }
+
+    @Test
     fun signalingFailureReleasesLocalMedia() =
         runTest {
         val fixture = CallFixture(this)

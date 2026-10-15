@@ -76,6 +76,7 @@ import com.storyteller_f.a.app.rtc_switch_camera
 import com.storyteller_f.a.app.rtc_unmute
 import com.storyteller_f.a.app.rtc_waiting
 import com.storyteller_f.a.app.rtc_you
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.Dispatchers
@@ -117,7 +118,10 @@ private fun RtcCallContent(roomId: PrimaryKey, state: RtcCallState, host: RtcCal
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = host::leave) {
+                IconButton(
+                    onClick = host::leave,
+                    modifier = Modifier.appiumSemantics(description = "rtc-back", onClick = host::leave),
+                ) {
                     Icon(Icons.AutoMirrored.Default.ArrowBack, stringResource(Res.string.rtc_leave))
                 }
                 Column {
@@ -220,7 +224,11 @@ private fun ParticipantTile(
     status: String,
     local: Boolean = false,
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth().appiumSemantics(
+            text = "$label, $status, audioMuted=$audioMuted, videoMuted=$videoMuted",
+        ),
+    ) {
         Box(
             Modifier.fillMaxWidth().aspectRatio(4f / 3f).background(MaterialTheme.colorScheme.surfaceContainerHighest),
             contentAlignment = Alignment.Center,
@@ -252,16 +260,34 @@ private fun ActiveCallControls(state: RtcCallState.Active, host: RtcCallHost) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        FilledTonalButton(onClick = host::toggleAudio) {
+        FilledTonalButton(
+            onClick = host::toggleAudio,
+            modifier = Modifier.appiumSemantics(description = "rtc-toggle-audio", onClick = host::toggleAudio),
+        ) {
             Icon(if (state.audioMuted) Icons.Default.MicOff else Icons.Default.Mic, null)
             Text(stringResource(if (state.audioMuted) Res.string.rtc_unmute else Res.string.rtc_mute))
         }
-        FilledTonalButton(onClick = host::toggleVideo, enabled = state.localVideo != null) {
+        FilledTonalButton(
+            onClick = host::toggleVideo,
+            enabled = state.localVideo != null,
+            modifier =
+            Modifier.appiumSemantics(
+                description = "rtc-toggle-video",
+                onClick = if (state.localVideo != null) host::toggleVideo else null,
+            ),
+        ) {
             Icon(if (state.videoMuted) Icons.Default.VideocamOff else Icons.Default.Videocam, null)
             Text(stringResource(if (state.videoMuted) Res.string.rtc_camera_on else Res.string.rtc_camera_off))
         }
         if (state.localVideo != null && state.media.canSwitchCamera) {
-            FilledTonalButton(onClick = host::switchCamera) {
+            FilledTonalButton(
+                onClick = host::switchCamera,
+                modifier =
+                Modifier.appiumSemantics(
+                    description = "rtc-switch-camera",
+                    onClick = host::switchCamera,
+                ),
+            ) {
                 Icon(Icons.Default.Cameraswitch, null)
                 Text(stringResource(Res.string.rtc_switch_camera))
             }
@@ -272,7 +298,7 @@ private fun ActiveCallControls(state: RtcCallState.Active, host: RtcCallHost) {
 
 @Composable
 private fun LeaveCallButton(onLeave: () -> Unit) {
-    Button(onClick = onLeave) {
+    Button(onClick = onLeave, modifier = Modifier.appiumSemantics(description = "rtc-leave", onClick = onLeave)) {
         Icon(Icons.Default.CallEnd, null)
         Text(stringResource(Res.string.rtc_leave))
     }
@@ -280,7 +306,15 @@ private fun LeaveCallButton(onLeave: () -> Unit) {
 
 @Composable
 internal fun DefaultRtcJoinButton(video: Boolean, enabled: Boolean, onJoin: () -> Unit) {
-    Button(onClick = onJoin, enabled = enabled) {
+    Button(
+        onClick = onJoin,
+        enabled = enabled,
+        modifier =
+        Modifier.appiumSemantics(
+            description = if (video) "rtc-join-video" else "rtc-join-audio",
+            onClick = if (enabled) onJoin else null,
+        ),
+    ) {
         Text(stringResource(if (video) Res.string.rtc_join_video else Res.string.rtc_join_audio))
     }
 }
