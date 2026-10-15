@@ -239,3 +239,7 @@
 - Normalize browser RTC capture `JsException` at the platform boundary; it is not an `Exception`.
   DOM failures can lack JavaScript stacks, so preserve their message without retaining an unsafe
   JS cause. Verify missing-device errors exit the joining state and cancellation remains cancellation.
+
+- Verify compression for cold Wasm client loads before diagnosing a blank page as RTC failure.
+  Browser session fixtures must populate storage on a static same-origin bootstrap document
+  before opening the app, so setup never aborts its first Wasm download with a reload.

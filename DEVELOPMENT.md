@@ -617,3 +617,9 @@ switching and scrolling beyond four participants. Pure audio joins negotiate aud
 The browser origin needs HTTPS and `Permissions-Policy` allowing camera, microphone and
 autoplay for `self`; keep unrelated origins restricted. After deployment compare the browser's
 loaded Wasm entry fingerprint with the running image, including versioned Compose resources.
+
+The static client Nginx configuration compresses Wasm, JavaScript, CSS and SVG responses.
+After deployment, request an entry Wasm asset with `Accept-Encoding: gzip`, verify
+`Content-Encoding`/`Vary`, and compare decompressed bytes with the image. Keep HTML cache
+validation enabled. Configuration-only releases must recreate the static containers to
+reattach replaced bind-mounted configuration files, then reload proxy upstream resolution.
