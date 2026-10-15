@@ -249,3 +249,7 @@
   symbols while compilation still succeeds. Preserve the recorder's newer URL API when resolving
   primitive ABI compatibility. Exercise real browser constraint conversion,
   synthetic track capture, SDP creation and cleanup when changing RTC dependencies.
+
+- Browser ICE events can contain an empty candidate string before the final null event. Treat
+  this as an end-of-candidates marker at the RTC boundary; native Ktor adapters reject it.
+  Preserve failures for non-empty invalid candidates and verify media still flows after the marker.

@@ -18,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
@@ -214,7 +215,7 @@ private class KtorRtcPeer(
             }
         }.launchIn(observers)
 
-        connection.iceCandidates.onEach {
+        connection.iceCandidates.filter { it.candidate.isNotEmpty() }.onEach {
             events.candidate(CustomCandidate(it.sdpMid, it.sdpMLineIndex, it.candidate))
         }.launchIn(observers)
         connection.state.onEach {
@@ -256,6 +257,9 @@ private class KtorRtcPeer(
     }
 
     override suspend fun addCandidate(candidate: CustomCandidate) {
+        // Browser end-of-candidates markers are not native ICE candidates.
+        // https://www.w3.org/TR/webrtc/#dom-rtcpeerconnectioniceevent-candidate
+        if (candidate.candidate.isEmpty()) return
         connection.addIceCandidate(WebRtc.IceCandidate(candidate.candidate, candidate.sdpMid, candidate.sdpMLineIndex))
     }
 

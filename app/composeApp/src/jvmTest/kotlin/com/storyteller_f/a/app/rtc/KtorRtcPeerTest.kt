@@ -16,6 +16,7 @@ import dev.onvoid.webrtc.media.video.VideoFrame
 import dev.onvoid.webrtc.media.video.VideoTrackSink
 import io.ktor.client.webrtc.JvmWebRtc
 import io.ktor.client.webrtc.MediaTrackFactory
+import io.ktor.client.webrtc.WebRtc
 import io.ktor.client.webrtc.WebRtcClient
 import io.ktor.client.webrtc.WebRtcMedia
 import io.ktor.client.webrtc.media.JvmAudioTrack
@@ -38,6 +39,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.seconds
 
@@ -64,10 +66,15 @@ class KtorRtcPeerTest {
                             combine(first.connection, second.connection) { a, b ->
                                 a == RtcConnectionState.Connected && b == RtcConnectionState.Connected
                             }.first { it }
+                            firstPeer.addCandidate(CustomCandidate("0", 0, ""))
+                            secondPeer.addCandidate(CustomCandidate("0", 0, ""))
                             val firstVideo = assertNotNull(first.video.first { it != null })
                             val secondVideo = assertNotNull(second.video.first { it != null })
                             receiveSyntheticFrames(firstVideo as DesktopRtcVideo, second)
                             receiveSyntheticFrames(secondVideo as DesktopRtcVideo, first)
+                            assertFailsWith<WebRtc.IceException> {
+                                firstPeer.addCandidate(CustomCandidate("0", 0, "invalid-candidate"))
+                            }
                         }
                     } finally {
                         forward.cancel()

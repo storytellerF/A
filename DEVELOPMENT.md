@@ -603,6 +603,9 @@ remove video sinks before disposing tracks, and explicitly close the media facto
 audio track. Remote JVM tracks are borrowed from their connection. Frame conversion runs on
 a worker and balances retained native frames. Android's EGL/media factory is application-owned.
 Browser audio belongs to the peer rather than a lazy video tile so scrolling cannot mute audio.
+Browser empty-string ICE candidates signal the end of gathering; filter them at the shared
+RTC boundary because native adapters reject them. Non-empty candidate errors still propagate.
+The native negotiation regression checks decoded frames after receiving these markers.
 
 Ktor 3.6.0 retains calls to the removed `js.core.JsPrimitives` conversion ABI.
 A Wasm-only internal compatibility object forwards its four required conversions to Kotlin's
