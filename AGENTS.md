@@ -200,6 +200,9 @@
   Keep host-test database scopes unique and temporary storage under the module build directory.
 
 - Browser semantics must publish changed labels even when geometry is unchanged.
+- Wasm E2E runs every scenario on Chrome, Edge and Firefox sequentially with isolated profiles.
+  Prefer installed browsers through Selenium Manager discovery; keep per-browser binary overrides
+  separate and never reuse a personal browser profile or skip an unavailable matrix entry.
 - Async SQLite transaction finalizers must complete under cancellation so Room can recycle its pool
   permit. Close allocated connections/statements when cancellation prevents delivery; new operations
   still honor cancellation, and cleanup must not replay business writes.

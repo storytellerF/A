@@ -4,21 +4,29 @@
 
 package com.storyteller_f.a.dev.appium
 
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.openqa.selenium.By
-import org.openqa.selenium.firefox.FirefoxDriver
-import org.openqa.selenium.firefox.FirefoxOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
 import java.time.Duration
 import kotlin.test.Test
 
-class WasmAppiumTest : AppiumTestBase() {
+@RunWith(Parameterized::class)
+class WasmAppiumTest(private val browserType: WasmBrowser) : AppiumTestBase() {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun browsers() = WasmBrowser.entries
+    }
+
     private val targetHelper = AppAppiumHelper()
     private val platformHelper =
         WasmAppiumHelper(
             resolveWasmDistribution(),
             By.cssSelector("[aria-label='avatar']"),
+            browserType,
         )
 
     @Test
@@ -66,16 +74,14 @@ class WasmAppiumTest : AppiumTestBase() {
         testSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test html semantics bridge mounts`() {
+    fun `test browser profile survives restart`() =
+        runAppiumBlockingTest { testWasmProfilePersistence(browserType, resolveWasmDistribution()) }
+
+    @Test
+    fun `test html semantics bridge mounts`() =
+        runAppiumBlockingTest {
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            val driver =
-                FirefoxDriver(
-                    FirefoxOptions().addPreference(
-                        "intl.accept_languages",
-                        "en-US,en",
-                    ).addPreference("intl.locale.requested", "en-US").addArguments("-headless"),
-                )
-            try {
+            browserType.withBrowser { driver ->
                 driver.get("${server.url}?appium=true")
                 runCatching {
                     WebDriverWait(driver, Duration.ofSeconds(30)).until(
@@ -94,8 +100,6 @@ class WasmAppiumTest : AppiumTestBase() {
                         cause,
                     )
                 }
-            } finally {
-                driver.quit()
             }
         }
     }

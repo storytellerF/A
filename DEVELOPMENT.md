@@ -125,7 +125,7 @@ remaining platform checks.
 
 
 The browser runner now reuses the same public/private activity and cross-session refresh scenarios.
-Real Firefox acceptance covers explicit sign-in, encrypted previews, exact counts and navigation badges,
+Browser acceptance across Chrome, Edge and Firefox covers explicit sign-in, encrypted previews, exact counts and navigation badges,
 unread/pinned context navigation, reading, sending and draft retention across 500/900/1600px widths
 and a 500px-high window. The existing publication, registration and sign-in/sign-out restart scenarios
 provide selector and authentication regression coverage. Capture the rendered page as well as the HTML
@@ -142,9 +142,20 @@ the width before measuring its frame and verify the resulting content dimensions
 against the current HTML input value and Compose acknowledgement after every viewport transition.
 Run the activity tests with `:app:wasmAppium:appiumTest --tests '*test activity previews*'`
 and the refresh test with `--tests '*test room refresh clears*'`, using the same dev/debug and Docker
-prerequisites. When using an already installed Firefox, set Selenium's `SE_BROWSER_PATH` to its
-executable and `SE_OFFLINE=true` to avoid unrelated browser-download checks; do not skip product tests
-or change their timeouts to hide environment failures.
+prerequisites. Both `:app:wasmAppium:appiumTest` and `:panel:wasmAppium:appiumTest` run every test against
+Chrome, Edge and Firefox through a JUnit parameter matrix. Reports identify each browser; variants
+remain sequential. Each run uses a temporary isolated profile, retained across browser restarts and
+removed after the test. Your normal browser profile is never used.
+
+Selenium Manager first discovers a locally installed browser and resolves its matching driver. If no
+installation is available, it uses its managed browser cache or downloads a browser where supported;
+missing browsers fail their matrix entries rather than silently skipping coverage. Set
+`WASM_E2E_CHROME_BINARY`, `WASM_E2E_EDGE_BINARY` or `WASM_E2E_FIREFOX_BINARY` to an existing executable
+for nonstandard installations. These are read only when the test creates its browser. Remove an old
+shared `SE_BROWSER_PATH` override before running the matrix, because it applies to every browser.
+`SE_OFFLINE=true` requires all matching drivers and browsers to be available already. Filtered Gradle
+`--tests` invocations still run the selected scenarios on all three browsers; do not change test
+timeouts or skip missing variants to hide environment failures.
 
 
 Paging clients treat server page tokens as opaque strings and retain the returned item order. Local
@@ -168,7 +179,7 @@ and stepping must finish non-cancellably: Room's pool cleanup performs rollback 
 permit, and cancelling that rollback can strand the single connection and leave later detail pages
 loading forever. Normal statements still reject cancellation and no business operation is replayed.
 `:client:room:wasmJsBrowserTest` covers response waiting, discarded allocation cleanup and cancelled
-finalization; repeated real Firefox navigation exercises the complete Room/worker boundary.
+finalization; repeated real-browser navigation exercises the complete Room/worker boundary.
 
 ## Temporary dependency pins
 
@@ -397,7 +408,7 @@ The runner owns a 1600×1000 virtual X11 display, a window manager, a separate D
 
 Do not use a disconnected user Xwayland session for unattended testing: the display can report 0×0 while Java and the X11 window remain alive. In the diagnosed failure, repeated thread dumps found the UI thread in Skiko `swapBuffers` and ATK waiting for UI dispatch; AT-SPI subsequently stopped exposing the application. An owned display removes that dependency rather than masking missing elements. See [Skiko's rendering properties](https://github.com/JetBrains/skiko/blob/master/skiko/src/jvmMain/kotlin/org/jetbrains/skiko/SkikoProperties.kt) for the independent rendering/vsync controls used during diagnosis.
 
-Appium selectors use English consistently. Desktop JVMs set en/US; Firefox sets en-US preferences. Android 13+ fixtures capture the original app locale before clearing data, temporarily set en-US, and restore the original override after cleanup without changing the system language. Linux modal dismissal sends Escape through the dedicated `linux: dismissDialog` driver command; page back retains Alt+Left. Older Android devices must already have an English system locale. Browser lifecycle scenarios restart Firefox with an isolated in-place profile so HttpOnly Cookies and encrypted IndexedDB records must survive process termination.
+Appium selectors use English consistently. Desktop JVMs set en/US; browser E2E variants set en-US preferences. Android 13+ fixtures capture the original app locale before clearing data, temporarily set en-US, and restore the original override after cleanup without changing the system language. Linux modal dismissal sends Escape through the dedicated `linux: dismissDialog` driver command; page back retains Alt+Left. Older Android devices must already have an English system locale. Browser lifecycle scenarios restart each browser with an isolated in-place profile so HttpOnly Cookies and encrypted IndexedDB records must survive process termination.
 
 ### Wasm browser unit tests
 
@@ -562,7 +573,7 @@ The expanded host-test allowlist includes in-process Ktor fixtures and local Luc
 
 Signin lifecycle regression coverage is in cloud/runtime RedisSessionStorageTest and cloud/server SigninLifecycleTest. The latter uses the existing PostgreSQL/Redis/filesystem/Lucene fixtures and checks real HTTP/WS cookie sharing, policy-close after revocation and panel session restore/revoke. Administrator signup must issue the success Cookie immediately; signout is idempotent after expiry, while signout-all requires an authenticated account.
 
-Run the real Firefox WebSocket regressions with `./gradlew :app:wasmAppium:appiumTest --tests '*test browser socket*' -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` in the configured Docker test environment. These use explicit UI sign-in and a test-only observer of native WebSocket connection and message counts. They cover transport disconnection and recovery without message replay, authenticated browser restart, sign-out, removed/expired browser Cookies, server revocation and expiry, replay of revoked/expired Cookies and rejection of an unapproved browser Origin. The observer stores no credentials, URLs or message bodies. The server-expiry test moves the isolated Redis session deadline into the past while keeping the browser Cookie and stored key; it does not shorten production timeouts. Redis idle/absolute expiry also has storage-level coverage.
+Run the three-browser WebSocket regressions with `./gradlew :app:wasmAppium:appiumTest --tests '*test browser socket*' -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` in the configured Docker test environment. These use explicit UI sign-in and a test-only observer of native WebSocket connection and message counts. They cover transport disconnection and recovery without message replay, authenticated browser restart, sign-out, removed/expired browser Cookies, server revocation and expiry, replay of revoked/expired Cookies and rejection of an unapproved browser Origin. The observer stores no credentials, URLs or message bodies. The server-expiry test moves the isolated Redis session deadline into the past while keeping the browser Cookie and stored key; it does not shorten production timeouts. Redis idle/absolute expiry also has storage-level coverage.
 
 Snapshot signing configuration is loaded at the cloud/server boundary into an in-memory Base64 PKCS#12 value shared with the PDF adapters. Both OpenPDF and PdfBox read buffered in-memory streams. The legacy file configuration is converted at startup; Base64 configuration never writes a decoded private-key file. SnapshotKeyStoreTest covers source precedence, legacy input, malformed Base64, missing/wrong passwords and redacted diagnostics. SnapshotTest exercises signed PDF generation using Base64 input.
 

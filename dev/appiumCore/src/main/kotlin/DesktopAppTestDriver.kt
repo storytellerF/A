@@ -89,7 +89,7 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                 "windows: invoke",
                 mapOf("elementId" to (element as org.openqa.selenium.remote.RemoteWebElement).id),
             )
-            element.getAttribute("States").orEmpty().split(",").contains("focused")
+            element.getAttribute("States").split(",").contains("focused")
         }
         driver.executeScript("windows: keys", mapOf("actions" to buildWindowsTextActions(text), "forceUnicode" to true))
     }
@@ -178,7 +178,7 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         val outputDir = File("build/test/appium-debug/DesktopAppiumTest")
         outputDir.mkdirs()
         val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        File(outputDir, "$safeName.xml").writeText(driver.pageSource.orEmpty())
+        File(outputDir, "$safeName.xml").writeText(driver.pageSource)
     }
 
     companion object {
