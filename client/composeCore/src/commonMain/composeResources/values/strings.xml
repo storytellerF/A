@@ -48,4 +48,6 @@
     <string name="copied">Copied</string>
     <string name="generate">Generate</string>
     <string name="confirm">Confirm</string>
+    <string name="unread_rooms">Unread rooms</string>
+    <string name="unread_messages">Unread messages</string>
 </resources>

@@ -15,7 +15,6 @@ import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
-import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TopicInfo
@@ -47,7 +46,6 @@ import com.storyteller_f.storage.RemoteKeyStorage
 import com.storyteller_f.storage.RemoteKeyStorage.Companion.NEXT_COLLECTION
 import com.storyteller_f.storage.RemoteKeyStorage.Companion.PRE_COLLECTION
 import com.storyteller_f.storage.RemoteKeys
-import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.RoomInfoStorage
 import com.storyteller_f.storage.TaskRecordCollection
 import com.storyteller_f.storage.TaskRecordInfoStorage
@@ -303,7 +301,7 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
     )
 
     override suspend fun clean(collection: TitleCollection) {
-        impl.clean(TitleCollection.Titles.getName())
+        impl.clean(collection.getName())
     }
 
     override fun observeDatum(key: String): Flow<TitleInfo?> = impl.observeDatum(TitleCollection.Titles.getName(), key)
@@ -319,115 +317,6 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
     }
 
     override suspend fun updateDocument(collection: TitleCollection, item: TitleInfo) {
-        val data = commonJson.encodeToString(item)
-        impl.update(collection.getName(), item.id.toString(), data)
-    }
-}
-
-class CommonStorageImpl(val appDatabase: AppDatabase) {
-    inline fun <reified T : Any> observeData(collection: String): PagingSource<Int, T> {
-        val source = appDatabase.getCommonDao().getAsSource(collection)
-        return WrappedPagingSource(source) { list ->
-            list.mapNotNull {
-                commonJson.safeDecodeFromStringOrNull(it.data)
-            }
-        }
-    }
-
-    inline fun <reified T : Any> observeDatum(collection: String, id: String): Flow<T?> {
-        val source = appDatabase.getCommonDao().getAsFlow(collection, id)
-        return source.map {
-            it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-        }
-    }
-
-    suspend fun clean(collection: String) {
-        appDatabase.getCommonDao().clean(collection)
-    }
-
-    suspend inline fun <reified T> getDocument(collection: String, id: String): T? {
-        val entity = appDatabase.getCommonDao().get(collection, id)
-        return entity?.data?.let { commonJson.safeDecodeFromStringOrNull(it) }
-    }
-
-    suspend fun saveLast(entity: CommonEntity) {
-        appDatabase.getCommonDao().saveLast(entity)
-    }
-
-    suspend fun saveFirst(entity: CommonEntity) {
-        appDatabase.getCommonDao().saveFirst(entity)
-    }
-
-    suspend fun delete(collection: String, key: String) {
-        appDatabase.getCommonDao().delete(collection, key)
-    }
-
-    suspend fun save(entity: CommonEntity) {
-        appDatabase.getCommonDao().insert(entity)
-    }
-
-    suspend fun update(collection: String, id: String, data: String) {
-        appDatabase.getCommonDao().updateData(collection, id, data)
-    }
-}
-
-class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
-    val impl = CommonStorageImpl(appDatabase)
-
-    private suspend fun saveToDefaultCollections(item: RoomInfo): CommonEntity {
-        val data = commonJson.encodeToString(item)
-        val entity = CommonEntity(item.id, RoomCollection.Rooms.getName(), data)
-        listOf(
-            entity,
-            entity.copy(id = item.aid),
-        ).forEach {
-            impl.save(it)
-        }
-        return entity
-    }
-
-    override suspend fun saveToDefault(item: RoomInfo) {
-        saveToDefaultCollections(item)
-    }
-
-    override suspend fun saveLast(collection: RoomCollection, item: RoomInfo) {
-        val commonEntity = saveToDefaultCollections(item)
-        if (collection !is RoomCollection.Rooms) {
-            val entity = commonEntity.copy(collection = collection.getName())
-            impl.saveLast(entity)
-        }
-    }
-
-    override suspend fun saveFirst(collection: RoomCollection, item: RoomInfo) {
-        val commonEntity = saveToDefaultCollections(item)
-        if (collection !is RoomCollection.Rooms) {
-            val entity = commonEntity.copy(collection = collection.getName())
-            impl.saveFirst(entity)
-        }
-    }
-
-    override fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo> =
-        impl.observeData(
-        collection.getName(),
-    )
-
-    override fun observeDatum(key: String): Flow<RoomInfo?> = impl.observeDatum(RoomCollection.Rooms.getName(), key)
-
-    override suspend fun getDocument(collection: RoomCollection, key: String): RoomInfo? =
-        impl.getDocument(
-        collection.getName(),
-        key,
-    )
-
-    override suspend fun delete(collection: RoomCollection, key: String) {
-        impl.delete(collection.getName(), key)
-    }
-
-    override suspend fun clean(collection: RoomCollection) {
-        impl.clean(RoomCollection.Rooms.getName())
-    }
-
-    override suspend fun updateDocument(collection: RoomCollection, item: RoomInfo) {
         val data = commonJson.encodeToString(item)
         impl.update(collection.getName(), item.id.toString(), data)
     }
@@ -660,6 +549,7 @@ class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
     override fun observeData(): PagingSource<Int, DownloadInfo> =
         WrappedPagingSource(
         appDatabase.getDownloadDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME),
+        ::getLocalRefreshKey,
     ) { entities ->
         entities.mapNotNull {
             commonJson.safeDecodeFromStringOrNull(it.data)
@@ -697,6 +587,7 @@ class RoomUploadInfoStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
     override fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo> =
         WrappedPagingSource(
         appDatabase.getUploadDao().getAsSource(collection.getName()),
+        ::getLocalRefreshKey,
     ) { entities ->
         entities.mapNotNull {
             commonJson.safeDecodeFromStringOrNull(it.data)

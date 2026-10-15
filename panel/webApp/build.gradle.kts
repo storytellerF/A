@@ -34,6 +34,7 @@ kotlin {
             implementation(projects.panel.composeApp)
             implementation(projects.client.composeCore)
             implementation(libs.ui)
+            implementation(libs.components.resources)
         }
     }
 }

@@ -18,6 +18,7 @@ import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.createCommunity
 import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.exitCommunity
+import com.storyteller_f.a.cloud.core.service.fillRoomActivities
 import com.storyteller_f.a.cloud.core.service.getCommunity
 import com.storyteller_f.a.cloud.core.service.getCommunityMemberInfos
 import com.storyteller_f.a.cloud.core.service.getCommunityRooms
@@ -36,8 +37,11 @@ import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.Route
+import kotlinx.collections.immutable.ImmutableList
 
 fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(handleResult(backend)) {
@@ -75,22 +79,22 @@ fun Route.bindCommunityRoute(backend: Backend) {
     }
 
     CustomApi.Communities.Id.Rooms.get(handleResult(backend)) { q, p ->
-        usePrincipalOrNull {
-            q.pagination(IdentifiablePagingGenerator, { l, p ->
+        usePrincipalOrNull { uid ->
+            q.pagination(IdentifiablePagingGenerator, { l: ImmutableList<RoomInfo>, p ->
                 RoomInfoListResponse(l, p)
             }) { f ->
-                backend.getCommunityRooms(p.id, f, it, q.joinStatus)
-            }
+                backend.getCommunityRooms(p.id, f, uid, q.joinStatus)
+            }.mapResult { backend.fillRoomActivities(uid, it) }
         }
     }
 
     CustomApi.Communities.Id.Rooms.search(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
-            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+            q.pagination(GeneralOffsetPagingGenerator, { l: ImmutableList<RoomInfo>, p ->
                 RoomInfoListResponse(l, p)
             }) { f ->
                 backend.searchCommunityRooms(uid, p.id, f, q)
-            }
+            }.mapResult { backend.fillRoomActivities(uid, it) }
         }
     }
 }

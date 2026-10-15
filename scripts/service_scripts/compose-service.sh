@@ -278,3 +278,9 @@ echo "Executing: ${CMD[@]}"
 # "${CMD[@]}"
 
 docker compose "${ENV_FILES[@]}" "${COMPOSE_FILES[@]}" "${custom_cmd_parts[@]}"
+
+# Nginx resolves named upstreams when loading its configuration. Recreated services
+# can have different addresses even when the proxy itself did not change.
+if [[ "${custom_cmd_parts[0]:-}" == "up" ]] && has_profile bunker; then
+    docker compose "${ENV_FILES[@]}" "${COMPOSE_FILES[@]}" exec -T bunkerweb nginx -s reload
+fi

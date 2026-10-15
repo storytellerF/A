@@ -50,6 +50,7 @@ import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.md5
+import org.jetbrains.exposed.v1.core.CustomFunction
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -57,6 +58,7 @@ import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
+import org.jetbrains.exposed.v1.core.longLiteral
 import org.jetbrains.exposed.v1.r2dbc.Query
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
 import org.jetbrains.exposed.v1.r2dbc.insert
@@ -264,7 +266,13 @@ class ExposedUserDatabase(
         check(
             UserTopicReads.upsert(onUpdate = {
                 it[UserTopicReads.updatedAt] = userTopicRead.updatedAt
-                it[UserTopicReads.topicId] = userTopicRead.topicId
+                it[UserTopicReads.topicId] =
+                    CustomFunction(
+                        "GREATEST",
+                        UserTopicReads.topicId.columnType,
+                        UserTopicReads.topicId,
+                        longLiteral(userTopicRead.topicId),
+                    )
             }) {
                 it[uid] = userTopicRead.uid
                 it[updatedAt] = userTopicRead.updatedAt

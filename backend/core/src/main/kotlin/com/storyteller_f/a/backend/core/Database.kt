@@ -20,6 +20,7 @@ import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.ReactionRecord
 import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.a.backend.core.types.RoomActivityRecord
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Title
@@ -321,6 +322,8 @@ interface TopicDatabase {
         pinType: TopicPinSearch?,
     ): Result<PaginationResult<Topic>>
 
+    suspend fun getJoinedCommunityPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
+
     suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>>
 }
 
@@ -541,6 +544,12 @@ interface ContainerDatabase {
     suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
     suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
     suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int>
+    suspend fun getUserUnreadMessageCount(uid: PrimaryKey): Result<Long>
+    suspend fun getRoomActivityRecords(uid: PrimaryKey, roomIds: List<PrimaryKey>): Result<List<RoomActivityRecord>>
+    suspend fun getUnreadRoomActivityRecords(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): Result<PaginationResult<RoomActivityRecord>>
 
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,

@@ -7,6 +7,21 @@ For build, test, and independent service setup instructions, see [DEVELOPMENT.md
 
 [Download the latest alpha build](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
+## Home on larger screens
+
+Home keeps World, Communities and Rooms as local sections. On larger windows, World keeps a bounded
+single reading flow with a joined-community preview, Communities uses more columns, and Rooms shows
+additional existing metadata. Community and member search results adapt their column count to the
+available content area independently of the input.
+Resizing preserves the selected section and its reading state. Wide lists provide an explicit Refresh action.
+Community and user detail sections preserve selection when resizing; room and topic details keep their
+reading content and message input aligned in a bounded column.
+Joined room rows include the latest message preview, author/time and an exact unread-message count.
+The Rooms navigation badge shows the total unread messages across all joined rooms.
+Wide World's context includes bounded unread-room and joined-community pinned-topic previews, each
+with its own refresh and loading/error state. Unavailable private messages show a neutral unavailable
+label; previews stay in memory and are not saved as plaintext.
+
 ## Storage and Search Availability
 
 After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted

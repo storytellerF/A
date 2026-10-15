@@ -5,6 +5,7 @@
 package com.storyteller_f.a.dev.appium
 
 import org.openqa.selenium.By
+import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
 import org.openqa.selenium.Keys
 import org.openqa.selenium.OutputType
@@ -18,9 +19,49 @@ import java.time.Duration
 
 /** Drives Compose/Wasm through its transparent Appium-only HTML semantics overlay. */
 class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
-    internal fun socketProbe() = WasmSocketProbe(browser)
-
     private val wait get() = WebDriverWait(browser, Duration.ofSeconds(UI_WAIT_SECONDS))
+
+    fun resizeViewport(width: Int, height: Int) {
+        // Set width before measuring responsive browser chrome for the exact content viewport.
+        browser.manage().window().size = Dimension(width, height)
+        waitForUiCommit()
+        val frame =
+            requireNotNull(
+                (browser as JavascriptExecutor).executeScript(
+                    "return [window.outerWidth - window.innerWidth, window.outerHeight - window.innerHeight];",
+                ),
+            ) as List<*>
+        browser.manage().window().size =
+            Dimension(
+                width + (requireNotNull(frame[0]) as Number).toInt(),
+                height + (requireNotNull(frame[1]) as Number).toInt(),
+            )
+        waitForUiCommit()
+        val actual =
+            browser.executeScript(
+                "return [window.innerWidth, window.innerHeight, window.outerWidth, window.outerHeight];",
+            )
+        check((requireNotNull(actual) as List<*>).take(2) == listOf(width.toLong(), height.toLong())) {
+            saveFailureSnapshot("resize")
+            "Expected viewport ${width}x$height; actual=$actual; initial frame=$frame"
+        }
+    }
+
+    fun assertInputText(expected: String) {
+        wait.until {
+            (browser as JavascriptExecutor).executeScript(
+                "return document.querySelector('[data-appium-input=true]')?.value === arguments[0];",
+                expected,
+            ) == true && inputLengthAttributeMatchesValue("data-appium-input-compose-length")
+        }
+    }
+
+    fun assertUnreadRoomsIndicator(visible: Boolean) {
+        val locator = descriptionLocator("Rooms, Unread messages")
+        if (visible) assertVisible(locator) else assertNotVisible(locator, 5)
+    }
+
+    internal fun socketProbe() = WasmSocketProbe(browser)
 
     override suspend fun clickByDescription(description: String) = click(descriptionLocator(description))
 
@@ -169,7 +210,8 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     private fun findOnScreen(locator: By): WebElement =
         wait.until {
-        browser.findElements(locator).firstOrNull(::isOnScreen)
+        // Overlay nodes share a z-index; later dialog nodes are painted above page controls.
+        browser.findElements(locator).lastOrNull(::isOnScreen)
     }
 
     private fun isOnScreen(element: WebElement): Boolean =
@@ -198,6 +240,15 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         val name = "$prefix-${System.currentTimeMillis()}"
         runCatching {
             File(outputDir, "$name.html").writeText(browser.pageSource.orEmpty())
+            val diagnostics =
+                (browser as JavascriptExecutor).executeScript(
+                    """
+                    return JSON.stringify({http: window.appiumHttpProbe, workers: window.appiumWorkerProbe,
+                      errors: (window.appiumErrors || []).length});
+                    """.trimIndent(),
+                )
+            File(outputDir, "$name.json").writeText(diagnostics?.toString().orEmpty())
+
             (browser as? TakesScreenshot)?.getScreenshotAs(OutputType.FILE)
                 ?.copyTo(File(outputDir, "$name.png"), overwrite = true)
         }

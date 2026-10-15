@@ -66,4 +66,23 @@
     <string name="home_start_destination_world">原来的首页</string>
     <string name="home_start_destination_communities">加入的社区</string>
     <string name="home_start_destination_rooms">加入的聊天室</string>
+    <string name="home_context_description">快速查看已加入的社区。</string>
+    <string name="view_all">查看全部</string>
+    <string name="community_view_all">全部</string>
+    <string name="community_view_poster">海报</string>
+    <string name="room_members">成员</string>
+    <string name="room_status">状态</string>
+    <string name="room_unread">未读</string>
+    <string name="room_read_only">只读</string>
+    <string name="room_community">社区</string>
+    <string name="room_no_community">私人房间</string>
+    <string name="activity_empty">暂无内容</string>
+    <string name="activity_unavailable">消息预览不可用</string>
+    <string name="activity_load_failed">活动加载失败，请刷新重试。</string>
+    <string name="activity_no_messages">暂无消息</string>
+    <string name="activity_empty_message">空消息</string>
+    <string name="activity_attachments">附件</string>
+    <string name="activity_preview_count">显示 %1$d 项，共 %2$d 项</string>
+    <string name="activity_unread_rooms">未读房间</string>
+    <string name="activity_pinned_topics">置顶话题</string>
 </resources>

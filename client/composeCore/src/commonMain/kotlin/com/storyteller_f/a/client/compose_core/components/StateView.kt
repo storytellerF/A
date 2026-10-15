@@ -16,12 +16,16 @@ import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +34,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -39,28 +46,70 @@ import androidx.paging.compose.itemKey
 import com.storyteller_f.a.client.compose_core.Res
 import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.no_content_yet
+import com.storyteller_f.a.client.compose_core.refresh
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.stringResource
 
 const val REFRESH_AFTER = 300L
+
+@Composable
+private fun PagingRefreshAction(enabled: Boolean, refresh: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        TextButton(
+            onClick = refresh,
+            modifier =
+            Modifier.appiumSemantics(
+                text = stringResource(Res.string.refresh),
+                onClick = refresh,
+            ),
+            enabled = enabled,
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+            Text(stringResource(Res.string.refresh), Modifier.padding(start = 4.dp))
+        }
+    }
+}
+
+@Composable
+private fun <T : Any> ObservePagingRefresh(pagingItems: LazyPagingItems<T>, refreshEvents: Flow<Any>?) {
+    val owner = LocalLifecycleOwner.current
+    LaunchedEffect(pagingItems, owner, refreshEvents) {
+        if (refreshEvents != null) {
+            owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                pagingItems.refresh()
+                refreshEvents.collect { pagingItems.refresh() }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
 fun <T : Any> StateView(
     pagingViewModel: PagingViewModel<T>,
     modifier: Modifier = Modifier,
+    showRefresh: Boolean = false,
+    onRefresh: () -> Unit = {},
+    refreshEvents: Flow<Any>? = null,
     content: @Composable (LazyPagingItems<T>) -> Unit,
 ) {
     val pagingItems = pagingViewModel.flow.collectAsLazyPagingItems()
+    ObservePagingRefresh(pagingItems, refreshEvents)
+    val refresh = {
+        onRefresh()
+        pagingItems.refresh()
+    }
     var pullRefreshing by remember { mutableStateOf(false) }
     val refreshState =
         rememberPullRefreshState(refreshing = pullRefreshing, onRefresh = {
             pullRefreshing = true
-            pagingItems.refresh()
+            refresh()
         })
     val refreshLoadState = pagingItems.loadState.refresh
     LaunchedEffect(key1 = pullRefreshing, key2 = refreshLoadState) {
@@ -71,22 +120,30 @@ fun <T : Any> StateView(
             pullRefreshing = false
         }
     }
-    Box(modifier = modifier.pullRefresh(refreshState)) {
-        if (pagingItems.itemCount > 0) {
-            content(pagingItems)
-            StateViewTopIndicator(pagingItems, pullRefreshing)
-        } else {
-            CenterBox {
-                when (val state = pagingItems.loadState.refresh.toLoadingState()) {
-                    is LoadingState.Error ->
-                        ExceptionCell(state.e) {
-                            pagingItems.refresh()
+    BoxWithConstraints(modifier = modifier.pullRefresh(refreshState)) {
+        val desktopRefresh = showRefresh || maxWidth >= 600.dp
+        Column(Modifier.fillMaxSize()) {
+            if (desktopRefresh) {
+                PagingRefreshAction(refreshLoadState !is LoadState.Loading, refresh)
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                if (pagingItems.itemCount > 0) {
+                    content(pagingItems)
+                    StateViewTopIndicator(pagingItems, pullRefreshing, refresh)
+                } else {
+                    CenterBox {
+                        when (val state = pagingItems.loadState.refresh.toLoadingState()) {
+                            is LoadingState.Error ->
+                                ExceptionCell(state.e) {
+                                    refresh()
+                                }
+
+                            is LoadingState.Done ->
+                                Text(text = stringResource(Res.string.no_content_yet))
+
+                            else -> CircularProgressIndicator()
                         }
-
-                    is LoadingState.Done ->
-                        Text(text = stringResource(Res.string.no_content_yet))
-
-                    else -> CircularProgressIndicator()
+                    }
                 }
             }
         }
@@ -153,7 +210,11 @@ private fun <T> StateViewTopIndicator(state: LoadingState?, handler: LoadingHand
 }
 
 @Composable
-private fun <T : Any> StateViewTopIndicator(pagingItems: LazyPagingItems<T>, pullRefreshing: Boolean) {
+private fun <T : Any> StateViewTopIndicator(
+    pagingItems: LazyPagingItems<T>,
+    pullRefreshing: Boolean,
+    refresh: () -> Unit,
+) {
     val combinedLoadStates = pagingItems.loadState
     val refreshState = combinedLoadStates.refresh.toLoadingState()
     val newState =
@@ -165,7 +226,7 @@ private fun <T : Any> StateViewTopIndicator(pagingItems: LazyPagingItems<T>, pul
     StateViewTopIndicatorInternal(
         newState,
     ) {
-        pagingItems.refresh()
+        refresh()
     }
 }
 

@@ -148,13 +148,15 @@ fun <C : Any, T : Any> buildPager(
     collection: C,
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
+    onUpdated: suspend () -> Unit = {},
     service: suspend (String?, Int) -> Result<ListResponse<T>>,
 ): Pager<String, T> =
-    buildPager(
+    buildCollectionPager(
     collection,
     wrapper,
     storage,
     RegularPagingSource(service),
+    onUpdated,
 )
 
 @OptIn(ExperimentalPagingApi::class)
@@ -163,21 +165,22 @@ fun <C : Any, T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     source: PagingSource<String, T>,
+): Pager<String, T> = buildCollectionPager(collection, wrapper, storage, source)
+
+@OptIn(ExperimentalPagingApi::class)
+private fun <C : Any, T : Any> buildCollectionPager(
+    collection: C,
+    wrapper: RemoteKeyStorageWrapper,
+    storage: CollectionListStorage<C, T>,
+    source: PagingSource<String, T>,
+    onUpdated: suspend () -> Unit = {},
 ): Pager<String, T> =
     Pager(
     PagingConfig(pageSize = 20),
     remoteMediator =
     CustomRemoteMediator(wrapper, source) { data, loadType ->
-        if (loadType == LoadType.REFRESH) {
-            storage.clean(collection)
-        }
-        data.forEach {
-            if (loadType == LoadType.PREPEND) {
-                storage.saveFirst(collection, it)
-            } else {
-                storage.saveLast(collection, it)
-            }
-        }
+        updateCollectionPage(collection, storage, data, loadType)
+        onUpdated()
     },
 ) {
     CompatPagingSource(storage.observeData(collection), IntKeyConverter)
@@ -195,16 +198,7 @@ fun <C : Any, T : Any> buildPager(
     PagingConfig(pageSize = 20),
     remoteMediator =
     CustomRemoteMediator(wrapper, networkSource) { data, loadType ->
-        if (loadType == LoadType.REFRESH) {
-            storage.clean(collection)
-        }
-        data.forEach {
-            if (loadType == LoadType.PREPEND) {
-                storage.saveFirst(collection, it)
-            } else {
-                storage.saveLast(collection, it)
-            }
-        }
+        updateCollectionPage(collection, storage, data, loadType)
     },
     pagingSourceFactory = localSourceFactory,
 )
@@ -239,3 +233,18 @@ fun <T : Any> buildPager(
     },
     pagingSourceFactory = localSourceFactory,
 )
+
+private suspend fun <C : Any, T : Any> updateCollectionPage(
+    collection: C,
+    storage: CollectionListStorage<C, T>,
+    data: List<T>,
+    loadType: LoadType,
+) {
+    if (loadType == LoadType.REFRESH) {
+        storage.replace(collection, data)
+    } else {
+        data.forEach {
+            if (loadType == LoadType.PREPEND) storage.saveFirst(collection, it) else storage.saveLast(collection, it)
+        }
+    }
+}

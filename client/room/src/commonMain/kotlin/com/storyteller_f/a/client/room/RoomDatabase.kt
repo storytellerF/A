@@ -16,6 +16,7 @@ import androidx.room3.OnConflictStrategy.Companion.REPLACE
 import androidx.room3.Query
 import androidx.room3.RoomDatabase
 import androidx.room3.RoomDatabaseConstructor
+import androidx.room3.Transaction
 import androidx.room3.paging.PagingSourceDaoReturnTypeConverter
 import kotlinx.coroutines.flow.Flow
 
@@ -45,6 +46,16 @@ expect fun getRoomDatabase(scope: String): AppDatabase
 interface CommonDao {
     @Insert(onConflict = REPLACE)
     suspend fun insert(item: CommonEntity)
+
+    @Insert(onConflict = REPLACE)
+    suspend fun insertAll(items: List<CommonEntity>)
+
+    @Transaction
+    suspend fun replaceCollection(collection: String, items: List<CommonEntity>, details: List<CommonEntity>) {
+        clean(collection)
+        insertAll(details)
+        insertAll(items)
+    }
 
     @Query("delete from CommonEntity where collection = :collection and id = :id")
     suspend fun delete(collection: String, id: String)

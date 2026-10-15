@@ -1,5 +1,175 @@
 # Development
 
+## Adaptive Home UI
+
+Home is an independent root destination; entering a community, room, topic or user pushes normal back
+history. The former root list/detail metadata and list-pane replacement tests were removed because that
+navigation contract no longer applies. Home, Community and User each share one page-local pager across rail/bottom navigation.
+Room and Topic detail content and composers share a centered reading column capped at 900dp.
+Keep content-width adaptation in the section or shared presentation component, after navigation and
+padding are deducted. Home context belongs only to World and uses bounded unread-room, pinned-topic and joined-community
+previews. Room summaries and exact unread counts use the activity endpoints described below.
+
+Run `./gradlew :app:composeApp:jvmTest :app:composeApp:adaptiveUiTest -Pserver.flavor=dev
+-Pserver.buildType=debug --console=plain` on one line. `adaptiveUiTest` runs only the runtime-free Home
+layout fixtures, separately from the regular host suite and without a backend or device. It checks section,
+search and scroll retention during resizing, context visibility, and result width/short-window scrolling.
+Use `./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
+for presentation snapshots. Snapshot fixtures must remain independent of app runtime CompositionLocals.
+
+## Room activity and Home context data
+
+The protected read endpoints use the current opaque Cookie session, with no target-user parameter:
+
+| Endpoint | Client request | Result / ordering |
+| --- | --- | --- |
+| `GET /users/unread/messages` | `getUnreadMessageCount()` | Exact total unread direct messages in all joined rooms, independent of paging |
+| `GET /users/unread/room-activities` | `getUnreadRoomActivities(PaginationQuery(...))` | Complete joined unread set, filtered before paging; latest direct-message ID descending |
+| `GET /users/pinned-topics` | `getJoinedPinnedTopics(PaginationQuery(...))` | Direct pinned topics in joined communities, topic ID descending |
+
+Both paged endpoints accept existing next/pre tokens and page sizes 1–100. Previous pages are returned
+in the same descending presentation order. Room activity cursors use `latestMessageId`, not the room ID;
+this avoids returning a room again for its older unread messages. Concurrent activity may move items
+between pages, so consumers refresh to obtain the current ordering; these are live queries, not snapshots.
+
+`RoomActivityInfo` is a request-boundary projection and does not change `RoomInfo`. It contains room
+metadata, a nullable latest message ID/body and an explicit `Long` unread-message count. `TopicInfo`
+provides the content/type, author information and stored creation timestamp. Consumers derive a bounded
+preview after decryption rather than requiring a server-generated plain summary. Empty rooms have no
+latest message and a zero count. Deleted messages disappear from the projection and count. Invited
+notification-room recipients keep their existing read access; these new lists deliberately cover joined
+rooms, rather than changing invitation or notification semantics. Read-only joined rooms remain included.
+
+Reverse room message lists keep a permanent 1dp latest-edge item before conditional loading rows.
+It anchors new arrivals after Send while the user is at the latest edge; history keeps the visible
+message key. Read markers use the maximum actual visible topic key, ignoring anchors/loading rows;
+they do not assume display order or mark unseen messages read. Adaptive UI coverage checks both
+latest-edge following and history retention.
+
+Counts include all existing direct messages after the user's room read marker (or all direct messages
+when no marker exists), including the user's own messages; replies are excluded. Read markers advance
+with an atomic database maximum, so viewing history or receiving an older request late cannot make
+already-read messages unread again. IDs are compared only
+as ordered read markers, never subtracted to calculate a count. `UnreadRoomsResponse.unreadCount`
+continues to count distinct unread rooms and shares the server-filtered grouped query. A page's total is
+its complete eligible room/topic count, not the page length.
+
+The server reads room/member/count/topic/author data in batches. Inaccessible or unjoined room IDs are
+omitted without disclosing whether they exist. Private bodies remain encrypted on the wire, with only
+the current member's encrypted key. Client requests reuse `processEncryptedTopic`; missing keys or
+failed decryption preserve the existing unavailable/failure representation, never a plaintext fallback.
+There is no new background polling or session renewal. Consumers request fresh data on explicit refresh
+or existing feature events; after read, exit, unpin or deletion the next request reflects current state.
+
+Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest` through the QEMU skill's
+`run-testcontainers.sh`, with the usual dev/debug properties. PostgreSQL plus the existing filesystem and
+Lucene RPC containers cover room-page activity ordering, totals beyond loaded pages, direct-message
+counts/read markers, both cursor directions,
+read-only rooms, deletion, private wire/client content, membership loss, pinned scope and request limits.
+
+## Activity preview integration
+
+Joined-room lists, joined-room search, community-room lists and community-room search return an
+`activities` projection alongside the existing `data` and pagination. It covers eligible joined rooms from
+that exact page; anonymous and unjoined rows have no private activity projection. Admin lists retain the
+compatible empty default. Client request wrappers decrypt activity through the existing private-topic
+boundary before delivering the page. `RoomListPreviewHost` receives those pages without making another
+request and retains their ephemeral previews across page boundaries. Refresh replaces the projection;
+local Room storage still persists only `RoomInfo`, never decrypted activity. Room events and lifecycle
+resume refresh the existing pager, preserving its scroll owner. Both room metadata and activity arrive
+from one list request, including search/community callers. The navigation badge displays the server's
+complete unread-message total, not a sum of loaded rows. The legacy unread-room count keeps its meaning.
+
+World's wide-only context independently shows at most three unread rooms and three pinned topics,
+with actual source totals when the preview is partial, plus the joined-community preview. Context scrolling
+is independent of the feed. Room/topic entries open existing root detail destinations; the Rooms action
+opens the existing Home section. No new route-level splitting or general activity-feed contract is added.
+
+`ActivityPreviewHost` is UI-framework-independent and uses an injected application-owned serial
+coordination dispatcher. Requests, decryption and bounded text/date preparation run on the worker
+dispatcher. Results are immutable, ephemeral presentation state; decrypted previews are not stored.
+Superseded jobs are cancelled and cannot publish late results. Session-keyed UI collectors reset on
+account changes; lifecycle stop pauses/cancels requests and resume fetches current data. Closing the
+composition cancels its Host. Room create/change/read/join/exit and community membership events update
+eligible data; room events do not restart pinned previews. Successful pin/unpin mutations emit the shared
+topic-change event from their request boundary, including dialog and menu callers.
+
+Pure snapshot fixtures cover compact/wide activity rows, larger text, unavailable private summaries and
+context errors. Headless tests cover page-boundary retention, refresh replacement, cancellation, source
+independence and event filtering. Adaptive UI tests cover preview retry/navigation, exact counts during
+resizing, list refresh callbacks, and active/inactive lifecycle binding. Home's unread navigation badge
+refreshes on active read/message/membership events, explicit source refresh and return to Home. Refresh
+waits for an existing query to complete so an update cannot be dropped while loading; its localized label
+identifies the unread state in both rail and bottom navigation. Native room cells retain their merged
+content text for assistive technology; the browser test overlay keeps its room-name navigation label.
+
+The `test activity previews track reading sending and navigation` Appium scenario registers two synthetic
+accounts against the isolated real backend and explicitly signs in through the UI. Messages use the
+production WebSocket channel. It verifies the latest summary, exact unread count, room/topic navigation,
+read-marker clearing, keyboard send, updated preview and navigation-badge clearing. The private-room
+variant verifies real encrypted message delivery and client decryption. A separate refresh scenario
+marks the room read through another session, then verifies that UI refresh clears rows and navigation
+together. On wide Android
+viewports it also verifies unread/pinned context; the desktop variant adds repeated narrow/medium/wide/
+short-window resizing and draft retention. Existing room-publication E2E remains compatible. Windows
+viewport changes target the verified test JVM's native window, with DPI conversion; Java-agent elements
+cannot use the driver's UIA window-resize path.
+
+Run `:app:androidAppium:appiumTest --tests '*test activity previews*'` with the usual dev/debug properties
+through the configured Docker test environment and a leased device. Temporary Android size/density,
+power and locale changes must be restored. Desktop acceptance uses the same named test under
+`:app:desktopAppium:appiumTest` after preparing its runtime classpath. It requires an interactive unlocked
+desktop for native keyboard/Escape input; an AWT accessibility tree alone is insufficient. Do not claim
+native desktop or browser acceptance from Android/host results. Keep issue #60 open through review and
+remaining platform checks.
+
+
+The browser runner now reuses the same public/private activity and cross-session refresh scenarios.
+Real Firefox acceptance covers explicit sign-in, encrypted previews, exact counts and navigation badges,
+unread/pinned context navigation, reading, sending and draft retention across 500/900/1600px widths
+and a 500px-high window. The existing publication, registration and sign-in/sign-out restart scenarios
+provide selector and authentication regression coverage. Capture the rendered page as well as the HTML
+semantics overlay; new preview text/actions must use the existing Appium-only bridge without changing
+native accessibility. Overlay nodes have equal stacking indices, so the driver selects the last matching
+visible node to respect foreground dialog order when a background page has the same button label.
+Bridge metadata updates during recomposition even when control dimensions do not change. Both activity
+variants revisit the same room three additional times after sending. Failure artifacts include HTTP and
+SQLite worker operation counts, without credentials, addresses, SQL or message bodies.
+
+Firefox's native window may enforce a 500px minimum width. Browser compact coverage uses that real
+viewport; desktop coverage remains 480px. Browser chrome changes height during resizing, so establish
+the width before measuring its frame and verify the resulting content dimensions exactly. Verify drafts
+against the current HTML input value and Compose acknowledgement after every viewport transition.
+Run the activity tests with `:app:wasmAppium:appiumTest --tests '*test activity previews*'`
+and the refresh test with `--tests '*test room refresh clears*'`, using the same dev/debug and Docker
+prerequisites. When using an already installed Firefox, set Selenium's `SE_BROWSER_PATH` to its
+executable and `SE_OFFLINE=true` to avoid unrelated browser-download checks; do not skip product tests
+or change their timeouts to hide environment failures.
+
+
+Paging clients treat server page tokens as opaque strings and retain the returned item order. Local
+Room offsets belong only to the database PagingSource. Its mapped source supplies Room's centered
+offset refresh policy for a new generation, and CompatPagingSource converts local keys without losing
+placeholder counts. RemoteMediator REFRESH follows the returned next tokens until it covers the
+previous cached range (at least initialLoadSize), then commits the replacement once. Failed or cancelled
+requests do not publish a partial window or advance stored remote keys. Room replaces list records,
+detail IDs and aliases in one transaction; preview Hosts publish staged pages after that commit.
+There is no UI-managed request ledger, token parsing, ID-based seek or manual scroll restoration.
+
+Collection refresh in `client/room` deletes only the requested list's named collection. Room and title
+refreshes preserve their default detail caches and other lists; clearing the defaults can invalidate an
+open detail page when the underlying Home list refreshes. `:client:room:jvmTest` runs shared
+headless tests against real SQLite for this boundary, including detail aliases. Its temporary database
+and native-driver files stay under the module build directory and use unique test scopes.
+
+Wasm SQLite cancellation waits for pending worker responses. If an allocation cannot be delivered to
+its cancelled caller, close the new connection/statement. Rollback/commit/savepoint-release preparation
+and stepping must finish non-cancellably: Room's pool cleanup performs rollback before recycling its
+permit, and cancelling that rollback can strand the single connection and leave later detail pages
+loading forever. Normal statements still reject cancellation and no business operation is replayed.
+`:client:room:wasmJsBrowserTest` covers response waiting, discarded allocation cleanup and cancelled
+finalization; repeated real Firefox navigation exercises the complete Room/worker boundary.
+
 ## Temporary dependency pins
 
 PostgreSQL R2DBC is pinned to `1.1.2.RELEASE` while
@@ -106,6 +276,14 @@ at `/etc/nginx/conf.d/default.conf`. The Wasm images contain the built site, not
 configuration. After editing the host configuration, reload Nginx or recreate the containers;
 no image rebuild is required. Standalone image runs must supply the same configuration to
 enable the required COOP/COEP headers.
+
+Docker builds rename each Wasm entry script with its SHA256 content prefix and update
+its index reference. A separate content digest versions Compose resource URLs through
+`configureWebResources`, keeping translated strings and generated byte offsets in sync.
+Keep HTML and mutable resource URLs subject to cache validation
+(`Cache-Control: no-cache`); otherwise a browser can retain an old entry script across
+deployments and load a different client than fresh HTTP probes. Verify the browser's
+loaded Wasm filenames against the deployed image when accepting an upgrade.
 
 ## Adminer reverse proxy
 
@@ -387,3 +565,14 @@ Signin lifecycle regression coverage is in cloud/runtime RedisSessionStorageTest
 Run the real Firefox WebSocket regressions with `./gradlew :app:wasmAppium:appiumTest --tests '*test browser socket*' -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` in the configured Docker test environment. These use explicit UI sign-in and a test-only observer of native WebSocket connection and message counts. They cover transport disconnection and recovery without message replay, authenticated browser restart, sign-out, removed/expired browser Cookies, server revocation and expiry, replay of revoked/expired Cookies and rejection of an unapproved browser Origin. The observer stores no credentials, URLs or message bodies. The server-expiry test moves the isolated Redis session deadline into the past while keeping the browser Cookie and stored key; it does not shorten production timeouts. Redis idle/absolute expiry also has storage-level coverage.
 
 Snapshot signing configuration is loaded at the cloud/server boundary into an in-memory Base64 PKCS#12 value shared with the PDF adapters. Both OpenPDF and PdfBox read buffered in-memory streams. The legacy file configuration is converted at startup; Base64 configuration never writes a decoded private-key file. SnapshotKeyStoreTest covers source precedence, legacy input, malformed Base64, missing/wrong passwords and redacted diagnostics. SnapshotTest exercises signed PDF generation using Base64 input.
+
+When deploying from an isolated source checkout, reconnect the existing filesystem
+and Lucene bind-mount directories before the first `up`; they resolve relative to
+that checkout, unlike named PostgreSQL volumes. Preserve newly created directories
+separately while correcting a mistaken mount. The Compose wrapper reloads BunkerWeb
+Nginx after `up` to resolve current service addresses after container replacement.
+
+Dockerfile base images and build frontends retain readable version tags and pin their
+manifest digests. For upgrades, resolve each upstream manifest with
+`docker buildx imagetools inspect <image>:<version>` and update its digest explicitly.
+Retry transient registry connection failures a few times before investigating further.

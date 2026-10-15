@@ -9,13 +9,22 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.configureWebResources
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalResourceApi::class)
 fun main() {
+    val resourceVersion = document.querySelector("meta[name='compose-resource-version']")?.getAttribute("content")
+    if (!resourceVersion.isNullOrEmpty()) {
+        configureWebResources {
+            resourcePathMapping { path -> "$path?v=$resourceVersion" }
+        }
+    }
     ComposeViewport {
         val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: getWasmPanelServerUrl()
         val panelUiViewModel = remember(httpUrl) { PanelUIViewModel(MainScope(), httpUrl) }

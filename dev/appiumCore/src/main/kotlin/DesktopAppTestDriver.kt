@@ -165,6 +165,15 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         }
     }
 
+    fun resizeWindow(width: Int, height: Int) {
+        windows?.synchronizeWindow()
+        if (windows != null) {
+            windows.resizeWindow(width, height)
+        } else {
+            driver.manage().window().size = org.openqa.selenium.Dimension(width, height)
+        }
+    }
+
     override suspend fun saveSnapshot(name: String) {
         val outputDir = File("build/test/appium-debug/DesktopAppiumTest")
         outputDir.mkdirs()

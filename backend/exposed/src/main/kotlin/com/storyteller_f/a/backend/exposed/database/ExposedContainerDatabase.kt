@@ -256,31 +256,16 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
         }
     }
 
+    override suspend fun getRoomActivityRecords(uid: PrimaryKey, roomIds: List<PrimaryKey>) =
+        queryRoomActivityRecords(uid, roomIds)
+
+    override suspend fun getUnreadRoomActivityRecords(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
+        queryUnreadRoomActivityRecords(uid, fetch)
+
+    override suspend fun getUserUnreadMessageCount(uid: PrimaryKey) = countUnreadRoomMessages(uid)
+
     override suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int> =
-        databaseSession.dbSearch {
-        search {
-            Members
-                .join(Topics, JoinType.INNER, Members.objectId, Topics.parentId) {
-                    Topics.parentType eq ObjectType.ROOM
-                }
-                .join(UserTopicReads, JoinType.LEFT, Members.objectId, UserTopicReads.objectId) {
-                    UserTopicReads.uid eq Members.uid and (UserTopicReads.objectType eq ObjectType.ROOM)
-                }
-                .select(Members.objectId)
-                .where {
-                    Members.uid eq uid and
-                        (Members.objectType eq ObjectType.ROOM) and
-                        (Members.status eq MemberStatus.JOINED) and
-                        Members.joinedTime.isNotNull() and
-                        (UserTopicReads.topicId.isNull() or (UserTopicReads.topicId less Topics.id))
-                }
-        }
-        map {
-            it[Members.objectId]
-        }
-    }.map { unreadRoomIds ->
-        unreadRoomIds.distinct().size
-    }
+        countUnreadRoomActivities(uid).map { Math.toIntExact(it) }
 
     override suspend fun getMemberPaginationResult(objectId: PrimaryKey?, word: String?, fetch: PrimaryKeyFetch) =
         paginationFromResults(

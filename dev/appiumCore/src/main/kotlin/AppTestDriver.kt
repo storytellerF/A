@@ -21,6 +21,12 @@ interface AppTestDriver {
     /** Dismisses an open modal using the platform back/Escape action. */
     suspend fun dismissDialog()
 
+    /** Hides the software keyboard before page navigation; desktop has no software keyboard. */
+    suspend fun dismissKeyboard() = Unit
+
+    /** Uses the platform's visible refresh control or pull gesture. */
+    suspend fun refreshList() = clickByText("Refresh")
+
     suspend fun navigateBack()
     suspend fun saveSnapshot(name: String)
 }

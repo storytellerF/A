@@ -22,6 +22,18 @@ class WasmAppiumTest : AppiumTestBase() {
         )
 
     @Test
+    fun `test activity previews track reading sending and navigation`() =
+        testActivityPreviewByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
+    fun `test activity previews decrypt private rooms`() =
+        testActivityPreviewByHelper(name.methodName, targetHelper, platformHelper, privateRoom = true)
+
+    @Test
+    fun `test room refresh clears cross session unread state`() =
+        testRoomActivityRefreshByHelper(name.methodName, targetHelper, platformHelper)
+
+    @Test
     fun `test browser socket server expiry stops reconnect`() =
         testBrowserSocketServerExpiry(name.methodName, targetHelper, platformHelper)
 

@@ -1,8 +1,8 @@
-# syntax=docker/dockerfile:1.7
+# syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 
 ARG BUILDER_STAGE=source-builder
 
-FROM eclipse-temurin:21-alpine AS source-builder
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS source-builder
 
 RUN apk add --no-cache bash curl
 
@@ -25,14 +25,14 @@ RUN --mount=type=cache,id=cloud-gradle-alpine,target=/root/.gradle,sharing=locke
     "./scripts/build_scripts/build-cloud.sh" && \
     sh scripts/build_scripts/stage-distributions.sh
 
-FROM eclipse-temurin:21-alpine AS prebuilt-builder
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS prebuilt-builder
 WORKDIR /app
 COPY . .
 RUN sh scripts/build_scripts/stage-distributions.sh
 
 FROM ${BUILDER_STAGE} AS builder
 
-FROM eclipse-temurin:21-alpine AS server
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS server
 
 RUN apk add --no-cache libavif-dev font-noto-all
 
@@ -49,7 +49,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/server/ .
 ENTRYPOINT ["sh", "./bin/server"]
 
-FROM eclipse-temurin:21-jre-jammy AS worker
+FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS worker
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libavif-dev libvulkan1 && \
@@ -68,7 +68,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/worker/ .
 ENTRYPOINT ["sh", "./bin/worker"]
 
-FROM eclipse-temurin:21-alpine AS ws
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS ws
 
 RUN apk add --no-cache libavif-dev font-noto-all
 
@@ -85,7 +85,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/ws/ .
 ENTRYPOINT ["sh", "./bin/ws"]
 
-FROM eclipse-temurin:21-alpine AS cli
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS cli
 
 RUN apk add --no-cache libavif-dev font-noto-all netcat-openbsd
 
@@ -106,7 +106,7 @@ COPY --from=builder --chown=app:app /app/scripts/tool_scripts/terminal-log.sh ./
 USER app:app
 ENTRYPOINT ["sh", "./scripts/docker/cli-entrypoint.sh"]
 
-FROM eclipse-temurin:21-alpine AS filesystem-service
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS filesystem-service
 
 RUN apk add --no-cache wget
 
@@ -119,7 +119,7 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/filesystem-service/ .
 ENTRYPOINT ["sh", "./bin/filesystem-service"]
 
-FROM eclipse-temurin:21-alpine AS lucene-service
+FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS lucene-service
 
 RUN apk add --no-cache wget
 

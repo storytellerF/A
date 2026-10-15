@@ -1,0 +1,35 @@
+/*
+ * This is a private project. All rights reserved.
+ */
+
+package com.storyteller_f.a.client.core
+
+import com.storyteller_f.a.api.CustomApi
+import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.api.RoomActivityListResponse
+import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.endpoint4k.ktor.client.invoke
+import kotlinx.collections.immutable.toImmutableList
+
+suspend fun UserSessionManager.getUnreadRoomActivities(query: PaginationQuery): Result<RoomActivityListResponse> =
+    serviceCatching { this@getUnreadRoomActivities.decryptRoomActivities(CustomApi.Users.Unread.activities(query)) }
+
+suspend fun UserSessionManager.getJoinedPinnedTopics(query: PaginationQuery) =
+    serviceCatching { CustomApi.Users.PinnedTopics.get(query) }
+
+suspend fun UserSessionManager.getUnreadMessageCount() = serviceCatching { CustomApi.Users.Unread.messages() }
+
+internal suspend fun UserSessionManager.decryptRoomList(response: RoomInfoListResponse): RoomInfoListResponse =
+    response.copy(activities = decryptRoomActivities(RoomActivityListResponse(response.activities)).data)
+
+private suspend fun UserSessionManager.decryptRoomActivities(
+    response: RoomActivityListResponse,
+): RoomActivityListResponse {
+    val messages = processEncryptedTopic(response.data.mapNotNull { it.latestMessage }, this).associateBy { it.id }
+    return response.copy(
+        data =
+        response.data.map { activity ->
+            activity.copy(latestMessage = activity.latestMessage?.let { messages[it.id] })
+        }.toImmutableList(),
+    )
+}

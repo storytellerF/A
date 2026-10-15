@@ -60,6 +60,7 @@ data class CommunityInfoListResponse(
 data class RoomInfoListResponse(
     override val data: CustomImmutableList<RoomInfo>,
     override val pagination: Pagination<String>? = null,
+    val activities: CustomImmutableList<RoomActivityInfo> = kotlinx.collections.immutable.persistentListOf(),
 ) : ListResponse<RoomInfo>
 
 @Serializable

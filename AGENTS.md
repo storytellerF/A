@@ -155,3 +155,71 @@
 - Snapshot PKCS#12 Base64 is secret configuration. Preserve existing key bytes during migration, validate supplied credentials without a file fallback or replacement-key generation, and keep decoded Base64 key material in memory.
 
 - Keep crypto tests self-contained with synthetic vectors or generated keys; missing external preset directories must not silently pass a test. Legacy CryptoJvm ECIES/CBC and shared P256 encryption use different ciphertext formats, so verify each format independently unless an explicit compatibility contract exists.
+
+- Adaptive Home uses one section pager across rail/bottom navigation. Measure shared lists and search
+  results against their own content constraints, and preserve mounted reading state across resizes.
+  Keep Home context out of shared lists. Run `:app:composeApp:adaptiveUiTest` for isolated layout/state
+  fixtures; regular host tests continue excluding device-based UI tests.
+
+- On Windows, run assembly, Detekt and screenshot/host UI verification sequentially when they share
+  Android runtime JARs. R8 and preview renderers can hold those files open during another build.
+
+- Room activity is an API projection, not a RoomInfo schema extension. Filter joined membership before
+  grouped unread pagination; apply activity cursors to the per-room maximum message ID, not individual
+  message rows. Preserve unread-room versus unread-message count meanings and existing private-topic
+  decryption. See DEVELOPMENT.md for the data contract and integration checks.
+
+- Activity previews must remain ephemeral and session-keyed. Room lists/search return activity with
+  the same page; never add a second viewport/batch fetch or persist decrypted previews. Preserve local
+  RoomInfo caching and route successful pin/read changes through the event bus. Total unread messages
+  come from the backend's complete joined-room aggregate, never a client sum of loaded pages.
+
+- Keep a permanent latest-edge anchor before conditional room loading rows, so new messages remain
+  visible at the latest edge while history keeps its message-key anchor.
+- Update room read markers from the maximum visible topic item key, not LazyColumn indices or the
+  first displayed row; paging spacers and loading rows occupy indices. New messages can replace the
+  visible topic without changing the scroll index.
+- Verify an interactive, unlocked foreground desktop before Windows Appium keyboard tests. An accessible
+  AWT tree does not prove OS input is available; do not bypass empty-editor failures with fake content.
+- Refresh the Home unread navigation badge on read/message/membership events and lifecycle resume;
+  keep badge labels localized and test their presence/absence alongside row counts.
+- Keep read-marker upserts monotonic and atomic; history navigation and late requests must not rewind
+  the stored marker. Verify both exact counts and the legacy unread-room aggregate.
+- Native room-cell accessibility must preserve merged visible content; keep platform-specific browser
+  test-overlay labels separate. Resize Windows Java-agent test windows through their verified native
+  handle and convert viewport dimensions for window DPI.
+
+- Browser Appium previews need explicit text/action bridge nodes; keep the bridge disabled outside test
+  mode and preserve native merged accessibility. Select equal-stack overlay nodes in foreground paint
+  order so dialog controls win over identically labelled background controls.
+- Measure actual browser content dimensions after responsive chrome settles. Native Firefox compact
+  windows may be limited to 500px; keep strict viewport/draft assertions and document the tested sizes.
+
+- Collection refresh must clean the requested named collection, never its default detail cache. Verify
+  selected-list deletion while preserving detail IDs/aliases and unrelated lists using real SQLite.
+  Keep host-test database scopes unique and temporary storage under the module build directory.
+
+- Browser semantics must publish changed labels even when geometry is unchanged.
+- Async SQLite transaction finalizers must complete under cancellation so Room can recycle its pool
+  permit. Close allocated connections/statements when cancellation prevents delivery; new operations
+  still honor cancellation, and cleanup must not replay business writes.
+
+- Treat server paging tokens as opaque and preserve server item order. Keep database offset keys
+  separate from network tokens. Refresh through the existing Pager/RemoteMediator, retain the loaded
+  range and placeholder counts, and atomically replace room rows before publishing preview state.
+  Anchor-preserving mapped PagingSources calculate refresh keys from previous-generation pages
+  without relying on per-instance caches. Verify multi-page event refresh with shuffled IDs and opaque tokens.
+
+- Fingerprint deployed Wasm entry scripts and require cache validation for HTML. During
+  upgrade acceptance, compare browser-loaded Wasm filenames with the image; a successful
+  fresh HTTP probe does not prove an existing tab has loaded the new client.
+
+- Isolated deployment checkouts must reconnect existing filesystem/Lucene bind mounts
+  before startup. Reload BunkerWeb upstream resolution after container replacement;
+  container health alone cannot establish correct domain routing or data continuity.
+
+- Version Compose web resource URLs as well as the entry script. Cached translation
+  files paired with new generated byte offsets can display unrelated strings or corrupted text.
+
+- Pin external Dockerfile base images and build frontends by verified manifest digest.
+  Treat transient Docker Hub failures with bounded retries before changing build configuration.
