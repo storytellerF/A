@@ -36,6 +36,42 @@ class BrowserRtcMediaDevicesTest {
     }
 
     @Test
+    fun navigatorAudioConstraintsAreLinked() =
+        runTest {
+        val original = rejectBrowserCapture()
+        try {
+            val constraints = WebRtcMedia.AudioTrackConstraints().apply { echoCancellation = true }
+            val failure =
+                assertFailsWith<WebRtcMedia.DeviceException> {
+                    BrowserRtcMediaDevices().createAudioTrack(constraints)
+                }
+            assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
+        } finally {
+            restoreBrowserCapture(original)
+        }
+    }
+
+    @Test
+    fun navigatorVideoConstraintsAreLinked() =
+        runTest {
+        val original = rejectBrowserCapture()
+        try {
+            val constraints =
+                WebRtcMedia.VideoTrackConstraints().apply {
+                    width = 640
+                    height = 480
+                }
+            val failure =
+                assertFailsWith<WebRtcMedia.DeviceException> {
+                    BrowserRtcMediaDevices().createVideoTrack(constraints)
+                }
+            assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
+        } finally {
+            restoreBrowserCapture(original)
+        }
+    }
+
+    @Test
     fun availableTracksKeepTheirIdentity() =
         runTest {
         val audio =
@@ -89,3 +125,16 @@ private class FailingMediaDevices(private val fail: () -> Unit) : MediaTrackFact
 
 @JsFun("() => { throw new DOMException('No capture device', 'NotFoundError'); }")
 private external fun throwMissingDevice(): JsAny
+
+@JsFun(
+    """() => {
+        const original = navigator.mediaDevices.getUserMedia;
+        navigator.mediaDevices.getUserMedia = () => Promise.reject(
+            new DOMException('Synthetic capture rejection', 'NotFoundError'));
+        return original;
+    }""",
+)
+private external fun rejectBrowserCapture(): JsAny
+
+@JsFun("(original) => { navigator.mediaDevices.getUserMedia = original; }")
+private external fun restoreBrowserCapture(original: JsAny)

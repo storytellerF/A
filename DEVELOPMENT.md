@@ -603,6 +603,14 @@ remove video sinks before disposing tracks, and explicitly close the media facto
 audio track. Remote JVM tracks are borrowed from their connection. Frame conversion runs on
 a worker and balances retained native frames. Android's EGL/media factory is application-owned.
 Browser audio belongs to the peer rather than a lazy video tile so scrolling cannot mute audio.
+
+Ktor 3.6.0 retains calls to the removed `js.core.JsPrimitives` conversion ABI.
+A Wasm-only internal compatibility object forwards its four required conversions to Kotlin's
+standard JS interop. Keep newer Wrappers for Kodio's URL API rather than downgrading the
+wrapper graph. Remove the object after Ktor rebuilds against the newer ABI.
+The web executable treats partial-linkage diagnostics as errors. Browser tests cover real
+constraint conversion, synthetic audio/video capture, SDP generation and track cleanup.
+
 Browser media capture normalizes Wasm `JsException` failures into Ktor device exceptions.
 A missing capture device must return the call to its failed ready state; DOM exceptions can lack
 JavaScript stacks, so do not retain them as causes in Kotlin-formatted diagnostic exceptions.

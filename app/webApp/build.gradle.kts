@@ -16,6 +16,7 @@ kotlin {
         outputModuleName = "appWebApp"
         browser()
         binaries.executable()
+        compilerOptions.freeCompilerArgs.add("-Xpartial-linkage-loglevel=error")
     }
 
     sourceSets {

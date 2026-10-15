@@ -243,3 +243,9 @@
 - Verify compression for cold Wasm client loads before diagnosing a blank page as RTC failure.
   Browser session fixtures must populate storage on a static same-origin bootstrap document
   before opening the app, so setup never aborts its first Wasm download with a reload.
+
+- Check Wasm runtime dependency resolution as well as compile classpaths. Ktor 3.6.0's browser
+  adapter retains the Wrappers 2026.1.9 ABI; newer transitive wrappers can remove inlined
+  symbols while compilation still succeeds. Preserve the recorder's newer URL API when resolving
+  primitive ABI compatibility. Exercise real browser constraint conversion,
+  synthetic track capture, SDP creation and cleanup when changing RTC dependencies.
