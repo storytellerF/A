@@ -20,16 +20,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,24 +36,18 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.storyteller_f.a.app.LocalAppNavFactory
-import com.storyteller_f.a.app.LocalUserInfo
+import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.activity_load_failed
-import com.storyteller_f.a.app.common.PreviewState
 import com.storyteller_f.a.app.common.RoomActivityPreview
+import com.storyteller_f.a.app.common.RoomListViewModel
+import com.storyteller_f.a.app.common.changesRoomActivity
 import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.common.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.pages.ActivityMessageContent
-import com.storyteller_f.a.app.pages.ObserveActivityEvents
-import com.storyteller_f.a.app.pages.RememberActivityPreviewHost
 import com.storyteller_f.a.app.pages.RememberUnreadBadgeRefresh
 import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
-import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.app.room_community
 import com.storyteller_f.a.app.room_members
 import com.storyteller_f.a.app.room_no_community
@@ -65,7 +55,6 @@ import com.storyteller_f.a.app.room_read_only
 import com.storyteller_f.a.app.room_status
 import com.storyteller_f.a.app.room_unread
 import com.storyteller_f.a.app.rooms
-import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.components.LayoutDefaults
 import com.storyteller_f.a.client.compose_core.components.RoomIcon
 import com.storyteller_f.a.client.compose_core.components.StateView
@@ -76,8 +65,7 @@ import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -86,45 +74,23 @@ fun MyRoomsPage() {
     RoomList(viewModel)
 }
 
-@OptIn(FlowPreview::class)
 @Composable
-fun RoomList(roomsViewModel: PagingViewModel<RoomInfo>, onClick: ((RoomInfo) -> Unit)? = null) {
-    val host = if (LocalUserInfo.current != null) RememberActivityPreviewHost() else null
-    val activityState = host?.let { key(it) { it.rows.collectAsStateWithLifecycle().value } }
-    if (host != null) ObserveActivityEvents(host)
-    val owner = LocalLifecycleOwner.current
+fun RoomList(roomsViewModel: RoomListViewModel, onClick: ((RoomInfo) -> Unit)? = null) {
+    val activities by roomsViewModel.previews.rows.collectAsStateWithLifecycle()
+    val events = LocalGlobalDialog.current.context.events
+    val refreshEvents = remember(events) { events.filter { it.changesRoomActivity() } }
     val refreshBadge = RememberUnreadBadgeRefresh()
     val listState = rememberLazyListState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val wide = maxWidth >= 760.dp
         Column(Modifier.fillMaxSize()) {
             if (wide) RoomTableHeader()
-            if (activityState is PreviewState.Loading) LinearProgressIndicator(Modifier.fillMaxWidth())
-            if (activityState is PreviewState.Failed) {
-                Text(stringResource(Res.string.activity_load_failed), Modifier.padding(horizontal = 20.dp))
-                TextButton({ host.refreshRows() }) { Text(stringResource(Res.string.refresh)) }
-            }
             StateView(
                 roomsViewModel,
                 Modifier.weight(1f).fillMaxWidth(),
-                onRefresh = {
-                    host?.refreshRows()
-                    refreshBadge()
-                },
+                onRefresh = refreshBadge,
+                refreshEvents = refreshEvents,
             ) { items ->
-                LaunchedEffect(host, items, owner) {
-                    if (host != null) {
-                        owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                            snapshotFlow {
-                                val anchor =
-                                    listState.layoutInfo.visibleItemsInfo.firstOrNull {
-                                        it.key is Long
-                                    }?.key as? Long
-                                anchor to items.itemSnapshotList.items
-                            }.debounce(150L).collect { (anchor, rooms) -> host.showWindow(anchor, rooms) }
-                        }
-                    }
-                }
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -134,12 +100,7 @@ fun RoomList(roomsViewModel: PagingViewModel<RoomInfo>, onClick: ((RoomInfo) -> 
                     topPrepend(items.loadState)
                     pagingItems(items, { it.id }) { index ->
                         val room = items[index]
-                        val activity =
-                            (activityState as? PreviewState.Ready)?.items?.firstOrNull {
-                                it.room.id ==
-                                    room?.id
-                            }
-                        PrimaryRoomCell(room, onClick, wide, activity)
+                        PrimaryRoomCell(room, onClick, wide, activities[room?.id])
                     }
                     bottomAppending(items.loadState)
                 }

@@ -6,8 +6,8 @@ package com.storyteller_f.a.cloud.core.service
 
 import com.storyteller_f.a.api.MAX_PAGE_SIZE
 import com.storyteller_f.a.api.RoomActivityInfo
-import com.storyteller_f.a.api.RoomActivityListResponse
-import com.storyteller_f.a.api.RoomActivityQuery
+import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.api.UnreadMessageCountResponse
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectListFetch
@@ -21,13 +21,17 @@ import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.mapResult
 import kotlinx.collections.immutable.toImmutableList
 
-suspend fun Backend.getRoomActivities(uid: PrimaryKey, query: RoomActivityQuery) =
+/** Adds activity only for eligible rooms from this exact page; private bodies stay encrypted. */
+suspend fun Backend.fillRoomActivities(uid: PrimaryKey?, response: RoomInfoListResponse?) =
     cancellableRunCatching {
-    val ids = parseRoomActivityIds(query.roomIds)
-    val records = database.container.getRoomActivityRecords(uid, ids).getOrThrow()
+    if (uid == null || response == null || response.data.isEmpty()) return@cancellableRunCatching response
+    val records = database.container.getRoomActivityRecords(uid, response.data.map { it.id }).getOrThrow()
     val activities = processRoomActivities(uid, records).associateBy { it.room.id }
-    RoomActivityListResponse(ids.mapNotNull(activities::get).toImmutableList())
+    response.copy(activities = response.data.mapNotNull { activities[it.id] }.toImmutableList())
 }
+
+suspend fun Backend.getUnreadMessageCount(uid: PrimaryKey) =
+    database.container.getUserUnreadMessageCount(uid).map { UnreadMessageCountResponse(it) }
 
 suspend fun Backend.getUnreadRoomActivities(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
     cancellableRunCatching {
@@ -61,14 +65,6 @@ private suspend fun Backend.processRoomActivities(
             RoomActivityInfo(room, record.latestMessageId, messages[record.latestMessageId], record.unreadMessageCount)
         }
     }
-}
-
-internal fun parseRoomActivityIds(value: String): List<PrimaryKey> {
-    val values = value.split(',')
-    if (values.size !in 1..MAX_PAGE_SIZE) throw CustomBadRequestException("Invalid room activity batch size")
-    return values.map { item ->
-        item.toLongOrNull()?.takeIf { it > 0 } ?: throw CustomBadRequestException("Invalid room identifier")
-    }.distinct()
 }
 
 private fun checkActivityPageSize(fetch: PrimaryKeyFetch) {

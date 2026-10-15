@@ -4,7 +4,6 @@
 
 package com.storyteller_f.a.app.common
 
-import com.storyteller_f.a.api.MAX_PAGE_SIZE
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
@@ -55,7 +54,6 @@ internal class ActivityPreviewHost(
     parentScope: CoroutineScope,
     coordination: CoroutineDispatcher,
     private val worker: CoroutineDispatcher,
-    private val fetchRows: suspend (List<PrimaryKey>) -> Result<RoomActivityListResponse>,
     private val fetchUnread: suspend (PaginationQuery) -> Result<RoomActivityListResponse>,
     private val fetchPinned: suspend (PaginationQuery) -> Result<TopicInfoListResponse>,
 ) {
@@ -63,41 +61,12 @@ internal class ActivityPreviewHost(
         CoroutineScope(
             parentScope.coroutineContext + SupervisorJob(parentScope.coroutineContext[Job]) + coordination,
         )
-    private val mutableRows = MutableStateFlow<PreviewState<RoomActivityPreview>>(PreviewState.Idle)
     private val mutableUnread = MutableStateFlow<PreviewState<RoomActivityPreview>>(PreviewState.Idle)
     private val mutablePinned = MutableStateFlow<PreviewState<PinnedTopicPreview>>(PreviewState.Idle)
-    val rows = mutableRows.asStateFlow()
     val unread = mutableUnread.asStateFlow()
     val pinned = mutablePinned.asStateFlow()
-    private var rowIds: List<PrimaryKey> = emptyList()
-    private var rowJob: Job? = null
     private var unreadJob: Job? = null
     private var pinnedJob: Job? = null
-
-    fun showRooms(ids: List<PrimaryKey>, force: Boolean = false) = scope.launch { loadRows(ids, force) }
-
-    /** Stable loaded batches avoid layout/request feedback when previews change row heights. */
-    fun showWindow(anchorId: PrimaryKey?, rooms: List<RoomInfo>) =
-        scope.launch {
-        val anchor = rooms.indexOfFirst { it.id == anchorId }.coerceAtLeast(0)
-        val start = anchor / MAX_PAGE_SIZE * MAX_PAGE_SIZE
-        val batch = rooms.subList(start, minOf(start + MAX_PAGE_SIZE, rooms.size)).asSequence()
-        loadRows(batch.filter { it.isJoined }.map { it.id }.toList(), false)
-    }
-
-    private fun loadRows(ids: List<PrimaryKey>, force: Boolean) {
-        val requested = ids.distinct().take(MAX_PAGE_SIZE)
-        if (!force && requested == rowIds && mutableRows.value !is PreviewState.Idle) return
-        rowIds = requested
-        rowJob?.cancel()
-        if (requested.isEmpty()) {
-            mutableRows.value = PreviewState.Ready(emptyList<RoomActivityPreview>().toImmutableList(), 0)
-        } else {
-            rowJob = load(mutableRows) { fetchRows(requested).map { response -> response.previewState() } }
-        }
-    }
-
-    fun refreshRows() = scope.launch { loadRows(rowIds, true) }
 
     fun refreshUnread() =
         scope.launch {
@@ -123,10 +92,7 @@ internal class ActivityPreviewHost(
     }
 
     fun onEvent(event: Any, context: Boolean) {
-        val roomsChanged = event.changesRoomActivity()
-        if (roomsChanged) {
-            if (context) refreshUnread() else refreshRows()
-        }
+        if (context && event.changesRoomActivity()) refreshUnread()
         if (context) {
             val pinsChanged =
                 when (event) {
@@ -141,10 +107,8 @@ internal class ActivityPreviewHost(
 
     fun pause() =
         scope.launch {
-        rowJob?.cancel()
         unreadJob?.cancel()
         pinnedJob?.cancel()
-        mutableRows.value = PreviewState.Idle
         mutableUnread.value = PreviewState.Idle
         mutablePinned.value = PreviewState.Idle
     }

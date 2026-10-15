@@ -11,8 +11,8 @@ import com.storyteller_f.a.client.core.addReadLog
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
-import com.storyteller_f.a.client.core.getRoomActivities
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
+import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
@@ -60,6 +60,11 @@ fun testActivityPreviewByHelper(
             scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
             scope.driver.dismissDialog()
             scenarioReadAndSendActivity(scope.driver, data)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (failure: IllegalStateException) {
+            scope.driver.saveSnapshot("activity-failed")
+            throw failure
         } finally {
             data.viewer.sessionManager.client.close()
         }
@@ -163,8 +168,8 @@ private suspend fun waitUntilRoomRead(data: ActivityScenario) {
     val deadline = System.currentTimeMillis() + java.time.Duration.ofSeconds(30).toMillis()
     while (System.currentTimeMillis() < deadline) {
         val count =
-            data.viewer.sessionManager.getRoomActivities(listOf(data.roomId)).getOrThrow()
-                .data.single().unreadMessageCount
+            data.viewer.sessionManager.getUserRooms(PaginationQuery()).getOrThrow()
+                .activities.single { it.room.id == data.roomId }.unreadMessageCount
         if (count == 0L) return
         delay(500.milliseconds)
     }
@@ -192,8 +197,8 @@ private suspend fun sendActivityMessages(
             socket.useWebSocket {
                 messages.forEach { sendMessage(ObjectTuple(roomId, ObjectType.ROOM), privateRoom, it, keys) }
             }.getOrThrow()
-            while (owner.sessionManager.getRoomActivities(listOf(roomId)).getOrThrow()
-                    .data.single().unreadMessageCount != messages.size.toLong()
+            while (owner.sessionManager.getUserRooms(PaginationQuery()).getOrThrow()
+                    .activities.single { it.room.id == roomId }.unreadMessageCount != messages.size.toLong()
             ) {
                 delay(500.milliseconds)
             }
@@ -260,9 +265,9 @@ fun testRoomActivityRefreshByHelper(testName: String, target: AppAppiumHelper, p
                 driver.assertVisibleByTextContaining(data.latestMessage)
                 driver.assertVisibleByText("3")
                 val activity =
-                    data.viewer.sessionManager.getRoomActivities(
-                        listOf(data.roomId),
-                    ).getOrThrow().data.single()
+                    data.viewer.sessionManager.getUserRooms(
+                        PaginationQuery(),
+                    ).getOrThrow().activities.single { it.room.id == data.roomId }
                 data.viewer.sessionManager.addReadLog(
                     UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
                 ).getOrThrow()

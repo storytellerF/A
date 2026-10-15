@@ -96,13 +96,29 @@ internal suspend fun ExposedContainerDatabase.countUnreadRoomActivities(uid: Pri
 }
 
 /** Filter the complete joined-room set before grouping and pagination, never a loaded room page. */
-private fun unreadRoomActivityQuery(uid: PrimaryKey): Query =
+private fun unreadRoomActivityQuery(uid: PrimaryKey): Query = unreadRoomMessageQuery(uid).groupBy(Members.objectId)
+
+internal suspend fun ExposedContainerDatabase.countUnreadRoomMessages(uid: PrimaryKey) =
+    databaseSession.dbSearch {
+    search { unreadRoomMessageQuery(uid, aggregate = true) }
+    map { it[unreadMessageColumn] }
+}.map { it.single() }
+
+private fun unreadRoomMessageQuery(uid: PrimaryKey, aggregate: Boolean = false): Query =
     Members.join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)
         .join(Topics, JoinType.INNER, Rooms.id, Topics.parentId) { Topics.parentType eq ObjectType.ROOM }
         .join(UserTopicReads, JoinType.LEFT, Rooms.id, UserTopicReads.objectId) {
             UserTopicReads.uid eq Members.uid and (UserTopicReads.objectType eq ObjectType.ROOM)
-        }.select(Members.objectId, latestMessageColumn, unreadMessageColumn).where {
+        }.select(
+            if (aggregate) {
+                listOf(
+                    unreadMessageColumn,
+                )
+            } else {
+                listOf(Members.objectId, latestMessageColumn, unreadMessageColumn)
+            },
+        ).where {
             Members.uid eq uid and (Members.objectType eq ObjectType.ROOM) and
                 (Members.status eq MemberStatus.JOINED) and Members.joinedTime.isNotNull() and
                 (UserTopicReads.topicId.isNull() or (UserTopicReads.topicId less Topics.id))
-        }.groupBy(Members.objectId)
+        }

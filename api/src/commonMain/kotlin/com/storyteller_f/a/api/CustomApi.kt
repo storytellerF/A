@@ -870,14 +870,6 @@ object CustomApi {
                 }
         }
 
-        object RoomActivities {
-            val get =
-                safeEndpointWithQueryBuilder("users/room-activities") {
-                    resp(RoomActivityListResponse::class)
-                    query(RoomActivityQuery::class)
-                }
-        }
-
         object PinnedTopics {
             val get =
                 safeEndpointWithQueryBuilder("users/pinned-topics") {
@@ -887,6 +879,10 @@ object CustomApi {
         }
 
         object Unread {
+            val messages =
+                safeEndpointBuilder("users/unread/messages") {
+                    resp(UnreadMessageCountResponse::class)
+                }
             val activities =
                 safeEndpointWithQueryBuilder("users/unread/room-activities") {
                     resp(RoomActivityListResponse::class)

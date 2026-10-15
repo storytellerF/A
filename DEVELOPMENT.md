@@ -23,7 +23,7 @@ The protected read endpoints use the current opaque Cookie session, with no targ
 
 | Endpoint | Client request | Result / ordering |
 | --- | --- | --- |
-| `GET /users/room-activities?roomIds=<comma-separated IDs>` | `getRoomActivities(ids)` | At most 100 input IDs; deduplicated, requested order; only existing joined rooms |
+| `GET /users/unread/messages` | `getUnreadMessageCount()` | Exact total unread direct messages in all joined rooms, independent of paging |
 | `GET /users/unread/room-activities` | `getUnreadRoomActivities(PaginationQuery(...))` | Complete joined unread set, filtered before paging; latest direct-message ID descending |
 | `GET /users/pinned-topics` | `getJoinedPinnedTopics(PaginationQuery(...))` | Direct pinned topics in joined communities, topic ID descending |
 
@@ -39,6 +39,12 @@ preview after decryption rather than requiring a server-generated plain summary.
 latest message and a zero count. Deleted messages disappear from the projection and count. Invited
 notification-room recipients keep their existing read access; these new lists deliberately cover joined
 rooms, rather than changing invitation or notification semantics. Read-only joined rooms remain included.
+
+Reverse room message lists keep a permanent 1dp latest-edge item before conditional loading rows.
+It anchors new arrivals after Send while the user is at the latest edge; history keeps the visible
+message key. Read markers use the maximum actual visible topic key, ignoring anchors/loading rows;
+they do not assume display order or mark unseen messages read. Adaptive UI coverage checks both
+latest-edge following and history retention.
 
 Counts include all existing direct messages after the user's room read marker (or all direct messages
 when no marker exists), including the user's own messages; replies are excluded. Read markers advance
@@ -57,17 +63,22 @@ or existing feature events; after read, exit, unpin or deletion the next request
 
 Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest` through the QEMU skill's
 `run-testcontainers.sh`, with the usual dev/debug properties. PostgreSQL plus the existing filesystem and
-Lucene RPC containers cover batch ordering, direct-message counts/read markers, both cursor directions,
+Lucene RPC containers cover room-page activity ordering, totals beyond loaded pages, direct-message
+counts/read markers, both cursor directions,
 read-only rooms, deletion, private wire/client content, membership loss, pinned scope and request limits.
 
 ## Activity preview integration
 
-Shared `RoomList` retains its paging/scroll owner and augments joined rows with batched activity data.
-The Host selects at most 100 loaded rooms around the current reading anchor, then filters joined rooms.
-Stable batches prevent request/row-height feedback when summaries appear. A short scrolling debounce
-coalesces viewport changes. Explicit list refresh also refreshes activity; supplementary failure leaves
-room navigation and paging usable, with a separate retry action. Search and community callers reuse the
-same presentation. Unjoined and signed-out rows do not fetch private activity data.
+Joined-room lists, joined-room search, community-room lists and community-room search return an
+`activities` projection alongside the existing `data` and pagination. It covers eligible joined rooms from
+that exact page; anonymous and unjoined rows have no private activity projection. Admin lists retain the
+compatible empty default. Client request wrappers decrypt activity through the existing private-topic
+boundary before delivering the page. `RoomListPreviewHost` receives those pages without making another
+request and retains their ephemeral previews across page boundaries. Refresh replaces the projection;
+local Room storage still persists only `RoomInfo`, never decrypted activity. Room events and lifecycle
+resume refresh the existing pager, preserving its scroll owner. Both room metadata and activity arrive
+from one list request, including search/community callers. The navigation badge displays the server's
+complete unread-message total, not a sum of loaded rows. The legacy unread-room count keeps its meaning.
 
 World's wide-only context independently shows at most three unread rooms and three pinned topics,
 with actual source totals when the preview is partial, plus the joined-community preview. Context scrolling
@@ -84,7 +95,7 @@ eligible data; room events do not restart pinned previews. Successful pin/unpin 
 topic-change event from their request boundary, including dialog and menu callers.
 
 Pure snapshot fixtures cover compact/wide activity rows, larger text, unavailable private summaries and
-context errors. Headless tests cover batching, worker selection, supersession, cancellation, source
+context errors. Headless tests cover page-boundary retention, refresh replacement, cancellation, source
 independence and event filtering. Adaptive UI tests cover preview retry/navigation, exact counts during
 resizing, list refresh callbacks, and active/inactive lifecycle binding. Home's unread navigation badge
 refreshes on active read/message/membership events, explicit source refresh and return to Home. Refresh

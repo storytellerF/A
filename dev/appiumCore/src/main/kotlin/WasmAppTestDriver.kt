@@ -57,7 +57,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
     }
 
     fun assertUnreadRoomsIndicator(visible: Boolean) {
-        val locator = descriptionLocator("Rooms, Unread rooms")
+        val locator = descriptionLocator("Rooms, Unread messages")
         if (visible) assertVisible(locator) else assertNotVisible(locator, 5)
     }
 

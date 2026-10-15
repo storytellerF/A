@@ -26,13 +26,14 @@ import com.storyteller_f.a.cloud.core.service.addSubscription
 import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.disableTwoFactor
 import com.storyteller_f.a.cloud.core.service.enableTotp
+import com.storyteller_f.a.cloud.core.service.fillRoomActivities
 import com.storyteller_f.a.cloud.core.service.generateRecoveryCodes
 import com.storyteller_f.a.cloud.core.service.getAllUsers
 import com.storyteller_f.a.cloud.core.service.getFavorites
 import com.storyteller_f.a.cloud.core.service.getJoinedPinnedTopics
-import com.storyteller_f.a.cloud.core.service.getRoomActivities
 import com.storyteller_f.a.cloud.core.service.getTopicsByParentId
 import com.storyteller_f.a.cloud.core.service.getTwoFactorSettings
+import com.storyteller_f.a.cloud.core.service.getUnreadMessageCount
 import com.storyteller_f.a.cloud.core.service.getUnreadRoomActivities
 import com.storyteller_f.a.cloud.core.service.getUserCommentedTopics
 import com.storyteller_f.a.cloud.core.service.getUserInfo
@@ -58,8 +59,11 @@ import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.common.pagingGenerator
 import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.Route
+import kotlinx.collections.immutable.ImmutableList
 
 fun Route.bindProtectedUserRoute(backend: Backend) {
     bindProtectedUserAccountRoute(backend)
@@ -143,9 +147,10 @@ private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
             }
         }
     }
-    CustomApi.Users.RoomActivities.get(handleResult(backend)) { query ->
-        usePrincipal { uid -> backend.getRoomActivities(uid, query) }
-    }
+    bindRoomActivityRoute(backend)
+}
+
+private fun Route.bindRoomActivityRoute(backend: Backend) {
     CustomApi.Users.Unread.activities(handleResult(backend)) { query ->
         usePrincipal { uid ->
             query.pagination(
@@ -167,6 +172,9 @@ private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
                 backend.getJoinedPinnedTopics(uid, fetch)
             }
         }
+    }
+    CustomApi.Users.Unread.messages(handleResult(backend)) {
+        usePrincipal { uid -> backend.getUnreadMessageCount(uid) }
     }
     CustomApi.Users.Unread.hasUnreadRooms(handleResult(backend)) {
         usePrincipal { uid ->
@@ -214,20 +222,20 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     }
     CustomApi.Users.JoinedRooms.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
-            q.pagination(IdentifiablePagingGenerator, { l, p ->
+            q.pagination(IdentifiablePagingGenerator, { l: ImmutableList<RoomInfo>, p ->
                 RoomInfoListResponse(l, p)
             }) { fetch ->
                 backend.getUserJoinedRooms(uid, fetch)
-            }
+            }.mapResult { backend.fillRoomActivities(uid, it) }
         }
     }
     CustomApi.Users.JoinedRooms.search(handleResult(backend)) { q ->
         usePrincipal { uid ->
-            q.pagination(GeneralOffsetPagingGenerator, { l, p ->
+            q.pagination(GeneralOffsetPagingGenerator, { l: ImmutableList<RoomInfo>, p ->
                 RoomInfoListResponse(l, p)
             }) { fetch ->
                 backend.searchCurrentUserRooms(uid, fetch, q)
-            }
+            }.mapResult { backend.fillRoomActivities(uid, it) }
         }
     }
 }

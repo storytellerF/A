@@ -57,7 +57,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
     }
 
     fun assertUnreadRoomsIndicator(visible: Boolean) {
-        val selector = """new UiSelector().descriptionContains("Unread rooms")"""
+        val selector = """new UiSelector().descriptionContains("Unread messages")"""
         if (visible) assertElementVisible(selector) else assertElementNotVisible(selector, 5)
     }
 

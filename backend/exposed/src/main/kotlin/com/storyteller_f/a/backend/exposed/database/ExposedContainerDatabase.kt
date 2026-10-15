@@ -262,6 +262,8 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
     override suspend fun getUnreadRoomActivityRecords(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
         queryUnreadRoomActivityRecords(uid, fetch)
 
+    override suspend fun getUserUnreadMessageCount(uid: PrimaryKey) = countUnreadRoomMessages(uid)
+
     override suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int> =
         countUnreadRoomActivities(uid).map { Math.toIntExact(it) }
 

@@ -38,7 +38,6 @@ import com.storyteller_f.a.client.core.getChildAccounts
 import com.storyteller_f.a.client.core.getComments
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityInfoByAid
-import com.storyteller_f.a.client.core.getCommunityRooms
 import com.storyteller_f.a.client.core.getFavorites
 import com.storyteller_f.a.client.core.getFileInfo
 import com.storyteller_f.a.client.core.getFileList
@@ -60,15 +59,11 @@ import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.getUserOverview
-import com.storyteller_f.a.client.core.getUserRooms
-import com.storyteller_f.a.client.core.hasUnreadRooms
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchAllMembers
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityMembers
-import com.storyteller_f.a.client.core.searchCommunityRooms
 import com.storyteller_f.a.client.core.searchCommunityTopics
-import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.searchRoomTopics
@@ -113,7 +108,6 @@ import com.storyteller_f.storage.FileRefCollection
 import com.storyteller_f.storage.MemberCollection
 import com.storyteller_f.storage.ModelStorage
 import com.storyteller_f.storage.ReactionCollection
-import com.storyteller_f.storage.RoomCollection
 import com.storyteller_f.storage.TitleCollection
 import com.storyteller_f.storage.TopicCollection
 import com.storyteller_f.storage.UploadCollection
@@ -231,40 +225,6 @@ class UserJoinedCommunitiesWithPosterViewModel(sessionManager: UserSessionManage
             sessionManager.getUserCommunities(
                 CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.HAS_POSTER, key, size),
             )
-        }.flow.cachedIn(viewModelScope)
-}
-
-@OptIn(ExperimentalPagingApi::class)
-class RoomsViewModel(
-    sessionManager: UserSessionManager,
-    modelStorage: ModelStorage,
-    joinStatusSearch: JoinStatusSearch,
-    word: String,
-) : PagingViewModel<RoomInfo>() {
-    private val modelCollection = RoomCollection.SearchRoom(word, null, joinStatusSearch)
-
-    override val flow: Flow<PagingData<RoomInfo>> =
-        buildPager(
-            modelCollection,
-            modelStorage.remoteKey.wrap(modelCollection.getName()),
-            modelStorage.room,
-        ) { key, size ->
-            sessionManager.searchCurrentUserRooms(word, size, key)
-        }.flow.cachedIn(viewModelScope)
-}
-
-@OptIn(ExperimentalPagingApi::class)
-class UserJoinedRoomsViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
-    PagingViewModel<RoomInfo>() {
-    private val modelCollection = RoomCollection.SearchRoom("", null, JoinStatusSearch.JOINED)
-
-    override val flow: Flow<PagingData<RoomInfo>> =
-        buildPager(
-            modelCollection,
-            modelStorage.remoteKey.wrap(modelCollection.getName()),
-            modelStorage.room,
-        ) { key, size ->
-            sessionManager.getUserRooms(PaginationQuery(key, size = size))
         }.flow.cachedIn(viewModelScope)
 }
 
@@ -851,63 +811,6 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
                 Result.failure(IllegalStateException("not logged in"))
             }
         }
-}
-
-class UnreadRoomsStateViewModel(sessionManager: UserSessionManager) : SimpleViewModel<Boolean>() {
-    override val handler: LoadingHandler<Boolean> =
-        SimpleLoadingHandler(viewModelScope) {
-            if (sessionManager.currentIsAlreadySignUp) {
-                sessionManager.hasUnreadRooms().map { it.hasUnread }
-            } else {
-                Result.success(false)
-            }
-        }
-}
-
-@OptIn(ExperimentalPagingApi::class)
-class CommunityRoomsViewModel(
-    sessionManager: UserSessionManager,
-    modelStorage: ModelStorage,
-    communityId: PrimaryKey,
-) : PagingViewModel<RoomInfo>() {
-    private val modelCollection = RoomCollection.CommunityRooms(communityId)
-
-    override val flow: Flow<PagingData<RoomInfo>> =
-        buildPager(
-            modelCollection,
-            modelStorage.remoteKey.wrap(modelCollection.getName()),
-            modelStorage.room,
-        ) { key, size ->
-            sessionManager.getCommunityRooms(
-                communityId,
-                CustomApi.Communities.Id.Rooms.CommunityRoomQuery(key, size = size),
-            )
-        }.flow.cachedIn(viewModelScope)
-}
-
-@OptIn(ExperimentalPagingApi::class)
-class CommunityRoomSearchViewModel(
-    sessionManager: UserSessionManager,
-    modelStorage: ModelStorage,
-    communityId: PrimaryKey,
-    word: String,
-) : PagingViewModel<RoomInfo>() {
-    private val modelCollection = RoomCollection.CommunityRoomSearch(communityId, word)
-
-    override val flow: Flow<PagingData<RoomInfo>> =
-        buildPager(
-            modelCollection,
-            modelStorage.remoteKey.wrap(modelCollection.getName()),
-            modelStorage.room,
-        ) { key, size ->
-            sessionManager.searchCommunityRooms(
-                communityId,
-                word,
-                JoinStatusSearch.UNSPECIFIED,
-                size,
-                key,
-            )
-        }.flow.cachedIn(viewModelScope)
 }
 
 @OptIn(ExperimentalPagingApi::class)

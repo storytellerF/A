@@ -27,6 +27,6 @@ data class RoomActivityListResponse(
     override val pagination: Pagination<String>? = null,
 ) : ListResponse<RoomActivityInfo>
 
-/** Comma-separated room IDs, at most 100. Inaccessible or unjoined rooms are omitted. */
+/** Total direct unread messages across all joined rooms, independent of list pagination. */
 @Serializable
-data class RoomActivityQuery(val roomIds: String)
+data class UnreadMessageCountResponse(val unreadMessageCount: Long)

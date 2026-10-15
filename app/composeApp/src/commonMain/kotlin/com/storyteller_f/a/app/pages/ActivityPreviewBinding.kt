@@ -17,19 +17,16 @@ import com.storyteller_f.a.app.LocalSessionManager
 import com.storyteller_f.a.app.common.ActivityPreviewHost
 import com.storyteller_f.a.app.common.OnRoomActivityRefreshRequested
 import com.storyteller_f.a.app.common.changesRoomActivity
+import com.storyteller_f.a.app.common.previewCoordination
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.getJoinedPinnedTopics
-import com.storyteller_f.a.client.core.getRoomActivities
 import com.storyteller_f.a.client.core.getUnreadRoomActivities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-
-// One application-owned coordination dispatcher; requests and preview processing use worker threads.
-private val previewCoordination = Dispatchers.Default.limitedParallelism(1)
 
 @Composable
 internal fun RememberActivityPreviewHost(): ActivityPreviewHost {
@@ -41,7 +38,6 @@ internal fun RememberActivityPreviewHost(): ActivityPreviewHost {
                 scope,
                 previewCoordination,
                 Dispatchers.Default,
-                session::getRoomActivities,
                 session::getUnreadRoomActivities,
                 session::getJoinedPinnedTopics,
             )
@@ -63,8 +59,6 @@ internal fun ObserveActivityEvents(
                 if (context) {
                     host.refreshUnread()
                     host.refreshPinned()
-                } else {
-                    host.refreshRows()
                 }
                 events.collect { host.onEvent(it, context) }
             } finally {
@@ -76,8 +70,8 @@ internal fun ObserveActivityEvents(
 
 /** Keeps the navigation badge aligned with read/membership events while Home is active. */
 @Composable
-internal fun ObserveUnreadRoomsEvents(
-    handler: LoadingHandler<Boolean>,
+internal fun <T> ObserveUnreadMessageCountEvents(
+    handler: LoadingHandler<T>,
     events: Flow<Any> = LocalGlobalDialog.current.context.events,
 ) {
     val owner = LocalLifecycleOwner.current
@@ -91,7 +85,7 @@ internal fun ObserveUnreadRoomsEvents(
     }
 }
 
-private suspend fun LoadingHandler<Boolean>.refreshAfterLoading() {
+private suspend fun <T> LoadingHandler<T>.refreshAfterLoading() {
     // SimpleLoadingHandler drops refreshes while loading; preserve the latest read/membership update.
     state.first { it !is LoadingState.Loading }
     refresh()

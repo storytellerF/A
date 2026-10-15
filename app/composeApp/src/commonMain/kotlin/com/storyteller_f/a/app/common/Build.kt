@@ -438,9 +438,9 @@ fun getUserOverviewViewModel() =
 }
 
 @Composable
-fun getUnreadRoomsStateViewModel(): UnreadRoomsStateViewModel =
-    customViewModel(listOf("unread-rooms-state")) { sessionManager, _ ->
-        UnreadRoomsStateViewModel(sessionManager)
+fun getUnreadMessageCountViewModel(): UnreadMessageCountViewModel =
+    customViewModel(listOf("unread-message-count")) { sessionManager, _ ->
+        UnreadMessageCountViewModel(sessionManager)
     }
 
 @Composable

@@ -169,12 +169,16 @@
   message rows. Preserve unread-room versus unread-message count meanings and existing private-topic
   decryption. See DEVELOPMENT.md for the data contract and integration checks.
 
-- Activity previews must remain ephemeral and session-keyed. Reuse the framework-independent preview
-  Host and lifecycle binding; never fetch per row or persist decrypted previews. Keep loaded batches
-  stable across row-height changes, and route successful pin/read changes through the existing event bus.
+- Activity previews must remain ephemeral and session-keyed. Room lists/search return activity with
+  the same page; never add a second viewport/batch fetch or persist decrypted previews. Preserve local
+  RoomInfo caching and route successful pin/read changes through the event bus. Total unread messages
+  come from the backend's complete joined-room aggregate, never a client sum of loaded pages.
 
-- Update room read markers from visible topic item keys, not LazyColumn indices; paging spacers and
-  loading rows occupy indices. New messages can replace the visible topic without changing the scroll index.
+- Keep a permanent latest-edge anchor before conditional room loading rows, so new messages remain
+  visible at the latest edge while history keeps its message-key anchor.
+- Update room read markers from the maximum visible topic item key, not LazyColumn indices or the
+  first displayed row; paging spacers and loading rows occupy indices. New messages can replace the
+  visible topic without changing the scroll index.
 - Verify an interactive, unlocked foreground desktop before Windows Appium keyboard tests. An accessible
   AWT tree does not prove OS input is available; do not bypass empty-editor failures with fake content.
 - Refresh the Home unread navigation badge on read/message/membership events and lifecycle resume;

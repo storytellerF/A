@@ -29,6 +29,7 @@ fun AdaptiveSectionScaffold(
     pagerState: PagerState,
     routes: List<NavRoute>,
     hasUnread: Boolean = false,
+    unreadMessageCount: Long = 0,
     modifier: Modifier = Modifier,
     search: @Composable (Int, Boolean) -> Unit,
     section: @Composable (Int) -> Unit,
@@ -41,10 +42,26 @@ fun AdaptiveSectionScaffold(
     BoxWithConstraints(modifier.fillMaxSize()) {
         val compact = maxWidth < 600.dp
         Scaffold(bottomBar = {
-            if (compact) CustomBottomNav(routes[pagerState.currentPage].path, routes, hasUnread, selectSection)
+            if (compact) {
+                CustomBottomNav(
+                    routes[pagerState.currentPage].path,
+                    routes,
+                    hasUnread,
+                    unreadMessageCount,
+                    selectSection,
+                )
+            }
         }) { padding ->
             Row(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
-                if (!compact) CustomRailNav(routes[pagerState.currentPage].path, routes, hasUnread, selectSection)
+                if (!compact) {
+                    CustomRailNav(
+                        routes[pagerState.currentPage].path,
+                        routes,
+                        hasUnread,
+                        unreadMessageCount,
+                        selectSection,
+                    )
+                }
                 Column(Modifier.weight(1f).fillMaxSize()) {
                     searchStates.SaveableStateProvider(routes[pagerState.currentPage].path) {
                         search(pagerState.currentPage, compact)

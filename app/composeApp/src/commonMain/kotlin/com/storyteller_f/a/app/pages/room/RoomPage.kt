@@ -221,6 +221,8 @@ private fun RoomPageInternal(room: IdRoomViewModel, needShowDialog: Boolean, roo
     }
 }
 
+internal fun latestVisibleRoomTopicId(keys: List<Any>): PrimaryKey? = keys.filterIsInstance<PrimaryKey>().maxOrNull()
+
 @Composable
 private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomInfo) {
     val firstVisibleItemScrollOffset by remember {
@@ -233,7 +235,7 @@ private fun BoxScope.NewTopicView(lazyListState: LazyListState, roomInfo: RoomIn
     val events = LocalGlobalDialog.current.context.events
     val visibleTopicId by remember(lazyListState) {
         derivedStateOf {
-            lazyListState.layoutInfo.visibleItemsInfo.firstNotNullOfOrNull { it.key as? PrimaryKey }
+            latestVisibleRoomTopicId(lazyListState.layoutInfo.visibleItemsInfo.map { it.key })
         }
     }
     LaunchedEffect(visibleTopicId, roomInfo.id) {

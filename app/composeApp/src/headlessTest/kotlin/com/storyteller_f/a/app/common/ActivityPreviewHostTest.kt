@@ -6,6 +6,7 @@ package com.storyteller_f.a.app.common
 
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
+import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -13,15 +14,13 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.ContinuationInterceptor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -31,87 +30,37 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActivityPreviewHostTest {
     @Test
-    fun rowsAreBatchedAndRefreshedOnWorker() =
-        runTest {
-        val coordination = StandardTestDispatcher(testScheduler, "coordination")
-        val worker = StandardTestDispatcher(testScheduler, "worker")
-        val requests = mutableListOf<List<Long>>()
-        val host =
-            ActivityPreviewHost(this, coordination, worker, { ids ->
-                assertEquals(worker, currentCoroutineContext()[ContinuationInterceptor])
-                requests.add(ids)
-                Result.success(RoomActivityListResponse(persistentListOf(activity(ids.first()))))
-            }, { Result.success(RoomActivityListResponse(persistentListOf())) }, {
-                Result.success(TopicInfoListResponse(persistentListOf()))
-            })
-        host.showRooms((1L..120L).toList() + 1L)
-        runCurrent()
-        assertEquals(100, requests.single().size)
-        host.showRooms((1L..120L).toList())
-        runCurrent()
-        assertEquals(1, requests.size)
-        host.refreshRows()
-        runCurrent()
-        assertEquals(2, requests.size)
-        host.showRooms(emptyList())
-        runCurrent()
-        assertTrue(assertIs<PreviewState.Ready<RoomActivityPreview>>(host.rows.value).items.isEmpty())
-        assertEquals(2, requests.size)
-        host.close()
+    fun readMarkerUsesNewestVisibleMessage() {
+        assertEquals(4L, com.storyteller_f.a.app.pages.room.latestVisibleRoomTopicId(listOf("anchor", 3L, 4L, 2L)))
+        assertEquals(2L, com.storyteller_f.a.app.pages.room.latestVisibleRoomTopicId(listOf(1L, 2L, "loading")))
+        assertEquals(null, com.storyteller_f.a.app.pages.room.latestVisibleRoomTopicId(listOf("anchor", "loading")))
     }
 
     @Test
-    fun visibleAnchorUsesStableJoinedRoomBatches() =
+    fun listPagesRetainActivityAcrossHundredRoomBoundary() =
         runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val batches = mutableListOf<List<Long>>()
-        val host =
-            ActivityPreviewHost(this, dispatcher, dispatcher, { ids ->
-                batches.add(ids)
-                Result.success(RoomActivityListResponse(persistentListOf()))
-            }, { Result.success(RoomActivityListResponse(persistentListOf())) }, {
-                Result.success(TopicInfoListResponse(persistentListOf()))
-            })
-        val rooms = (1L..120L).map { RoomInfo.EMPTY.copy(id = it, joinedTime = RoomInfo.EMPTY.createdTime) }
-        host.showWindow(1, rooms)
-        runCurrent()
-        host.showWindow(20, rooms)
-        runCurrent()
-        assertEquals(1, batches.size)
-        assertEquals((1L..100L).toList(), batches.first())
-        host.showWindow(110, rooms)
-        runCurrent()
-        assertEquals((101L..120L).toList(), batches.last())
-        host.showWindow(110, rooms.map { it.copy(joinedTime = null) })
-        runCurrent()
-        assertEquals(2, batches.size)
-        assertTrue(assertIs<PreviewState.Ready<RoomActivityPreview>>(host.rows.value).items.isEmpty())
-        host.close()
+        val host = RoomListPreviewHost(dispatcher, dispatcher)
+        host.acceptPage(null, roomPage(1L..100L))
+        host.acceptPage("next-page", roomPage(101L..120L))
+        assertEquals((1L..120L).toSet(), host.rows.value.keys)
+        for (id in 95L..105L) assertEquals(id, host.rows.value.getValue(id).unreadCount)
+        host.acceptPage(null, roomPage(101L..105L))
+        assertEquals((101L..105L).toSet(), host.rows.value.keys)
     }
 
     @Test
-    fun supersededRequestCannotPublishPrivatePreview() =
+    fun cancelledPageCannotPublishPrivatePreview() =
         runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val late = CompletableDeferred<RoomActivityListResponse>()
-        val host =
-            ActivityPreviewHost(this, dispatcher, dispatcher, { ids ->
-                if (ids.single() == 1L) {
-                    Result.success(withContext(NonCancellable) { late.await() })
-                } else {
-                    Result.success(RoomActivityListResponse(persistentListOf(activity(2))))
-                }
-            }, { Result.success(RoomActivityListResponse(persistentListOf())) }, {
-                Result.success(TopicInfoListResponse(persistentListOf()))
-            })
-        host.showRooms(listOf(1))
+        val host = RoomListPreviewHost(dispatcher, dispatcher)
+        val job =
+            launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                host.acceptPage(null, roomPage(1L..1L))
+            }
+        job.cancel()
         runCurrent()
-        host.showRooms(listOf(2))
-        runCurrent()
-        late.complete(RoomActivityListResponse(persistentListOf(activity(1))))
-        runCurrent()
-        assertEquals(2L, assertIs<PreviewState.Ready<RoomActivityPreview>>(host.rows.value).items.single().room.id)
-        host.close()
+        assertTrue(host.rows.value.isEmpty())
     }
 
     @Test
@@ -121,8 +70,6 @@ class ActivityPreviewHostTest {
         var failUnread = true
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
-                Result.success(RoomActivityListResponse(persistentListOf()))
-            }, {
                 if (failUnread) error("Synthetic failure")
                 Result.success(RoomActivityListResponse(persistentListOf(activity(1)), Pagination(null, null, 9)))
             }, {
@@ -154,17 +101,17 @@ class ActivityPreviewHostTest {
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
                 Result.success(pending.await())
-            }, { Result.success(RoomActivityListResponse(persistentListOf())) }, {
+            }, {
                 Result.success(TopicInfoListResponse(persistentListOf()))
             })
-        host.showRooms(listOf(1))
+        host.refreshUnread()
         runCurrent()
-        assertIs<PreviewState.Loading>(host.rows.value)
+        assertIs<PreviewState.Loading>(host.unread.value)
         host.pause()
         runCurrent()
         pending.complete(RoomActivityListResponse(persistentListOf(activity(1))))
         runCurrent()
-        assertIs<PreviewState.Idle>(host.rows.value)
+        assertIs<PreviewState.Idle>(host.unread.value)
         host.close()
     }
 
@@ -176,8 +123,6 @@ class ActivityPreviewHostTest {
         var pinLoads = 0
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
-                Result.success(RoomActivityListResponse(persistentListOf()))
-            }, {
                 unreadLoads++
                 Result.success(RoomActivityListResponse(persistentListOf()))
             }, {
@@ -217,3 +162,9 @@ class ActivityPreviewHostTest {
 }
 
 private fun activity(id: Long) = RoomActivityInfo(RoomInfo.EMPTY.copy(id = id), null, null, 0)
+
+private fun roomPage(ids: LongRange) =
+    RoomInfoListResponse(
+    ids.map { RoomInfo.EMPTY.copy(id = it) }.toImmutableList(),
+    activities = ids.map { activity(it).copy(unreadMessageCount = it) }.toImmutableList(),
+)

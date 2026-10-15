@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
@@ -48,7 +50,6 @@ import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.activity_unread_rooms
 import com.storyteller_f.a.app.common.ActivityPreviewHost
 import com.storyteller_f.a.app.common.MessagePreview
 import com.storyteller_f.a.app.common.MessageSummary
@@ -62,10 +63,11 @@ import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
 import com.storyteller_f.a.app.pages.HomeFeedLayout
 import com.storyteller_f.a.app.pages.ObserveActivityEvents
-import com.storyteller_f.a.app.pages.ObserveUnreadRoomsEvents
+import com.storyteller_f.a.app.pages.ObserveUnreadMessageCountEvents
 import com.storyteller_f.a.app.pages.RoomActivityPreviewContent
 import com.storyteller_f.a.app.pages.room.RoomRowContent
 import com.storyteller_f.a.app.pages.search.DesktopSearchLayout
+import com.storyteller_f.a.app.pages.topic.addLatestRoomAnchor
 import com.storyteller_f.a.app.refresh
 import com.storyteller_f.a.client.compose_core.common.PagingViewModel
 import com.storyteller_f.a.client.compose_core.components.NavRoute
@@ -334,6 +336,64 @@ class HomeAdaptiveUiTest {
     }
 
     @Test
+    fun roomAnchorFollowsNewMessagesAndPreservesHistory() =
+        runComposeUiTest {
+        val messages = mutableStateOf(listOf(4, 3, 2, 1))
+        val list = androidx.compose.foundation.lazy.LazyListState()
+        setContent {
+            MaterialTheme {
+                LazyColumn(
+                    state = list,
+                    reverseLayout = true,
+                    modifier = Modifier.requiredSize(500.dp, 200.dp).testTag("messages"),
+                ) {
+                    addLatestRoomAnchor()
+                    items(messages.value.size, key = { messages.value[it] }) { index ->
+                        Text("Message ${messages.value[index]}", Modifier.height(80.dp))
+                    }
+                }
+            }
+        }
+        onNodeWithText("Message 4").assertIsDisplayed()
+        runOnIdle { messages.value = listOf(5) + messages.value }
+        onNodeWithText("Message 5").assertIsDisplayed()
+        onNodeWithTag("messages").performScrollToIndex(4)
+        val historyKey = runOnIdle { list.layoutInfo.visibleItemsInfo.first().key }
+        runOnIdle { messages.value = listOf(6) + messages.value }
+        runOnIdle { assertEquals(historyKey, list.layoutInfo.visibleItemsInfo.first().key) }
+    }
+
+    @Test
+    fun roomRefreshEventsReloadEmptyList() =
+        runComposeUiTest {
+        val events = MutableSharedFlow<Any>(extraBufferCapacity = 1)
+        val loads = MutableStateFlow(0)
+        val model =
+            object : PagingViewModel<RoomInfo>() {
+                override val flow =
+                    androidx.paging.Pager(androidx.paging.PagingConfig(20)) {
+                        com.storyteller_f.a.client.compose_core.common.RegularPagingSource<RoomInfo> { _, _ ->
+                            loads.value++
+                            Result.success(com.storyteller_f.a.api.RoomInfoListResponse(persistentListOf()))
+                        }
+                    }.flow
+            }
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(800.dp, 300.dp)) {
+                    StateView(model, refreshEvents = events) { Text("Room content") }
+                }
+            }
+        }
+        waitUntil { events.subscriptionCount.value == 1 && loads.value > 0 }
+        awaitIdle()
+        val beforeRefresh = loads.value
+        assertTrue(events.tryEmit(OnRoomRead(1)))
+        waitUntil { loads.value > beforeRefresh }
+        onNodeWithText("Room content").assertDoesNotExist()
+    }
+
+    @Test
     fun previewBindingRefreshesOnlyWhilePageIsActive() =
         runComposeUiTest {
         val owner =
@@ -344,8 +404,6 @@ class HomeAdaptiveUiTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val host =
             ActivityPreviewHost(scope, Dispatchers.Default.limitedParallelism(1), Dispatchers.Default, {
-                Result.success(RoomActivityListResponse(persistentListOf()))
-            }, {
                 Result.success(
                     RoomActivityListResponse(
                         persistentListOf(RoomActivityInfo(RoomInfo.EMPTY.copy(name = "Live room"), null, null, 5)),
@@ -403,7 +461,7 @@ class HomeAdaptiveUiTest {
             }
         setContent {
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
-                ObserveUnreadRoomsEvents(handler, events)
+                ObserveUnreadMessageCountEvents(handler, events)
             }
         }
         runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
@@ -435,7 +493,7 @@ class HomeAdaptiveUiTest {
         runComposeUiTest {
         val width = mutableStateOf(900.dp)
         val unread = mutableStateOf(true)
-        val unreadLabel = getString(Res.string.activity_unread_rooms)
+        val total = mutableStateOf(123L)
         setContent {
             MaterialTheme {
                 val pager = rememberPagerState { 1 }
@@ -444,16 +502,26 @@ class HomeAdaptiveUiTest {
                         pager,
                         listOf(NavRoute("/rooms", Icons.Default.Public, "Rooms")),
                         unread.value,
+                        unreadMessageCount = total.value,
                         search = { _, _ -> },
                     ) { Text("Room content") }
                 }
             }
         }
-        onNodeWithContentDescription("Rooms, $unreadLabel").assertExists()
-        runOnIdle { width.value = 390.dp }
-        onNodeWithContentDescription("Rooms, $unreadLabel").assertExists()
+        val unreadDescription =
+            onNodeWithTag("Rooms").fetchSemanticsNode()
+                .config[androidx.compose.ui.semantics.SemanticsProperties.ContentDescription].first()
+        assertTrue(unreadDescription.startsWith("Rooms, "))
+        onNodeWithContentDescription(unreadDescription).assertExists()
+        onNodeWithText("123", useUnmergedTree = true).assertExists()
+        runOnIdle {
+            total.value = 122L
+            width.value = 390.dp
+        }
+        onNodeWithContentDescription(unreadDescription).assertExists()
+        onNodeWithText("122", useUnmergedTree = true).assertExists()
         runOnIdle { unread.value = false }
-        onNodeWithContentDescription("Rooms, $unreadLabel").assertDoesNotExist()
+        onNodeWithContentDescription(unreadDescription).assertDoesNotExist()
         onNodeWithContentDescription("Rooms").assertExists()
     }
 }

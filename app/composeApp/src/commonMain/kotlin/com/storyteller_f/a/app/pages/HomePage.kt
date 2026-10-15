@@ -46,7 +46,7 @@ import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
-import com.storyteller_f.a.app.common.getUnreadRoomsStateViewModel
+import com.storyteller_f.a.app.common.getUnreadMessageCountViewModel
 import com.storyteller_f.a.app.communities
 import com.storyteller_f.a.app.design_spec
 import com.storyteller_f.a.app.download_latest_app
@@ -86,19 +86,29 @@ fun HomePage() {
             ),
             NavRoute(HOME_START_DESTINATION_ROOMS, Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
         )
-    val unreadRoomsViewModel = getUnreadRoomsStateViewModel()
-    ObserveUnreadRoomsEvents(unreadRoomsViewModel.handler)
-    val hasUnread by key(unreadRoomsViewModel) { unreadRoomsViewModel.handler.data.collectAsStateWithLifecycle() }
+    val unreadMessagesViewModel = getUnreadMessageCountViewModel()
+    ObserveUnreadMessageCountEvents(unreadMessagesViewModel.handler)
+    val unreadMessages by key(
+        unreadMessagesViewModel,
+    ) { unreadMessagesViewModel.handler.data.collectAsStateWithLifecycle() }
+    val unreadMessageCount = unreadMessages?.unreadMessageCount ?: 0
     val scope = rememberCoroutineScope()
-    AdaptiveSectionScaffold(pagerState, homeNavRoutes, hasUnread == true, Modifier.testTag("home"), { page, compact ->
-        val searchScope =
-            when (page) {
-                1 -> SearchScope.MyCommunity
-                2 -> SearchScope.MyRoom
-                else -> SearchScope.World
-            }
-        CustomSearchBar(searchScope, title = if (compact) null else homeNavRoutes[page].label) { ProjectIcon() }
-    }) { page ->
+    AdaptiveSectionScaffold(
+        pagerState,
+        homeNavRoutes,
+        unreadMessageCount > 0,
+        unreadMessageCount,
+        Modifier.testTag("home"),
+        { page, compact ->
+            val searchScope =
+                when (page) {
+                    1 -> SearchScope.MyCommunity
+                    2 -> SearchScope.MyRoom
+                    else -> SearchScope.World
+                }
+            CustomSearchBar(searchScope, title = if (compact) null else homeNavRoutes[page].label) { ProjectIcon() }
+        },
+    ) { page ->
         HomeSection(page) { destination -> scope.launch { pagerState.animateScrollToPage(destination) } }
     }
 }

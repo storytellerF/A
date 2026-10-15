@@ -185,7 +185,7 @@ suspend fun UserSessionManager.getCommunityRooms(
     communityId: PrimaryKey,
     paginationQuery: CustomApi.Communities.Id.Rooms.CommunityRoomQuery,
 ) = serviceCatching {
-    CustomApi.Communities.Id.Rooms.get(paginationQuery, CommonPath(communityId))
+    this@getCommunityRooms.decryptRoomList(CustomApi.Communities.Id.Rooms.get(paginationQuery, CommonPath(communityId)))
 }
 
 suspend fun UserSessionManager.searchCommunityRooms(
@@ -195,9 +195,11 @@ suspend fun UserSessionManager.searchCommunityRooms(
     size: Int,
     nextRoomId: String?,
 ) = serviceCatching {
-    CustomApi.Communities.Id.Rooms.search(
-        CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery(word, joinStatusSearch, nextRoomId, size),
-        CommonPath(communityId),
+    this@searchCommunityRooms.decryptRoomList(
+        CustomApi.Communities.Id.Rooms.search(
+            CustomApi.Communities.Id.Rooms.CommunityRoomSearchQuery(word, joinStatusSearch, nextRoomId, size),
+            CommonPath(communityId),
+        ),
     )
 }
 
@@ -289,13 +291,15 @@ suspend fun UserSessionManager.getTopicInfoByAid(aid: String) =
 
 suspend fun UserSessionManager.getUserRooms(paginationQuery: PaginationQuery) =
     serviceCatching {
-    CustomApi.Users.JoinedRooms.get(paginationQuery)
+    this@getUserRooms.decryptRoomList(CustomApi.Users.JoinedRooms.get(paginationQuery))
 }
 
 suspend fun UserSessionManager.searchCurrentUserRooms(word: String, size: Int, nextRoomId: String?) =
     serviceCatching {
-    CustomApi.Users.JoinedRooms.search(
-        CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size),
+    this@searchCurrentUserRooms.decryptRoomList(
+        CustomApi.Users.JoinedRooms.search(
+            CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size),
+        ),
     )
 }
 

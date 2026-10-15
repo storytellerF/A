@@ -4,11 +4,11 @@
 
 package com.storyteller_f.a.cloud.server
 
+import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.RoomActivityInfo
-import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.client.core.ServerErrorException
@@ -19,14 +19,18 @@ import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.exitRoom
+import com.storyteller_f.a.client.core.getCommunityRooms
 import com.storyteller_f.a.client.core.getJoinedPinnedTopics
-import com.storyteller_f.a.client.core.getRoomActivities
 import com.storyteller_f.a.client.core.getRoomMembersPublicKeys
 import com.storyteller_f.a.client.core.getRoomTopics
+import com.storyteller_f.a.client.core.getUnreadMessageCount
 import com.storyteller_f.a.client.core.getUnreadRoomActivities
+import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.hasUnreadRooms
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
+import com.storyteller_f.a.client.core.searchCommunityRooms
+import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
@@ -36,13 +40,13 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.client.request.parameter
 import io.ktor.http.HttpStatusCode
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
@@ -57,7 +61,7 @@ import kotlin.test.assertTrue
 
 class RoomActivityTest {
     @Test
-    fun `batch counts direct messages and preserves order`() =
+    fun `room pages count direct messages in page order`() =
         test {
         attachSession { account ->
             val community = createCommunityForTest()
@@ -66,7 +70,7 @@ class RoomActivityTest {
             val first = createRoomMessage(account.uid, room.id, "First")
             val second = createRoomMessage(account.uid, room.id, "Second")
             createRoomMessage(account.uid, second.id, "Reply excluded", ObjectType.TOPIC)
-            val initial = getRoomActivities(listOf(empty.id, room.id, room.id)).getOrThrow().data
+            val initial = getUserRooms(PaginationQuery()).getOrThrow().activities
             val latest = assertNotNull(initial.last().latestMessage)
             assertEquals(listOf(empty.id, room.id), initial.map { it.room.id })
             assertNull(initial.first().latestMessage)
@@ -97,7 +101,53 @@ class RoomActivityTest {
             assertEquals(0L, getOnlyRoomActivity(room.id).unreadMessageCount)
             assertEquals(0, hasUnreadRooms().getOrThrow().unreadCount)
             exitRoom(room.id).getOrThrow()
-            assertTrue(getRoomActivities(listOf(room.id)).getOrThrow().data.isEmpty())
+            assertTrue(getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == room.id })
+        }
+    }
+
+    @Test
+    fun `list activity and totals cover unloaded rooms`() =
+        test {
+        attachSession { account ->
+            val community = createCommunityForTest()
+            val rooms = (1..105).map { createPublicRoomForTest(community.id, "page$it", "Room $it") }
+            val messages = rooms.map { createRoomMessage(account.uid, it.id, "Page message") }
+            createRoomMessage(account.uid, rooms.first().id, "Second direct message")
+            createRoomMessage(account.uid, messages.first().id, "Excluded reply", ObjectType.TOPIC)
+            assertEquals(106L, getUnreadMessageCount().getOrThrow().unreadMessageCount)
+            val first = getUserRooms(PaginationQuery(size = 100)).getOrThrow()
+            val second = getUserRooms(PaginationQuery(first.pagination?.nextPageToken, size = 100)).getOrThrow()
+            assertEquals(100, first.data.size)
+            assertEquals(5, second.data.size)
+            listOf(first, second).forEach { page ->
+                assertEquals(page.data.map { it.id }, page.activities.map { it.room.id })
+                assertTrue(page.activities.all { it.latestMessage != null && it.unreadMessageCount > 0 })
+            }
+            assertEquals(105, hasUnreadRooms().getOrThrow().unreadCount)
+            val communityPage =
+                getCommunityRooms(
+                    community.id,
+                    CustomApi.Communities.Id.Rooms.CommunityRoomQuery(size = 3),
+                ).getOrThrow()
+            assertEquals(communityPage.data.map { it.id }, communityPage.activities.map { it.room.id })
+            val search = searchCurrentUserRooms("Room", 3, null).getOrThrow()
+            val communitySearch =
+                searchCommunityRooms(
+                    community.id,
+                    "Room",
+                    JoinStatusSearch.JOINED,
+                    3,
+                    null,
+                ).getOrThrow()
+            listOf(search, communitySearch).forEach { page ->
+                assertEquals(3, page.activities.size)
+                assertEquals(page.data.map { it.id }, page.activities.map { it.room.id })
+            }
+            val read = first.activities.first()
+            addReadLog(UpdateUserRead(read.room.tuple(), requireNotNull(read.latestMessageId))).getOrThrow()
+            assertEquals(106L - read.unreadMessageCount, getUnreadMessageCount().getOrThrow().unreadMessageCount)
+            exitRoom(rooms.first().id).getOrThrow()
+            assertEquals(103L, getUnreadMessageCount().getOrThrow().unreadMessageCount)
         }
     }
 
@@ -155,15 +205,10 @@ class RoomActivityTest {
                 val room = createRoom(NewRoom("private", "Private")).getOrThrow()
                 val keys = getRoomMembersPublicKeys(room.id, PaginationQuery()).getOrThrow().data
                 createTopicInRoomAndWait(frames) { sendMessage(room.tuple(), true, "Private message", keys) }
-                val wire =
-                    with(
-                        client,
-                    ) {
-                        get(
-                            "/users/room-activities",
-                        ) { parameter("roomIds", room.id.toString()) }.body<RoomActivityListResponse>()
-                    }
-                assertIs<TopicContent.Encrypted>(wire.data.single().latestMessage?.content)
+                val listWire = client.get("/users/joined-rooms").body<com.storyteller_f.a.api.RoomInfoListResponse>()
+                assertIs<TopicContent.Encrypted>(listWire.activities.single().latestMessage?.content)
+                val listPage = getUserRooms(PaginationQuery()).getOrThrow()
+                assertIs<TopicContent.Plain>(listPage.activities.single().latestMessage?.content)
                 assertEquals(
                     "Private message",
                     assertIs<TopicContent.Plain>(
@@ -174,7 +219,7 @@ class RoomActivityTest {
             }
         val lateMember =
             attachSession {
-                assertTrue(getRoomActivities(listOf(owner.custom)).getOrThrow().data.isEmpty())
+                assertTrue(getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == owner.custom })
             }
         loginSession(owner) {
             createTitle(
@@ -192,8 +237,7 @@ class RoomActivityTest {
         noneSession {
             val error =
                 assertFailsWith<ServerErrorException> {
-                    client.get("/users/room-activities") { parameter("roomIds", owner.custom.toString()) }
-                        .body<RoomActivityListResponse>()
+                    client.get("/users/joined-rooms").body<com.storyteller_f.a.api.RoomInfoListResponse>()
                 }
             assertEquals(HttpStatusCode.Unauthorized, error.status)
         }
@@ -267,21 +311,13 @@ class RoomActivityTest {
     }
 
     @Test
-    fun `activity rejects invalid sizes and identifiers`() =
+    fun `activity rejects invalid page sizes`() =
         test {
         attachSession {
             assertTrue(getUnreadRoomActivities(PaginationQuery(size = 101)).isFailure)
             assertTrue(getJoinedPinnedTopics(PaginationQuery(size = 0)).isFailure)
-            listOf("", "-1", "invalid", List(101) { "1" }.joinToString(",")).forEach { ids ->
-                val error =
-                    assertFailsWith<ServerErrorException> {
-                        client.get("/users/room-activities") {
-                            parameter("roomIds", ids)
-                        }.body<RoomActivityListResponse>()
-                    }
-                assertEquals(HttpStatusCode.BadRequest, error.status)
-            }
             assertFalse(hasUnreadRooms().getOrThrow().hasUnread)
+            assertEquals(0L, getUnreadMessageCount().getOrThrow().unreadMessageCount)
         }
     }
 }
@@ -297,4 +333,4 @@ private suspend fun TestMate.createRoomMessage(
 )
 
 private suspend fun UserSessionManager.getOnlyRoomActivity(roomId: PrimaryKey): RoomActivityInfo =
-    getRoomActivities(listOf(roomId)).getOrThrow().data.single()
+    getUserRooms(PaginationQuery()).getOrThrow().activities.single { it.room.id == roomId }

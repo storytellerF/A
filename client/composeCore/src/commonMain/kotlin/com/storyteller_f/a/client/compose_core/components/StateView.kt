@@ -34,6 +34,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.CombinedLoadStates
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -50,9 +53,41 @@ import com.storyteller_f.a.client.core.LoadingState
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.stringResource
 
 const val REFRESH_AFTER = 300L
+
+@Composable
+private fun PagingRefreshAction(enabled: Boolean, refresh: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+        TextButton(
+            onClick = refresh,
+            modifier =
+            Modifier.appiumSemantics(
+                text = stringResource(Res.string.refresh),
+                onClick = refresh,
+            ),
+            enabled = enabled,
+        ) {
+            Icon(Icons.Default.Refresh, contentDescription = null)
+            Text(stringResource(Res.string.refresh), Modifier.padding(start = 4.dp))
+        }
+    }
+}
+
+@Composable
+private fun <T : Any> ObservePagingRefresh(pagingItems: LazyPagingItems<T>, refreshEvents: Flow<Any>?) {
+    val owner = LocalLifecycleOwner.current
+    LaunchedEffect(pagingItems, owner, refreshEvents) {
+        if (refreshEvents != null) {
+            owner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                pagingItems.refresh()
+                refreshEvents.collect { pagingItems.refresh() }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalHazeMaterialsApi::class)
 @Composable
@@ -61,9 +96,11 @@ fun <T : Any> StateView(
     modifier: Modifier = Modifier,
     showRefresh: Boolean = false,
     onRefresh: () -> Unit = {},
+    refreshEvents: Flow<Any>? = null,
     content: @Composable (LazyPagingItems<T>) -> Unit,
 ) {
     val pagingItems = pagingViewModel.flow.collectAsLazyPagingItems()
+    ObservePagingRefresh(pagingItems, refreshEvents)
     val refresh = {
         onRefresh()
         pagingItems.refresh()
@@ -87,20 +124,7 @@ fun <T : Any> StateView(
         val desktopRefresh = showRefresh || maxWidth >= 600.dp
         Column(Modifier.fillMaxSize()) {
             if (desktopRefresh) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    TextButton(
-                        onClick = refresh,
-                        modifier =
-                        Modifier.appiumSemantics(
-                            text = stringResource(Res.string.refresh),
-                            onClick = refresh,
-                        ),
-                        enabled = refreshLoadState !is LoadState.Loading,
-                    ) {
-                        Icon(Icons.Default.Refresh, contentDescription = null)
-                        Text(stringResource(Res.string.refresh), Modifier.padding(start = 4.dp))
-                    }
-                }
+                PagingRefreshAction(refreshLoadState !is LoadState.Loading, refresh)
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 if (pagingItems.itemCount > 0) {
