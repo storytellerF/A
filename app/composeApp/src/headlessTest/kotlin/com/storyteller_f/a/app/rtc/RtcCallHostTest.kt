@@ -37,6 +37,17 @@ class RtcCallHostTest {
     }
 
     @Test
+    fun signalingFailureReleasesLocalMedia() =
+        runTest {
+        val fixture = CallFixture(this)
+        fixture.failSend = true
+        fixture.join()
+        assertTrue(assertIs<RtcCallState.Ready>(fixture.host.state.value).failed)
+        assertTrue(fixture.engine.media.closed)
+        fixture.close()
+    }
+
+    @Test
     fun sixPeersKeepEveryEarlyCandidate() =
         runTest {
         val fixture = CallFixture(this)
@@ -176,9 +187,11 @@ class RtcCallHostTest {
 private class CallFixture(private val test: TestScope) {
     val engine = FakeRtcEngine()
     val sent = mutableListOf<RoomFrame>()
+    var failSend = false
     private val frames = MutableSharedFlow<RoomFrame>()
     val host =
         RtcCallHost(1L, test.backgroundScope, StandardTestDispatcher(test.testScheduler), engine, frames) {
+            check(!failSend) { "Synthetic signaling failure" }
             sent.add(it)
         }
 

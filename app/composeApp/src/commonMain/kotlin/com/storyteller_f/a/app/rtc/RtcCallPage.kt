@@ -95,7 +95,7 @@ internal fun RtcCallPage(roomId: PrimaryKey) {
         remember(account, roomId) {
             val socket = account.sessionManager.webSocketClient
             RtcCallHost(roomId, scope, rtcCoordination, createRtcEngine(), socket.frameFlow) { frame ->
-                socket.useWebSocket { sendFrame(frame) }
+                socket.useWebSocket { sendFrame(frame) }.getOrThrow()
             }
         }
     DisposableEffect(host) { onDispose { host.close() } }
