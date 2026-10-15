@@ -43,9 +43,12 @@ class ActivityPreviewHostTest {
         val host = RoomListPreviewHost(dispatcher, dispatcher)
         host.acceptPage(null, roomPage(1L..100L))
         host.acceptPage("next-page", roomPage(101L..120L))
+        host.publish()
         assertEquals((1L..120L).toSet(), host.rows.value.keys)
         for (id in 95L..105L) assertEquals(id, host.rows.value.getValue(id).unreadCount)
         host.acceptPage(null, roomPage(101L..105L))
+        assertEquals((1L..120L).toSet(), host.rows.value.keys)
+        host.publish()
         assertEquals((101L..105L).toSet(), host.rows.value.keys)
     }
 
@@ -60,6 +63,7 @@ class ActivityPreviewHostTest {
             }
         job.cancel()
         runCurrent()
+        host.publish()
         assertTrue(host.rows.value.isEmpty())
     }
 

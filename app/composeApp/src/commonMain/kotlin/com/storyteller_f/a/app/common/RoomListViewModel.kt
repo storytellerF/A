@@ -58,13 +58,19 @@ internal class RoomListPreviewHost(
 ) {
     private val mutableRows = MutableStateFlow<ImmutableMap<PrimaryKey, RoomActivityPreview>>(persistentMapOf())
     val rows = mutableRows.asStateFlow()
+    private var stagedRows: ImmutableMap<PrimaryKey, RoomActivityPreview>? = null
 
     suspend fun acceptPage(key: String?, response: RoomInfoListResponse) {
         val previews = withContext(worker) { response.activities.associate { it.room.id to it.toPreview() } }
         withContext(coordination) {
-            val previous = if (key == null) persistentMapOf() else mutableRows.value
-            mutableRows.value = (previous + previews).toImmutableMap()
+            val previous = if (key == null) persistentMapOf() else stagedRows ?: mutableRows.value
+            stagedRows = (previous + previews).toImmutableMap()
         }
+    }
+    suspend fun publish() =
+        withContext(coordination) {
+        stagedRows?.let { mutableRows.value = it }
+        stagedRows = null
     }
 }
 
@@ -82,6 +88,7 @@ class RoomsViewModel(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
             modelStorage.room,
+            onUpdated = previews::publish,
         ) { key, size ->
             captureRoomPage(key, sessionManager.searchCurrentUserRooms(word, size, key))
         }.flow.cachedIn(viewModelScope)
@@ -97,6 +104,7 @@ class UserJoinedRoomsViewModel(sessionManager: UserSessionManager, modelStorage:
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
             modelStorage.room,
+            onUpdated = previews::publish,
         ) { key, size ->
             captureRoomPage(key, sessionManager.getUserRooms(PaginationQuery(key, size = size)))
         }.flow.cachedIn(viewModelScope)
@@ -126,6 +134,7 @@ class CommunityRoomsViewModel(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
             modelStorage.room,
+            onUpdated = previews::publish,
         ) { key, size ->
             captureRoomPage(
                 key,
@@ -151,6 +160,7 @@ class CommunityRoomSearchViewModel(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
             modelStorage.room,
+            onUpdated = previews::publish,
         ) { key, size ->
             captureRoomPage(
                 key,

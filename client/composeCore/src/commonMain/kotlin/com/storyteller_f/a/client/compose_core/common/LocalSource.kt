@@ -64,37 +64,33 @@ class CustomRemoteMediator<Datum : Any>(
         Napier.v(tag = "pagination") {
             "mediator load $loadType"
         }
-        val params =
-            when (loadType) {
-                LoadType.REFRESH ->
-                    PagingSource.LoadParams.Refresh<String>(
-                        null,
-                        state.config.pageSize,
-                        state.config.enablePlaceholders,
-                    )
-
-                LoadType.PREPEND -> {
-                    val remoteKey = wrapper.getPreRemoteKey()?.key
-                    PagingSource.LoadParams.Append(
-                        remoteKey
-                            ?: return MediatorResult.Success(endOfPaginationReached = true),
-                        state.config.pageSize,
-                        state.config.enablePlaceholders,
-                    )
-                }
-
-                LoadType.APPEND -> {
-                    val remoteKey = wrapper.getNextRemoteKey()?.key
-                    PagingSource.LoadParams.Append(
-                        remoteKey
-                            ?: return MediatorResult.Success(endOfPaginationReached = true),
-                        state.config.pageSize,
-                        state.config.enablePlaceholders,
-                    )
-                }
-            }
         return try {
-            mediatorResult(params, loadType)
+            val params =
+                when (loadType) {
+                    LoadType.REFRESH ->
+                        return applyResult(loadRefreshWindow(state), loadType)
+
+                    LoadType.PREPEND -> {
+                        val remoteKey = wrapper.getPreRemoteKey()?.key
+                        PagingSource.LoadParams.Append(
+                            remoteKey
+                                ?: return MediatorResult.Success(endOfPaginationReached = true),
+                            state.config.pageSize,
+                            state.config.enablePlaceholders,
+                        )
+                    }
+
+                    LoadType.APPEND -> {
+                        val remoteKey = wrapper.getNextRemoteKey()?.key
+                        PagingSource.LoadParams.Append(
+                            remoteKey
+                                ?: return MediatorResult.Success(endOfPaginationReached = true),
+                            state.config.pageSize,
+                            state.config.enablePlaceholders,
+                        )
+                    }
+                }
+            applyResult(networkService.load(params), loadType)
         } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
             throw cancellation
         } catch (e: Exception) {
@@ -105,8 +101,52 @@ class CustomRemoteMediator<Datum : Any>(
         }
     }
 
-    private suspend fun mediatorResult(params: PagingSource.LoadParams<String>, loadType: LoadType) =
-        when (val loadResult = networkService.load(params)) {
+    /** Reload the cached range before replacing it; API tokens are passed through unchanged. */
+    private suspend fun loadRefreshWindow(state: PagingState<String, Datum>): PagingSource.LoadResult<String, Datum> {
+        val cachedSize =
+            state.pages.sumOf { it.data.size } +
+                (state.pages.firstOrNull()?.itemsBefore ?: 0).coerceAtLeast(0) +
+                (state.pages.lastOrNull()?.itemsAfter ?: 0).coerceAtLeast(0)
+        val targetSize =
+            maxOf(
+                state.config.initialLoadSize,
+                cachedSize,
+                (state.anchorPosition ?: 0) + 1,
+            )
+        val data = mutableListOf<Datum>()
+        val tokens = mutableSetOf<String>()
+        var params: PagingSource.LoadParams<String> =
+            PagingSource.LoadParams.Refresh(
+                null,
+                state.config.pageSize,
+                state.config.enablePlaceholders,
+            )
+        while (true) {
+            when (val page = networkService.load(params)) {
+                is PagingSource.LoadResult.Error -> return page
+
+                is PagingSource.LoadResult.Invalid -> return page
+
+                is PagingSource.LoadResult.Page -> {
+                    data.addAll(page.data)
+                    val next = page.nextKey
+                    if (data.size >= targetSize || next == null) {
+                        return PagingSource.LoadResult.Page(data.toList(), null, next)
+                    }
+                    check(tokens.add(next)) { "Repeated pagination token" }
+                    params =
+                        PagingSource.LoadParams.Append(
+                            next,
+                            state.config.pageSize,
+                            state.config.enablePlaceholders,
+                        )
+                }
+            }
+        }
+    }
+
+    private suspend fun applyResult(loadResult: PagingSource.LoadResult<String, Datum>, loadType: LoadType) =
+        when (loadResult) {
             is PagingSource.LoadResult.Error<String, Datum> -> {
                 MediatorResult.Error(loadResult.throwable)
             }
@@ -119,11 +159,15 @@ class CustomRemoteMediator<Datum : Any>(
                 val data = loadResult.data
                 val nextKey = loadResult.nextKey
                 val preKey = loadResult.prevKey
-                wrapper.savePreRemoteKey(RemoteKeys(wrapper.collectionName, preKey))
-                wrapper.saveNextRemoteKey(RemoteKeys(wrapper.collectionName, nextKey))
                 update(data, loadType)
+                if (loadType != LoadType.APPEND) {
+                    wrapper.savePreRemoteKey(RemoteKeys(wrapper.collectionName, preKey))
+                }
+                if (loadType != LoadType.PREPEND) {
+                    wrapper.saveNextRemoteKey(RemoteKeys(wrapper.collectionName, nextKey))
+                }
                 Napier.v(tag = "pagination") {
-                    "mediator success type: $loadType key: ${params.key ?: "<none>"}"
+                    "mediator success type: $loadType"
                 }
                 MediatorResult.Success(endOfPaginationReached = nextKey == null)
             }

@@ -147,9 +147,18 @@ executable and `SE_OFFLINE=true` to avoid unrelated browser-download checks; do 
 or change their timeouts to hide environment failures.
 
 
+Paging clients treat server page tokens as opaque strings and retain the returned item order. Local
+Room offsets belong only to the database PagingSource. Its mapped source supplies Room's centered
+offset refresh policy for a new generation, and CompatPagingSource converts local keys without losing
+placeholder counts. RemoteMediator REFRESH follows the returned next tokens until it covers the
+previous cached range (at least initialLoadSize), then commits the replacement once. Failed or cancelled
+requests do not publish a partial window or advance stored remote keys. Room replaces list records,
+detail IDs and aliases in one transaction; preview Hosts publish staged pages after that commit.
+There is no UI-managed request ledger, token parsing, ID-based seek or manual scroll restoration.
+
 Collection refresh in `client/room` deletes only the requested list's named collection. Room and title
 refreshes preserve their default detail caches and other lists; clearing the defaults can invalidate an
-open detail page when the underlying Home list refreshes. `:client:room:jvmTest` runs two shared
+open detail page when the underlying Home list refreshes. `:client:room:jvmTest` runs shared
 headless tests against real SQLite for this boundary, including detail aliases. Its temporary database
 and native-driver files stay under the module build directory and use unique test scopes.
 

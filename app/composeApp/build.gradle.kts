@@ -206,6 +206,7 @@ kotlin {
             implementation(libs.latex.renderer)
         }
         commonTest.dependencies {
+            implementation(libs.androidx.room.runtime)
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
 
@@ -427,6 +428,7 @@ tasks.register<Test>("adaptiveUiTest") {
     val hostTest = tasks.named<Test>("jvmTest").get()
     testClassesDirs = hostTest.testClassesDirs
     classpath = hostTest.classpath
-    include("device_based/HomeAdaptiveUiTest*")
+    include("device_based/HomeAdaptiveUiTest*", "device_based/RoomPagingUiTest*")
+    systemProperty("java.io.tmpdir", layout.buildDirectory.get().asFile.absolutePath)
     maxParallelForks = 1
 }

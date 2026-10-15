@@ -203,3 +203,9 @@
 - Async SQLite transaction finalizers must complete under cancellation so Room can recycle its pool
   permit. Close allocated connections/statements when cancellation prevents delivery; new operations
   still honor cancellation, and cleanup must not replay business writes.
+
+- Treat server paging tokens as opaque and preserve server item order. Keep database offset keys
+  separate from network tokens. Refresh through the existing Pager/RemoteMediator, retain the loaded
+  range and placeholder counts, and atomically replace room rows before publishing preview state.
+  Anchor-preserving mapped PagingSources calculate refresh keys from previous-generation pages
+  without relying on per-instance caches. Verify multi-page event refresh with shuffled IDs and opaque tokens.

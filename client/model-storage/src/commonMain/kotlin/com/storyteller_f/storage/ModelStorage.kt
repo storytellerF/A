@@ -47,6 +47,12 @@ interface CollectionListStorage<C, I : Any> {
     suspend fun saveFirst(collection: C, item: I)
     fun observeData(collection: C): PagingSource<Int, I>
     suspend fun clean(collection: C)
+
+    /** Replaces a complete refresh window; database implementations should commit it atomically. */
+    suspend fun replace(collection: C, items: List<I>) {
+        clean(collection)
+        items.forEach { saveLast(collection, it) }
+    }
     suspend fun getDocument(collection: C, id: PrimaryKey): I? = getDocument(collection, id.toString())
     suspend fun getDocument(collection: C, key: String): I?
     suspend fun updateDocument(collection: C, item: I)
@@ -477,22 +483,31 @@ suspend fun UserInfoStorage.update(collection: UserCollection, id: PrimaryKey, b
     updateDocument(collection, value)
 }
 
+/** A type-changing mapping supplies a policy that can read the previous generation's mapped pages. */
 class WrappedPagingSource<K : Any, T : Any, M : Any>(
     val rawSource: PagingSource<K, T>,
+    private val refreshKey: (PagingState<K, M>) -> K? = { null },
     val process: suspend (List<T>) -> List<M>,
 ) : PagingSource<K, M>() {
     init {
-        rawSource.registerInvalidatedCallback {
-            invalidate()
-        }
+        rawSource.registerInvalidatedCallback { invalidate() }
     }
 
-    override fun getRefreshKey(state: PagingState<K, M>): K? = null
+    override fun getRefreshKey(state: PagingState<K, M>): K? = refreshKey(state)
 
     override suspend fun load(params: LoadParams<K>): LoadResult<K, M> =
         when (val result = rawSource.load(params)) {
-        is LoadResult.Page<K, T> -> LoadResult.Page(process(result.data), result.prevKey, result.nextKey)
+        is LoadResult.Page<K, T> ->
+            LoadResult.Page(
+                process(result.data),
+                result.prevKey,
+                result.nextKey,
+                result.itemsBefore,
+                result.itemsAfter,
+            )
+
         is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
+
         is LoadResult.Invalid<K, T> -> LoadResult.Invalid()
     }
 }
