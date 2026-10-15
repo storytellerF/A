@@ -328,5 +328,5 @@ suspend fun processSendCandidate(frame: RoomFrame.SendCandidate, uid: PrimaryKey
 }
 
 suspend fun DefaultWebSocketServerSession.sendFrame(frame: RoomFrame) {
-    sendSerialized(frame)
+    sendRtcFrame { sendSerialized(frame) }
 }

@@ -595,6 +595,9 @@ independent peer job and buffered signaling queue. ICE is queued until the remot
 peer departure cannot clear another peer's state. Native callbacks carry peer identities so a
 late callback cannot change a replacement peer. Acquisition and shutdown retain ownership
 through cancellation. The screen owns the call lifetime.
+The shared WebSocket dispatcher translates recipient channel cancellation into a delivery
+failure while preserving its own cancellation, so a disconnect cannot stop other rooms'
+negotiation loop.
 
 Media uses Ktor 3.6.0's experimental `ktor-client-webrtc` API on Android, JVM, Wasm and iOS.
 Keep platform engines, permission prompts, renderers and native cleanup behind `RtcEngine`.

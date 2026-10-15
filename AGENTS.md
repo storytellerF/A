@@ -253,3 +253,7 @@
 - Browser ICE events can contain an empty candidate string before the final null event. Treat
   this as an end-of-candidates marker at the RTC boundary; native Ktor adapters reject it.
   Preserve failures for non-empty invalid candidates and verify media still flows after the marker.
+
+- Shared RTC dispatch must distinguish a recipient channel cancellation from caller cancellation.
+  Check the caller context before propagating cancellation; one closed WebSocket must not
+  cancel the global signaling or negotiation jobs.

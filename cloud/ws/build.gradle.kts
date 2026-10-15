@@ -27,6 +27,8 @@ kotlin {
 }
 
 dependencies {
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
     implementation(libs.napier)
     implementation(projects.shared)
     implementation(projects.api)
