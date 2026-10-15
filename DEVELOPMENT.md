@@ -576,3 +576,11 @@ Dockerfile base images and build frontends retain readable version tags and pin 
 manifest digests. For upgrades, resolve each upstream manifest with
 `docker buildx imagetools inspect <image>:<version>` and update its digest explicitly.
 Retry transient registry connection failures a few times before investigating further.
+
+## Android RTC
+
+RTC uses one peer connection and an independent signaling queue per remote user. Buffer ICE
+candidates until the remote description is ready; leaving a peer must not clear another peer session.
+Run `./gradlew :app:composeApp:testAndroidHostTest --tests "*PeerSignalingTest" -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
+for candidate ordering and peer isolation coverage. Real multi-device audio/video verification is still
+required for permissions, joining, leaving, mute state and scrolling beyond four remote participants.

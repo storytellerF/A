@@ -223,3 +223,6 @@
 
 - Pin external Dockerfile base images and build frontends by verified manifest digest.
   Treat transient Docker Hub failures with bounded retries before changing build configuration.
+
+- RTC ICE candidates must remain queued until their peer remote description is ready. Keep peer
+  queues independent, and guard completion cleanup against replacing a newer connection for the same user.

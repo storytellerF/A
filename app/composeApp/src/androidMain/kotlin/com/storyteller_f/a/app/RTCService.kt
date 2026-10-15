@@ -14,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.coroutineScope
 import com.shepeliev.webrtckmp.AudioTrack
+import com.shepeliev.webrtckmp.MediaDevices
 import com.shepeliev.webrtckmp.MediaStream
 import com.shepeliev.webrtckmp.MediaStreamTrackKind
 import com.shepeliev.webrtckmp.VideoTrack
@@ -22,21 +23,22 @@ import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 class RTCService : LifecycleService() {
+    private val rtcHandle by lazy { DefaultRTCHandle(uiViewModel, lifecycle) }
     override fun onCreate() {
         super.onCreate()
         val channel = "Upload"
@@ -51,8 +53,13 @@ class RTCService : LifecycleService() {
 
     override fun onBind(intent: Intent): IBinder? {
         super.onBind(intent)
-        val rtcHandle = DefaultRTCHandle(uiViewModel, lifecycle)
         return RTCBinder(rtcHandle)
+    }
+
+    override fun onDestroy() {
+        rtcHandle.hangup()
+        rtcHandle.releaseStream()
+        super.onDestroy()
     }
 }
 
@@ -65,6 +72,7 @@ data class RemotePeerState(
 )
 
 interface RTCHandle {
+    val error: StateFlow<String?>
     val stream: StateFlow<MediaStream?>
     val callingRoom: StateFlow<PrimaryKey?>
     val remotePeers: StateFlow<Map<PrimaryKey, RemotePeerState>>
@@ -82,12 +90,14 @@ interface RTCHandle {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) : RTCHandle {
+    override val error = MutableStateFlow<String?>(null)
     override val callingRoom = MutableStateFlow<PrimaryKey?>(null)
     override var stream = MutableStateFlow<MediaStream?>(null)
     override val remotePeers = MutableStateFlow<Map<PrimaryKey, RemotePeerState>>(emptyMap())
     override val localAudioMuted = MutableStateFlow(false)
     override val localVideoMuted = MutableStateFlow(false)
     override var job: Job? = null
+    private var joiningJob: Job? = null
     private val peerJobs = mutableMapOf<PrimaryKey, Job>()
     private val peerSignals = mutableMapOf<PrimaryKey, PeerSignaling>()
 
@@ -163,6 +173,8 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
     override fun hangup() {
         val roomId = callingRoom.value
+        joiningJob?.cancel()
+        joiningJob = null
         peerJobs.values.toList().forEach {
             it.cancel()
         }
@@ -186,21 +198,41 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         if (callingRoom.value == roomId) {
             return
         }
+        error.value = null
+        if (callingRoom.value != null) hangup()
         val session = uiViewModel.instance.value.sessionManager
-        lifecycle.coroutineScope.launch {
-            session.webSocketClient.useWebSocket {
-                val f = RoomFrame.StartCall(roomId)
-                sendFrame(f)
-                sendFrame(
-                    RoomFrame.UpdateCallMediaState(
-                        roomId = roomId,
-                        audioMuted = localAudioMuted.value,
-                        videoMuted = localVideoMuted.value,
-                    ),
-                )
-            }
-        }
         callingRoom.value = roomId
+        joiningJob =
+            lifecycle.coroutineScope.launch {
+                try {
+                    if (stream.value == null) {
+                        val media = MediaDevices.getUserMedia(audio = true, video = true)
+                        if (callingRoom.value != roomId) {
+                            media.release()
+                            return@launch
+                        }
+                        setLocalStream(media)
+                    }
+                    if (callingRoom.value != roomId) return@launch
+                    session.webSocketClient.useWebSocket {
+                        sendFrame(RoomFrame.StartCall(roomId))
+                        sendFrame(
+                            RoomFrame.UpdateCallMediaState(
+                                roomId = roomId,
+                                audioMuted = localAudioMuted.value,
+                                videoMuted = localVideoMuted.value,
+                            ),
+                        )
+                    }
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    error.value = "Unable to join call. Check permissions and connection, then try again."
+                    Napier.e(failure, tag = "rtc") { "Unable to join call" }
+                    hangup()
+                    releaseStream()
+                }
+            }
     }
 
     private fun processCreateAnswer(frame: RoomFrame.CreateAnswer, instance: IAccountInstance) {
@@ -227,9 +259,11 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         peerJobs[targetUid] = currentJob
         job = currentJob
         currentJob.invokeOnCompletion {
-            peerJobs.remove(targetUid)
-            peerSignals.remove(targetUid)?.cancel()
-            removeRemotePeer(targetUid)
+            if (peerJobs[targetUid] === currentJob) {
+                peerJobs.remove(targetUid)
+                peerSignals.remove(targetUid)?.cancel()
+                removeRemotePeer(targetUid)
+            }
         }
     }
 
@@ -257,9 +291,11 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
         peerJobs[targetUid] = currentJob
         job = currentJob
         currentJob.invokeOnCompletion {
-            peerJobs.remove(targetUid)
-            peerSignals.remove(targetUid)?.cancel()
-            removeRemotePeer(targetUid)
+            if (peerJobs[targetUid] === currentJob) {
+                peerJobs.remove(targetUid)
+                peerSignals.remove(targetUid)?.cancel()
+                removeRemotePeer(targetUid)
+            }
         }
     }
 
@@ -361,24 +397,20 @@ class DefaultRTCHandle(val uiViewModel: UIViewModel, val lifecycle: Lifecycle) :
 
 class PeerSignaling {
     val answer = CompletableDeferred<RoomFrame.RespondAnswer>()
-    private val candidateEvents =
-        MutableSharedFlow<RoomFrame.ReceiveCandidate>(
-            replay = 1,
-            extraBufferCapacity = 16,
-            onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        )
-    val candidates: SharedFlow<RoomFrame.ReceiveCandidate> = candidateEvents
+    private val candidateEvents = Channel<RoomFrame.ReceiveCandidate>(Channel.UNLIMITED)
+    val candidates = candidateEvents.receiveAsFlow()
 
     fun receiveAnswer(frame: RoomFrame.RespondAnswer) {
         answer.complete(frame)
     }
 
     fun receiveCandidate(frame: RoomFrame.ReceiveCandidate) {
-        candidateEvents.tryEmit(frame)
+        candidateEvents.trySend(frame)
     }
 
     fun cancel() {
         answer.cancel()
+        candidateEvents.cancel()
     }
 }
 
