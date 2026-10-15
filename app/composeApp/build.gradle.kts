@@ -120,7 +120,6 @@ kotlin {
 
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
-            implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
             implementation(libs.androidx.core.splashscreen)
@@ -144,6 +143,7 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            implementation(libs.ktor.webrtc)
             implementation(libs.runtime)
             implementation(libs.foundation)
             implementation(libs.material)
@@ -213,6 +213,28 @@ kotlin {
             implementation(libs.ui.test)
         }
         jvmMain.dependencies {
+            val nativePlatform =
+                providers.systemProperty("os.name").map { name ->
+                    when {
+                        name.startsWith("Windows", ignoreCase = true) -> "windows"
+                        name.startsWith("Mac", ignoreCase = true) -> "macos"
+                        name.startsWith("Linux", ignoreCase = true) -> "linux"
+                        else -> error("Unsupported RTC platform: $name")
+                    }
+                }
+            val nativeArchitecture =
+                providers.systemProperty("os.arch").map { architecture ->
+                    when (architecture.lowercase()) {
+                        "amd64", "x86_64" -> "x86_64"
+                        "aarch64", "arm64" -> "aarch64"
+                        else -> error("Unsupported RTC architecture: $architecture")
+                    }
+                }
+            runtimeOnly(
+                nativePlatform.zip(nativeArchitecture) { platform, architecture ->
+                    "dev.onvoid.webrtc:webrtc-java:${libs.versions.webrtcJava.get()}:$platform-$architecture"
+                },
+            )
             implementation(libs.vlcj)
             implementation(libs.jlayer)
             implementation(libs.connectivity.http)

@@ -676,7 +676,7 @@ private fun RoomDialogButtons(roomInfo: RoomInfo, dismiss: () -> Unit) {
             RoomMemberStatus(roomInfo, globalDialogController)
             FavoriteButton(roomInfo.favoriteId, roomInfo.tuple())
             SubscriptionButton(roomInfo.subscriptionId, roomInfo.tuple())
-            StartCallButton(roomInfo)
+            StartCallButton(roomInfo, dismiss)
             if (roomInfo.isPrivate || roomInfo.creator == me?.id) {
                 RoomFileExplorerButton(roomInfo, dismiss, appNavFactory)
             }
@@ -744,13 +744,15 @@ private fun RoomMemberStatus(roomInfo: RoomInfo, globalDialogController: AppGlob
 }
 
 @Composable
-private fun StartCallButton(roomInfo: RoomInfo) {
+private fun StartCallButton(roomInfo: RoomInfo, dismiss: () -> Unit) {
+    val nav = LocalAppNavFactory.current.newAppNav()
     val sessionManager = LocalSessionManager.current
 
     val scope = rememberCoroutineScope()
 
     ButtonNav(Icons.Default.Call, stringResource(Res.string.start_call)) {
-        appPlatformImpl.startCall(roomInfo.id)
+        dismiss()
+        nav.gotoCall(roomInfo.id)
     }
     if (getPlatform().name.contains("android", ignoreCase = true)) {
         val context = LocalPlatformContext.current

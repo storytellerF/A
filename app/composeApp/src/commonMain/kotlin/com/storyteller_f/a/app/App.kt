@@ -714,6 +714,8 @@ private fun createAppNavFactoryForBubble(): AppNavFactory =
 
         override fun gotoSignIn() = Unit
 
+        override fun gotoCall(roomId: PrimaryKey) = Unit
+
         override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) = Unit
 
         override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) = Unit

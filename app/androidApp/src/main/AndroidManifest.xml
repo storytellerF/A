@@ -21,11 +21,6 @@
         <profileable
             android:shell="true"
             tools:targetApi="29" />
-        <activity
-            android:name=".RTCActivity"
-            android:exported="false"
-            android:launchMode="singleTask"
-            android:taskAffinity="a.rtc" />
 
         <uses-native-library android:name="libvndksupport.so" android:required="false"/>
         <uses-native-library android:name="libOpenCL.so" android:required="false"/>
@@ -103,12 +98,6 @@
             android:name=".FileService"
             android:exported="false"
             android:foregroundServiceType="mediaProcessing">
-
-        </service>
-        <service
-            android:name=".RTCService"
-            android:exported="false"
-            android:foregroundServiceType="phoneCall">
 
         </service>
     </application>

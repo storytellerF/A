@@ -226,3 +226,9 @@
 
 - RTC ICE candidates must remain queued until their peer remote description is ready. Keep peer
   queues independent, and guard completion cleanup against replacing a newer connection for the same user.
+
+- Ktor RTC JVM shutdown must detach sender tracks before closing the connection and disposing
+  local media. Remote JVM tracks are borrowed; video renderers must remove sinks before
+  track disposal. Keep native negotiation tests on a real dispatcher, including cancellation cleanup.
+- Android Ktor remote tracks are owned by native receivers. Remove renderer sinks before
+  PeerConnection disposal and avoid separately disposing those receiver-owned tracks.

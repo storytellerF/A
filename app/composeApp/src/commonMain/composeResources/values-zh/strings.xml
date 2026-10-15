@@ -85,4 +85,29 @@
     <string name="activity_preview_count">显示 %1$d 项，共 %2$d 项</string>
     <string name="activity_unread_rooms">未读房间</string>
     <string name="activity_pinned_topics">置顶话题</string>
+
+    <string name="rtc_room">房间 %1$s</string>
+    <string name="rtc_participants">%1$d 人 · 通话中</string>
+    <string name="rtc_ready">准备加入房间通话</string>
+    <string name="rtc_joining">正在准备麦克风和摄像头…</string>
+    <string name="rtc_join_video">视频加入</string>
+    <string name="rtc_join_audio">语音加入</string>
+    <string name="rtc_leave">离开通话</string>
+    <string name="rtc_you">我</string>
+    <string name="rtc_participant">参与者 %1$s</string>
+    <string name="rtc_waiting">等待其他用户加入此房间</string>
+    <string name="rtc_camera_off">关闭摄像头</string>
+    <string name="rtc_camera_on">开启摄像头</string>
+    <string name="rtc_audio_only">语音通话</string>
+    <string name="rtc_mute">静音</string>
+    <string name="rtc_unmute">取消静音</string>
+    <string name="rtc_muted">已静音</string>
+    <string name="rtc_switch_camera">切换摄像头</string>
+    <string name="rtc_connecting">正在连接</string>
+    <string name="rtc_connected">已连接</string>
+    <string name="rtc_disconnected">连接已断开</string>
+    <string name="rtc_failed">无法连接，请检查权限和网络后重新加入。</string>
+    <string name="rtc_permission_required">请在应用设置中允许访问麦克风和摄像头。</string>
+    <string name="rtc_open_settings">打开设置</string>
+    <string name="rtc_media_failed">无法更新媒体，请检查摄像头和麦克风。</string>
 </resources>

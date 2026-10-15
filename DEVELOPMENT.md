@@ -577,10 +577,29 @@ manifest digests. For upgrades, resolve each upstream manifest with
 `docker buildx imagetools inspect <image>:<version>` and update its digest explicitly.
 Retry transient registry connection failures a few times before investigating further.
 
-## Android RTC
+## Cross-platform RTC
 
-RTC uses one peer connection and an independent signaling queue per remote user. Buffer ICE
-candidates until the remote description is ready; leaving a peer must not clear another peer session.
-Run `./gradlew :app:composeApp:testAndroidHostTest --tests "*PeerSignalingTest" -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
-for candidate ordering and peer isolation coverage. Real multi-device audio/video verification is still
-required for permissions, joining, leaving, mute state and scrolling beyond four remote participants.
+The shared `RtcCallHost` owns call state independently of Compose. Each remote user has an
+independent peer job and buffered signaling queue. ICE is queued until the remote SDP is ready;
+peer departure cannot clear another peer's state. Native callbacks carry peer identities so a
+late callback cannot change a replacement peer. Acquisition and shutdown retain ownership
+through cancellation. The screen owns the call lifetime.
+
+Media uses Ktor 3.6.0's experimental `ktor-client-webrtc` API on Android, JVM, Wasm and iOS.
+Keep platform engines, permission prompts, renderers and native cleanup behind `RtcEngine`.
+Ktor's JVM engine uses webrtc-java 0.16.0; detach sender tracks before connection shutdown,
+remove video sinks before disposing tracks, and explicitly close the media factory and local
+audio track. Remote JVM tracks are borrowed from their connection. Frame conversion runs on
+a worker and balances retained native frames. Android's EGL/media factory is application-owned.
+Browser audio belongs to the peer rather than a lazy video tile so scrolling cannot mute audio.
+
+Run `./gradlew :app:composeApp:jvmTest --tests "*Rtc*Test" :app:composeApp:testAndroidHostTest --tests "*Rtc*Test" -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`
+for shared state/signaling and native SDP/ICE/cleanup coverage. The native JVM fixture uses
+synthetic audio/video sources and real time. Compile Android, desktop and Wasm adapters;
+use macOS with `-Ptarget.ios=true` for iOS, whose Xcode target links WebRTC 137.7151.04.
+Real multi-client checks must cover permissions, media, joining/leaving, mute state, camera
+switching and scrolling beyond four participants. Pure audio joins negotiate audio tracks.
+
+The browser origin needs HTTPS and `Permissions-Policy` allowing camera, microphone and
+autoplay for `self`; keep unrelated origins restricted. After deployment compare the browser's
+loaded Wasm entry fingerprint with the running image, including versioned Compose resources.

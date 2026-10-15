@@ -233,8 +233,13 @@ System notification rooms allow recipients to read messages; their message input
 
 Snapshot PDF signing accepts `SNAPSHOT_KEYSTORE_BASE64` (the single-line Base64 encoding of the existing PKCS#12 file) and `SNAPSHOT_KEYSTORE_PASS` in the selected environment file. The server validates and uses the key in memory; no keystore mount is required. Base64 is encoding, not encryption: protect the environment file and never commit or log its contents. `SNAPSHOT_KEYSTORE_BASE64` takes precedence over the legacy `SNAPSHOT_KEYSTORE_PATH`; malformed data or an incorrect/missing password fails startup without falling back or generating a replacement key. To migrate, encode the existing file with `base64 -w 0 < existing.p12`, save the output privately in the environment file, retain the password, and remove `SNAPSHOT_KEYSTORE_PATH`. With neither source configured, snapshot signing is disabled.
 
-## Android room calls
+## Room calls
 
-Open a room call and choose **Join call**, then grant camera and microphone permissions.
-Other users joining the same room appear in a scrollable participant grid with camera and mute status.
-Use the controls to mute, hide video, switch cameras or leave the call.
+Android, desktop and browser clients share the room call page. Open a room's call action,
+then choose **Join with video** or **Join with audio** and allow the requested permissions.
+Participants appear in a scrollable adaptive grid with independent connection, camera and
+mute status. Controls mute the microphone, hide video, switch supported cameras or leave.
+Calls end when the call page is closed. Browser calls require HTTPS and camera/microphone
+permission. CLI clients do not provide audio/video calls.
+
+The iOS adapter and permissions are included; build and device acceptance require macOS/Xcode.

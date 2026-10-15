@@ -30,7 +30,6 @@ import com.storyteller_f.a.app.common.getDeepLink
 import com.storyteller_f.a.app.utils.AppPlatformImpl
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.safeFirstUnicode
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -38,17 +37,6 @@ import java.util.concurrent.atomic.AtomicInteger
 val notifyId = AtomicInteger(0)
 
 object AndroidAppPlatformImpl : AppPlatformImpl {
-    override fun startCall(roomId: PrimaryKey) {
-        val application = appContextRef.get() ?: return
-        val intent =
-            Intent(application, RTCActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                putExtra("roomId", roomId)
-            }
-        application.startActivity(intent)
-    }
-
     override suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) {
         val context = appContextRef.get() ?: return
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {

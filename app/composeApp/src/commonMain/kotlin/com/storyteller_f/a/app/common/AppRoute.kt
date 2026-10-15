@@ -70,6 +70,9 @@ data object HomeScreen : NavKey
 data class CommunityScreen(val communityId: PrimaryKey, val showDialog: Boolean? = null) : NavKey
 
 @Serializable
+data class RtcCallScreen(val roomId: PrimaryKey) : NavKey
+
+@Serializable
 data class RoomScreen(val roomId: PrimaryKey, val showDialog: Boolean? = null) : NavKey
 
 @Serializable
@@ -193,6 +196,7 @@ val appNavSerializersModule =
             subclass(HomeScreen::class)
             subclass(CommunityScreen::class)
             subclass(RoomScreen::class)
+            subclass(RtcCallScreen::class)
             subclass(SignSessionScreen::class)
             subclass(TopicScreen::class)
             subclass(AboutScreen::class)
@@ -241,6 +245,8 @@ interface AppNav {
     val backStack: NavBackStack<NavKey>
 
     fun gotoSignIn()
+
+    fun gotoCall(roomId: PrimaryKey)
 
     fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean)
 
@@ -317,6 +323,10 @@ interface AppNavFactory {
 private class DefaultAppNav(override val backStack: NavBackStack<NavKey>) : AppNav {
     override fun gotoSignIn() {
         backStack.add(SignSessionScreen)
+    }
+
+    override fun gotoCall(roomId: PrimaryKey) {
+        backStack.add(RtcCallScreen(roomId))
     }
 
     override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) {
@@ -532,6 +542,9 @@ private fun EntryProviderScope<NavKey>.handleMainScreen() {
     }
     entry<CommunityScreen> { screen ->
         CommunityPage(screen.communityId, screen.showDialog == true)
+    }
+    entry<RtcCallScreen> { screen ->
+        com.storyteller_f.a.app.rtc.RtcCallPage(screen.roomId)
     }
     entry<RoomScreen> { screen ->
         RoomPage(screen.roomId, screen.showDialog == true)
