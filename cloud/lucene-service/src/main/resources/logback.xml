@@ -1,48 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
 <configuration>
+    <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder" />
+    <import class="ch.qos.logback.classic.filter.LevelFilter" />
+    <import class="ch.qos.logback.classic.filter.ThresholdFilter" />
+    <import class="ch.qos.logback.core.ConsoleAppender" />
+    <import class="ch.qos.logback.core.rolling.RollingFileAppender" />
+    <import class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy" />
+
     <property name="SERVICE_LOG_PATH" value="${LOG_PATH:-build/logs/lucene}" />
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
-    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDERR" class="ConsoleAppender">
         <target>System.err</target>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <filter class="ThresholdFilter">
             <level>WARN</level>
         </filter>
-        <encoder>
+        <encoder class="PatternLayoutEncoder">
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT" class="ConsoleAppender">
         <target>System.out</target>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>DEBUG</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>TRACE</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>WARN</level>
             <onMatch>DENY</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>ERROR</level>
             <onMatch>DENY</onMatch>
         </filter>
-        <encoder>
+        <encoder class="PatternLayoutEncoder">
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="FILE" class="RollingFileAppender">
         <file>${SERVICE_LOG_PATH}/lucene.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <rollingPolicy class="TimeBasedRollingPolicy">
             <fileNamePattern>${SERVICE_LOG_PATH}/lucene.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
-        <encoder><pattern>${LOG_PATTERN}</pattern></encoder>
+        <encoder class="PatternLayoutEncoder"><pattern>${LOG_PATTERN}</pattern></encoder>
     </appender>
     <root level="INFO">
         <appender-ref ref="STDOUT" />

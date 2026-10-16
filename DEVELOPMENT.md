@@ -376,6 +376,8 @@ use the independent `com.storyteller_f.services.*.api` namespaces.
 
 ## Service log collection
 
+- Logback XML uses the canonical import form: an XML declaration and `<!DOCTYPE configuration>`, followed by fully qualified `<import class="..." />` declarations. Appenders, filters, rolling policies and encoders reference the imported short class names; every encoder declares `class="PatternLayoutEncoder"`.
+
 - Server request summaries join URL, status, method, query, headers and remote-IP fields on one line without adding formatting line breaks or transforming field values.
 
 - Log filenames use the service name: `server.log`, `worker.log`, `ws.log`, `cli.log`, `filesystem.log`, and `lucene.log`; rotated files follow `<service>.yyyy-MM-dd.log`. Existing files keep their names and remain covered by Promtail's `*.log` pattern.

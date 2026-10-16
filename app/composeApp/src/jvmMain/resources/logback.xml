@@ -1,36 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
 <configuration>
-    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+    <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder" />
+    <import class="ch.qos.logback.classic.filter.LevelFilter" />
+    <import class="ch.qos.logback.classic.filter.ThresholdFilter" />
+    <import class="ch.qos.logback.core.ConsoleAppender" />
+
+    <appender name="STDERR" class="ConsoleAppender">
         <target>System.err</target>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+        <filter class="ThresholdFilter">
             <level>WARN</level>
         </filter>
-        <encoder>
+        <encoder class="PatternLayoutEncoder">
             <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT" class="ConsoleAppender">
         <target>System.out</target>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>DEBUG</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>TRACE</level>
             <onMatch>ACCEPT</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>WARN</level>
             <onMatch>DENY</onMatch>
         </filter>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+        <filter class="LevelFilter">
             <level>ERROR</level>
             <onMatch>DENY</onMatch>
         </filter>
-        <encoder>
+        <encoder class="PatternLayoutEncoder">
             <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
