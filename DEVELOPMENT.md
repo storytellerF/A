@@ -645,3 +645,18 @@ After deployment, request an entry Wasm asset with `Accept-Encoding: gzip`, veri
 `Content-Encoding`/`Vary`, and compare decompressed bytes with the image. Keep HTML cache
 validation enabled. Configuration-only releases must recreate the static containers to
 reattach replaced bind-mounted configuration files, then reload proxy upstream resolution.
+
+### Worker model resolution
+
+KoogClientFactory accepts only exact IDs from the OpenAI, Anthropic, Google, Ollama and OpenRouter
+SDK catalogs. Google's module is published as 1.3.0-beta alongside stable Koog 1.3.0 modules.
+Model capabilities and token limits come directly from Koog; there are no manual
+aliases or custom metadata fallbacks. Resolve the model before creating a client so invalid
+configuration fails without allocating client resources. Defaults reference SDK constants;
+OpenRouter requires an explicit ID. OpenAI-compatible endpoints use an opaque model-ID wrapper
+without capabilities or token limits, and LiteRT retains local model metadata.
+
+The migration intentionally rejects previously accepted unknown, dated or legacy IDs. Update
+stored configurations to a catalog ID or use OPENAI_COMPATIBLE for custom compatible endpoints.
+The Google and Ollama presets now match their SDK defaults, and the OpenRouter preset uses a
+catalog model. Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.

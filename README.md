@@ -48,6 +48,16 @@ endpoint and ignores `baseUrl`. For LiteRT-LM, set `modelPath` in
 `cloud/worker/llm-config.litert-example.json` to an existing local `.litertlm` model before applying it;
 the worker does not download the model.
 
+OpenAI, Anthropic, Google, Ollama and OpenRouter require exact, case-sensitive IDs from Koog's
+model catalog. Unknown IDs, unlisted dated versions and aliases are rejected. Without a model ID,
+OpenAI uses `gpt-4o`, Anthropic uses `claude-sonnet-4-0`, Google uses `gemini-2.5-flash`, and Ollama
+uses `llama3.2:latest`. OpenRouter requires an explicit ID.
+
+OpenAI-compatible model IDs are opaque strings passed directly to the API, with no OpenAI catalog
+lookup or inferred metadata; their existing default is `gpt-3.5-turbo`. For existing configurations,
+replace unlisted IDs with exact catalog IDs. Custom deployments using the compatible HTTP protocol
+can use `OPENAI_COMPATIBLE` with their endpoint and model name. LiteRT keeps local model IDs.
+
 All providers return the same structured moderation decision. The LiteRT-LM client uses native JSON-schema
 constrained output, tries the GPU backend first, and falls back to CPU if GPU initialization fails. Set
 `cachePath` in the LiteRT-LM preset to a directory writable by the worker. Existing configurations without

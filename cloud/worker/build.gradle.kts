@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.koog.prompt.executor.openai)
     implementation(libs.koog.prompt.executor.openrouter)
     implementation(libs.koog.prompt.executor.anthropic)
+    implementation(libs.koog.prompt.executor.google)
     implementation(libs.koog.prompt.executor.ollama)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)

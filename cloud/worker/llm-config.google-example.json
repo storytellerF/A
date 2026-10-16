@@ -3,7 +3,7 @@
   "llmConfigData": {
     "provider": "GOOGLE",
     "apiKey": "your-google-api-key",
-    "model": "gemini-2.0-flash",
+    "model": "gemini-2.5-flash",
     "temperature": 0.7,
     "maxTokens": 1024
   }

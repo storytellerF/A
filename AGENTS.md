@@ -264,3 +264,9 @@
 
 - Adaptive form fields must emit one layout root per item, including their dividers. Keep editor draft
   and mode state outside responsive width branches; measure breakpoints after pane padding.
+
+- Resolve official-provider Koog model names only by exact catalog IDs through modelsById();
+  reject unlisted IDs and never add manual aliases, model substitutions or metadata fallbacks.
+
+- OpenAI-compatible endpoints share only the HTTP protocol. Treat model IDs as opaque strings;
+  never resolve them through the OpenAI catalog or infer OpenAI model metadata.

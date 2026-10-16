@@ -3,6 +3,11 @@
  */
 package com.storytellerf.a.cloud.worker.llm
 
+import ai.koog.prompt.executor.clients.anthropic.AnthropicModels
+import ai.koog.prompt.executor.clients.google.GoogleModels
+import ai.koog.prompt.executor.clients.openai.OpenAIModels
+import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
+import ai.koog.prompt.executor.ollama.client.OllamaModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.params.LLMParams
@@ -17,11 +22,12 @@ import java.io.File
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private const val OPENROUTER_MODEL_ID = "dots-studio/dots-3-note-preview:free"
+private const val OPENROUTER_MODEL_ID = "openai/gpt-4o"
 
 internal class KoogIntegrationTest {
     @BeforeTest
@@ -62,7 +68,7 @@ internal class KoogIntegrationTest {
             LlmConfig(
                 provider = LlmProvider.GOOGLE,
                 apiKey = "test-key",
-                model = "gemini-2.0-flash",
+                model = "gemini-2.5-flash",
             )
 
         val client = KoogClientFactory.createClient(config)
@@ -75,7 +81,7 @@ internal class KoogIntegrationTest {
             LlmConfig(
                 provider = LlmProvider.OLLAMA,
                 baseUrl = "http://localhost:11434",
-                model = "llama3",
+                model = "llama3.2:latest",
             )
 
         val client = KoogClientFactory.createClient(config)
@@ -129,17 +135,71 @@ internal class KoogIntegrationTest {
     }
 
     @Test
-    fun `test explicit model identifier is preserved`() {
-        val config =
-            LlmConfig(
-                provider = LlmProvider.OPENAI,
-                apiKey = "test-key",
-                model = "gpt-4",
+    fun `known models retain SDK metadata`() {
+        val cases =
+            listOf(
+                LlmProvider.OPENAI to OpenAIModels.Chat.GPT4o,
+                LlmProvider.OPENAI to OpenAIModels.Chat.O3,
+                LlmProvider.ANTHROPIC to AnthropicModels.Sonnet_4,
+                LlmProvider.GOOGLE to GoogleModels.Gemini2_5Flash,
+                LlmProvider.OPENROUTER to OpenRouterModels.GPT4o,
+                LlmProvider.OLLAMA to OllamaModels.models.first(),
             )
+        cases.forEach { (provider, expected) ->
+            val actual = KoogClientFactory.resolveModel(LlmConfig(provider = provider, model = expected.id))
+            assertEquals(expected, actual, "$provider model ${expected.id}")
+        }
+    }
 
-        val model = KoogClientFactory.resolveModel(config)
-        assertNotNull(model)
-        assertEquals("gpt-4", model.id)
+    @Test
+    fun `compatible endpoints treat model IDs as opaque`() {
+        listOf("gpt-4o", "o3", "Custom/Model-V1").forEach { id ->
+            val model = KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OPENAI_COMPATIBLE, model = id))
+            assertEquals(id, model.id)
+            assertNull(model.capabilities)
+            assertNull(model.contextLength)
+            assertNull(model.maxOutputTokens)
+        }
+    }
+
+    @Test
+    fun `catalog providers reject unknown model IDs`() {
+        val providers =
+            listOf(
+                LlmProvider.OPENAI,
+                LlmProvider.ANTHROPIC,
+                LlmProvider.GOOGLE,
+                LlmProvider.OLLAMA,
+                LlmProvider.OPENROUTER,
+            )
+        providers.forEach { provider ->
+            listOf("Custom/Model-V1", "GPT-4o", " ", "claude-sonnet-4-20250514").forEach { id ->
+                val failure =
+                    assertFailsWith<IllegalArgumentException> {
+                        KoogClientFactory.resolveModel(LlmConfig(provider = provider, model = id))
+                    }
+                assertTrue(failure.message.orEmpty().contains("model"))
+            }
+        }
+    }
+
+    @Test
+    fun `catalog IDs cannot cross providers`() {
+        assertFailsWith<IllegalArgumentException> {
+            KoogClientFactory.resolveModel(LlmConfig(LlmProvider.ANTHROPIC, model = OpenAIModels.Chat.GPT4o.id))
+        }
+    }
+
+    @Test
+    fun `default models use SDK definitions`() {
+        assertEquals(OpenAIModels.Chat.GPT4o, KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OPENAI)))
+        assertEquals(AnthropicModels.Sonnet_4, KoogClientFactory.resolveModel(LlmConfig(LlmProvider.ANTHROPIC)))
+        assertEquals(GoogleModels.Gemini2_5Flash, KoogClientFactory.resolveModel(LlmConfig(LlmProvider.GOOGLE)))
+        assertEquals(OllamaModels.Meta.LLAMA_3_2, KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OLLAMA)))
+        assertEquals(
+            "gpt-3.5-turbo",
+            KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OPENAI_COMPATIBLE)).id,
+        )
     }
 
     @Test

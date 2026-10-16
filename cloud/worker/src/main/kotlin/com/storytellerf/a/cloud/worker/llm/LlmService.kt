@@ -110,8 +110,8 @@ internal class KoogLlmService(
          * Create a KoogLlmService from LLM configuration.
          */
         fun create(config: LlmConfig): KoogLlmService {
-            val client = KoogClientFactory.createClient(config)
             val model = KoogClientFactory.resolveModel(config)
+            val client = KoogClientFactory.createClient(config)
             return KoogLlmService(client, model, config)
         }
     }
