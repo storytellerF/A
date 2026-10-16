@@ -21,6 +21,7 @@ application {
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    implementation(libs.logback)
     implementation(projects.services.luceneProtocol)
     implementation(libs.bundles.lucene)
     implementation(libs.ktor.server.core)

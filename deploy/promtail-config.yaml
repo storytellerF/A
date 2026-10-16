@@ -31,3 +31,13 @@ scrape_configs:
         labels:
           job: cli
           __path__: /var/log/A/cli/*.log
+      - targets:
+          - localhost
+        labels:
+          job: filesystem
+          __path__: /var/log/A/filesystem/*.log
+      - targets:
+          - localhost
+        labels:
+          job: lucene
+          __path__: /var/log/A/lucene/*.log

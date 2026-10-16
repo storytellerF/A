@@ -8,11 +8,13 @@ services:
         BUILD_ON: ${BUILD_ON}
     restart: unless-stopped
     environment:
+      LOG_PATH: /home/app/logs/lucene
       LUCENE_RPC_PORT: 8821
       LUCENE_BASE_PATH: /data
     expose:
       - "8821"
     volumes:
+      - service-logs:/home/app/logs
       - ../lucene_data:/data
     healthcheck:
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8821/health" ]

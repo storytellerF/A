@@ -5,6 +5,7 @@
 - Prefer KMP-shareable code. Handle platform differences with `expect`/`actual` or platform source directories.
 - Keep the Gradle configuration cache enabled (`org.gradle.configuration-cache=true`) and avoid side effects or IO during configuration.
 - Logging: use Napier in shared/app code. Initialize a logging tree only when needed for tests or debugging.
+- Use the canonical imported-class Logback XML form documented in DEVELOPMENT.md.
 - Static analysis: run Detekt with `config/detekt/detekt.yml`. Do not create or use Detekt baseline files; every active finding must be fixed in source code. Do not add or broaden suppressions to bypass findings. When Detekt rules conflict, disable only the conflicting rule or narrowly scoped configuration necessary to resolve the conflict.
 - Detekt permits public library entities and public data classes only in the configured `api` and `shared.model` protocol/model scopes and the `client/core` request boundary; keep these exceptions narrowly scoped in `config/detekt/detekt.yml`.
 - New Kotlin source files must start with the private-project license header configured by Detekt.
@@ -283,3 +284,12 @@
   construct and own its default credential chain so credential requests inherit the configured region
   and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
   in authentication, region propagation and resource-lifecycle tests.
+
+- Appium artifacts belong to the invocation's `AppiumTestReport` directory. Keep allocation atomic,
+  preserve the original test failure during collection, and register private runtime paths for cleanup
+  before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
+  downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
+
+- Filesystem/Lucene use SLF4J directly, without Napier or shared/business dependencies. Keep their Logback
+  provider, container-owned `LOG_PATH` directories and Appium file-log archives aligned; validate
+  service startup records rather than treating nonempty provider-warning output as collected logs.

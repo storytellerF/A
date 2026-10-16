@@ -5,28 +5,25 @@
 package com.storyteller_f.a.dev.appium
 
 import org.testcontainers.containers.Network
-import java.io.File
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /** Starts the backend topology shared by desktop and browser Appium tests. */
-@OptIn(ExperimentalUuidApi::class)
-suspend fun runAppiumTestEnvironment(allowedOrigins: String = "", block: suspend (AppiumPorts) -> Unit) {
-    val sessionId = Uuid.random().toHexString()
-    val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
-    prepareSessionDirectories(hostSessionPath)
+internal suspend fun runAppiumTestEnvironment(
+    report: AppiumTestReport,
+    allowedOrigins: String = "",
+    block: suspend (AppiumPorts) -> Unit,
+) {
     System.setProperty("api.version", "1.44")
     Network.newNetwork().use { network ->
-        useLightweightBackendContainers(network) { filesystem, redis ->
+        useLightweightBackendContainers(network, report) { filesystem, redis ->
             val environment =
                 buildContainerEnv() + ("SIGNIN_ALLOWED_ORIGINS" to allowedOrigins) +
                     ("FILESYSTEM_PUBLIC_URL" to "http://${filesystem.host}:${filesystem.getMappedPort(8822)}")
-            useCliInitContainer(network, environment, hostSessionPath) {
-                useWsContainer(network, environment, hostSessionPath) { ws ->
+            useCliInitContainer(network, environment, report) {
+                useWsContainer(network, environment, report) { ws ->
                     val wsPort = ws.getMappedPort(8813)
-                    useServerContainer(network, environment, hostSessionPath) { server ->
+                    useServerContainer(network, environment, report) { server ->
                         val serverPort = server.getMappedPort(8811)
-                        useWorkerContainer(network, environment, hostSessionPath) {
+                        useWorkerContainer(network, environment, report) {
                             block(
                                 AppiumPorts(server = serverPort, ws = wsPort, expireUserSessions = {
                                     val result = redis.execInContainer("redis-cli", "EVAL", EXPIRE_USER_SESSIONS, "0")

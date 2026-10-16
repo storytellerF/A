@@ -159,6 +159,10 @@ for profiles in "filesystem,lucene,server,worker" "pg,filesystem,lucene,server,w
 done
 
 for backend in filesystem lucene; do
+  assert_contains "deploy/docker-compose/docker-compose.$backend.yml" "      LOG_PATH: /home/app/logs/$backend"
+  assert_contains "deploy/docker-compose/docker-compose.$backend.yml" "      - service-logs:/home/app/logs"
+  assert_contains "deploy/promtail-config.yaml" "          job: $backend"
+  assert_contains "deploy/promtail-config.yaml" "          __path__: /var/log/A/$backend/*.log"
   assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  cli:"
   assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  server:"
   assert_not_contains "deploy/docker-compose/docker-compose.$backend.yml" "  worker:"

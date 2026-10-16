@@ -7,13 +7,13 @@ package com.storyteller_f.a.cloud.filesystem
 import com.storyteller_f.services.filesystem.api.CopyPack
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
 import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
-import io.github.aakira.napier.Napier
 import io.mikael.urlbuilder.UrlBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.slf4j.LoggerFactory
 import java.io.BufferedInputStream
 import java.io.File
 import java.nio.file.FileVisitResult
@@ -45,9 +45,8 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         }
 
     init {
-        Napier.i {
-            "media path ${base.toRealPath().pathString}"
-        }
+        LoggerFactory.getLogger(LocalFileSystemObjectStorageService::class.java)
+            .info("Filesystem object storage initialized")
     }
 
     suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>> =

@@ -376,7 +376,14 @@ use the independent `com.storyteller_f.services.*.api` namespaces.
 
 ## Service log collection
 
-- Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws and cli. All four services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.
+- Logback XML uses the canonical import form: an XML declaration and `<!DOCTYPE configuration>`, followed by fully qualified `<import class="..." />` declarations. Appenders, filters, rolling policies and encoders reference the imported short class names; every encoder declares `class="PatternLayoutEncoder"`.
+
+- Server request summaries join URL, status, method, query, headers and remote-IP fields on one line without adding formatting line breaks or transforming field values.
+
+- Log filenames use the service name: `server.log`, `worker.log`, `ws.log`, `cli.log`, `filesystem.log`, and `lucene.log`; rotated files follow `<service>.yyyy-MM-dd.log`. Existing files keep their names and remain covered by Promtail's `*.log` pattern.
+
+- Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws, cli, filesystem and lucene. All six services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.
+- The CLI entrypoint also writes its startup/readiness records to `cli.log` when `LOG_PATH` is set, including when preset initialization is disabled. Verify this path with `bash scripts/test_scripts/cli-entrypoint-test.sh`.
 - Runtime images create the log directory owned by the application user. Container logs no longer depend on a host `LOG_PATH` bind mount. Recreate the application services and Promtail together to apply the volume/path changes; existing host log files are not automatically migrated.
 
 ## Windows AVIF native library
@@ -686,3 +693,43 @@ access. HTTP fixtures use real IO dispatchers and unique ports. No live cloud ac
 invocation is needed.
 
 Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
+
+### Appium artifact reports
+
+Every Android, desktop and Wasm helper invocation writes a report under the runner module's
+`build/reports/appium/index.html`. Open that index to find the exact test name, platform, result,
+failure stack and all collected artifacts. Per-case reports link readable backend console logs,
+service log archives, application logs, screenshots/page sources, Android recordings and available
+failure diagnostics. Collection errors appear separately from the original test failure.
+
+Directories are grouped by suite/platform/test name. Each component uses a bounded safe name plus
+a deterministic SHA-256 prefix to distinguish sanitization collisions. Atomic `attempt-N` directory
+creation isolates repeated runs, retries, same-named invocations and concurrent processes without
+UUIDs or overwrites. Keep the whole report tree when exporting reports so relative links work.
+Private injected sessions and desktop runtime storage are removed before report generation.
+
+Run the report lifecycle and filesystem regression tests with
+`./gradlew :dev:appiumCore:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
+These tests do not require an Appium server, Docker or a device.
+
+Artifact links open static HTML viewers rather than relying on server MIME mappings. Log/text/XML/HTML
+content is escaped; tar, tar.gz and zip files show an archive listing with text previews without extracting
+entry paths. Images and recordings are embedded in their viewers. Original files remain available through
+an explicit download link. Text previews are limited to 2 MiB per file/entry and archives to 100 entries and 8 MiB of previewed text.
+
+Filesystem and Lucene services package their own Logback provider/configuration. Both services emit
+console and rolling-file logs. Service events use SLF4J directly;
+INFO goes to stdout, WARN/ERROR to stderr,
+and all enabled levels go to the rolling file, matching server/worker. Promtail reads
+the shared volume under `/var/log/A/<service>/*.log` with the corresponding `job` label
+and pushes to Loki. `LOG_PATH` controls the file directory; without it, standalone runs
+use `build/logs/filesystem` and `build/logs/lucene`. Runtime images create `/home/app/logs/<service>` owned by the non-root service
+user; Compose mounts the existing `service-logs` volume there for Promtail. Appium exports both
+console output and the complete filesystem/Lucene file-log directories before container shutdown.
+The service-specific startup messages must appear in both outputs; SLF4J provider warnings alone
+are not evidence of successful log collection. In Loki, query
+`{job=~"server|worker|ws|cli|filesystem|lucene"}` for backend logs, or
+`{job="filesystem"} |= "Filesystem service starting"` and
+`{job="lucene"} |= "Lucene service starting"` to verify the independent services.
+Confirm returned records include the matching `/var/log/A/<service>/` filename;
+container stdout alone does not verify the shared-volume/Promtail/Loki chain.

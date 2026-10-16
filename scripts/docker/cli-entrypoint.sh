@@ -16,7 +16,12 @@ is_enabled() {
 }
 
 log() {
-  printf '[cli-entrypoint] %s\n' "$*"
+  if [ -n "${LOG_PATH:-}" ]; then
+    mkdir -p "$LOG_PATH"
+    printf '[cli-entrypoint] %s\n' "$*" | tee -a "$LOG_PATH/cli.log"
+  else
+    printf '[cli-entrypoint] %s\n' "$*"
+  fi
 }
 
 if [ ! -f "$CLI_PATH" ]; then

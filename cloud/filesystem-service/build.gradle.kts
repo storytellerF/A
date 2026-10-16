@@ -20,8 +20,8 @@ application {
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    implementation(libs.logback)
     implementation(projects.services.filesystemProtocol)
-    implementation(libs.napier)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.urlbuilder)
