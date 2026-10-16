@@ -264,3 +264,22 @@
 
 - Adaptive form fields must emit one layout root per item, including their dividers. Keep editor draft
   and mode state outside responsive width branches; measure breakpoints after pane padding.
+
+- Resolve direct-provider Koog model names only by exact catalog IDs through modelsById();
+  reject unlisted IDs and never add manual aliases, model substitutions or metadata fallbacks.
+  OpenRouter is a router exception: accept nonblank IDs through LLModel without catalog lookup
+  or guessed token limits, and let the remote API validate model support.
+
+- OpenAI-compatible endpoints share only the HTTP protocol. Treat model IDs as opaque strings;
+  never resolve them through the OpenAI catalog or infer OpenAI model metadata.
+
+- Pair GoogleModels with native GoogleLLMClient and a native API root; Google definitions lack
+  OpenAI endpoint capabilities. Verify request execution, not only model lookup or client construction.
+
+- Use native Bedrock Converse for schema-based generation. DeepSeek JSON-object mode must receive
+  the response schema in its system prompt because the native adapter omits it from the API payload.
+
+- Bedrock API keys must take priority over ambient AWS signing credentials. Let the runtime SDK
+  construct and own its default credential chain so credential requests inherit the configured region
+  and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
+  in authentication, region propagation and resource-lifecycle tests.

@@ -1,0 +1,10 @@
+{
+  "type": "llmConfig",
+  "llmConfigData": {
+    "provider": "MISTRAL_AI",
+    "model": "mistral-medium-latest",
+    "temperature": 0.7,
+    "maxTokens": 1024,
+    "apiKey": "your-mistral-api-key"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "type": "llmConfig",
+  "llmConfigData": {
+    "provider": "BEDROCK",
+    "model": "openai.gpt-oss-120b-1:0",
+    "temperature": 0.7,
+    "maxTokens": 1024,
+    "region": "us-west-2"
+  }
+}

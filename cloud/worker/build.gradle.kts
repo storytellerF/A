@@ -28,6 +28,11 @@ dependencies {
     implementation(libs.koog.prompt.executor.openai)
     implementation(libs.koog.prompt.executor.openrouter)
     implementation(libs.koog.prompt.executor.anthropic)
+    implementation(libs.koog.prompt.executor.bedrock)
+    implementation(libs.koog.prompt.executor.deepseek)
+    implementation(libs.koog.prompt.executor.mistralai)
+    implementation(libs.koog.prompt.executor.dashscope)
+    implementation(libs.koog.prompt.executor.google)
     implementation(libs.koog.prompt.executor.ollama)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.coroutines.core)
@@ -42,6 +47,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    systemProperty("LOG_PATH", layout.buildDirectory.dir("test/logs").get().asFile.absolutePath)
 }
 
 tasks.named("mergeServiceFiles") {
