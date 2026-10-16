@@ -376,6 +376,8 @@ use the independent `com.storyteller_f.services.*.api` namespaces.
 
 ## Service log collection
 
+- Server request summaries join URL, status, method, query, headers and remote-IP fields on one line without adding formatting line breaks or transforming field values.
+
 - Log filenames use the service name: `server.log`, `worker.log`, `ws.log`, `cli.log`, `filesystem.log`, and `lucene.log`; rotated files follow `<service>.yyyy-MM-dd.log`. Existing files keep their names and remain covered by Promtail's `*.log` pattern.
 
 - Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws, cli, filesystem and lucene. All six services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.

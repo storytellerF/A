@@ -240,12 +240,14 @@ private fun buildLog(call: ApplicationCall, reader: DatabaseReader): String {
     val status = call.response.status()
     val httpMethod = call.request.httpMethod.value
     val ipList = call.remoteIp(reader).joinToString(",")
-    return """Url: ${call.request.uri}, 
-                |    Status: ${status ?: "<none>"}, HTTP method: $httpMethod,
-                |    Query: ${call.request.queryString()},
-                |    Headers: ${call.request.headers.toMap()},
-                |    Ip：$ipList
-    """.trimMargin()
+    return formatRequestLog(
+        "Url" to call.request.uri,
+        "Status" to (status?.toString() ?: "<none>"),
+        "HTTP method" to httpMethod,
+        "Query" to call.request.queryString(),
+        "Headers" to call.request.headers.toMap().toString(),
+        "Ip" to ipList,
+    )
 }
 
 class RegionBlockerConfig {
