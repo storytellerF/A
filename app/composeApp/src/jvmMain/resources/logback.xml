@@ -7,6 +7,7 @@
     <import class="ch.qos.logback.classic.filter.ThresholdFilter" />
     <import class="ch.qos.logback.core.ConsoleAppender" />
 
+    <property name="APP_NAME" value="app" />
     <property name="LOG_PATTERN" value="%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
 
     <appender name="STDERR" class="ConsoleAppender">
