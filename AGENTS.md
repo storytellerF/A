@@ -283,3 +283,12 @@
   construct and own its default credential chain so credential requests inherit the configured region
   and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
   in authentication, region propagation and resource-lifecycle tests.
+
+- Appium artifacts belong to the invocation's `AppiumTestReport` directory. Keep allocation atomic,
+  preserve the original test failure during collection, and register private runtime paths for cleanup
+  before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
+  downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
+
+- Filesystem/Lucene logging remains independent of shared/business modules. Keep their Logback
+  provider, container-owned `LOG_PATH` directories and Appium file-log archives aligned; validate
+  service startup records rather than treating nonempty provider-warning output as collected logs.
