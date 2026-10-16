@@ -20,6 +20,6 @@ sh "$ROOT_DIR/scripts/docker/cli-entrypoint.sh" > "$TEST_DIR/stdout" 2> "$TEST_D
 grep -Fq 'OK' "$TEST_DIR/response"
 grep -Fq 'ready server listening' "$TEST_DIR/stdout"
 grep -Fq 'ready without preset data load' "$TEST_DIR/stdout"
-cmp "$TEST_DIR/stdout" "$TEST_DIR/log directory/A_cli.log"
+cmp "$TEST_DIR/stdout" "$TEST_DIR/log directory/cli.log"
 [[ ! -s "$TEST_DIR/stderr" ]]
 echo 'cli-entrypoint-test: ok'

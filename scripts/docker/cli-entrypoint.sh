@@ -18,7 +18,7 @@ is_enabled() {
 log() {
   if [ -n "${LOG_PATH:-}" ]; then
     mkdir -p "$LOG_PATH"
-    printf '[cli-entrypoint] %s\n' "$*" | tee -a "$LOG_PATH/A_cli.log"
+    printf '[cli-entrypoint] %s\n' "$*" | tee -a "$LOG_PATH/cli.log"
   else
     printf '[cli-entrypoint] %s\n' "$*"
   fi
