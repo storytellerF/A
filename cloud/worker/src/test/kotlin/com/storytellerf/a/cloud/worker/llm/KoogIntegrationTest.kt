@@ -4,9 +4,9 @@
 package com.storytellerf.a.cloud.worker.llm
 
 import ai.koog.prompt.executor.clients.anthropic.AnthropicModels
+import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
 import ai.koog.prompt.executor.ollama.client.OllamaModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
@@ -23,11 +23,12 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private const val OPENROUTER_MODEL_ID = "openai/gpt-4o"
+private const val OPENROUTER_MODEL_ID = "dots-studio/dots-3-note-preview:free"
 
 internal class KoogIntegrationTest {
     @BeforeTest
@@ -72,7 +73,9 @@ internal class KoogIntegrationTest {
             )
 
         val client = KoogClientFactory.createClient(config)
-        assertNotNull(client)
+        assertIs<GoogleLLMClient>(client)
+        assertEquals(LLMProvider.Google, client.llmProvider())
+        client.close()
     }
 
     @Test
@@ -142,7 +145,6 @@ internal class KoogIntegrationTest {
                 LlmProvider.OPENAI to OpenAIModels.Chat.O3,
                 LlmProvider.ANTHROPIC to AnthropicModels.Sonnet_4,
                 LlmProvider.GOOGLE to GoogleModels.Gemini2_5Flash,
-                LlmProvider.OPENROUTER to OpenRouterModels.GPT4o,
                 LlmProvider.OLLAMA to OllamaModels.models.first(),
             )
         cases.forEach { (provider, expected) ->
@@ -163,6 +165,26 @@ internal class KoogIntegrationTest {
     }
 
     @Test
+    fun `OpenRouter preserves IDs without guessed limits`() {
+        listOf(OPENROUTER_MODEL_ID, "gpt-4o", "Custom/Model-V1").forEach { id ->
+            val model = KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OPENROUTER, model = id))
+            assertEquals(id, model.id)
+            assertEquals(LLMProvider.OpenRouter, model.provider)
+            assertNull(model.contextLength)
+            assertNull(model.maxOutputTokens)
+        }
+    }
+
+    @Test
+    fun `OpenRouter requires a nonblank ID`() {
+        listOf(null, "", " ").forEach { id ->
+            assertFailsWith<IllegalArgumentException> {
+                KoogClientFactory.resolveModel(LlmConfig(LlmProvider.OPENROUTER, model = id))
+            }
+        }
+    }
+
+    @Test
     fun `catalog providers reject unknown model IDs`() {
         val providers =
             listOf(
@@ -170,7 +192,6 @@ internal class KoogIntegrationTest {
                 LlmProvider.ANTHROPIC,
                 LlmProvider.GOOGLE,
                 LlmProvider.OLLAMA,
-                LlmProvider.OPENROUTER,
             )
         providers.forEach { provider ->
             listOf("Custom/Model-V1", "GPT-4o", " ", "claude-sonnet-4-20250514").forEach { id ->

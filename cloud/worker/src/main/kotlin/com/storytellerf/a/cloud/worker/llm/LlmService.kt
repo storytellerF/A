@@ -9,6 +9,7 @@ import ai.koog.prompt.executor.clients.LLMClient
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.params.LLMParams
 import com.storyteller_f.shared.model.LlmConfig
+import com.storyteller_f.shared.model.LlmProvider
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
@@ -51,10 +52,11 @@ internal class KoogLlmService(
                     "Generating response for prompt: ${prompt.take(LOG_PREVIEW_LENGTH)}..."
                 }
 
+                val effectiveSystemPrompt = resolveSystemPrompt(systemPrompt, responseSchema)
                 val promptObj =
-                    if (systemPrompt != null) {
+                    if (effectiveSystemPrompt != null) {
                         prompt(existing = emptyPrompt()) {
-                            system(systemPrompt)
+                            system(effectiveSystemPrompt)
                             user(prompt)
                         }
                     } else {
@@ -97,6 +99,14 @@ internal class KoogLlmService(
             }
         return response
     }
+
+    private fun resolveSystemPrompt(systemPrompt: String?, schema: LlmResponseSchema?): String? =
+        if (config.provider == LlmProvider.DEEPSEEK && schema != null) {
+            // Koog's DeepSeek adapter sends JSON-object mode without the schema, so the model needs it in context.
+            listOfNotNull(systemPrompt, "Respond with JSON matching this schema: ${schema.schema}").joinToString("\n")
+        } else {
+            systemPrompt
+        }
 
     override fun close() {
         Napier.d(tag = "llm") {

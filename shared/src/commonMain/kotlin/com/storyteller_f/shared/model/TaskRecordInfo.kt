@@ -76,6 +76,18 @@ enum class LlmProvider {
     /** Google API. */
     GOOGLE,
 
+    /** AWS Bedrock runtime API. */
+    BEDROCK,
+
+    /** DeepSeek API. */
+    DEEPSEEK,
+
+    /** Mistral AI API. */
+    MISTRAL_AI,
+
+    /** Alibaba DashScope API. */
+    DASHSCOPE,
+
     /** Local Ollama server. */
     OLLAMA,
 
@@ -108,6 +120,8 @@ data class LlmConfig(
     val modelPath: String? = null,
     /** Writable local cache directory used by the LiteRT provider. */
     val cachePath: String? = null,
+    /** AWS region for Bedrock; omitted values use the SDK default region. */
+    val region: String? = null,
 ) {
     /** Constants used to persist this configuration model. */
     companion object {

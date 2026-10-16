@@ -48,15 +48,41 @@ endpoint and ignores `baseUrl`. For LiteRT-LM, set `modelPath` in
 `cloud/worker/llm-config.litert-example.json` to an existing local `.litertlm` model before applying it;
 the worker does not download the model.
 
-OpenAI, Anthropic, Google, Ollama and OpenRouter require exact, case-sensitive IDs from Koog's
-model catalog. Unknown IDs, unlisted dated versions and aliases are rejected. Without a model ID,
-OpenAI uses `gpt-4o`, Anthropic uses `claude-sonnet-4-0`, Google uses `gemini-2.5-flash`, and Ollama
-uses `llama3.2:latest`. OpenRouter requires an explicit ID.
+OpenAI, Anthropic, Google, Ollama, Bedrock, DeepSeek, Mistral AI and DashScope require exact,
+case-sensitive IDs from Koog's model catalog. Unknown IDs, unlisted dated versions and aliases
+are rejected. Their default model IDs are:
+
+| Provider | Default model ID |
+| --- | --- |
+| `OPENAI` | `gpt-4o` |
+| `ANTHROPIC` | `claude-sonnet-4-0` |
+| `GOOGLE` | `gemini-2.5-flash` |
+| `OLLAMA` | `llama3.2:latest` |
+| `BEDROCK` | `openai.gpt-oss-120b-1:0` |
+| `DEEPSEEK` | `deepseek-v4-flash` |
+| `MISTRAL_AI` | `mistral-medium-latest` |
+| `DASHSCOPE` | `qwen-plus` |
+
+OpenRouter requires an explicit, nonblank ID and accepts models outside Koog's catalog unchanged.
+It uses the router's model support rather than guessed context or output-token limits.
+
+Google uses the native Gemini API. Its default API root is `https://generativelanguage.googleapis.com`.
+For a custom Google endpoint, set `baseUrl` to its native API root; the client appends
+`v1beta/models/{id}:generateContent`. Existing Google configurations pointing to an OpenAI-compatible
+`/v1beta/openai` endpoint must switch to the native root, or use `OPENAI_COMPATIBLE` to retain that protocol.
 
 OpenAI-compatible model IDs are opaque strings passed directly to the API, with no OpenAI catalog
-lookup or inferred metadata; their existing default is `gpt-3.5-turbo`. For existing configurations,
+lookup or inferred metadata; their existing default is `gpt-3.5-turbo`. For direct-provider configurations,
 replace unlisted IDs with exact catalog IDs. Custom deployments using the compatible HTTP protocol
 can use `OPENAI_COMPATIBLE` with their endpoint and model name. LiteRT keeps local model IDs.
+
+DeepSeek, Mistral AI and DashScope use `apiKey` and optionally a native API root in `baseUrl`;
+DashScope defaults to the international endpoint. Use the corresponding `llm-config.*-example.json`
+presets. Bedrock uses the native AWS Converse API. Its optional `region` defaults to the Koog SDK's
+`us-west-2`; `baseUrl` optionally overrides the runtime endpoint. Without `apiKey`, AWS credentials
+come from the SDK default chain (for example a workload role, environment or shared profile).
+Alternatively, `apiKey` can contain a Bedrock bearer API key. Never store AWS access/secret keys in
+that field. The Bedrock preset omits credentials so workload credentials can be supplied at runtime.
 
 All providers return the same structured moderation decision. The LiteRT-LM client uses native JSON-schema
 constrained output, tries the GPU backend first, and falls back to CPU if GPU initialization fails. Set

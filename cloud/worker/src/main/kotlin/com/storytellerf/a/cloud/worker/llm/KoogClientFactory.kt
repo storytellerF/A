@@ -9,14 +9,20 @@ import ai.koog.prompt.executor.clients.LLModelDefinitions
 import ai.koog.prompt.executor.clients.anthropic.AnthropicClientSettings
 import ai.koog.prompt.executor.clients.anthropic.AnthropicLLMClient
 import ai.koog.prompt.executor.clients.anthropic.AnthropicModels
+import ai.koog.prompt.executor.clients.bedrock.BedrockModels
+import ai.koog.prompt.executor.clients.dashscope.DashscopeModels
+import ai.koog.prompt.executor.clients.deepseek.DeepSeekModels
+import ai.koog.prompt.executor.clients.google.GoogleClientSettings
+import ai.koog.prompt.executor.clients.google.GoogleLLMClient
 import ai.koog.prompt.executor.clients.google.GoogleModels
+import ai.koog.prompt.executor.clients.mistralai.MistralAIModels
 import ai.koog.prompt.executor.clients.modelsById
 import ai.koog.prompt.executor.clients.openai.OpenAIClientSettings
 import ai.koog.prompt.executor.clients.openai.OpenAILLMClient
 import ai.koog.prompt.executor.clients.openai.OpenAIModels
 import ai.koog.prompt.executor.clients.openrouter.OpenRouterLLMClient
-import ai.koog.prompt.executor.clients.openrouter.OpenRouterModels
 import ai.koog.prompt.executor.ollama.client.OllamaModels
+import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import com.storyteller_f.shared.model.LlmConfig
@@ -39,6 +45,10 @@ object KoogClientFactory {
                 LlmProvider.OPENAI -> createOpenAiClient(config)
                 LlmProvider.ANTHROPIC -> createAnthropicClient(config)
                 LlmProvider.GOOGLE -> createGoogleClient(config)
+                LlmProvider.BEDROCK -> createBedrockClient(config)
+                LlmProvider.DEEPSEEK -> createDeepSeekClient(config)
+                LlmProvider.MISTRAL_AI -> createMistralClient(config)
+                LlmProvider.DASHSCOPE -> createDashscopeClient(config)
                 LlmProvider.OLLAMA -> createOllamaClient(config)
                 LlmProvider.OPENAI_COMPATIBLE -> createOpenAICompatibleClient(config)
                 LlmProvider.OPENROUTER -> createOpenRouterClient(config)
@@ -48,37 +58,36 @@ object KoogClientFactory {
     }
 
     /**
-     * Requires exact SDK catalog IDs except for opaque compatible endpoints and local LiteRT models.
+     * Requires SDK catalog IDs for direct providers; router and compatible IDs remain opaque.
      */
     fun resolveModel(config: LlmConfig): LLModel =
         when (config.provider) {
-        LlmProvider.OPENAI ->
-            config.model?.let {
-                resolveCatalogModel(OpenAIModels, config.provider, it)
-            } ?: OpenAIModels.Chat.GPT4o
+        LlmProvider.OPENAI -> resolveCatalogModel(OpenAIModels, config, OpenAIModels.Chat.GPT4o)
 
-        LlmProvider.ANTHROPIC ->
-            config.model?.let {
-                resolveCatalogModel(AnthropicModels, config.provider, it)
-            } ?: AnthropicModels.Sonnet_4
+        LlmProvider.ANTHROPIC -> resolveCatalogModel(AnthropicModels, config, AnthropicModels.Sonnet_4)
 
-        LlmProvider.GOOGLE ->
-            config.model?.let {
-                resolveCatalogModel(GoogleModels, config.provider, it)
-            } ?: GoogleModels.Gemini2_5Flash
+        LlmProvider.GOOGLE -> resolveCatalogModel(GoogleModels, config, GoogleModels.Gemini2_5Flash)
 
-        LlmProvider.OLLAMA ->
-            config.model?.let {
-                resolveCatalogModel(OllamaModels, config.provider, it)
-            } ?: OllamaModels.Meta.LLAMA_3_2
+        LlmProvider.OLLAMA -> resolveCatalogModel(OllamaModels, config, OllamaModels.Meta.LLAMA_3_2)
+
+        LlmProvider.BEDROCK -> resolveCatalogModel(BedrockModels, config, BedrockModels.OpenAIGptOss120B)
+
+        LlmProvider.DEEPSEEK -> resolveCatalogModel(DeepSeekModels, config, DeepSeekModels.DeepSeekV4Flash)
+
+        LlmProvider.MISTRAL_AI -> resolveCatalogModel(MistralAIModels, config, MistralAIModels.Chat.MistralMedium31)
+
+        LlmProvider.DASHSCOPE -> resolveCatalogModel(DashscopeModels, config, DashscopeModels.QWEN_PLUS)
 
         LlmProvider.OPENAI_COMPATIBLE ->
             LLModel(provider = LLMProvider.OpenAI, id = config.model ?: "gpt-3.5-turbo")
 
-        LlmProvider.OPENROUTER -> {
-            val modelName = requireOpenRouterModel(config)
-            resolveCatalogModel(OpenRouterModels, config.provider, modelName)
-        }
+        LlmProvider.OPENROUTER ->
+            LLModel(
+                provider = LLMProvider.OpenRouter,
+                id = requireOpenRouterModel(config),
+                // Koog checks these before sending our completion/schema requests; the router validates model support.
+                capabilities = listOf(LLMCapability.Completion, LLMCapability.Schema.JSON.Standard),
+            )
 
         LlmProvider.LITERT_LLM -> resolveLiteRtModel(config)
     }
@@ -116,18 +125,14 @@ object KoogClientFactory {
     private fun createGoogleClient(config: LlmConfig): LLMClient {
         val apiKey = config.apiKey ?: error("API key required for Google")
         val settings =
-            OpenAIClientSettings(
-                baseUrl =
-                config.baseUrl
-                    ?: "https://generativelanguage.googleapis.com/v1beta/openai",
+            GoogleClientSettings(
+                baseUrl = config.baseUrl ?: "https://generativelanguage.googleapis.com",
             )
-        val httpClientFactory = KtorKoogHttpClient.Factory()
-
-        Napier.i(tag = "koog") {
-            "Creating Google client with model: ${config.model ?: GoogleModels.Gemini2_5Flash.id}"
-        }
-
-        return OpenAILLMClient(apiKey, settings, httpClientFactory)
+        return GoogleLLMClient(
+            apiKey = apiKey,
+            settings = settings,
+            httpClientFactory = KtorKoogHttpClient.Factory(),
+        )
     }
 
     private fun createOllamaClient(config: LlmConfig): LLMClient {
@@ -207,10 +212,12 @@ object KoogClientFactory {
 
     private fun resolveCatalogModel(
         definitions: LLModelDefinitions,
-        provider: LlmProvider,
-        modelName: String,
-    ): LLModel =
-        requireNotNull(definitions.modelsById()[modelName]) {
-        "Unknown $provider model ID: $modelName. Use an exact Koog catalog ID."
+        config: LlmConfig,
+        defaultModel: LLModel,
+    ): LLModel {
+        val modelName = config.model ?: return defaultModel
+        return requireNotNull(definitions.modelsById()[modelName]) {
+            "Unknown ${config.provider} model ID: $modelName. Use an exact Koog catalog ID."
+        }
     }
 }
