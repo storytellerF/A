@@ -5,7 +5,6 @@
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
@@ -33,6 +32,7 @@ import com.storyteller_f.a.app.common.createCommunityViewModel
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
 import com.storyteller_f.a.app.font_settings
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.compose_core.components.CommunityPoster
@@ -106,7 +106,7 @@ private fun CommunitySettingInternal(
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     val appNavFactory = LocalAppNavFactory.current
-    Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
+    AdaptiveFormLayout(Modifier.padding(values)) {
         SettingOptionResettableView(
             "Icon",
             communityInfo.icon != null,

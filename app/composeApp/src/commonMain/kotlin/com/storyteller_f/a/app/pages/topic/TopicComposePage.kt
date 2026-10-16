@@ -30,11 +30,13 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.Typography
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -49,6 +51,7 @@ import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.common.getMarkdownMediasViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.input_is_empty
+import com.storyteller_f.a.app.pages.AdaptiveEditorLayout
 import com.storyteller_f.a.app.pages.community.getFontSettings
 import com.storyteller_f.a.app.pages.room.RoomSendButton
 import com.storyteller_f.a.app.preview
@@ -133,7 +136,7 @@ private fun getCommunityTypography(data: TopicComposeData): Typography? =
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun TopicComposeScaffold(data: TopicComposeData, mediaTarget: ObjectTuple, backPrePage: () -> Unit) {
-    var input by remember {
+    var input by rememberSaveable {
         mutableStateOf("")
     }
     var showSheet by remember {
@@ -192,35 +195,33 @@ private fun TopicComposeInternal(
     val selected = pagerState.currentPage
     val coroutineScope = rememberCoroutineScope()
 
-    PrimaryTabRow(selected) {
-        tabs.forEachIndexed { i, e ->
-            val selectTab: () -> Unit = {
-                coroutineScope.launch {
-                    pagerState.scrollToPage(i)
+    AdaptiveEditorLayout(preview = { PreviewTopicPage(input, mediaTarget) }) { wide ->
+        LaunchedEffect(wide) {
+            if (wide && pagerState.currentPage == 0) pagerState.scrollToPage(1)
+        }
+        val visibleTabs = if (wide) tabs.drop(1) else tabs
+        val visibleSelected = if (wide) selected.coerceAtLeast(1) - 1 else selected
+        PrimaryTabRow(visibleSelected) {
+            visibleTabs.forEachIndexed { i, label ->
+                val page = if (wide) i + 1 else i
+                val selectTab: () -> Unit = {
+                    coroutineScope.launch { pagerState.scrollToPage(page) }
                 }
-            }
-            Tab(
-                selected = selected == i,
-                onClick = selectTab,
-                modifier = Modifier.appiumSemantics(text = e, onClick = selectTab),
-            ) {
-                Text(text = e, modifier = Modifier.padding(vertical = 12.dp))
+                Tab(
+                    selected = visibleSelected == i,
+                    onClick = selectTab,
+                    modifier = Modifier.appiumSemantics(text = label, onClick = selectTab),
+                ) {
+                    Text(text = label, modifier = Modifier.padding(vertical = 12.dp))
+                }
             }
         }
-    }
-    HorizontalPager(pagerState, key = tabs::get) { index ->
-        when (index) {
-            0 -> PreviewTopicPage(input, mediaTarget)
-
-            1 ->
-                EditTopicPage(input, data) {
-                    Napier.i {
-                        "markdown update1 $it"
-                    }
-                    updateInput(it)
-                }
-
-            2 -> BlockEditTopicPage(input, updateInput)
+        HorizontalPager(pagerState, key = tabs::get, userScrollEnabled = !wide) { index ->
+            when {
+                index == 0 && !wide -> PreviewTopicPage(input, mediaTarget)
+                index == 2 -> BlockEditTopicPage(input, updateInput)
+                else -> EditTopicPage(input, data, updateInput)
+            }
         }
     }
 }

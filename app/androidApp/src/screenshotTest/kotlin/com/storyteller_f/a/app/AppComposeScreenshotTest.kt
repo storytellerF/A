@@ -36,6 +36,8 @@ import com.storyteller_f.a.app.common.RoomActivityPreview
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
 import com.storyteller_f.a.app.pages.ActivityPreviewSection
+import com.storyteller_f.a.app.pages.AdaptiveEditorLayout
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
@@ -452,6 +454,34 @@ fun ActivityErrorContextScreenshot() {
     ScreenshotAppTheme {
         ActivityPreviewSection<RoomActivityPreview>("Unread rooms", PreviewState.Failed, {}) {
             RoomActivityPreviewContent(it)
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 540, heightDp = 480)
+@Preview(showBackground = true, widthDp = 1200, heightDp = 480)
+@Composable
+fun AdaptiveSettingsScreenshot() {
+    ScreenshotAppTheme {
+        AdaptiveFormLayout {
+            SettingOptionView("Name", {}) { Text("Example community") }
+            SettingOptionView("Alias", {}) { Text("example") }
+            SettingOptionView("Content font", {}) { Text("Default") }
+            SettingOptionView("Code font", {}) { Text("Monospace") }
+        }
+    }
+}
+
+@PreviewTest
+@Preview(showBackground = true, widthDp = 700, heightDp = 480)
+@Preview(showBackground = true, widthDp = 1200, heightDp = 480)
+@Composable
+fun AdaptiveEditorScreenshot() {
+    ScreenshotAppTheme {
+        AdaptiveEditorLayout(preview = { Text("Rendered topic preview", Modifier.padding(20.dp)) }) {
+            Text("Raw / Block", Modifier.padding(20.dp))
+            BasicTextField("Draft topic content", {}, Modifier.fillMaxSize().padding(20.dp))
         }
     }
 }

@@ -5,13 +5,11 @@
 package com.storyteller_f.a.app.pages.community
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +35,7 @@ import com.storyteller_f.a.app.aid
 import com.storyteller_f.a.app.common.OnCommunityCreated
 import com.storyteller_f.a.app.member_join_policy
 import com.storyteller_f.a.app.name
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.title.CommonComposePage
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
@@ -92,11 +91,7 @@ fun CommunityComposeInternal(
     onMemberJoinPolicyChange: (MemberPolicy) -> Unit = {},
     onAidChange: (String) -> Unit = {},
 ) {
-    Column(
-        modifier = Modifier.width(300.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    AdaptiveFormLayout {
         OutlinedTextField(name, onValueChange = {
             onNameChange(it)
         }, label = {

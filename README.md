@@ -16,6 +16,9 @@ available content area independently of the input.
 Resizing preserves the selected section and its reading state. Wide lists provide an explicit Refresh action.
 Community and user detail sections preserve selection when resizing; room and topic details keep their
 reading content and message input aligned in a bounded column.
+Settings and creation forms expand to two columns on wide windows. Favorites, subscriptions, comments
+and reaction history use adaptive grids. The topic editor shows a live preview alongside the raw or
+block editor when space permits, and keeps the draft when the window is resized.
 Joined room rows include the latest message preview, author/time and an exact unread-message count.
 The Rooms navigation badge shows the total unread messages across all joined rooms.
 Wide World's context includes bounded unread-room and joined-community pinned-topic previews, each

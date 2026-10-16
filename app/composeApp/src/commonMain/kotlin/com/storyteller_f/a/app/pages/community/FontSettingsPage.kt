@@ -4,11 +4,7 @@
 
 package com.storyteller_f.a.app.pages.community
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,7 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
@@ -37,6 +32,7 @@ import com.storyteller_f.a.app.components.FontView
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
 import com.storyteller_f.a.app.font_settings
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.compose_core.components.emitEvent
@@ -128,14 +124,7 @@ private fun FontSettingsInternal(
     val codeFont = communityInfo.fontSettings?.codeFont
     val fallbackFont = communityInfo.fontSettings?.fallbackFont
 
-    Column(
-        modifier =
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(paddingValues)
-            .padding(horizontal = 20.dp),
-    ) {
+    AdaptiveFormLayout(Modifier.padding(paddingValues)) {
         // Content Font
         FontSettingRow(
             label = "Content Font",

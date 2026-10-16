@@ -261,3 +261,6 @@
 - Verify browser WebRTC presentation with requestVideoFrameCallback presentedFrames. Firefox can
   report zero VideoPlaybackQuality totalVideoFrames for a MediaStream while actual frames
   are being presented; do not infer a frozen stream from that counter alone.
+
+- Adaptive form fields must emit one layout root per item, including their dividers. Keep editor draft
+  and mode state outside responsive width branches; measure breakpoints after pane padding.

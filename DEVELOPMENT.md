@@ -5,7 +5,12 @@
 Home is an independent root destination; entering a community, room, topic or user pushes normal back
 history. The former root list/detail metadata and list-pane replacement tests were removed because that
 navigation contract no longer applies. Home, Community and User each share one page-local pager across rail/bottom navigation.
-Room and Topic detail content and composers share a centered reading column capped at 900dp.
+Room and Topic detail content share a centered reading column capped at 900dp.
+Settings and creation forms use AdaptiveFormLayout, capped at 1200dp, with two equal columns when
+at least 800dp remains after content padding. Each setting and its divider form one layout item.
+Personal favorites, comments, subscriptions and reaction records reuse AdaptiveItemGrid and its paging keys.
+The topic composer uses editor/preview panes from 1000dp of available content width, capped at 1600dp;
+compact view retains the preview/raw/block tabs. Keep draft and mode state outside width branches.
 Keep content-width adaptation in the section or shared presentation component, after navigation and
 padding are deducted. Home context belongs only to World and uses bounded unread-room, pinned-topic and joined-community
 previews. Room summaries and exact unread counts use the activity endpoints described below.

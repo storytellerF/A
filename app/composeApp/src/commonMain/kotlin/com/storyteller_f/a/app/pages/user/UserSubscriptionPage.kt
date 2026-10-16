@@ -8,9 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +22,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.SubscriptionsViewModel
 import com.storyteller_f.a.app.common.getSubscriptionViewModel
+import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.topic.TopicCell
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.pagingItems
@@ -46,7 +45,7 @@ fun SubscriptionPageInternal(viewModel: SubscriptionsViewModel) {
             viewModel,
             modifier = Modifier.padding(top = paddingValues.calculateTopPadding()),
         ) { items ->
-            LazyColumn(contentPadding = PaddingValues(10.dp)) {
+            AdaptiveItemGrid {
                 pagingItems(items, {
                     it.id
                 }) {

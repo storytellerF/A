@@ -34,6 +34,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -58,6 +59,8 @@ import com.storyteller_f.a.app.common.OnRoomRead
 import com.storyteller_f.a.app.common.PreviewState
 import com.storyteller_f.a.app.common.RoomActivityPreview
 import com.storyteller_f.a.app.pages.ActivityPreviewSection
+import com.storyteller_f.a.app.pages.AdaptiveEditorLayout
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.app.pages.AdaptiveSectionScaffold
 import com.storyteller_f.a.app.pages.DetailReadingColumn
@@ -90,6 +93,79 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
 class HomeAdaptiveUiTest {
+    @Test
+    fun formRemainsScrollableInShortWindows() =
+        runComposeUiTest {
+        val width = mutableStateOf(1200.dp)
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(width.value, 180.dp)) {
+                    AdaptiveFormLayout {
+                        repeat(8) { index ->
+                            Text("Field $index", Modifier.height(100.dp).testTag("field-$index"))
+                        }
+                    }
+                }
+            }
+        }
+        onNodeWithTag("field-7").performScrollTo().assertIsDisplayed()
+        runOnIdle { width.value = 540.dp }
+        onNodeWithTag("field-7").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun formFieldsReflowAndKeepInput() =
+        runComposeUiTest {
+        val width = mutableStateOf(540.dp)
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(width.value, 400.dp)) {
+                    AdaptiveFormLayout {
+                        var draft by rememberSaveable { mutableStateOf("") }
+                        BasicTextField(draft, { draft = it }, Modifier.testTag("form-draft"))
+                        Text("Second field", Modifier.testTag("form-second"))
+                    }
+                }
+            }
+        }
+        onNodeWithTag("form-draft").performTextReplacement("Keep this draft")
+        val compactFirst = onNodeWithTag("form-draft").getUnclippedBoundsInRoot()
+        val compactSecond = onNodeWithTag("form-second").getUnclippedBoundsInRoot()
+        assertTrue(compactSecond.top > compactFirst.top)
+        runOnIdle { width.value = 1200.dp }
+        val wideFirst = onNodeWithTag("form-draft").getUnclippedBoundsInRoot()
+        val wideSecond = onNodeWithTag("form-second").getUnclippedBoundsInRoot()
+        assertEquals(wideFirst.top, wideSecond.top)
+        assertTrue(wideSecond.left >= wideFirst.right)
+        onNodeWithTag("form-draft").assertTextEquals("Keep this draft")
+        runOnIdle { width.value = 540.dp }
+        onNodeWithTag("form-draft").assertTextEquals("Keep this draft")
+    }
+
+    @Test
+    fun editorKeepsDraftWhenPreviewAppears() =
+        runComposeUiTest {
+        val width = mutableStateOf(700.dp)
+        setContent {
+            MaterialTheme {
+                Box(Modifier.requiredSize(width.value, 500.dp)) {
+                    AdaptiveEditorLayout(preview = { Text("Live preview") }) {
+                        var draft by rememberSaveable { mutableStateOf("") }
+                        BasicTextField(draft, { draft = it }, Modifier.testTag("editor-draft"))
+                    }
+                }
+            }
+        }
+        onNodeWithTag("editor-draft").performTextReplacement("Retained editor")
+        onNodeWithText("Live preview").assertDoesNotExist()
+        runOnIdle { width.value = 1200.dp }
+        onNodeWithText("Live preview").assertIsDisplayed()
+        onNodeWithTag("editor-draft").assertTextEquals("Retained editor")
+        runOnIdle { width.value = 700.dp }
+        onNodeWithText("Live preview").assertDoesNotExist()
+        onNodeWithTag("editor-draft").assertTextEquals("Retained editor")
+    }
+
     @Test
     fun resizingPreservesSectionSearchAndScroll() =
         runComposeUiTest {
