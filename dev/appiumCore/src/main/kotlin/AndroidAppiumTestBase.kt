@@ -29,8 +29,9 @@ data class AuthenticatedSession(val session: InjectedSession, val sessionManager
 
 data class AppUnderTest(val packageName: String, val mainActivityClassName: String)
 
-suspend fun useLightweightBackendContainers(
+internal suspend fun useLightweightBackendContainers(
     network: Network,
+    report: AppiumTestReport,
     block: suspend (GenericContainer<*>, GenericContainer<*>) -> Unit,
 ) {
     PostgreSQLContainer("pgvector/pgvector:pg16").apply {
@@ -41,40 +42,46 @@ suspend fun useLightweightBackendContainers(
         withPassword(POSTGRES_PASSWORD)
         withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
     }.use { postgresql ->
-        postgresql.start()
-        GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
-            withNetwork(network)
-            withNetworkAliases("appium-filesystem")
-            withEnv("FILESYSTEM_PUBLIC_URL", "http://appium-filesystem:8822")
-            withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
-            withExposedPorts(FILESYSTEM_PORT, 8822)
-            waitingFor(Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)))
-        }.use { filesystem ->
-            filesystem.start()
-            GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+        postgresql.runWithSessionLogs(report, "postgresql", archiveLogs = false) {
+            GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
                 withNetwork(network)
-                withNetworkAliases("appium-lucene")
+                withNetworkAliases("appium-filesystem")
+                withEnv("FILESYSTEM_PUBLIC_URL", "http://appium-filesystem:8822")
                 withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
-                withExposedPorts(LUCENE_PORT)
-                waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
-            }.use { lucene ->
-                lucene.start()
-                GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
-                    withNetwork(network)
-                    withNetworkAliases("signin-redis")
-                }.use { redis ->
-                    redis.start()
-                    block(filesystem, redis)
+                withExposedPorts(FILESYSTEM_PORT, 8822)
+                waitingFor(Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)))
+            }.use { filesystem ->
+                filesystem.runWithSessionLogs(report, "filesystem") {
+                    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
+                        withNetwork(network)
+                        withNetworkAliases("appium-lucene")
+                        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
+                        withExposedPorts(LUCENE_PORT)
+                        waitingFor(
+                            Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)),
+                        )
+                    }.use { lucene ->
+                        lucene.runWithSessionLogs(report, "lucene") {
+                            GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+                                withNetwork(network)
+                                withNetworkAliases("signin-redis")
+                            }.use { redis ->
+                                redis.runWithSessionLogs(report, "redis", archiveLogs = false) {
+                                    block(filesystem, redis)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
-suspend fun useCliInitContainer(
+internal suspend fun useCliInitContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
+    report: AppiumTestReport,
     block: suspend () -> Unit,
 ) {
     val presetPath = resolveAppiumPresetPath()
@@ -98,16 +105,16 @@ suspend fun useCliInitContainer(
         withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-cli")))
         withStartupAttempts(3)
     }.use { cliContainer ->
-        cliContainer.runWithSessionLogs(hostSessionPath, "cli") {
+        cliContainer.runWithSessionLogs(report, "cli") {
             block()
         }
     }
 }
 
-suspend fun useWsContainer(
+internal suspend fun useWsContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
+    report: AppiumTestReport,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-ws:latest")).apply {
@@ -119,16 +126,16 @@ suspend fun useWsContainer(
         withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-ws")))
         withStartupAttempts(3)
     }.use { wsContainer ->
-        wsContainer.runWithSessionLogs(hostSessionPath, "ws") {
+        wsContainer.runWithSessionLogs(report, "ws") {
             block(wsContainer)
         }
     }
 }
 
-suspend fun useServerContainer(
+internal suspend fun useServerContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
+    report: AppiumTestReport,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-server:latest")).apply {
@@ -144,16 +151,16 @@ suspend fun useServerContainer(
         withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-server")))
         withStartupAttempts(3)
     }.use { serverContainer ->
-        serverContainer.runWithSessionLogs(hostSessionPath, "server") {
+        serverContainer.runWithSessionLogs(report, "server") {
             block(serverContainer)
         }
     }
 }
 
-suspend fun useWorkerContainer(
+internal suspend fun useWorkerContainer(
     network: Network,
     commonEnv: Map<String, String>,
-    hostSessionPath: String,
+    report: AppiumTestReport,
     block: suspend (GenericContainer<*>) -> Unit,
 ) {
     GenericContainer(DockerImageName.parse("a-worker:latest")).apply {
@@ -162,15 +169,16 @@ suspend fun useWorkerContainer(
         withLogConsumer(Slf4jLogConsumer(LoggerFactory.getLogger("appium-test-worker")))
         withStartupAttempts(3)
     }.use { workerContainer ->
-        workerContainer.runWithSessionLogs(hostSessionPath, "worker") {
+        workerContainer.runWithSessionLogs(report, "worker") {
             block(workerContainer)
         }
     }
 }
 
 private suspend fun GenericContainer<*>.runWithSessionLogs(
-    hostSessionPath: String,
+    report: AppiumTestReport,
     serviceName: String,
+    archiveLogs: Boolean = true,
     block: suspend () -> Unit,
 ) {
     try {
@@ -179,15 +187,19 @@ private suspend fun GenericContainer<*>.runWithSessionLogs(
     } finally {
         if (containerId != null) {
             // Export before use closes the container, including startup and test failures.
-            runCatching {
-                val archive = File(hostSessionPath, "logs/$serviceName.tar")
-                archive.parentFile.mkdirs()
-                dockerClient.copyArchiveFromContainerCmd(containerId, "/home/app/logs/$serviceName").exec()
-                    .buffered().use { input ->
-                        archive.outputStream().buffered().use { output -> input.copyTo(output) }
-                    }
-            }.onFailure { failure ->
-                LoggerFactory.getLogger("appium-test-$serviceName").warn("Failed to export service logs", failure)
+            val logsDir = report.directory.resolve("logs")
+            report.collect("$serviceName console") {
+                logsDir.mkdirs()
+                logsDir.resolve("$serviceName.log").writeText(logs)
+            }
+            if (archiveLogs) {
+                report.collect("$serviceName archive") {
+                    val archive = logsDir.resolve("$serviceName.tar")
+                    dockerClient.copyArchiveFromContainerCmd(containerId, "/home/app/logs/$serviceName").exec()
+                        .buffered().use { input ->
+                            archive.outputStream().buffered().use { output -> input.copyTo(output) }
+                        }
+                }
             }
         }
     }
@@ -199,12 +211,6 @@ fun resolveAppiumPresetPath(): File {
             .map { File(it, "dev/preset") }
     return presetPaths.firstOrNull { File(it, "0_preset_user.json").exists() }
         ?: error("Shared E2E preset data directory not found")
-}
-
-fun prepareSessionDirectories(sessionPath: String) {
-    val sessionDir = File(sessionPath)
-    sessionDir.mkdirs()
-    File(sessionDir, "logs").mkdirs()
 }
 
 fun buildContainerEnv(): Map<String, String> {

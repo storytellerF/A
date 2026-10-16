@@ -11,8 +11,6 @@ import org.testcontainers.containers.Network
 import java.io.File
 import java.net.URI
 import java.util.Base64
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 data class AppiumTestSetup<T>(val data: T, val injectedSession: InjectedSession? = null)
 
@@ -47,9 +45,21 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
+        val report = AppiumTestReport(target.suiteName, "android", testName)
+        report.run {
+            runAndroidTest(target, setup, block, report)
+        }
+    }
+
+    private suspend fun <T> runAndroidTest(
+        target: TargetAppiumHelper,
+        setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
+        block: suspend (AppiumTestScope, T) -> Unit,
+        report: AppiumTestReport,
+    ) {
         // noReset keeps the previous process alive; stop it before replacing its reverse targets.
         withEnglishAndroidAppLocale(target.androidApp.packageName, ::runAdbCommand) {
-            runAndroidTestEnvironment { ports ->
+            runAndroidTestEnvironment(report) { ports ->
                 var driver: AndroidDriver? = null
                 var testFailed = false
                 try {
@@ -57,7 +67,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     prepared.injectedSession?.let { session ->
                         pushInjectedSessionToPrivateDir(
                             packageName = target.androidApp.packageName,
-                            testName = testName,
+                            file = report.temporaryPath("private-session.json"),
                             content = buildInjectedSessionJson(session),
                         )
                     }
@@ -83,37 +93,41 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     throw throwable
                 } finally {
                     driver?.let { activeDriver ->
-                        saveRecording(activeDriver, target.suiteName, testName)
-                        copyAppLogToBuild(target.suiteName, testName, target.androidApp.packageName)
+                        report.captureDriver(activeDriver)
+                        report.collect("Recording") { saveRecording(activeDriver, report.directory) }
                         if (testFailed) {
-                            collectBugreport(target.suiteName, testName)
+                            report.collect("Bugreport") { collectBugreport(report.directory) }
                         }
-                        runCatching { activeDriver.quit() }
+                        report.collect("Driver shutdown") { activeDriver.quit() }
                     }
-                    runAdbCommand(listOf("shell", "am", "force-stop", target.androidApp.packageName))
+                    report.collect("Application log") {
+                        copyAppLogToBuild(report.directory, target.androidApp.packageName)
+                    }
+                    report.collect("Exit diagnostics") {
+                        copyAnrTracesToBuild(report.directory, target.androidApp.packageName)
+                    }
+                    report.collect("Application shutdown") {
+                        runAdbCommand(listOf("shell", "am", "force-stop", target.androidApp.packageName))
+                    }
                 }
             }
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
-    private suspend fun runAndroidTestEnvironment(block: suspend (AppiumPorts) -> Unit) {
-        val sessionId = Uuid.random().toHexString()
-        val hostSessionPath = File("build/test/appium/sessions", sessionId).canonicalPath
-        prepareSessionDirectories(hostSessionPath)
+    private suspend fun runAndroidTestEnvironment(report: AppiumTestReport, block: suspend (AppiumPorts) -> Unit) {
         System.setProperty("api.version", "1.44")
         Network.newNetwork().use { network ->
-            useLightweightBackendContainers(network) { filesystem, _ ->
+            useLightweightBackendContainers(network, report) { filesystem, _ ->
                 bindAndroidReverse(hostPort = filesystem.getMappedPort(8822), devicePort = 8822)
                 val commonEnv = buildContainerEnv() + ("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
-                useCliInitContainer(network, commonEnv, hostSessionPath) {
-                    useWsContainer(network, commonEnv, hostSessionPath) { wsContainer ->
+                useCliInitContainer(network, commonEnv, report) {
+                    useWsContainer(network, commonEnv, report) { wsContainer ->
                         val hostWsPort = wsContainer.getMappedPort(8813)
                         bindAndroidReverse(hostPort = hostWsPort, devicePort = 8813)
-                        useServerContainer(network, commonEnv, hostSessionPath) { serverContainer ->
+                        useServerContainer(network, commonEnv, report) { serverContainer ->
                             val hostServerPort = serverContainer.getMappedPort(8811)
                             bindAndroidReverse(hostPort = hostServerPort, devicePort = 8811)
-                            useWorkerContainer(network, commonEnv, hostSessionPath) {
+                            useWorkerContainer(network, commonEnv, report) {
                                 block(AppiumPorts(server = hostServerPort, ws = hostWsPort))
                             }
                         }
@@ -129,23 +143,25 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         runAdbCommand(listOf("shell", "am", "start", "-n", "${app.packageName}/${app.mainActivityClassName}"))
     }
 
-    private fun pushInjectedSessionToPrivateDir(packageName: String, testName: String, content: String) {
-        val file = File("build/test/appium/tmp/injected-session-$testName.json")
+    private fun pushInjectedSessionToPrivateDir(packageName: String, file: File, content: String) {
         file.parentFile?.mkdirs()
         file.writeText(content)
-        runAdbCommand(listOf("push", file.canonicalPath, INJECTED_SESSION_TEMP_PATH))
-        runAdbCommand(listOf("shell", "run-as", packageName, "mkdir", "-p", INJECTED_SESSION_DIR))
-        runAdbCommand(
-            listOf(
-                "shell",
-                "run-as",
-                packageName,
-                "cp",
-                INJECTED_SESSION_TEMP_PATH,
-                INJECTED_SESSION_FILE,
-            ),
-        )
-        runAdbCommand(listOf("shell", "run-as", packageName, "cat", INJECTED_SESSION_FILE))
+        try {
+            runAdbCommand(listOf("push", file.canonicalPath, INJECTED_SESSION_TEMP_PATH))
+            runAdbCommand(listOf("shell", "run-as", packageName, "mkdir", "-p", INJECTED_SESSION_DIR))
+            runAdbCommand(
+                listOf(
+                    "shell",
+                    "run-as",
+                    packageName,
+                    "cp",
+                    INJECTED_SESSION_TEMP_PATH,
+                    INJECTED_SESSION_FILE,
+                ),
+            )
+        } finally {
+            file.delete()
+        }
     }
 
     private fun bindAndroidReverse(hostPort: Int, devicePort: Int) {
@@ -178,10 +194,8 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         )
     }
 
-    private fun copyAppLogToBuild(suiteName: String, testName: String, packageName: String) {
-        val outputDir = File("build/test/appium-logs/$suiteName")
-        outputDir.mkdirs()
-        val outputFile = File(outputDir, "$testName.log")
+    private fun copyAppLogToBuild(outputDir: File, packageName: String) {
+        val outputFile = File(outputDir, "application.log")
         val logResult =
             runAdbCommandAllowFailure(
                 listOf("exec-out", "run-as", packageName, "cat", "files/logs/$APP_LOG_FILE_NAME"),
@@ -189,37 +203,24 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         if (logResult.exitCode == 0 && logResult.output.isNotBlank()) {
             outputFile.writeText(logResult.output)
         } else {
-            outputFile.writeText(
-                "Failed to export app log: ${logResult.output.ifBlank { "exitCode=${logResult.exitCode}" }}",
-            )
-        }
-        copyAnrTracesToBuild(outputDir, testName, packageName)
-    }
-
-    private fun collectBugreport(suiteName: String, testName: String) {
-        val outputDir = File("build/test/appium-logs/$suiteName")
-        outputDir.mkdirs()
-        val outputFile = File(outputDir, "$testName.bugreport.zip")
-        runAdbCommandAllowFailure(listOf("bugreport", outputFile.canonicalPath))
-    }
-
-    private fun copyAnrTracesToBuild(outputDir: File, testName: String, packageName: String) {
-        val anrResult =
-            runAdbCommandAllowFailure(
-                listOf("shell", "dumpsys", "activity", "exit-info", packageName),
-            )
-        if (anrResult.exitCode == 0 && anrResult.output.isNotBlank()) {
-            File(outputDir, "$testName.exit-info.txt").writeText(anrResult.output)
+            error("Failed to export app log: ${logResult.output.ifBlank { "exitCode=${logResult.exitCode}" }}")
         }
     }
 
-    private fun saveRecording(driver: AndroidDriver, suiteName: String, testName: String) {
-        runCatching {
-            val content = driver.stopRecordingScreen()
-            val decoded = Base64.getDecoder().decode(content)
-            val directory = File("build/test/appium-records/$suiteName").also { it.mkdirs() }
-            File(directory, "$testName.mp4").writeBytes(decoded)
-        }
+    private fun collectBugreport(outputDir: File) {
+        val outputFile = File(outputDir, "bugreport.zip")
+        runAdbCommand(listOf("bugreport", outputFile.canonicalPath))
+    }
+
+    private fun copyAnrTracesToBuild(outputDir: File, packageName: String) {
+        val output = runAdbCommand(listOf("shell", "dumpsys", "activity", "exit-info", packageName))
+        File(outputDir, "exit-info.txt").writeText(output)
+    }
+
+    private fun saveRecording(driver: AndroidDriver, outputDir: File) {
+        val content = driver.stopRecordingScreen()
+        val decoded = Base64.getDecoder().decode(content)
+        File(outputDir, "recording.mp4").writeBytes(decoded)
     }
 
     private fun runAdbCommand(args: List<String>): String {
@@ -273,41 +274,49 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
-        val browserCapture = if (captureBrowserOpen) DesktopBrowserCapture.create(testName) else null
-        runDesktopTest(
-            testName = testName,
-            config = target.desktopRuntimeConfig,
-            beforeLaunch = { ports, sessionFilePath ->
-                val prepared = setup(ports)
-                prepared.injectedSession?.let { session ->
-                    writeSessionFile(sessionFilePath, buildInjectedSessionJson(session))
+        val report = AppiumTestReport(target.suiteName, "desktop-${platform.name.lowercase()}", testName)
+        report.run {
+            val browserCapture =
+                if (captureBrowserOpen) {
+                    DesktopBrowserCapture.create(
+                        report.directory.resolve("browser"),
+                    )
+                } else {
+                    null
                 }
-                prepared
-            },
-            browserCapture = browserCapture,
-        ) { driver, prepared, processId, restartApp ->
-            block(
-                DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture, restartApp),
-                prepared.data,
-            )
+            runDesktopTest(
+                report = report,
+                config = target.desktopRuntimeConfig,
+                beforeLaunch = { ports, sessionFilePath ->
+                    val prepared = setup(ports)
+                    prepared.injectedSession?.let { session ->
+                        writeSessionFile(sessionFilePath, buildInjectedSessionJson(session))
+                    }
+                    prepared
+                },
+                browserCapture = browserCapture,
+            ) { driver, prepared, processId, restartApp ->
+                block(
+                    DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture, restartApp),
+                    prepared.data,
+                )
+            }
         }
     }
 
     private suspend fun <T> runDesktopTest(
-        testName: String,
+        report: AppiumTestReport,
         config: DesktopAppiumRuntimeConfig,
         beforeLaunch: suspend (ports: AppiumPorts, sessionFilePath: String) -> T,
         browserCapture: DesktopBrowserCapture?,
         block: suspend (AppiumDriver, T, Long?, suspend () -> DesktopAppTestDriver) -> Unit,
     ) {
-        runAppiumTestEnvironment { ports ->
-            val sessionFile = File("build/test/appium/tmp/desktop-session-$testName.json")
-            val runtimeDir = File("build/test/appium/tmp/desktop-runtime-$testName")
-            val logDir = File("build/test/appium-logs/${config.suiteName}").also { it.mkdirs() }
-            val appLogFile = File(logDir, "${safeName(testName)}.desktop.log")
-            runtimeDir.deleteRecursively()
+        runAppiumTestEnvironment(report) { ports ->
+            val sessionFile = report.temporaryPath("private-session.json")
+            val runtimeDir = report.temporaryPath("runtime")
+            val logDir = report.directory.resolve("application").also { it.mkdirs() }
+            val appLogFile = File(logDir, "desktop.log")
             runtimeDir.mkdirs()
-            appLogFile.delete()
 
             val setup = beforeLaunch(ports, sessionFile.canonicalPath)
             val launchScript =
@@ -338,26 +347,27 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
             } catch (throwable: Throwable) {
-                DesktopAppiumFailureDumper.dumpOnFailure(
-                    context =
-                    DesktopAppiumFailureDumper.Context(
-                        suiteName = config.suiteName,
-                        appLabel = config.appLabel,
-                        testName = testName,
-                        sessionFile = sessionFile,
-                        logDir = logDir,
-                        appLogFile = appLogFile,
-                    ),
-                    driver = driver,
-                    throwable = throwable,
-                )
+                report.collect("Desktop diagnostics") {
+                    DesktopAppiumFailureDumper.dumpOnFailure(
+                        context =
+                        DesktopAppiumFailureDumper.Context(
+                            outputDir = report.directory.resolve("diagnostics"),
+                            appLabel = config.appLabel,
+                            sessionFile = sessionFile,
+                            logDir = logDir,
+                            appLogFile = appLogFile,
+                        ),
+                        driver = driver,
+                        throwable = throwable,
+                    )
+                }
                 throw throwable
             } finally {
-                driver?.quit()
-                launchScript.delete()
-                sessionFile.delete()
-                File("${sessionFile.canonicalPath}.pid").delete()
-                runtimeDir.deleteRecursively()
+                driver?.let { activeDriver ->
+                    report.captureDriver(activeDriver)
+                    report.collect("Driver shutdown") { activeDriver.quit() }
+                }
+                report.collect("Launch script cleanup") { launchScript.delete() }
             }
         }
     }

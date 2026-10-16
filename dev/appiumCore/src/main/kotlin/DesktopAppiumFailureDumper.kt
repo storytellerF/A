@@ -6,22 +6,18 @@ package com.storyteller_f.a.dev.appium
 
 import io.appium.java_client.AppiumDriver
 import java.io.File
-import java.time.Instant
 
 object DesktopAppiumFailureDumper {
     internal data class Context(
-        val suiteName: String,
+        val outputDir: File,
         val appLabel: String,
-        val testName: String,
         val sessionFile: File,
         val logDir: File,
         val appLogFile: File,
     )
 
     internal fun dumpOnFailure(context: Context, driver: AppiumDriver?, throwable: Throwable) {
-        val outputDir =
-            File("build/test/appium-debug/${context.suiteName}", DesktopAppiumHelper.safeName(context.testName))
-                .resolve(Instant.now().toString().replace(Regex("[^a-zA-Z0-9._-]"), "_"))
+        val outputDir = context.outputDir
         outputDir.mkdirs()
 
         File(outputDir, "failure.txt").writeText(

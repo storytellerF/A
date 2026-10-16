@@ -28,42 +28,46 @@ class WasmAppiumHelper(
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
-        WasmDistributionServer(distribution).use { server ->
-            runAppiumTestEnvironment(allowedOrigins = server.url.removeSuffix("/")) { ports ->
-                server.setBackendUrl("http://127.0.0.1:${ports.server}")
-                browserType.withProfile { profile ->
-                    var browser: WebDriver = browserType.createDriver(profile, windowSize)
-                    try {
-                        val prepared = setup(ports)
-                        initializeBrowserState(browser, server, prepared.injectedSession)
-                        browser.get(
-                            "${server.url}?appium=true&appiumHttpUrl=${server.url.removeSuffix(
-                                "/",
-                            )}&appiumWsUrl=ws://127.0.0.1:${ports.ws}",
-                        )
-                        awaitStartup(browser, server)
-                        if (prepared.injectedSession != null) {
-                            WebDriverWait(browser, Duration.ofSeconds(30)).until {
-                                (browser as JavascriptExecutor).executeScript(
-                                    "return window.localStorage.getItem('appium.session_ready') === 'true';",
-                                ) == true
+        val report = AppiumTestReport(target.suiteName, "wasm-${browserType.name.lowercase()}", testName)
+        report.run {
+            WasmDistributionServer(distribution).use { server ->
+                runAppiumTestEnvironment(report, allowedOrigins = server.url.removeSuffix("/")) { ports ->
+                    server.setBackendUrl("http://127.0.0.1:${ports.server}")
+                    browserType.withProfile { profile ->
+                        var browser: WebDriver = browserType.createDriver(profile, windowSize)
+                        try {
+                            val prepared = setup(ports)
+                            initializeBrowserState(browser, server, prepared.injectedSession)
+                            browser.get(
+                                "${server.url}?appium=true&appiumHttpUrl=${server.url.removeSuffix(
+                                    "/",
+                                )}&appiumWsUrl=ws://127.0.0.1:${ports.ws}",
+                            )
+                            awaitStartup(browser, server)
+                            if (prepared.injectedSession != null) {
+                                WebDriverWait(browser, Duration.ofSeconds(30)).until {
+                                    (browser as JavascriptExecutor).executeScript(
+                                        "return window.localStorage.getItem('appium.session_ready') === 'true';",
+                                    ) == true
+                                }
                             }
+                            block(
+                                WasmAppiumTestScope({ browser }) {
+                                    val url = requireNotNull(browser.currentUrl) { "Browser target URL is unavailable" }
+                                    (browser as JavascriptExecutor).executeScript(
+                                        "window.localStorage.removeItem('appium.injected_session');",
+                                    )
+                                    browser.quit()
+                                    browser = browserType.createDriver(profile, windowSize)
+                                    browser.get(url)
+                                    awaitStartup(browser, server)
+                                },
+                                prepared.data,
+                            )
+                        } finally {
+                            report.captureDriver(browser)
+                            report.collect("Browser shutdown") { browser.quit() }
                         }
-                        block(
-                            WasmAppiumTestScope({ browser }) {
-                                val url = requireNotNull(browser.currentUrl) { "Browser target URL is unavailable" }
-                                (browser as JavascriptExecutor).executeScript(
-                                    "window.localStorage.removeItem('appium.injected_session');",
-                                )
-                                browser.quit()
-                                browser = browserType.createDriver(profile, windowSize)
-                                browser.get(url)
-                                awaitStartup(browser, server)
-                            },
-                            prepared.data,
-                        )
-                    } finally {
-                        browser.quit()
                     }
                 }
             }

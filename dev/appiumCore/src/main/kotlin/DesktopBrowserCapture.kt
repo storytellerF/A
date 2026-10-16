@@ -30,9 +30,7 @@ class DesktopBrowserCapture private constructor(val command: File, private val c
     }
 
     companion object {
-        fun create(testName: String): DesktopBrowserCapture {
-            val directory = File("build/test/appium/browser-capture", DesktopAppiumHelper.safeName(testName))
-            directory.deleteRecursively()
+        fun create(directory: File): DesktopBrowserCapture {
             check(directory.mkdirs()) { "Failed to create browser capture directory" }
             val capturedUriFile = File(directory, "opened-uri.txt")
             val command = File(directory, "xdg-open")
