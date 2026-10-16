@@ -289,6 +289,6 @@
   before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
   downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
 
-- Filesystem/Lucene logging remains independent of shared/business modules. Keep their Logback
+- Filesystem/Lucene use SLF4J directly, without Napier or shared/business dependencies. Keep their Logback
   provider, container-owned `LOG_PATH` directories and Appium file-log archives aligned; validate
   service startup records rather than treating nonempty provider-warning output as collected logs.

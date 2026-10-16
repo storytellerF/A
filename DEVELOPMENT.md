@@ -376,7 +376,7 @@ use the independent `com.storyteller_f.services.*.api` namespaces.
 
 ## Service log collection
 
-- Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws and cli. All four services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.
+- Compose overrides `LOG_PATH` to `/home/app/logs/<service>` for server, worker, ws, cli, filesystem and lucene. All six services mount the shared `service-logs` volume; Promtail mounts it read-only at `/var/log/A` and collects each service directory, including rotated `.log` files.
 - Runtime images create the log directory owned by the application user. Container logs no longer depend on a host `LOG_PATH` bind mount. Recreate the application services and Promtail together to apply the volume/path changes; existing host log files are not automatically migrated.
 
 ## Windows AVIF native library
@@ -711,9 +711,18 @@ entry paths. Images and recordings are embedded in their viewers. Original files
 an explicit download link. Text previews are limited to 2 MiB per file/entry and archives to 100 entries and 8 MiB of previewed text.
 
 Filesystem and Lucene services package their own Logback provider/configuration. Both services emit
-console and rolling-file logs. `LOG_PATH` controls the file directory; without it, standalone runs
+console and rolling-file logs. Service events use SLF4J directly;
+INFO goes to stdout, WARN/ERROR to stderr,
+and all enabled levels go to the rolling file, matching server/worker. Promtail reads
+the shared volume under `/var/log/A/<service>/*.log` with the corresponding `job` label
+and pushes to Loki. `LOG_PATH` controls the file directory; without it, standalone runs
 use `build/logs/filesystem` and `build/logs/lucene`. Runtime images create `/home/app/logs/<service>` owned by the non-root service
 user; Compose mounts the existing `service-logs` volume there for Promtail. Appium exports both
 console output and the complete filesystem/Lucene file-log directories before container shutdown.
 The service-specific startup messages must appear in both outputs; SLF4J provider warnings alone
-are not evidence of successful log collection.
+are not evidence of successful log collection. In Loki, query
+`{job=~"server|worker|ws|cli|filesystem|lucene"}` for backend logs, or
+`{job="filesystem"} |= "Filesystem service starting"` and
+`{job="lucene"} |= "Lucene service starting"` to verify the independent services.
+Confirm returned records include the matching `/var/log/A/<service>/` filename;
+container stdout alone does not verify the shared-volume/Promtail/Loki chain.
