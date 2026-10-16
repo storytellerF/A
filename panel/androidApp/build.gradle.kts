@@ -60,7 +60,6 @@ dependencies {
     implementation(libs.lifecycle.service)
     implementation(libs.connectivity.device)
     implementation(libs.connectivity.compose.device)
-    implementation(libs.webrtc.kmp)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.datastore.preferences.core)

@@ -71,7 +71,6 @@ kotlin {
             implementation(libs.record.core)
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
-            implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
             implementation(libs.androidx.datastore.preferences.core)

@@ -99,7 +99,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.napier)
-    implementation(libs.webrtc.kmp)
     implementation(libs.connector) {
         exclude(group = "com.google.protobuf", module = "protobuf-java")
     }

@@ -25,7 +25,6 @@ import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.setupKmpLogger
-import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.safeMessage
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -50,7 +49,6 @@ val uiViewModel: UIViewModel by lazy {
 }
 
 object JvmAppPlatformImpl : AppPlatformImpl {
-    override fun startCall(roomId: PrimaryKey) = Unit
     override suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?) = Unit
 }
 

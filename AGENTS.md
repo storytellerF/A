@@ -200,6 +200,9 @@
   Keep host-test database scopes unique and temporary storage under the module build directory.
 
 - Browser semantics must publish changed labels even when geometry is unchanged.
+- Wasm E2E runs every scenario on Chrome, Edge and Firefox sequentially with isolated profiles.
+  Prefer installed browsers through Selenium Manager discovery; keep per-browser binary overrides
+  separate and never reuse a personal browser profile or skip an unavailable matrix entry.
 - Async SQLite transaction finalizers must complete under cancellation so Room can recycle its pool
   permit. Close allocated connections/statements when cancellation prevents delivery; new operations
   still honor cancellation, and cleanup must not replay business writes.
@@ -223,3 +226,38 @@
 
 - Pin external Dockerfile base images and build frontends by verified manifest digest.
   Treat transient Docker Hub failures with bounded retries before changing build configuration.
+
+- RTC ICE candidates must remain queued until their peer remote description is ready. Keep peer
+  queues independent, and guard completion cleanup against replacing a newer connection for the same user.
+
+- Ktor RTC JVM shutdown must detach sender tracks before closing the connection and disposing
+  local media. Remote JVM tracks are borrowed; video renderers must remove sinks before
+  track disposal. Keep native negotiation tests on a real dispatcher, including cancellation cleanup.
+- Android Ktor remote tracks are owned by native receivers. Remove renderer sinks before
+  PeerConnection disposal and avoid separately disposing those receiver-owned tracks.
+
+- Normalize browser RTC capture `JsException` at the platform boundary; it is not an `Exception`.
+  DOM failures can lack JavaScript stacks, so preserve their message without retaining an unsafe
+  JS cause. Verify missing-device errors exit the joining state and cancellation remains cancellation.
+
+- Verify compression for cold Wasm client loads before diagnosing a blank page as RTC failure.
+  Browser session fixtures must populate storage on a static same-origin bootstrap document
+  before opening the app, so setup never aborts its first Wasm download with a reload.
+
+- Check Wasm runtime dependency resolution as well as compile classpaths. Ktor 3.6.0's browser
+  adapter retains the Wrappers 2026.1.9 ABI; newer transitive wrappers can remove inlined
+  symbols while compilation still succeeds. Preserve the recorder's newer URL API when resolving
+  primitive ABI compatibility. Exercise real browser constraint conversion,
+  synthetic track capture, SDP creation and cleanup when changing RTC dependencies.
+
+- Browser ICE events can contain an empty candidate string before the final null event. Treat
+  this as an end-of-candidates marker at the RTC boundary; native Ktor adapters reject it.
+  Preserve failures for non-empty invalid candidates and verify media still flows after the marker.
+
+- Shared RTC dispatch must distinguish a recipient channel cancellation from caller cancellation.
+  Check the caller context before propagating cancellation; one closed WebSocket must not
+  cancel the global signaling or negotiation jobs.
+
+- Verify browser WebRTC presentation with requestVideoFrameCallback presentedFrames. Firefox can
+  report zero VideoPlaybackQuality totalVideoFrames for a MediaStream while actual frames
+  are being presented; do not infer a frozen stream from that counter alone.

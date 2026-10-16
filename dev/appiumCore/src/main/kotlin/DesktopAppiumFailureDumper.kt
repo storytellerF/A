@@ -41,7 +41,7 @@ object DesktopAppiumFailureDumper {
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {
         if (driver == null) return
         runCatching {
-            File(outputDir, "appium-page-source.xml").writeText(driver.pageSource.orEmpty())
+            File(outputDir, "appium-page-source.xml").writeText(driver.pageSource)
         }.onFailure {
             File(outputDir, "appium-page-source.error.txt").writeText(it.stackTraceToString())
         }

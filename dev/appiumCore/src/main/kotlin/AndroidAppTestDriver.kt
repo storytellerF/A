@@ -192,7 +192,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
         val outputDir = File("build/test/appium-debug/AppiumTest")
         outputDir.mkdirs()
         val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        File(outputDir, "$safeName.xml").writeText(driver.pageSource.orEmpty())
+        File(outputDir, "$safeName.xml").writeText(driver.pageSource)
         File(outputDir, "$safeName.png").writeBytes(driver.getScreenshotAs(OutputType.BYTES))
     }
 

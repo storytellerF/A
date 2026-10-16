@@ -9,7 +9,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.type.PrimaryKey
 import dev.jordond.connectivity.Connectivity
 import io.ktor.http.ContentType
 import kotlinx.io.Source
@@ -27,7 +26,6 @@ interface ClientFile {
 data class AppPlatform(val hasNativeBack: Boolean, val isActive: Boolean = true, val debug: Boolean)
 
 interface AppPlatformImpl {
-    fun startCall(roomId: PrimaryKey)
     suspend fun notifyNotification(room: RoomInfo, bitmap: ImageBitmap?)
 }
 

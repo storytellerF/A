@@ -129,10 +129,12 @@ uriKmp = "0.0.21"
 urlbuilder = "2.0.9"
 imageAvif = "0.0.1-alpha6"
 vlcj = "4.12.1"
-webrtcKmp = "0.125.11"
 zoomimageComposeCoil3 = "1.7.0"
 
+webrtcJava = "0.16.0"
+
 [libraries]
+ktor-webrtc = { module = "io.ktor:ktor-client-webrtc", version.ref = "ktor" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
@@ -347,6 +349,8 @@ richeditor-compose = { module = "com.mohamedrejeb.richeditor:richeditor-compose"
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "runtime" }
 screenshot-validation-api = { module = "com.android.tools.screenshot:screenshot-validation-api", version.ref = "screenshot" }
+selenium-chrome-driver = { module = "org.seleniumhq.selenium:selenium-chrome-driver", version.ref = "selenium" }
+selenium-edge-driver = { module = "org.seleniumhq.selenium:selenium-edge-driver", version.ref = "selenium" }
 selenium-firefox-driver = { module = "org.seleniumhq.selenium:selenium-firefox-driver", version.ref = "selenium" }
 sonner = { module = "io.github.dokar3:sonner", version.ref = "sonner" }
 sql-formatter = { module = "com.github.vertical-blank:sql-formatter", version.ref = "sqlFormatter" }
@@ -366,7 +370,6 @@ uri-kmp = { module = "com.eygraber:uri-kmp", version.ref = "uriKmp" }
 urlbuilder = { module = "io.mikael:urlbuilder", version.ref = "urlbuilder" }
 image-avif = { module = "io.github.storytellerf:image-avif", version.ref = "imageAvif" }
 vlcj = { module = "uk.co.caprica:vlcj", version.ref = "vlcj" }
-webrtc-kmp = { module = "com.shepeliev:webrtc-kmp", version.ref = "webrtcKmp" }
 zoomimage-compose-coil3 = { module = "io.github.panpf.zoomimage:zoomimage-compose-coil3", version.ref = "zoomimageComposeCoil3" }
 
 [plugins]

@@ -153,4 +153,29 @@
     <string name="activity_preview_count">Showing %1$d of %2$d</string>
     <string name="activity_unread_rooms">Unread rooms</string>
     <string name="activity_pinned_topics">Pinned topics</string>
+
+    <string name="rtc_room">Room %1$s</string>
+    <string name="rtc_participants">%1$d participants · In call</string>
+    <string name="rtc_ready">Ready to join the room call</string>
+    <string name="rtc_joining">Preparing microphone and camera…</string>
+    <string name="rtc_join_video">Join with video</string>
+    <string name="rtc_join_audio">Join with audio</string>
+    <string name="rtc_leave">Leave call</string>
+    <string name="rtc_you">You</string>
+    <string name="rtc_participant">Participant %1$s</string>
+    <string name="rtc_waiting">Waiting for others to join this room</string>
+    <string name="rtc_camera_off">Camera off</string>
+    <string name="rtc_camera_on">Camera on</string>
+    <string name="rtc_audio_only">Audio call</string>
+    <string name="rtc_mute">Mute</string>
+    <string name="rtc_unmute">Unmute</string>
+    <string name="rtc_muted">Muted</string>
+    <string name="rtc_switch_camera">Switch camera</string>
+    <string name="rtc_connecting">Connecting</string>
+    <string name="rtc_connected">Connected</string>
+    <string name="rtc_disconnected">Disconnected</string>
+    <string name="rtc_failed">Unable to connect. Check permissions and connection, then join again.</string>
+    <string name="rtc_permission_required">Allow microphone and camera access in app settings.</string>
+    <string name="rtc_open_settings">Open settings</string>
+    <string name="rtc_media_failed">Unable to update media. Check your camera and microphone.</string>
 </resources>

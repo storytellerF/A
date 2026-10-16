@@ -4,23 +4,32 @@
 
 package com.storyteller_f.a.dev.appium
 
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import org.openqa.selenium.By
+import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
-import org.openqa.selenium.firefox.FirefoxDriver
-import org.openqa.selenium.firefox.FirefoxOptions
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
 import java.io.File
 import java.time.Duration
 import kotlin.test.Test
 
-class PanelWasmAppiumTest : AppiumTestBase() {
+@RunWith(Parameterized::class)
+class PanelWasmAppiumTest(private val browserType: WasmBrowser) : AppiumTestBase() {
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "{0}")
+        fun browsers() = WasmBrowser.entries
+    }
+
     private val targetHelper = PanelAppiumHelper()
     private val platformHelper =
         WasmAppiumHelper(
             resolveWasmDistribution(),
             By.cssSelector("[data-appium-text='Sign in'], [data-appium-text='Overview']"),
-            listOf("-headless", "--width=500", "--height=800"),
+            browserType,
+            Dimension(500, 800),
         )
 
     @Test
@@ -32,19 +41,10 @@ class PanelWasmAppiumTest : AppiumTestBase() {
         testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
 
     @Test
-    fun `test html semantics bridge mounts`() {
+    fun `test html semantics bridge mounts`() =
+        runAppiumBlockingTest {
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            val browser =
-                FirefoxDriver(
-                    FirefoxOptions().addPreference(
-                        "intl.accept_languages",
-                        "en-US,en",
-                    ).addPreference(
-                        "intl.locale.requested",
-                        "en-US",
-                    ).addArguments("-headless", "--width=500", "--height=800"),
-                )
-            try {
+            browserType.withBrowser(Dimension(500, 800)) { browser ->
                 browser.get("${server.url}?appium=true")
                 runCatching {
                     WebDriverWait(browser, Duration.ofSeconds(30)).until(
@@ -62,8 +62,6 @@ class PanelWasmAppiumTest : AppiumTestBase() {
                         cause,
                     )
                 }
-            } finally {
-                browser.quit()
             }
         }
     }

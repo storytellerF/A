@@ -91,7 +91,6 @@ kotlin {
 
             implementation(libs.connectivity.device)
             implementation(libs.connectivity.compose.device)
-            implementation(libs.webrtc.kmp)
             implementation(libs.accompanist.permissions)
 
             implementation(libs.androidx.core.splashscreen)
