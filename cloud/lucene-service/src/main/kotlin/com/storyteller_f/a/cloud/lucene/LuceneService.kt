@@ -51,6 +51,7 @@ import org.apache.lucene.search.SortField
 import org.apache.lucene.search.TermQuery
 import org.apache.lucene.store.FSDirectory
 import org.apache.lucene.util.BytesRef
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -208,6 +209,7 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
 
 fun main() {
     val port = System.getenv("LUCENE_RPC_PORT")?.toIntOrNull() ?: 8821
+    LoggerFactory.getLogger("lucene-service").info("Lucene service starting: RPC port={}", port)
     val service = LuceneRpcImpl(Paths.get(System.getenv("LUCENE_BASE_PATH") ?: "/data"))
     embeddedServer(CIO, host = "0.0.0.0", port = port) {
         install(WebSockets) { maxFrameSize = Long.MAX_VALUE }

@@ -113,6 +113,8 @@ RUN apk add --no-cache wget
 ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/filesystem && chown -R app:app /home/app/logs
+ENV LOG_PATH=/home/app/logs/filesystem
 ENV HOME=/home/app
 USER app:app
 WORKDIR /app
@@ -126,6 +128,8 @@ RUN apk add --no-cache wget
 ARG APP_UID=1000
 ARG APP_GID=1000
 RUN addgroup -S -g "$APP_GID" app && adduser -S -D -h /home/app -u "$APP_UID" -G app app
+RUN mkdir -p /home/app/logs/lucene && chown -R app:app /home/app/logs
+ENV LOG_PATH=/home/app/logs/lucene
 ENV HOME=/home/app
 USER app:app
 WORKDIR /app

@@ -8,6 +8,7 @@ services:
         BUILD_ON: ${BUILD_ON}
     restart: unless-stopped
     environment:
+      LOG_PATH: /home/app/logs/filesystem
       FILESYSTEM_RPC_PORT: 8820
       FILE_SYSTEM_MEDIA_PATH: /data
       FILESYSTEM_HTTP_PORT: 8822
@@ -17,6 +18,7 @@ services:
     ports:
       - ${FILESYSTEM_EXPOSE_PORT:-8822}:8822
     volumes:
+      - service-logs:/home/app/logs
       - ../a_file_data:/data
     healthcheck:
       test: [ "CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8820/health" ]

@@ -9,7 +9,6 @@ import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
 import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
-import io.github.aakira.napier.Napier
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
@@ -27,6 +26,7 @@ import kotlinx.coroutines.job
 import kotlinx.rpc.krpc.ktor.server.Krpc
 import kotlinx.rpc.krpc.ktor.server.rpc
 import kotlinx.rpc.krpc.serialization.json.json
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -41,6 +41,7 @@ internal class FilesystemRpcImpl(
     private val storage: LocalFileSystemObjectStorageService,
     private val uploadDirectory: Path,
 ) : FilesystemRpc {
+    private val logger = LoggerFactory.getLogger(FilesystemRpcImpl::class.java)
     private val uploads = ConcurrentHashMap<String, PendingUpload>()
 
     fun closeUploads() {
@@ -48,7 +49,7 @@ internal class FilesystemRpcImpl(
             try {
                 Files.deleteIfExists(pending.path)
             } catch (failure: Exception) {
-                Napier.e(failure) { "remove disconnected filesystem upload failed" }
+                logger.error("Remove disconnected filesystem upload failed", failure)
             }
         }
         uploads.clear()
@@ -130,10 +131,12 @@ internal class FilesystemRpcImpl(
 }
 
 fun main() {
+    val logger = LoggerFactory.getLogger("filesystem-service")
     val port = System.getenv("FILESYSTEM_RPC_PORT")?.toIntOrNull() ?: 8820
     val base = Paths.get(System.getenv("FILE_SYSTEM_MEDIA_PATH") ?: "/data")
     val publicUrl = System.getenv("FILESYSTEM_PUBLIC_URL") ?: error("FILESYSTEM_PUBLIC_URL is empty")
     val httpPort = System.getenv("FILESYSTEM_HTTP_PORT")?.toIntOrNull() ?: 8822
+    logger.info("Filesystem service starting: RPC port={}, HTTP port={}", port, httpPort)
     val storage = LocalFileSystemObjectStorageService(publicUrl, base)
     embeddedServer(CIO, host = "0.0.0.0", port = httpPort) {
         configureObjectDownloads(storage)
