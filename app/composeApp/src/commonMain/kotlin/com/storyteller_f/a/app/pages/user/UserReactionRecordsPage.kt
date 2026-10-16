@@ -7,7 +7,6 @@ package com.storyteller_f.a.app.pages.user
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -18,6 +17,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.common.UserReactionRecordsViewModel
 import com.storyteller_f.a.app.common.getUserReactionRecordsViewModel
+import com.storyteller_f.a.app.pages.AdaptiveItemGrid
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.safeArea
@@ -37,7 +37,7 @@ fun UserReactionRecordsPageInternal(viewModel: UserReactionRecordsViewModel) {
             viewModel,
             modifier = Modifier.safeArea(paddingValues, layoutDirection),
         ) { items ->
-            LazyColumn {
+            AdaptiveItemGrid {
                 pagingItems(items, {
                     it.id
                 }) {

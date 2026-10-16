@@ -4,7 +4,6 @@
 
 package com.storyteller_f.a.app.pages.room
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,13 +19,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.AppGlobalDialogController
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.common.OnRoomUpdated
 import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.user.ObjectSettingDialog
 import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
@@ -86,7 +85,7 @@ private fun RoomSettingInternal(values: PaddingValues, showDialog: (SettingOptio
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
-    Column(modifier = Modifier.padding(horizontal = 20.dp).padding(values)) {
+    AdaptiveFormLayout(Modifier.padding(values)) {
         SettingOptionResettableView(
             "Icon",
             roomInfo.icon != null,

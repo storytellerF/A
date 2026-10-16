@@ -5,11 +5,7 @@
 package com.storyteller_f.a.app.pages
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -21,7 +17,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
@@ -50,9 +45,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun PreferencePage() {
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
-    ) {
+    AdaptiveFormLayout {
         HomeStartDestinationPreferenceItem()
         TranslateModelPreferenceItem()
     }

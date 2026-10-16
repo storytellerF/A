@@ -5,6 +5,7 @@
 package com.storyteller_f.a.app.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -25,19 +26,21 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SettingOptionView(title: String, onClick: () -> Unit, content: @Composable () -> Unit) {
-    val shape = RoundedCornerShape(8.dp)
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-        Modifier.clip(shape).clickable {
-            onClick()
-        }.padding(18.dp),
-    ) {
-        Text(title)
-        Spacer(modifier = Modifier.weight(1f))
-        content()
+    Column {
+        val shape = RoundedCornerShape(8.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+            Modifier.clip(shape).clickable {
+                onClick()
+            }.padding(18.dp),
+        ) {
+            Text(title)
+            Spacer(modifier = Modifier.weight(1f))
+            content()
+        }
+        HorizontalDivider()
     }
-    HorizontalDivider()
 }
 
 @Composable
@@ -47,40 +50,42 @@ fun SettingOptionResettableView(
     onClick: (Boolean) -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val shape = RoundedCornerShape(8.dp)
-    var expended by remember {
-        mutableStateOf(false)
-    }
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier =
-        Modifier.clip(shape).clickable {
-            if (supportReset) {
-                expended = true
-            } else {
-                onClick(false)
-            }
-        }.padding(18.dp),
-    ) {
-        Text(title)
-        Spacer(modifier = Modifier.weight(1f))
-        content()
-        DropdownMenu(expended, {
-            expended = false
-        }) {
-            DropdownMenuItem({
-                expended = false
-                onClick(true)
-            }) {
-                Text("Reset")
-            }
-            DropdownMenuItem({
-                onClick(false)
+    Column {
+        val shape = RoundedCornerShape(8.dp)
+        var expended by remember {
+            mutableStateOf(false)
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier =
+            Modifier.clip(shape).clickable {
+                if (supportReset) {
+                    expended = true
+                } else {
+                    onClick(false)
+                }
+            }.padding(18.dp),
+        ) {
+            Text(title)
+            Spacer(modifier = Modifier.weight(1f))
+            content()
+            DropdownMenu(expended, {
                 expended = false
             }) {
-                Text("Edit")
+                DropdownMenuItem({
+                    expended = false
+                    onClick(true)
+                }) {
+                    Text("Reset")
+                }
+                DropdownMenuItem({
+                    onClick(false)
+                    expended = false
+                }) {
+                    Text("Edit")
+                }
             }
         }
+        HorizontalDivider()
     }
-    HorizontalDivider()
 }

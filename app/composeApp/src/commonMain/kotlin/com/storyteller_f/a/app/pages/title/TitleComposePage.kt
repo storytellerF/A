@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
@@ -75,6 +74,7 @@ import com.storyteller_f.a.app.common.createRoomSearchViewModel
 import com.storyteller_f.a.app.common.createSearchCommunitiesViewModel
 import com.storyteller_f.a.app.common.createTitleComposeViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomList
@@ -184,11 +184,7 @@ fun TitleComposeInternalEdit(vm: TitleComposeViewModel) {
     val receiver by vm.receiver.collectAsState()
     val isScopeLocked by vm.isScopeLocked.collectAsState()
     val isTypeLocked by vm.isTypeLocked.collectAsState()
-    Column(
-        modifier = Modifier.width(300.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
+    AdaptiveFormLayout {
         OutlinedTextField(name, vm::setName, label = {
             Text("name")
         }, modifier = Modifier.fillMaxWidth())

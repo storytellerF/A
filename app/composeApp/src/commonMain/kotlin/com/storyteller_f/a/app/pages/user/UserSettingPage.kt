@@ -51,6 +51,7 @@ import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.common.OnUserUpdated
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
+import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.topic.FilePicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
 import com.storyteller_f.a.app.utils.saveTextToFile
@@ -327,7 +328,7 @@ private fun UserSettingInternal(
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
-    Column(modifier = Modifier.padding(values).padding(horizontal = 20.dp)) {
+    AdaptiveFormLayout(Modifier.padding(values)) {
         SettingOptionResettableView(
             "Icon",
             m.avatar != null,
