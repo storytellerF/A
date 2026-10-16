@@ -9,13 +9,15 @@
     <import class="ch.qos.logback.core.rolling.RollingFileAppender" />
     <import class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy" />
 
+    <property name="LOG_PATTERN" value="%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+
     <appender name="STDERR" class="ConsoleAppender">
         <target>System.err</target>
         <filter class="ThresholdFilter">
             <level>WARN</level>
         </filter>
         <encoder class="PatternLayoutEncoder">
-            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
     <appender name="STDOUT" class="ConsoleAppender">
@@ -41,7 +43,7 @@
             <onMatch>DENY</onMatch>
         </filter>
         <encoder class="PatternLayoutEncoder">
-            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
     <!-- 定义日志文件路径 -->
@@ -57,7 +59,7 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder class="PatternLayoutEncoder">
-            <pattern>%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>${LOG_PATTERN}</pattern>
         </encoder>
     </appender>
     <root level="INFO">
