@@ -81,8 +81,9 @@ DashScope defaults to the international endpoint. Use the corresponding `llm-con
 presets. Bedrock uses the native AWS Converse API. Its optional `region` defaults to the Koog SDK's
 `us-west-2`; `baseUrl` optionally overrides the runtime endpoint. Without `apiKey`, AWS credentials
 come from the SDK default chain (for example a workload role, environment or shared profile).
-Alternatively, `apiKey` can contain a Bedrock bearer API key. Never store AWS access/secret keys in
-that field. The Bedrock preset omits credentials so workload credentials can be supplied at runtime.
+Alternatively, `apiKey` can contain a Bedrock bearer API key, which takes precedence over available AWS
+credentials. Never store AWS access/secret keys in that field. The Bedrock preset omits credentials
+so workload credentials can be supplied at runtime.
 
 All providers return the same structured moderation decision. The LiteRT-LM client uses native JSON-schema
 constrained output, tries the GPU backend first, and falls back to CPU if GPU initialization fails. Set

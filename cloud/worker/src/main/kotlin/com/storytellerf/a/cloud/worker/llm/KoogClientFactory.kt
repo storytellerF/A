@@ -25,6 +25,7 @@ import ai.koog.prompt.executor.ollama.client.OllamaModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
+import aws.smithy.kotlin.runtime.http.engine.HttpClientEngine
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.LlmProvider
 import io.github.aakira.napier.Napier
@@ -39,13 +40,16 @@ object KoogClientFactory {
     /**
      * Creates an LLM client for the given configuration.
      */
-    fun createClient(config: LlmConfig): LLMClient {
+    fun createClient(config: LlmConfig): LLMClient = createClient(config, null)
+
+    // Transport injection keeps factory execution tests on the production authentication path.
+    internal fun createClient(config: LlmConfig, bedrockHttpEngine: HttpClientEngine?): LLMClient {
         val client =
             when (config.provider) {
                 LlmProvider.OPENAI -> createOpenAiClient(config)
                 LlmProvider.ANTHROPIC -> createAnthropicClient(config)
                 LlmProvider.GOOGLE -> createGoogleClient(config)
-                LlmProvider.BEDROCK -> createBedrockClient(config)
+                LlmProvider.BEDROCK -> createBedrockClient(config, bedrockHttpEngine)
                 LlmProvider.DEEPSEEK -> createDeepSeekClient(config)
                 LlmProvider.MISTRAL_AI -> createMistralClient(config)
                 LlmProvider.DASHSCOPE -> createDashscopeClient(config)

@@ -278,3 +278,8 @@
 
 - Use native Bedrock Converse for schema-based generation. DeepSeek JSON-object mode must receive
   the response schema in its system prompt because the native adapter omits it from the API payload.
+
+- Bedrock API keys must take priority over ambient AWS signing credentials. Let the runtime SDK
+  construct and own its default credential chain so credential requests inherit the configured region
+  and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
+  in authentication, region propagation and resource-lifecycle tests.

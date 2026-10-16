@@ -15,8 +15,13 @@ import ai.koog.prompt.executor.clients.deepseek.DeepSeekClientSettings
 import ai.koog.prompt.executor.clients.deepseek.DeepSeekLLMClient
 import ai.koog.prompt.executor.clients.mistralai.MistralAIClientSettings
 import ai.koog.prompt.executor.clients.mistralai.MistralAILLMClient
-import aws.sdk.kotlin.runtime.auth.credentials.DefaultChainCredentialsProvider
+import aws.sdk.kotlin.services.bedrockruntime.BedrockRuntimeClient
+import aws.smithy.kotlin.runtime.auth.AuthSchemeId
+import aws.smithy.kotlin.runtime.http.engine.HttpClientEngine
+import aws.smithy.kotlin.runtime.net.url.Url
+import aws.smithy.kotlin.runtime.retries.StandardRetryStrategy
 import com.storyteller_f.shared.model.LlmConfig
+import kotlin.time.Duration.Companion.milliseconds
 
 internal fun createDeepSeekClient(config: LlmConfig): LLMClient =
     DeepSeekLLMClient(
@@ -39,25 +44,36 @@ internal fun createDashscopeClient(config: LlmConfig): LLMClient =
     httpClientFactory = KtorKoogHttpClient.Factory(),
 )
 
-internal fun createBedrockClient(config: LlmConfig): LLMClient {
-    val region = config.region ?: BedrockClientSettings().region
+internal fun createBedrockClient(config: LlmConfig, httpEngine: HttpClientEngine? = null): LLMClient {
+    val settings = BedrockClientSettings()
+    val region = config.region ?: settings.region
     require(region.isNotBlank()) { "Bedrock region must not be blank" }
-    // Native AWS credentials stay in the SDK chain; apiKey optionally supplies a Bedrock bearer token.
-    val identityProvider =
-        config.apiKey?.let {
-            require(it.isNotBlank()) { "Bedrock API key must not be blank" }
-            StaticBearerTokenProvider(it)
-        } ?: DefaultChainCredentialsProvider()
-    return BedrockLLMClient(
-        identityProvider = identityProvider,
-        settings =
-        BedrockClientSettings(
-            region = region,
-            endpointUrl = config.baseUrl,
-            apiMethod = BedrockAPIMethod.Converse,
-            maxRetries = 1,
-        ),
-    )
+    val apiKey = config.apiKey
+    require(apiKey == null || apiKey.isNotBlank()) { "Bedrock API key must not be blank" }
+    val endpoint = config.baseUrl?.let(Url::parse)
+    val runtime =
+        BedrockRuntimeClient {
+            this.region = region
+            endpointUrl = endpoint
+            // Let the SDK bind its default credential chain to this region and own its lifecycle.
+            if (apiKey != null) {
+                bearerTokenProvider = StaticBearerTokenProvider(apiKey)
+                authSchemePreference = listOf(AuthSchemeId.HttpBearer)
+            }
+            retryStrategy = StandardRetryStrategy { maxAttempts = 1 }
+            val timeouts = settings.timeoutConfig
+            callTimeout = timeouts.requestTimeoutMillis.milliseconds
+            if (httpEngine != null) {
+                httpClient = httpEngine
+            } else {
+                httpClient {
+                    connectTimeout = timeouts.connectTimeoutMillis.milliseconds
+                    socketReadTimeout = timeouts.socketTimeoutMillis.milliseconds
+                    socketWriteTimeout = timeouts.socketTimeoutMillis.milliseconds
+                }
+            }
+        }
+    return BedrockLLMClient(runtime, apiMethod = BedrockAPIMethod.Converse)
 }
 
 private fun requireProviderKey(config: LlmConfig): String =

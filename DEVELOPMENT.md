@@ -662,6 +662,9 @@ LiteRT retains local model metadata.
 Google pairs GoogleModels with native GoogleLLMClient and GoogleClientSettings. Bedrock uses native
 Converse to preserve standard JSON-schema output. Its factory accepts a bearer API key or the AWS
 SDK default credential chain, a region and optional runtime endpoint, with one request attempt.
+An explicit API key prioritizes HTTP bearer authentication over ambient AWS signing credentials.
+The runtime SDK constructs and owns its default credential chain, binding it to the configured region
+and closing its credential cache together with the runtime HTTP engine.
 Koog's DeepSeek adapter uses JSON-object mode instead of transmitting a JSON schema. The service
 retains caller system instructions and includes the schema in that provider's system prompt; the
 moderation parser still validates the returned decision.
@@ -673,9 +676,13 @@ use a native API root instead of the previous OpenAI-compatible path; see README
 OpenRouter IDs remain opaque and need no catalog migration.
 
 GoogleLlmExecutionTest and OfficialProviderExecutionTest exercise native routing, authentication,
-prompts, request schemas and response decoding against ephemeral loopback HTTP fixtures. Bedrock's
-execution test supplies synthetic signing credentials directly to the SDK; factory tests cover bearer
-and default-chain construction without resolving real credentials. Fixtures use real IO dispatchers
-and unique ports. No live cloud account or model invocation is needed.
+prompts, request schemas and response decoding against ephemeral loopback HTTP fixtures.
+BedrockFactoryExecutionTest creates clients through KoogClientFactory and replaces only the network
+transport for signed/bearer Converse execution. Synthetic JVM credentials verify API-key priority,
+regional signing, endpoint routing and schema conversion. SDK provider inspection verifies default
+and explicit region propagation; closing the service must close the real default credential cache
+and owned HTTP engine in both authentication modes. Tests restore JVM properties and serialize their
+access. HTTP fixtures use real IO dispatchers and unique ports. No live cloud account or model
+invocation is needed.
 
 Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
