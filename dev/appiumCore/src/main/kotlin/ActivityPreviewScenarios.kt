@@ -111,8 +111,8 @@ private suspend fun prepareActivityScenario(createSession: suspend () -> Authent
 }
 
 private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: ActivityScenario) {
-    // Native Firefox windows enforce a 500px minimum; this still exercises bottom navigation.
-    val compactWidth = if (driver is WasmAppTestDriver) 500 else 480
+    // Native Chrome on Windows requires 504px and Firefox requires 500px; both use bottom navigation.
+    val compactWidth = if (driver is WasmAppTestDriver) 504 else 480
     driver.clickByText("Rooms")
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertVisibleByText("3")
