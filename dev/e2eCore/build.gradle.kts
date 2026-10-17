@@ -12,6 +12,7 @@ kotlin {
 }
 
 dependencies {
+    api(projects.dev.testInfrastructure)
     api(kotlin("test"))
     api(libs.kotlinx.coroutines.core)
     api(libs.testcontainers.postgresql)

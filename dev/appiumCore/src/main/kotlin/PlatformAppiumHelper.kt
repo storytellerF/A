@@ -4,10 +4,10 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.useBackendFixture
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.android.AndroidDriver
 import io.appium.java_client.android.options.UiAutomator2Options
-import org.testcontainers.containers.Network
 import java.io.File
 import java.net.URI
 import java.util.Base64
@@ -115,25 +115,16 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
     }
 
     private suspend fun runAndroidTestEnvironment(report: AppiumTestReport, block: suspend (AppiumPorts) -> Unit) {
-        System.setProperty("api.version", "1.44")
-        Network.newNetwork().use { network ->
-            useLightweightBackendContainers(network, report) { filesystem, _ ->
-                bindAndroidReverse(hostPort = filesystem.getMappedPort(8822), devicePort = 8822)
-                val commonEnv = buildContainerEnv() + ("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
-                useCliInitContainer(network, commonEnv, report) {
-                    useWsContainer(network, commonEnv, report) { wsContainer ->
-                        val hostWsPort = wsContainer.getMappedPort(8813)
-                        bindAndroidReverse(hostPort = hostWsPort, devicePort = 8813)
-                        useServerContainer(network, commonEnv, report) { serverContainer ->
-                            val hostServerPort = serverContainer.getMappedPort(8811)
-                            bindAndroidReverse(hostPort = hostServerPort, devicePort = 8811)
-                            useWorkerContainer(network, commonEnv, report) {
-                                block(AppiumPorts(server = hostServerPort, ws = hostWsPort))
-                            }
-                        }
-                    }
-                }
-            }
+        useBackendFixture(
+            report.directory.resolve("logs"),
+            environment = { services ->
+                bindAndroidReverse(hostPort = services.filesystemHttpPort, devicePort = 8822)
+                mapOf("FILESYSTEM_PUBLIC_URL" to "http://127.0.0.1:8822")
+            },
+        ) { backend ->
+            bindAndroidReverse(hostPort = backend.wsPort, devicePort = 8813)
+            bindAndroidReverse(hostPort = backend.serverPort, devicePort = 8811)
+            block(AppiumPorts(server = backend.serverPort, ws = backend.wsPort))
         }
     }
 
