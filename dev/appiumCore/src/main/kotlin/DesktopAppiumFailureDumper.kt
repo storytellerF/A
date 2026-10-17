@@ -37,7 +37,10 @@ object DesktopAppiumFailureDumper {
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {
         if (driver == null) return
         runCatching {
-            File(outputDir, "appium-page-source.xml").writeText(driver.pageSource)
+            File(
+                outputDir,
+                "appium-page-source.xml",
+            ).writeText(checkNotNull(driver.pageSource) { "Appium returned no page source" })
         }.onFailure {
             File(outputDir, "appium-page-source.error.txt").writeText(it.stackTraceToString())
         }

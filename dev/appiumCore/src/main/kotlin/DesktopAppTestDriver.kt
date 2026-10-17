@@ -5,6 +5,7 @@
 package com.storyteller_f.a.dev.appium
 
 import io.appium.java_client.AppiumDriver
+import io.appium.java_client.remote.AppiumWebElement
 import org.openqa.selenium.By
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.support.ui.WebDriverWait
@@ -58,7 +59,7 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         if (platform == DesktopTestPlatform.Windows) {
             driver.executeScript(
                 "windows: invoke",
-                mapOf("elementId" to (element as org.openqa.selenium.remote.RemoteWebElement).id),
+                mapOf("elementId" to (element as AppiumWebElement).id),
             )
         } else {
             element.click()
@@ -87,9 +88,9 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
             val element = driver.findElements(By.xpath("//Edit")).lastOrNull() ?: return@until false
             driver.executeScript(
                 "windows: invoke",
-                mapOf("elementId" to (element as org.openqa.selenium.remote.RemoteWebElement).id),
+                mapOf("elementId" to (element as AppiumWebElement).id),
             )
-            element.getAttribute("States").split(",").contains("focused")
+            element.getAttribute("States")?.split(",")?.contains("focused") == true
         }
         driver.executeScript("windows: keys", mapOf("actions" to buildWindowsTextActions(text), "forceUnicode" to true))
     }
@@ -178,7 +179,7 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         val outputDir = File("build/test/appium-debug/DesktopAppiumTest")
         outputDir.mkdirs()
         val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        File(outputDir, "$safeName.xml").writeText(driver.pageSource)
+        File(outputDir, "$safeName.xml").writeText(checkNotNull(driver.pageSource) { "Appium returned no page source" })
     }
 
     companion object {
