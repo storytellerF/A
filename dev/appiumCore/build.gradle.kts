@@ -33,6 +33,7 @@ dependencies {
     api(libs.java.client)
     api(libs.testcontainers)
     api(libs.testcontainers.postgresql)
+    implementation(libs.selenium.support)
     implementation(libs.selenium.chrome.driver)
     implementation(libs.selenium.edge.driver)
     implementation(libs.selenium.firefox.driver)

@@ -293,3 +293,7 @@
 - Filesystem/Lucene use SLF4J directly, without Napier or shared/business dependencies. Keep their Logback
   provider, container-owned `LOG_PATH` directories and Appium file-log archives aligned; validate
   service startup records rather than treating nonempty provider-warning output as collected logs.
+
+- Appium 11 does not transitively provide Selenium support utilities. Declare selenium-support explicitly
+  when using Selenium waits; Appium elements are AppiumWebElement, not RemoteWebElement. Treat a missing
+  page source as a diagnostic collection failure instead of writing an empty artifact.
