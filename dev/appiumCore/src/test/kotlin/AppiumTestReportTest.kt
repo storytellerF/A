@@ -15,6 +15,7 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import java.io.File
 import java.lang.reflect.Proxy
+import java.net.URLDecoder
 import java.nio.file.Files
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.Test
@@ -26,17 +27,11 @@ import kotlin.test.assertTrue
 
 class AppiumTestReportTest {
     @Test
-    fun isolateAttemptsAndUnsafeNames() =
+    fun isolateUnsafeNames() =
         runAppiumBlockingTest {
         withReportRoot { root ->
             val names = listOf("../test", "..\\test", "CON", "", "<test> & \"quoted\"", "测试")
-            val reports =
-                names.flatMap { name ->
-                    listOf(
-                        AppiumTestReport("suite", "android", name, root),
-                        AppiumTestReport("suite", "android", name, root),
-                    )
-                }
+            val reports = names.map { name -> AppiumTestReport("suite", "android", name, root) }
             assertEquals(reports.size, reports.map { it.directory.canonicalPath }.distinct().size)
             reports.forEach { report ->
                 assertTrue(report.directory.toPath().startsWith(root.toPath()))
@@ -44,6 +39,35 @@ class AppiumTestReportTest {
                 assertTrue(report.directory.resolve("index.html").isFile)
             }
             assertTrue(root.resolve("index.html").readText().contains("&lt;test&gt; &amp; &quot;quoted&quot;"))
+            Regex("""href="([^"]+)"""").findAll(root.resolve("index.html").readText()).forEach { link ->
+                val relative = URLDecoder.decode(link.groupValues[1], Charsets.UTF_8)
+                assertTrue(root.resolve(relative).isFile)
+            }
+        }
+    }
+
+    @Test
+    fun replacePreviousReportArtifacts() =
+        runAppiumBlockingTest {
+        withReportRoot { root ->
+            val first = AppiumTestReport("suite", "android", "same case", root)
+            assertFailsWith<IllegalStateException> {
+                first.run {
+                    first.collect("Recording") { error("old collection error") }
+                    first.directory.resolve("old.png").writeBytes(byteArrayOf(1))
+                    first.directory.resolve("attempt-1").mkdir()
+                    error("old failure")
+                }
+            }
+            val latest = AppiumTestReport("suite", "android", "same case", root)
+            assertEquals(first.directory, latest.directory)
+            latest.run { latest.directory.resolve("latest.log").writeText("latest") }
+            assertEquals(
+                setOf("index.html", "latest.log", "artifact-views"),
+                requireNotNull(latest.directory.list()).toSet(),
+            )
+            assertFalse(latest.directory.resolve("index.html").readText().contains("old failure"))
+            assertFalse(root.resolve("index.html").readText().contains("attempt-"))
         }
     }
 
@@ -91,14 +115,14 @@ class AppiumTestReportTest {
     }
 
     @Test
-    fun allocateConcurrentAttemptsWithoutOverwrite() =
+    fun isolateConcurrentCases() =
         runAppiumBlockingTest {
         withReportRoot { root ->
             val reports =
                 coroutineScope {
                     (1..12).map {
                         async(Dispatchers.IO) {
-                            AppiumTestReport("suite", "android", "same name", root).also { report -> report.run { } }
+                            AppiumTestReport("suite", "android", "case $it", root).also { report -> report.run { } }
                         }
                     }.awaitAll()
                 }
@@ -106,8 +130,8 @@ class AppiumTestReportTest {
             val index = root.resolve("index.html").readText()
             reports.forEach { assertTrue(index.contains(it.directory.relativeTo(root).invariantSeparatorsPath)) }
             assertTrue(
-                AppiumTestReport("other suite", "android", "same name", root).directory.parentFile !=
-                    reports.first().directory.parentFile,
+                AppiumTestReport("other suite", "android", "case 1", root).directory !=
+                    reports.first().directory,
             )
         }
     }

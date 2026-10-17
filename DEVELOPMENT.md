@@ -703,15 +703,16 @@ Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug -
 ### Appium artifact reports
 
 Every Android, desktop and Wasm helper invocation writes a report under the runner module's
-`build/reports/appium/index.html`. Open that index to find the exact test name, platform, result,
+`build/reports/test-artifacts/index.html`. Open that index to find the exact test name, platform, result,
 failure stack and all collected artifacts. Per-case reports link readable backend console logs,
 service log archives, application logs, screenshots/page sources, Android recordings and available
 failure diagnostics. Collection errors appear separately from the original test failure.
 
-Directories are grouped by suite/platform/test name. Each component uses a bounded safe name plus
-a deterministic SHA-256 prefix to distinguish sanitization collisions. Atomic `attempt-N` directory
-creation isolates repeated runs, retries, same-named invocations and concurrent processes without
-UUIDs or overwrites. Keep the whole report tree when exporting reports so relative links work.
+All integration and E2E artifacts use `build/reports/test-artifacts/<test class>/<test name>/`
+under the runner module. Appium adds a platform/browser subdirectory after the test name.
+Names remain readable, without hashes, random suffixes or attempt counters; only characters invalid
+in Windows filenames and reserved device names are percent-encoded. Each case directory is cleared
+before reuse, so only the latest result is retained. Serialize concurrent runs of the same case. Keep the whole report tree when exporting reports so relative links work.
 Private injected sessions and desktop runtime storage are removed before report generation.
 
 Run the report lifecycle and filesystem regression tests with
@@ -763,8 +764,9 @@ close errors. Cleanup
 exports console logs and application log archives before container removal, including readiness
 failures inside Testcontainers. Cleanup continues after collection/removal errors and attaches them
 to the original failure; without an original failure it reports the cleanup error.
-Appium logs remain in its invocation report; server logs are under build/test/session/<id>/logs/containers;
-CLI logs use unique build/reports/e2e/backend-* directories. Collection errors have *.error.txt records.
+Appium and CLI service logs use the named case's `logs` directory; server integration container logs
+use `logs/containers` and SQL explanations use `explain` within the named case directory.
+Full-backend containers use Testcontainers' default single startup attempt. Collection errors have *.error.txt records.
 
 Run `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test` through the Docker wrapper,
 with `-Pserver.flavor=dev -Pserver.buildType=debug`. The infrastructure tests include a real Redis

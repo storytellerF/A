@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.prepareTestReportDirectory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
@@ -14,21 +15,19 @@ import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import java.io.File
 import java.nio.channels.FileChannel
-import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import java.security.MessageDigest
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
-/** One immutable artifact directory per invocation, including retries and same-named cases. */
+/** Keeps only the latest artifacts for each suite, platform and test name. */
 internal class AppiumTestReport(
     private val suite: String,
     private val platform: String,
     private val testName: String,
-    private val root: File = File("build/reports/appium"),
+    private val root: File = File("build/reports/test-artifacts"),
 ) {
-    val directory: File = allocateAttempt(root, suite, platform, testName)
+    val directory: File = prepareTestReportDirectory(root, suite, testName, platform)
     private val started = Instant.now()
     private val collectionErrors = mutableListOf<String>()
     private val temporaryPaths = mutableListOf<File>()
@@ -119,35 +118,13 @@ internal class AppiumTestReport(
             <title>${suite.escapeHtml()} / ${platform.escapeHtml()} / ${testName.escapeHtml()} — $status</title>
             <h1>${testName.escapeHtml()}</h1><p>Suite: ${suite.escapeHtml()}</p>
             <p>Platform: ${platform.escapeHtml()} | Result: $status</p>
-            <p>Started: $started | Finished: ${Instant.now()} | Attempt: ${directory.name}</p>
+            <p>Started: $started | Finished: ${Instant.now()}</p>
             <h2>Failure</h2><pre>${failure?.stackTraceToString().orEmpty().escapeHtml()}</pre>
             <h2>Collection errors</h2><pre>${errors.joinToString("\n").escapeHtml()}</pre>
             <h2>Artifacts</h2><ul>$artifacts</ul></html>
             """.trimIndent(),
         )
     }
-}
-
-private fun allocateAttempt(root: File, vararg names: String): File {
-    val parent = names.fold(root) { directory, name -> directory.resolve(reportPathSegment(name)) }
-    Files.createDirectories(parent.toPath())
-    // Atomic mkdir works across forks/processes; sanitization collisions retain distinct name hashes.
-    return generateSequence(1) { it + 1 }.firstNotNullOf { attempt ->
-        val directory = parent.resolve("attempt-$attempt")
-        try {
-            Files.createDirectory(directory.toPath()).toFile()
-        } catch (_: FileAlreadyExistsException) {
-            null
-        }
-    }
-}
-
-private fun reportPathSegment(value: String): String {
-    val readable = value.replace(Regex("[^a-zA-Z0-9_-]"), "_").take(32).ifEmpty { "test" }
-    val digest =
-        MessageDigest.getInstance("SHA-256").digest(value.toByteArray()).take(8)
-            .joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
-    return "$readable-$digest"
 }
 
 internal fun String.escapeHtml(): String =
@@ -159,9 +136,11 @@ private fun writeIndex(root: File) {
     val entries =
         root.walkTopDown().filter { it.isFile && it.name == "index.html" && it.parentFile != root }
             .sortedBy { it.path }.joinToString("\n") { report ->
-                val path = report.relativeTo(root).invariantSeparatorsPath
+                val relative = report.relativeTo(root)
+                val path = relative.invariantSeparatorsPath
+                val link = encodeArtifactPath(relative.toPath())
                 val title = report.readText().substringAfter("<title>").substringBefore("</title>")
-                "<li><a href=\"${path.escapeHtml()}\">$title</a> (${path.escapeHtml()})</li>"
+                "<li><a href=\"${link.escapeHtml()}\">$title</a> (${path.escapeHtml()})</li>"
             }
     root.resolve("index.html").writeText(
         """<!doctype html><html lang="en"><meta charset="utf-8"><title>Appium reports</title>""" +

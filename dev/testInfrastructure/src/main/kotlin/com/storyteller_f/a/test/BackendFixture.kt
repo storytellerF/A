@@ -14,7 +14,6 @@ import java.io.File
 private const val CLI_READY_PORT = 8081
 private const val SERVER_PORT = 8811
 private const val WS_PORT = 8813
-private const val STARTUP_ATTEMPTS = 3
 
 /** Host endpoints and base services, valid only within [useBackendFixture]. */
 @ConsistentCopyVisibility
@@ -79,7 +78,6 @@ private fun createCli(network: Network, env: Map<String, String>): GenericContai
         withEnv(env + mapOf("CLI_INIT_ENABLE" to "true", "CLI_READY_PORT" to CLI_READY_PORT.toString()))
         withCopyFileToContainer(MountableFile.forHostPath(resolveTestPresetPath().toPath()), "/app/deploy/preset_data")
         withExposedPorts(CLI_READY_PORT)
-        withStartupAttempts(STARTUP_ATTEMPTS)
         waitingFor(Wait.forHttp("/").forPort(CLI_READY_PORT).forStatusCode(200).withStartupTimeout(STARTUP_TIMEOUT))
     }
 
@@ -89,7 +87,6 @@ private fun createWs(network: Network, env: Map<String, String>): GenericContain
         withNetworkAliases("test-ws")
         withEnv(env)
         withExposedPorts(WS_PORT)
-        withStartupAttempts(STARTUP_ATTEMPTS)
         waitingFor(Wait.forListeningPort().withStartupTimeout(STARTUP_TIMEOUT))
     }
 
@@ -98,10 +95,9 @@ private fun createServer(network: Network, env: Map<String, String>): GenericCon
         withNetwork(network)
         withEnv(env)
         withExposedPorts(SERVER_PORT)
-        withStartupAttempts(STARTUP_ATTEMPTS)
         waitingFor(Wait.forHttp("/metrics").forPort(SERVER_PORT).forStatusCode(200).withStartupTimeout(STARTUP_TIMEOUT))
     }
 
 private fun createWorker(network: Network, env: Map<String, String>): GenericContainer<*> =
     FixtureContainer(DockerImageName.parse("a-worker:latest"))
-        .withNetwork(network).withEnv(env).withStartupAttempts(STARTUP_ATTEMPTS)
+        .withNetwork(network).withEnv(env)

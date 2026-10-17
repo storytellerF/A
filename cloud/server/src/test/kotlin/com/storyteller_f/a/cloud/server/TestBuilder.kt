@@ -27,6 +27,7 @@ import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
+import com.storyteller_f.a.test.prepareTestReportDirectory
 import com.storyteller_f.a.test.useBaseServiceFixture
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -62,10 +63,10 @@ import kotlinx.coroutines.yield
 import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import com.storyteller_f.a.cloud.ws.module as wsModule
 
 private const val TEST_WS_URL = "ws://localhost/ws"
@@ -89,27 +90,28 @@ class TestMate(val applicationTestBuilder: ApplicationTestBuilder, val workerBac
 
 @OptIn(ExperimentalUuidApi::class)
 fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.() -> Unit) {
-    val uuid = Uuid.random().toHexString()
-    val logPath = File("build/test/session/$uuid/logs").canonicalPath
-    System.setProperty("LOG_PATH", logPath)
+    val testFrame =
+        Exception().stackTrace.first { frame ->
+            frame.className.startsWith("com.storyteller_f.a.cloud.server.") &&
+                Class.forName(frame.className).declaredMethods.any { method ->
+                    method.name == frame.methodName && method.isAnnotationPresent(Test::class.java)
+                }
+        }
+    val methodName = testFrame.methodName
+    val reportDirectory =
+        prepareTestReportDirectory(
+            File("build/reports/test-artifacts"),
+            testFrame.className.substringAfterLast('.'),
+            methodName,
+        )
+    System.setProperty("LOG_PATH", reportDirectory.resolve("logs").canonicalPath)
     setupKmpLogger()
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
     loadAvif()
-    val traceElements = Exception().stackTrace
-    val methodNameIndex =
-        traceElements.indexOfFirst {
-            it.fileName != "TestBuilder.kt"
-        }
-    if (methodNameIndex < 0) {
-        error("test not found")
-    }
-    val methodName = traceElements[methodNameIndex + 1].methodName
-    Napier.i {
-        "start test `$methodName` $uuid"
-    }
+    Napier.i { "start test `$methodName`" }
     startTestContainerTest(
-        uuid,
+        reportDirectory,
         mapOf(
             "SESSION_SECRET" to TEST_SESSION_SECRET,
             "METHOD_NAME" to methodName,
@@ -121,15 +123,19 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.
     }
 }
 
-private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String>, block: suspend TestMate.() -> Unit) {
+private fun startTestContainerTest(
+    reportDirectory: File,
+    overrideEnv: Map<String, String>,
+    block: suspend TestMate.() -> Unit,
+) {
     runBlocking {
-        useBaseServiceFixture(File("build/test/session/$uuid/logs/containers")) { services ->
-            doTest(uuid, services.hostEnvironment + overrideEnv, block)
+        useBaseServiceFixture(reportDirectory.resolve("logs/containers")) { services ->
+            doTest(reportDirectory, services.hostEnvironment + overrideEnv, block)
         }
     }
 }
 
-private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
+private fun doTest(reportDirectory: File, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
     testApplication {
         environment {
             config =
@@ -157,7 +163,7 @@ private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMa
                 val task = CompletableDeferred<Unit>()
                 val job =
                     launch(Dispatchers.IO) {
-                        receiveExplainResult(task, port, uuid)
+                        receiveExplainResult(task, port, reportDirectory)
                     }
                 task.await()
                 testMate.block()
@@ -169,7 +175,7 @@ private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMa
     }
 }
 
-private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: Int, uuid: String) {
+private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: Int, reportDirectory: File) {
     withContext(Dispatchers.IO) {
         ServerSocket(port).apply {
             soTimeout = 1000
@@ -182,7 +188,7 @@ private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: 
                         socket.getInputStream().bufferedReader().use {
                             val explainResult =
                                 commonJson.decodeFromString<ExplainResult>(it.readText())
-                            saveDatabaseExplainResult(explainResult, uuid)
+                            saveDatabaseExplainResult(explainResult, reportDirectory)
                         }
                     }
                 } catch (_: SocketTimeoutException) {
@@ -203,14 +209,15 @@ private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: 
     }
 }
 
-fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
+fun saveDatabaseExplainResult(explainResult: ExplainResult, reportDirectory: File) {
     val dialect = explainResult.dialect
     val statements = explainResult.sql
     val result = explainResult.result
     val stackTraceString = explainResult.stackTraceString
     val file =
         File(
-            "./build/test/session/$uuid/$dialect/${extractTableNames(
+            reportDirectory,
+            "explain/$dialect/${extractTableNames(
                 statements,
             ).joinToString("/")}/${md5(statements)}.explain",
         )

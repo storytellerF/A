@@ -285,7 +285,7 @@
   and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
   in authentication, region propagation and resource-lifecycle tests.
 
-- Appium artifacts belong to the invocation's `AppiumTestReport` directory. Keep allocation atomic,
+- Appium artifacts belong to the case's fixed `AppiumTestReport` directory. Replace old reports before each run,
   preserve the original test failure during collection, and register private runtime paths for cleanup
   before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
   downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
@@ -312,3 +312,7 @@
 
 - Start Edge E2E at about:blank; its external MSN new-tab load can block the first WebDriver navigation before the local test URL is sent. Preserve normal page loading and test timeouts.
 - Current Windows Chrome can enforce a 504px content minimum. Browser activity resize tests use that explicit compact width across the matrix and retain exact viewport/draft assertions; see DEVELOPMENT.md.
+
+- Keep only the latest named test artifacts for Appium, CLI and server integration tests under
+  build/reports/test-artifacts/<test class>/<test name> (Appium adds its platform). Do not add hashes,
+  invocation counters or random report suffixes. Use the default single container startup attempt. See DEVELOPMENT.md for report paths.

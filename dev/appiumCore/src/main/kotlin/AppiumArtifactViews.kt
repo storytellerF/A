@@ -108,7 +108,7 @@ private fun renderText(bytes: ByteArray): String {
     return "$notice<pre>$content</pre>"
 }
 
-private fun encodeArtifactPath(path: Path): String =
+internal fun encodeArtifactPath(path: Path): String =
     path.joinToString("/") { segment ->
     java.net.URLEncoder.encode(segment.toString(), Charsets.UTF_8).replace("+", "%20")
 }

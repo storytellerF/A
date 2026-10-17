@@ -4,12 +4,12 @@
 
 package com.storytellerf.a.e2e
 
+import com.storyteller_f.a.test.prepareTestReportDirectory
 import com.storyteller_f.a.test.useBackendFixture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.io.File
-import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
 /** Mapped host ports of the HTTP and WebSocket services started for a CLI E2E test. */
@@ -31,9 +31,8 @@ fun runE2eBlockingTest(block: suspend CoroutineScope.() -> Unit) {
 }
 
 /** Start an isolated full backend and retain service logs under the module build directory. */
-suspend fun runE2eTestEnvironment(block: suspend (E2ePorts) -> Unit) {
-    val root = File("build/reports/e2e").also { it.mkdirs() }
-    val directory = Files.createTempDirectory(root.toPath(), "backend-").toFile()
+suspend fun runE2eTestEnvironment(suite: String, testName: String, block: suspend (E2ePorts) -> Unit) {
+    val directory = prepareTestReportDirectory(File("build/reports/test-artifacts"), suite, testName)
     useBackendFixture(directory.resolve("logs")) { backend ->
         block(E2ePorts(backend.serverPort, backend.wsPort))
     }
