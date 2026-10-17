@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-artifact-reports")
     `java-library`
     alias(libs.plugins.kotlinJvm)
 }

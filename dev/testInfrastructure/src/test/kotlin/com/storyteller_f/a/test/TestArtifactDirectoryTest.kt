@@ -7,20 +7,19 @@ package com.storyteller_f.a.test
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class TestReportDirectoryTest {
+class TestArtifactDirectoryTest {
     @Test
-    fun keepReadableNamesAndReplaceOnlySelectedCase() {
+    fun keepReadableNamesAndPreserveCollectedCases() {
         val root = File("build/test/report-directories/readable")
-        val directory = prepareTestReportDirectory(root, "ExampleTest", "register and browse 测试")
+        val directory = createTestArtifactDirectory(root, "ExampleTest", "register and browse 测试")
         assertEquals(root.resolve("ExampleTest/register and browse 测试"), directory)
         directory.resolve("stale.log").writeText("old report")
-        val other = prepareTestReportDirectory(root, "ExampleTest", "other test")
+        val other = createTestArtifactDirectory(root, "ExampleTest", "other test")
         other.resolve("keep.log").writeText("other report")
-        assertEquals(directory, prepareTestReportDirectory(root, "ExampleTest", "register and browse 测试"))
-        assertFalse(directory.resolve("stale.log").exists())
+        assertEquals(directory, createTestArtifactDirectory(root, "ExampleTest", "register and browse 测试"))
+        assertEquals("old report", directory.resolve("stale.log").readText())
         assertEquals("other report", other.resolve("keep.log").readText())
     }
 
@@ -28,7 +27,7 @@ class TestReportDirectoryTest {
     fun encodeUnsafeNamesWithoutCollisions() {
         val root = File("build/test/report-directories/encoded")
         val names = listOf("../test", "..\\test", "CON", "%43ON", "", ".", "..", "a:", "a%3A", "trailing.")
-        val directories = names.map { prepareTestReportDirectory(root, it) }
+        val directories = names.map { createTestArtifactDirectory(root, it) }
         assertEquals(names.size, directories.distinct().size)
         directories.forEach { assertTrue(it.canonicalFile.toPath().startsWith(root.canonicalFile.toPath())) }
         assertEquals("%43ON", directories[2].name)

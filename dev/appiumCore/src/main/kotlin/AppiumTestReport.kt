@@ -4,19 +4,18 @@
 
 package com.storyteller_f.a.dev.appium
 
-import com.storyteller_f.a.test.prepareTestReportDirectory
-import kotlinx.coroutines.Dispatchers
+import com.storyteller_f.a.test.TestArtifactResult
+import com.storyteller_f.a.test.TestArtifactStatus
+import com.storyteller_f.a.test.createTestArtifactDirectory
+import com.storyteller_f.a.test.testArtifactRoot
+import com.storyteller_f.a.test.writeTestArtifactResult
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.TakesScreenshot
 import org.openqa.selenium.WebDriver
 import java.io.File
-import java.nio.channels.FileChannel
 import java.nio.file.Files
-import java.nio.file.StandardOpenOption
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -25,9 +24,9 @@ internal class AppiumTestReport(
     private val suite: String,
     private val platform: String,
     private val testName: String,
-    private val root: File = File("build/reports/test-artifacts"),
+    root: File = testArtifactRoot(),
 ) {
-    val directory: File = prepareTestReportDirectory(root, suite, testName, platform)
+    val directory: File = createTestArtifactDirectory(root, suite, testName, platform)
     private val started = Instant.now()
     private val collectionErrors = mutableListOf<String>()
     private val temporaryPaths = mutableListOf<File>()
@@ -71,15 +70,14 @@ internal class AppiumTestReport(
         }
     }
 
-    private suspend fun finish(outcome: AppiumOutcome) {
+    private fun finish(outcome: AppiumOutcome) {
         try {
             temporaryPaths.forEach { path ->
                 collect("Temporary state cleanup") {
                     check(!path.exists() || path.deleteRecursively()) { "Unable to remove temporary state" }
                 }
             }
-            writeReport(outcome)
-            publishReportIndex(root)
+            writeResult(outcome)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (reportFailure: Exception) {
@@ -95,65 +93,19 @@ internal class AppiumTestReport(
         }
     }
 
-    private fun writeReport(outcome: AppiumOutcome) {
+    private fun writeResult(outcome: AppiumOutcome) {
         val failure = (outcome as? AppiumOutcome.Failed)?.cause
         if (failure != null) directory.resolve("failure.txt").writeText(failure.stackTraceToString())
         if (collectionErrors.isNotEmpty()) {
             directory.resolve("collection-errors.txt").writeText(collectionErrors.joinToString("\n"))
         }
-        val serviceErrors =
-            directory.walkTopDown().filter { it.isFile && it.name.endsWith(".error.txt") }
-                .map { "${it.relativeTo(directory)}: ${it.readText()}" }.toList()
-        val errors = collectionErrors + serviceErrors
         val status =
             when (outcome) {
-                AppiumOutcome.Running -> "CANCELLED"
-                AppiumOutcome.Passed -> "PASSED"
-                is AppiumOutcome.Failed -> "FAILED"
+                AppiumOutcome.Running -> TestArtifactStatus.CANCELLED
+                AppiumOutcome.Passed -> TestArtifactStatus.PASSED
+                is AppiumOutcome.Failed -> TestArtifactStatus.FAILED
             }
-        val artifacts = renderAppiumArtifacts(directory)
-        directory.resolve("index.html").writeText(
-            """
-            <!doctype html><html lang="en"><meta charset="utf-8">
-            <title>${suite.escapeHtml()} / ${platform.escapeHtml()} / ${testName.escapeHtml()} — $status</title>
-            <h1>${testName.escapeHtml()}</h1><p>Suite: ${suite.escapeHtml()}</p>
-            <p>Platform: ${platform.escapeHtml()} | Result: $status</p>
-            <p>Started: $started | Finished: ${Instant.now()}</p>
-            <h2>Failure</h2><pre>${failure?.stackTraceToString().orEmpty().escapeHtml()}</pre>
-            <h2>Collection errors</h2><pre>${errors.joinToString("\n").escapeHtml()}</pre>
-            <h2>Artifacts</h2><ul>$artifacts</ul></html>
-            """.trimIndent(),
-        )
-    }
-}
-
-internal fun String.escapeHtml(): String =
-    replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;")
-
-private val reportIndexMutex = Mutex()
-
-private fun writeIndex(root: File) {
-    val entries =
-        root.walkTopDown().filter { it.isFile && it.name == "index.html" && it.parentFile != root }
-            .sortedBy { it.path }.joinToString("\n") { report ->
-                val relative = report.relativeTo(root)
-                val path = relative.invariantSeparatorsPath
-                val link = encodeArtifactPath(relative.toPath())
-                val title = report.readText().substringAfter("<title>").substringBefore("</title>")
-                "<li><a href=\"${link.escapeHtml()}\">$title</a> (${path.escapeHtml()})</li>"
-            }
-    root.resolve("index.html").writeText(
-        """<!doctype html><html lang="en"><meta charset="utf-8"><title>Appium reports</title>""" +
-            "<h1>Appium reports</h1><ul>$entries</ul></html>",
-    )
-}
-
-private suspend fun publishReportIndex(root: File) =
-    withContext(Dispatchers.IO) {
-    reportIndexMutex.withLock {
-        // The OS file lock coordinates independent Gradle forks; the coroutine mutex handles this JVM.
-        FileChannel.open(root.resolve(".index.lock").toPath(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-            .use { channel -> channel.lock().use { writeIndex(root) } }
+        writeTestArtifactResult(directory, TestArtifactResult(suite, testName, platform, status, started))
     }
 }
 

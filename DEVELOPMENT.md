@@ -703,21 +703,33 @@ Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug -
 ### Appium artifact reports
 
 Every Android, desktop and Wasm helper invocation writes a report under the runner module's
-`build/reports/test-artifacts/index.html`. Open that index to find the exact test name, platform, result,
+`build/reports/<test task>/index.html`. Open that index to find the exact test name, platform, result,
 failure stack and all collected artifacts. Per-case reports link readable backend console logs,
 service log archives, application logs, screenshots/page sources, Android recordings and available
 failure diagnostics. Collection errors appear separately from the original test failure.
 
-All integration and E2E artifacts use `build/reports/test-artifacts/<test class>/<test name>/`
-under the runner module. Appium adds a platform/browser subdirectory after the test name.
-Names remain readable, without hashes, random suffixes or attempt counters; only characters invalid
-in Windows filenames and reserved device names are percent-encoded. Each case directory is cleared
-before reuse, so only the latest result is retained. Serialize concurrent runs of the same case. Keep the whole report tree when exporting reports so relative links work.
+Server integration, CLI E2E and Appium tests write raw files under
+`build/test-results/<test task>/artifacts/<test class>/<test name>/`. Appium adds a platform/browser
+subdirectory. Names remain readable without hashes, random suffixes or attempt counters; filesystem-invalid
+characters and reserved device names are percent-encoded. Each case writes `result.properties`, logs,
+screenshots and other collected files without generating HTML or scanning other cases.
+
+The `test-artifact-reports` convention owns the two phases. Before an executing Test task, it clears
+only that task's raw artifact directory. Cached and up-to-date Test tasks retain their collected results.
+The `<test task>ArtifactReport` JavaExec finalizer then generates a standalone report under
+`build/reports/<test task>/index.html`, including artifact copies and safe HTML viewers. It runs after
+test failures too. Gradle's native JUnit XML and HTML results remain in their normal locations.
+Run the finalizer directly to regenerate reports from saved raw results without running tests.
+Serialize independent builds that target the same module/task output directories.
+Keep the generated report tree intact when exporting it so relative artifact links work.
 Private injected sessions and desktop runtime storage are removed before report generation.
 
-Run the report lifecycle and filesystem regression tests with
-`./gradlew :dev:appiumCore:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
-These tests do not require an Appium server, Docker or a device.
+Run Appium collection lifecycle tests with
+`./gradlew :dev:appiumCore:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` without
+an Appium server or a device. Shared metadata, HTML viewer and generator tests live in
+`:dev:testInfrastructure:test`, whose full suite also includes a real Redis startup-failure test.
+The former Appium viewer tests moved there with the shared renderer; lifecycle assertions now verify raw
+metadata first, then explicitly invoke aggregation to check generated pages and links.
 
 Artifact links open static HTML viewers rather than relying on server MIME mappings. Log/text/XML/HTML
 content is escaped; tar, tar.gz and zip files show an archive listing with text previews without extracting
@@ -764,8 +776,9 @@ close errors. Cleanup
 exports console logs and application log archives before container removal, including readiness
 failures inside Testcontainers. Cleanup continues after collection/removal errors and attaches them
 to the original failure; without an original failure it reports the cleanup error.
-Appium and CLI service logs use the named case's `logs` directory; server integration container logs
-use `logs/containers` and SQL explanations use `explain` within the named case directory.
+Appium and CLI service logs use the raw case's `logs` directory; server integration container logs
+use `logs/containers` and SQL explanations use `explain`. Fixture cleanup exports files before writing
+the case result metadata, so task-level report generation never needs a live container or device.
 Full-backend containers use Testcontainers' default single startup attempt. Collection errors have *.error.txt records.
 
 Run `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test` through the Docker wrapper,

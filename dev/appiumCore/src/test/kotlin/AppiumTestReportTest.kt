@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.generateTestArtifactReports
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -36,38 +37,31 @@ class AppiumTestReportTest {
             reports.forEach { report ->
                 assertTrue(report.directory.toPath().startsWith(root.toPath()))
                 report.run { }
-                assertTrue(report.directory.resolve("index.html").isFile)
+                assertTrue(report.directory.resolve("result.properties").isFile)
+                assertFalse(report.directory.resolve("index.html").exists())
             }
-            assertTrue(root.resolve("index.html").readText().contains("&lt;test&gt; &amp; &quot;quoted&quot;"))
-            Regex("""href="([^"]+)"""").findAll(root.resolve("index.html").readText()).forEach { link ->
+            assertTrue(
+                generatedRoot(root).resolve("index.html").readText().contains("&lt;test&gt; &amp; &quot;quoted&quot;"),
+            )
+            Regex("""href="([^"]+)"""").findAll(generatedRoot(root).resolve("index.html").readText()).forEach { link ->
                 val relative = URLDecoder.decode(link.groupValues[1], Charsets.UTF_8)
-                assertTrue(root.resolve(relative).isFile)
+                assertTrue(generatedRoot(root).resolve(relative).isFile)
             }
         }
     }
 
     @Test
-    fun replacePreviousReportArtifacts() =
+    fun deferHtmlUntilAggregation() =
         runAppiumBlockingTest {
         withReportRoot { root ->
-            val first = AppiumTestReport("suite", "android", "same case", root)
-            assertFailsWith<IllegalStateException> {
-                first.run {
-                    first.collect("Recording") { error("old collection error") }
-                    first.directory.resolve("old.png").writeBytes(byteArrayOf(1))
-                    first.directory.resolve("attempt-1").mkdir()
-                    error("old failure")
-                }
-            }
-            val latest = AppiumTestReport("suite", "android", "same case", root)
-            assertEquals(first.directory, latest.directory)
-            latest.run { latest.directory.resolve("latest.log").writeText("latest") }
-            assertEquals(
-                setOf("index.html", "latest.log", "artifact-views"),
-                requireNotNull(latest.directory.list()).toSet(),
-            )
-            assertFalse(latest.directory.resolve("index.html").readText().contains("old failure"))
-            assertFalse(root.resolve("index.html").readText().contains("attempt-"))
+            val report = AppiumTestReport("suite", "android", "case", root)
+            report.run { report.directory.resolve("latest.log").writeText("latest") }
+            assertFalse(root.resolve("index.html").exists())
+            assertEquals(setOf("result.properties", "latest.log"), requireNotNull(report.directory.list()).toSet())
+            val generated = generatedCase(root, report)
+            assertTrue(generated.resolve("index.html").isFile)
+            assertTrue(generated.resolve("artifact-views/latest.log.html").isFile)
+            assertFalse(report.directory.resolve("artifact-views").exists())
         }
     }
 
@@ -89,7 +83,7 @@ class AppiumTestReportTest {
                     }
                 }
             assertSame(original, actual)
-            val html = report.directory.resolve("index.html").readText()
+            val html = generatedCase(root, report).resolve("index.html").readText()
             assertTrue(html.contains("FAILED"))
             assertTrue(html.contains("original &lt;failure&gt;"))
             assertTrue(html.contains("recording unavailable"))
@@ -106,10 +100,10 @@ class AppiumTestReportTest {
             val cancelled = AppiumTestReport("suite", "wasm-firefox", "cancelled", root)
             val cancellation = CancellationException("cancelled")
             assertSame(cancellation, assertFailsWith<CancellationException> { cancelled.run { throw cancellation } })
-            assertTrue(cancelled.directory.resolve("index.html").readText().contains("CANCELLED"))
+            assertTrue(generatedCase(root, cancelled).resolve("index.html").readText().contains("CANCELLED"))
             val success = AppiumTestReport("suite", "wasm-chrome", "success", root)
             success.run { }
-            assertTrue(success.directory.resolve("index.html").readText().contains("PASSED"))
+            assertTrue(generatedCase(root, success).resolve("index.html").readText().contains("PASSED"))
             assertFalse(success.directory.resolve("failure.txt").exists())
         }
     }
@@ -127,8 +121,15 @@ class AppiumTestReportTest {
                     }.awaitAll()
                 }
             assertEquals(12, reports.map { it.directory }.distinct().size)
-            val index = root.resolve("index.html").readText()
-            reports.forEach { assertTrue(index.contains(it.directory.relativeTo(root).invariantSeparatorsPath)) }
+            assertFalse(root.resolve("index.html").exists())
+            val generated = generatedRoot(root)
+            val index = generated.resolve("index.html").readText()
+            reports.forEach {
+                assertTrue(
+                    generated.resolve(it.directory.relativeTo(root)).resolve("index.html").isFile,
+                )
+            }
+            assertTrue(index.contains("PASSED"))
             assertTrue(
                 AppiumTestReport("other suite", "android", "case 1", root).directory !=
                     reports.first().directory,
@@ -149,7 +150,7 @@ class AppiumTestReportTest {
             assertFailsWith<IllegalStateException> { report.run { error("setup failed") } }
             assertFalse(privateSession.exists())
             assertFalse(runtime.exists())
-            val html = report.directory.resolve("index.html").readText()
+            val html = generatedCase(root, report).resolve("index.html").readText()
             assertFalse(html.contains("synthetic private state"))
             assertTrue(html.contains("setup failed"))
         }
@@ -160,7 +161,7 @@ class AppiumTestReportTest {
         runAppiumBlockingTest {
         withReportRoot { root ->
             val report = AppiumTestReport("suite", "desktop", "broken report", root)
-            report.directory.resolve("index.html").mkdir()
+            report.directory.resolve("result.properties").mkdir()
             val original = AssertionError("test failure")
             val actual = assertFailsWith<AssertionError> { report.run { throw original } }
             assertSame(original, actual)
@@ -186,7 +187,7 @@ class AppiumTestReportTest {
                 job.cancel()
                 job.join()
             }
-            assertTrue(report.directory.resolve("index.html").readText().contains("CANCELLED"))
+            assertTrue(generatedCase(root, report).resolve("index.html").readText().contains("CANCELLED"))
         }
     }
 
@@ -211,12 +212,20 @@ class AppiumTestReportTest {
                 report.directory.resolve("recording # &.mp4").writeBytes(byteArrayOf(1))
             }
             assertEquals("<html>page</html>", report.directory.resolve("page-source.xml").readText())
-            val html = report.directory.resolve("index.html").readText()
+            val html = generatedCase(root, report).resolve("index.html").readText()
             assertTrue(html.contains("screenshot unavailable"))
             assertTrue(html.contains("recording%20%23%20%26.mp4.html"))
             assertTrue(html.contains("PASSED"))
         }
     }
+
+    private fun generatedRoot(raw: File): File =
+        raw.parentFile.resolve("${raw.name}-html").also {
+        generateTestArtifactReports(raw, it)
+    }
+
+    private fun generatedCase(raw: File, report: AppiumTestReport): File =
+        generatedRoot(raw).resolve(report.directory.relativeTo(raw).path)
 
     private suspend fun withReportRoot(block: suspend (File) -> Unit) {
         val parent = File("build/test/appium-report-tests").also { it.mkdirs() }
@@ -225,6 +234,7 @@ class AppiumTestReportTest {
             block(root)
         } finally {
             root.deleteRecursively()
+            root.parentFile.resolve("${root.name}-html").deleteRecursively()
         }
     }
 }

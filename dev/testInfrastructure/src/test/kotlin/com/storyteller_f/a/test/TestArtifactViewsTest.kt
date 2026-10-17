@@ -2,7 +2,7 @@
  * This is a private project. All rights reserved.
  */
 
-package com.storyteller_f.a.dev.appium
+package com.storyteller_f.a.test
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
@@ -15,13 +15,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class AppiumArtifactViewsTest {
+class TestArtifactViewsTest {
     @Test
     fun previewTextWithoutExecutingCollectedMarkup() =
         withDirectory { directory ->
         directory.resolve("application.log").writeText("<script>alert('log')</script> & text")
         directory.resolve("page-source.xml").writeText("<hierarchy><node/></hierarchy>")
-        val links = renderAppiumArtifacts(directory)
+        val links = renderTestArtifacts(directory)
         assertTrue(links.contains("href=\"artifact-views/application.log.html\""))
         val log = directory.resolve("artifact-views/application.log.html").readText()
         assertTrue(log.contains("&lt;script&gt;alert(&#39;log&#39;)&lt;/script&gt; &amp; text"))
@@ -29,7 +29,7 @@ class AppiumArtifactViewsTest {
         assertTrue(log.contains("href=\"../application.log\" download"))
         val source = directory.resolve("artifact-views/page-source.xml.html").readText()
         assertTrue(source.contains("&lt;hierarchy&gt;&lt;node/&gt;&lt;/hierarchy&gt;"))
-        assertEquals(links, renderAppiumArtifacts(directory))
+        assertEquals(links, renderTestArtifacts(directory))
     }
 
     @Test
@@ -46,7 +46,7 @@ class AppiumArtifactViewsTest {
             archive.write(text)
             archive.closeEntry()
         }
-        renderAppiumArtifacts(directory)
+        renderTestArtifacts(directory)
         val tar = directory.resolve("artifact-views/server.tar.html").readText()
         assertTrue(tar.contains("../../outside.log"))
         assertTrue(tar.contains("service &lt;event&gt;"))
@@ -62,7 +62,7 @@ class AppiumArtifactViewsTest {
         directory.resolve("screenshot.png").writeBytes(byteArrayOf(1))
         directory.resolve("recording # &.mp4").writeBytes(byteArrayOf(2))
         directory.resolve("broken.zip").writeText("broken archive")
-        val links = renderAppiumArtifacts(directory)
+        val links = renderTestArtifacts(directory)
         assertTrue(links.contains("recording%20%23%20%26.mp4.html"))
         val image = directory.resolve("artifact-views/screenshot.png.html").readText()
         assertTrue(image.contains("""<img src="../screenshot.png""""))

@@ -27,7 +27,9 @@ import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
-import com.storyteller_f.a.test.prepareTestReportDirectory
+import com.storyteller_f.a.test.createTestArtifactDirectory
+import com.storyteller_f.a.test.recordTestArtifacts
+import com.storyteller_f.a.test.testArtifactRoot
 import com.storyteller_f.a.test.useBaseServiceFixture
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
@@ -99,8 +101,8 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.
         }
     val methodName = testFrame.methodName
     val reportDirectory =
-        prepareTestReportDirectory(
-            File("build/reports/test-artifacts"),
+        createTestArtifactDirectory(
+            testArtifactRoot(),
             testFrame.className.substringAfterLast('.'),
             methodName,
         )
@@ -110,28 +112,30 @@ fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.
     loadCryptoLibIfNeed()
     loadAvif()
     Napier.i { "start test `$methodName`" }
-    startTestContainerTest(
-        reportDirectory,
-        mapOf(
-            "SESSION_SECRET" to TEST_SESSION_SECRET,
-            "METHOD_NAME" to methodName,
-        ) + overrideEnv,
-        block,
-    )
+    runBlocking {
+        recordTestArtifacts(reportDirectory, testFrame.className.substringAfterLast('.'), methodName) {
+            startTestContainerTest(
+                reportDirectory,
+                mapOf(
+                    "SESSION_SECRET" to TEST_SESSION_SECRET,
+                    "METHOD_NAME" to methodName,
+                ) + overrideEnv,
+                block,
+            )
+        }
+    }
     Napier.i {
         "test done `$methodName`"
     }
 }
 
-private fun startTestContainerTest(
+private suspend fun startTestContainerTest(
     reportDirectory: File,
     overrideEnv: Map<String, String>,
     block: suspend TestMate.() -> Unit,
 ) {
-    runBlocking {
-        useBaseServiceFixture(reportDirectory.resolve("logs/containers")) { services ->
-            doTest(reportDirectory, services.hostEnvironment + overrideEnv, block)
-        }
+    useBaseServiceFixture(reportDirectory.resolve("logs/containers")) { services ->
+        doTest(reportDirectory, services.hostEnvironment + overrideEnv, block)
     }
 }
 

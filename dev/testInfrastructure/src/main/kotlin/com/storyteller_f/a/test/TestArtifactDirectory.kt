@@ -7,14 +7,13 @@ package com.storyteller_f.a.test
 import java.io.File
 import java.nio.file.Files
 
-/** Replaces the latest report for a named case. Callers must serialize the same case. */
-fun prepareTestReportDirectory(root: File, vararg names: String): File {
+/** Creates a named case directory; the Gradle Test task clears raw artifacts before execution. */
+fun createTestArtifactDirectory(root: File, vararg names: String): File {
     require(names.isNotEmpty()) { "A test report needs a case name" }
     val directory = names.fold(root) { parent, name -> parent.resolve(reportPathSegment(name)) }
     val reportPath = directory.canonicalFile.toPath()
     val rootPath = root.canonicalFile.toPath()
     check(reportPath != rootPath && reportPath.startsWith(rootPath)) { "Report must remain within its root" }
-    check(!directory.exists() || directory.deleteRecursively()) { "Unable to replace previous test report" }
     return Files.createDirectories(directory.toPath()).toFile()
 }
 

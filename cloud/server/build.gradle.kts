@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-artifact-reports")
     id("test-docker-image")
     application
     alias(libs.plugins.kotlinJvm)

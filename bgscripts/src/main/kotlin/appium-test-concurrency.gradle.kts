@@ -2,6 +2,10 @@
  * This is a private project. All rights reserved.
  */
 
+plugins {
+    id("test-artifact-reports")
+}
+
 val platform = when (project.name) {
     "androidAppium" -> "android"
     "desktopAppium" -> "desktop"
