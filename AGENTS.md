@@ -297,3 +297,18 @@
 - Appium 11 does not transitively provide Selenium support utilities. Declare selenium-support explicitly
   when using Selenium waits; Appium elements are AppiumWebElement, not RemoteWebElement. Treat a missing
   page source as a diagnostic collection failure instead of writing an empty artifact.
+
+- Keep server/Appium/CLI Testcontainers topology in dev/testInfrastructure. Callers own Ktor test-host,
+  platform forwarding and business assertions; use explicit host versus container environments.
+  Register resources before startup, export logs before Testcontainers removes failed containers,
+  and preserve the original failure while completing cancellation-safe cleanup.
+
+- Normalize Linux test-image shell scripts to LF in copyTestDockerDistribution, preserving source
+  line endings so Windows checkouts cannot break container entrypoints. Track the filtering policy
+  as a task input so existing Sync contexts are regenerated when the policy changes.
+
+- JVM coroutine stack-trace recovery can copy exceptions across dispatchers; verify the original
+  failure through its cause chain and check that cleanup failures remain suppressed on it.
+
+- Start Edge E2E at about:blank; its external MSN new-tab load can block the first WebDriver navigation before the local test URL is sent. Preserve normal page loading and test timeouts.
+- Current Windows Chrome can enforce a 504px content minimum. Browser activity resize tests use that explicit compact width across the matrix and retain exact viewport/draft assertions; see DEVELOPMENT.md.

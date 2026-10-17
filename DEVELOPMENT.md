@@ -428,6 +428,12 @@ Browser suites use Chrome Headless; install Chrome or set `CHROME_BIN` before ru
 
 The `wasm-browser-test-interop` convention is applied to `shared` and `client/room`. It lowers only the `kotlinx-io` Node `createRequire` getter in generated `.import-object.mjs` files, preserving its module URL while preventing a bare `import.meta` alias from reaching Karma classic-script bundles. The loader is tracked as a test input and has regression coverage via `node --test config/webpack/wasm-node-import-meta.test.cjs`. It does not patch cached dependencies or generated files.
 
+Browser activity resize scenarios use a strict 504px compact content viewport: Windows Chrome enforces that minimum (522px outer width with 18px frame), while Firefox permits 500px. The 504px case still exercises bottom navigation, alongside 900px and 1600px layouts; viewport equality and draft preservation assertions remain strict.
+
+Edge E2E sessions start at `about:blank`, so the first WebDriver navigation does not wait for the external MSN new-tab page. Profiles remain isolated and the normal page-load strategy and timeouts are preserved.
+
+The `app/composeApp` browser bundle disables resolution of unused `events`, `fs`, `os` and `path` externals emitted by transitive Kotlin wrappers. These generated namespace aliases have no browser callers; do not add Node polyfills for them. Validate both the library production bundle through `assemble` and the real `app/webApp` browser entry through the three-browser E2E matrix.
+
 Navigation tests compare `NavBackStack.toList()` with the expected history, because wrapper object equality is not the cross-platform contract for the stack contents.
 
 ### Local Android test initialization
@@ -733,3 +739,34 @@ are not evidence of successful log collection. In Loki, query
 `{job="lucene"} |= "Lucene service starting"` to verify the independent services.
 Confirm returned records include the matching `/var/log/A/<service>/` filename;
 container stdout alone does not verify the shared-volume/Promtail/Loki chain.
+
+
+### Shared Testcontainers fixtures
+
+`dev/testInfrastructure` owns the test topology for server integration tests, Appium and CLI E2E.
+`useBaseServiceFixture` creates an isolated network, PostgreSQL, Redis, filesystem and Lucene services.
+Its `hostEnvironment` contains mapped host endpoints; `containerEnvironment` contains Docker-network
+aliases. The full `useBackendFixture` adds preset initialization, WebSocket, HTTP server and worker.
+Each invocation owns independent containers and data; no container reuse or shared database is enabled.
+Ktor test-host setup and business assertions stay in server tests. Appium retains device forwarding,
+browser origins and session-expiry actions. CLI E2E retains process driving and assertions.
+
+Fixtures copy presets through the Docker API, never a host bind mount. Gradle image tasks remain
+responsible for building the images before tests. The context copy normalizes shell scripts to LF
+without modifying working-tree line endings. Inputs are resolved relative to the repository,
+and container logging ignores the host `LOG_PATH` from test.env.
+
+Blocking Testcontainers startup runs on Dispatchers.IO. Cancellation waits for the current native
+startup call to return, then releases the registered resources with non-suspending Java IO cleanup.
+The owning scope runs on Dispatchers.IO; Kotlin use retains the original failure and suppresses
+close errors. Cleanup
+exports console logs and application log archives before container removal, including readiness
+failures inside Testcontainers. Cleanup continues after collection/removal errors and attaches them
+to the original failure; without an original failure it reports the cleanup error.
+Appium logs remain in its invocation report; server logs are under build/test/session/<id>/logs/containers;
+CLI logs use unique build/reports/e2e/backend-* directories. Collection errors have *.error.txt records.
+
+Run `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test` through the Docker wrapper,
+with `-Pserver.flavor=dev -Pserver.buildType=debug`. The infrastructure tests include a real Redis
+readiness failure to verify logs survive startup cleanup. Validate the complete backend through
+`:app:cliE2e:e2eTest :panel:cliE2e:e2eTest` and the existing Appium suites.
