@@ -285,9 +285,9 @@
   and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
   in authentication, region propagation and resource-lifecycle tests.
 
-- Appium artifacts belong to the invocation's `AppiumTestReport` directory. Keep allocation atomic,
+- Appium artifacts belong to the case's raw `AppiumTestReport` directory. Let Gradle clear task outputs,
   preserve the original test failure during collection, and register private runtime paths for cleanup
-  before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
+  before raw result metadata is written. Link artifacts through static HTML viewers so server MIME defaults cannot force
   downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
 
 - Filesystem/Lucene use SLF4J directly, without Napier or shared/business dependencies. Keep their Logback
@@ -297,3 +297,24 @@
 - Appium 11 does not transitively provide Selenium support utilities. Declare selenium-support explicitly
   when using Selenium waits; Appium elements are AppiumWebElement, not RemoteWebElement. Treat a missing
   page source as a diagnostic collection failure instead of writing an empty artifact.
+
+- Keep server/Appium/CLI Testcontainers topology in dev/testInfrastructure. Callers own Ktor test-host,
+  platform forwarding and business assertions; use explicit host versus container environments.
+  Register resources before startup, export logs before Testcontainers removes failed containers,
+  and preserve the original failure while completing cancellation-safe cleanup.
+
+- Normalize Linux test-image shell scripts to LF in copyTestDockerDistribution, preserving source
+  line endings so Windows checkouts cannot break container entrypoints. Track the filtering policy
+  as a task input so existing Sync contexts are regenerated when the policy changes.
+
+- JVM coroutine stack-trace recovery can copy exceptions across dispatchers; verify the original
+  failure through its cause chain and check that cleanup failures remain suppressed on it.
+
+- Start Edge E2E at about:blank; its external MSN new-tab load can block the first WebDriver navigation before the local test URL is sent. Preserve normal page loading and test timeouts.
+- Current Windows Chrome can enforce a 504px content minimum. Browser activity resize tests use that explicit compact width across the matrix and retain exact viewport/draft assertions; see DEVELOPMENT.md.
+
+- Keep raw Appium/CLI/server artifacts under build/test-results/<task>/artifacts/<class>/<test>;
+  Appium adds its platform. The test-artifact-reports convention clears raw files before Test executes
+  and finalizes each task with one reports/<task>/index.html. Do not scan or render reports inside cases.
+  Keep report generation independent of live fixtures and serialize independent builds sharing outputs.
+  Do not add hashes, counters, random suffixes or container startup retries. See DEVELOPMENT.md.

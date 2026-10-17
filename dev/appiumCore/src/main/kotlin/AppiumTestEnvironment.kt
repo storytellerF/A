@@ -4,7 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
-import org.testcontainers.containers.Network
+import com.storyteller_f.a.test.useBackendFixture
 
 /** Starts the backend topology shared by desktop and browser Appium tests. */
 internal suspend fun runAppiumTestEnvironment(
@@ -12,29 +12,16 @@ internal suspend fun runAppiumTestEnvironment(
     allowedOrigins: String = "",
     block: suspend (AppiumPorts) -> Unit,
 ) {
-    System.setProperty("api.version", "1.44")
-    Network.newNetwork().use { network ->
-        useLightweightBackendContainers(network, report) { filesystem, redis ->
-            val environment =
-                buildContainerEnv() + ("SIGNIN_ALLOWED_ORIGINS" to allowedOrigins) +
-                    ("FILESYSTEM_PUBLIC_URL" to "http://${filesystem.host}:${filesystem.getMappedPort(8822)}")
-            useCliInitContainer(network, environment, report) {
-                useWsContainer(network, environment, report) { ws ->
-                    val wsPort = ws.getMappedPort(8813)
-                    useServerContainer(network, environment, report) { server ->
-                        val serverPort = server.getMappedPort(8811)
-                        useWorkerContainer(network, environment, report) {
-                            block(
-                                AppiumPorts(server = serverPort, ws = wsPort, expireUserSessions = {
-                                    val result = redis.execInContainer("redis-cli", "EVAL", EXPIRE_USER_SESSIONS, "0")
-                                    check(result.exitCode == 0) { "Test session expiry failed" }
-                                }),
-                            )
-                        }
-                    }
-                }
-            }
-        }
+    useBackendFixture(
+        report.directory.resolve("logs"),
+        environment = { mapOf("SIGNIN_ALLOWED_ORIGINS" to allowedOrigins) },
+    ) { backend ->
+        block(
+            AppiumPorts(server = backend.serverPort, ws = backend.wsPort, expireUserSessions = {
+                val result = backend.services.redis.execInContainer("redis-cli", "EVAL", EXPIRE_USER_SESSIONS, "0")
+                check(result.exitCode == 0) { "Test session expiry failed" }
+            }),
+        )
     }
 }
 

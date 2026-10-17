@@ -7,17 +7,22 @@ package com.storytellerf.a.panelclie2e
 import com.storytellerf.a.e2e.E2eCliTerminalFactory
 import com.storytellerf.a.e2e.runE2eBlockingTest
 import com.storytellerf.a.e2e.runE2eTestEnvironment
+import org.junit.Rule
+import org.junit.rules.TestName
 import kotlin.test.Test
 
 private const val INSTALL_DIR_PROPERTY = "panel.cli.app.install.dir"
 
 internal class PanelCliE2eTest {
+    @get:Rule
+    val testName = TestName()
+
     private val terminalFactory = E2eCliTerminalFactory()
 
     @Test
-    internal fun `register and browse panel overview`() {
+    fun `register and browse panel overview`() {
         runE2eBlockingTest {
-            runE2eTestEnvironment { ports ->
+            runE2eTestEnvironment("PanelCliE2eTest", testName.methodName) { ports ->
                 terminalFactory.useTerminal(INSTALL_DIR_PROPERTY, ports, this) { terminal ->
                     terminal.awaitText("PANEL CLI")
                     terminal.sendLine("1")

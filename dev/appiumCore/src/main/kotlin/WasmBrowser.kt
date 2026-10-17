@@ -39,9 +39,10 @@ enum class WasmBrowser {
                     },
                 )
 
+            // Edge otherwise opens MSN; WebDriver waits for that navigation before the first command.
             EDGE ->
                 EdgeDriver(
-                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize)).also {
+                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize) + "about:blank").also {
                         if (binary != null) it.setBinary(binary.canonicalPath)
                         it.setExperimentalOption("prefs", mapOf("intl.accept_languages" to "en-US,en"))
                     },

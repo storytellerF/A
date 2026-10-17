@@ -44,6 +44,7 @@ include(":app:cliApp")
 include(":app:androidApp")
 include(":app:desktopApp")
 
+include(":dev:testInfrastructure")
 include(":dev:e2eCore")
 
 include(":dev:appiumCore")

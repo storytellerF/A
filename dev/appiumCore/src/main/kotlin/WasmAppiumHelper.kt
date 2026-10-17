@@ -28,7 +28,12 @@ class WasmAppiumHelper(
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
-        val report = AppiumTestReport(target.suiteName, "wasm-${browserType.name.lowercase()}", testName)
+        val report =
+            AppiumTestReport(
+                target.suiteName,
+                "wasm-${browserType.name.lowercase()}",
+                testName.removeSuffix("[${browserType.name}]"),
+            )
         report.run {
             WasmDistributionServer(distribution).use { server ->
                 runAppiumTestEnvironment(report, allowedOrigins = server.url.removeSuffix("/")) { ports ->
