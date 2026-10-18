@@ -442,6 +442,11 @@ The `app/composeApp` browser bundle disables resolution of unused `events`, `fs`
 
 Navigation tests compare `NavBackStack.toList()` with the expected history, because wrapper object equality is not the cross-platform contract for the stack contents.
 
+Appium runners pass their target and platform helpers to the typed `AppiumTestBase`
+constructor. Shared test flows extend that base and obtain both helpers and the JUnit test name
+from it; concrete test methods only supply scenario options, such as `privateRoom = true`.
+Wasm-only extensions require a `WasmAppiumHelper` receiver type.
+
 ### E2E navigation and readiness
 
 Room-row native accessibility merges the room-name description with message-preview descriptions.

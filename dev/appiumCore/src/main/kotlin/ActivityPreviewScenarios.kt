@@ -38,39 +38,35 @@ private data class ActivityScenario(
     val pinnedTopic: String?,
 )
 
-fun testActivityPreviewByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-    privateRoom: Boolean = false,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val data =
-                if (privateRoom) {
-                    preparePrivateActivityScenario { target.createAuthenticatedSession(ports) }
-                } else {
-                    prepareActivityScenario { target.createAuthenticatedSession(ports) }
-                }
-            AppiumTestSetup(data)
-        },
-    ) { scope, data ->
-        try {
-            scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
-            scope.driver.dismissDialog()
-            scenarioReadAndSendActivity(scope.driver, data)
-        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
-            throw cancelled
-        } catch (failure: IllegalStateException) {
-            scope.driver.saveSnapshot("activity-failed")
-            throw failure
-        } finally {
-            data.viewer.sessionManager.client.close()
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityPreviewByHelper(privateRoom: Boolean = false) =
+    runAppiumBlockingTest {
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val data =
+                    if (privateRoom) {
+                        preparePrivateActivityScenario { targetHelper.createAuthenticatedSession(ports) }
+                    } else {
+                        prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) }
+                    }
+                AppiumTestSetup(data)
+            },
+        ) { scope, data ->
+            try {
+                scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
+                scope.driver.dismissDialog()
+                scenarioReadAndSendActivity(scope.driver, data)
+            } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancelled
+            } catch (failure: IllegalStateException) {
+                scope.driver.saveSnapshot("activity-failed")
+                throw failure
+            } finally {
+                data.viewer.sessionManager.client.close()
+            }
         }
     }
-}
 
 private suspend fun prepareActivityScenario(createSession: suspend () -> AuthenticatedSession): ActivityScenario {
     val owner = createSession()
@@ -258,48 +254,52 @@ private suspend fun preparePrivateActivityScenario(
     }
 }
 
-fun testRoomActivityRefreshByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testRoomActivityRefreshByHelper() =
     runAppiumBlockingTest {
-        platform.runTest(
-            testName = testName,
-            target = target,
-            setup = { ports -> AppiumTestSetup(prepareActivityScenario { target.createAuthenticatedSession(ports) }) },
-        ) { scope, data ->
-            try {
-                val driver = scope.driver
-                scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
-                driver.dismissDialog()
-                driver.clickByText("Rooms")
-                driver.assertVisibleByTextContaining(data.latestMessage)
-                driver.assertVisibleByText("3")
-                val activity =
-                    data.viewer.sessionManager.getUserRooms(
-                        PaginationQuery(),
-                    ).getOrThrow().activities.single { it.room.id == data.roomId }
-                data.viewer.sessionManager.addReadLog(
-                    UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
-                ).getOrThrow()
-                driver.refreshList()
-                driver.assertVisibleByTextContaining(data.latestMessage)
-                driver.assertNotVisibleByText("3")
-                if (driver is AndroidAppTestDriver) {
-                    driver.assertUnreadRoomsIndicator(false)
-                } else if (driver is WasmAppTestDriver) {
-                    driver.assertUnreadRoomsIndicator(false)
-                } else {
-                    driver.assertNotVisibleByText("Unread rooms")
-                }
-            } finally {
-                data.viewer.sessionManager.client.close()
+    platformHelper.runTest(
+        testName = testName,
+        target = targetHelper,
+        setup = { ports ->
+            AppiumTestSetup(
+                prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) },
+            )
+        },
+    ) { scope, data ->
+        try {
+            val driver = scope.driver
+            scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
+            driver.dismissDialog()
+            driver.clickByText("Rooms")
+            driver.assertVisibleByTextContaining(data.latestMessage)
+            driver.assertVisibleByText("3")
+            val activity =
+                data.viewer.sessionManager.getUserRooms(
+                    PaginationQuery(),
+                ).getOrThrow().activities.single { it.room.id == data.roomId }
+            data.viewer.sessionManager.addReadLog(
+                UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
+            ).getOrThrow()
+            driver.refreshList()
+            driver.assertVisibleByTextContaining(data.latestMessage)
+            driver.assertNotVisibleByText("3")
+            if (driver is AndroidAppTestDriver) {
+                driver.assertUnreadRoomsIndicator(false)
+            } else if (driver is WasmAppTestDriver) {
+                driver.assertUnreadRoomsIndicator(false)
+            } else {
+                driver.assertNotVisibleByText("Unread rooms")
             }
+        } finally {
+            data.viewer.sessionManager.client.close()
         }
     }
+}
 
 private fun AppTestDriver.resizeActivityViewport(width: Int, height: Int) {
     when (this) {
         is DesktopAppTestDriver -> resizeWindow(width, height)
         is WasmAppTestDriver -> resizeViewport(width, height)
-        else -> error("The current test platform does not support window resizing")
+        else -> error("The current test platformHelper does not support window resizing")
     }
 }
 

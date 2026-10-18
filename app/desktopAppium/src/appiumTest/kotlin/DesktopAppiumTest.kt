@@ -6,64 +6,53 @@ package com.storyteller_f.a.dev.appium
 
 import kotlin.test.Test
 
-class DesktopAppiumTest : AppiumTestBase() {
-    private val targetHelper = AppAppiumHelper()
-    private val platformHelper = DesktopAppiumHelper()
+class DesktopAppiumTest :
+    AppiumTestBase<AppAppiumHelper, DesktopAppiumHelper>(
+        AppAppiumHelper(),
+        DesktopAppiumHelper(),
+    ) {
+    @Test
+    fun `test explicit sign in and sign out survive restart`() = testSignoutPersistenceByHelper()
 
     @Test
-    fun `test explicit sign in and sign out survive restart`() =
-        testSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test child sign in stays in memory across restart`() = testChildSigninByHelper()
 
     @Test
-    fun `test child sign in stays in memory across restart`() =
-        testChildSigninByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in survives restart and revocation requires explicit login`() = testSigninLifecycleByHelper()
 
     @Test
-    fun `test sign in survives restart and revocation requires explicit login`() =
-        testSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign up`() = testSignUpByHelper()
 
     @Test
-    fun `test sign up`() = testSignUpByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in as system user`() = testSignInAsSystemUserByHelper()
 
     @Test
-    fun `test sign in as system user`() = testSignInAsSystemUserByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in by injected session`() = testInjectedSessionByHelper()
 
     @Test
-    fun `test sign in by injected session`() =
-        testInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test publish topic in user space`() = testPublishTopicInUserSpaceByHelper()
 
     @Test
-    fun `test publish topic in user space`() =
-        testPublishTopicInUserSpaceByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test favorite topic from topic page`() = testFavoriteTopicByHelper()
 
     @Test
-    fun `test favorite topic from topic page`() =
-        testFavoriteTopicByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test opens asciidoc preview`() = testOpenAsciidocPreviewByHelper()
 
     @Test
-    fun `test opens asciidoc preview`() = testOpenAsciidocPreviewByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test subscribe topic from community page`() = testSubscribeTopicByHelper()
 
     @Test
-    fun `test subscribe topic from community page`() =
-        testSubscribeTopicByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test community profile actions from joined community`() = testCommunityProfileActionsByHelper()
 
     @Test
-    fun `test community profile actions from joined community`() =
-        testCommunityProfileActionsByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test publish topic in joined community`() = testPublishTopicInCommunityByHelper()
 
     @Test
-    fun `test publish topic in joined community`() =
-        testPublishTopicInCommunityByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test activity previews track reading sending and navigation`() = testActivityPreviewByHelper()
 
     @Test
-    fun `test activity previews track reading sending and navigation`() =
-        testActivityPreviewByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test room refresh clears unread after another session reads`() = testRoomActivityRefreshByHelper()
 
     @Test
-    fun `test room refresh clears unread after another session reads`() =
-        testRoomActivityRefreshByHelper(name.methodName, targetHelper, platformHelper)
-
-    @Test
-    fun `test publish topic in community room`() =
-        testPublishTopicInCommunityRoomByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test publish topic in community room`() = testPublishTopicInCommunityRoomByHelper()
 }
