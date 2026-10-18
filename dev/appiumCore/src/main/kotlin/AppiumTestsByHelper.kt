@@ -4,12 +4,8 @@
 
 package com.storyteller_f.a.dev.appium
 
-import com.storyteller_f.a.api.NewCommunity
-import com.storyteller_f.a.api.NewRoom
 import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.a.client.core.addChildAccount
-import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.signOutAll
 import io.ktor.http.HttpStatusCode
@@ -184,19 +180,23 @@ fun testSigninLifecycleByHelper(testName: String, target: AppAppiumHelper, platf
         platform.runTest(
             testName = testName,
             target = target,
-            setup = { ports -> AppiumTestSetup(target.createAuthenticatedSession(ports)) },
+            setup = { ports ->
+                AppiumTestSetup(prepareAuthenticatedRoomScenario { target.createAuthenticatedSession(ports) })
+            },
         ) { scope, data ->
             try {
-                scenarioSignIn(scope.driver, data.session.pemPrivateKey)
+                scenarioSignIn(scope.driver, data.authenticated.session.pemPrivateKey)
                 scope.restart()
-                scenarioVerifyInjectedSessionLoaded(scope.driver, data.session.address)
+                scenarioVerifyInjectedSessionLoaded(scope.driver, data.authenticated.session.address)
                 if (platform is WasmAppiumHelper) scope.driver.assertNotVisibleByText("Switch Account")
                 scope.driver.dismissDialog()
-                scenarioOpenSessionRoom(scope.driver, data)
-                data.sessionManager.signOutAll().getOrThrow()
+                scenarioPublishTopicInRoom(scope.driver, data.communityName, data.roomName)
+                data.authenticated.sessionManager.signOutAll().getOrThrow()
                 assertEquals(
                     HttpStatusCode.Unauthorized,
-                    assertIs<ServerErrorException>(data.sessionManager.restoreSession().exceptionOrNull()).status,
+                    assertIs<ServerErrorException>(
+                        data.authenticated.sessionManager.restoreSession().exceptionOrNull(),
+                    ).status,
                 )
                 scope.driver.clickByDescription("avatar")
                 scope.driver.assertVisibleByText("Sign in")
@@ -204,7 +204,7 @@ fun testSigninLifecycleByHelper(testName: String, target: AppAppiumHelper, platf
                 scope.driver.clickByDescription("avatar")
                 scope.driver.assertVisibleByText("Sign in")
             } finally {
-                data.sessionManager.client.close()
+                data.authenticated.sessionManager.client.close()
             }
         }
     }
@@ -273,15 +273,6 @@ fun testSignoutPersistenceByHelper(testName: String, target: AppAppiumHelper, pl
             scope.driver.assertVisibleByText("Sign in")
         }
     }
-
-private suspend fun scenarioOpenSessionRoom(driver: AppTestDriver, data: AuthenticatedSession) {
-    val suffix = System.currentTimeMillis().toString()
-    val communityName = "sc-$suffix"
-    val roomName = "sr-$suffix"
-    val community = data.sessionManager.createCommunity(NewCommunity(communityName, "sc$suffix")).getOrThrow()
-    data.sessionManager.createRoom(NewRoom(roomName, "sr$suffix", communityId = community.id)).getOrThrow()
-    scenarioPublishTopicInRoom(driver, communityName, roomName)
-}
 
 fun testPanelSignoutPersistenceByHelper(testName: String, target: PanelAppiumHelper, platform: PlatformAppiumHelper) =
     runAppiumBlockingTest {

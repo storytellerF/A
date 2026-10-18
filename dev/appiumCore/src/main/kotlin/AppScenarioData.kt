@@ -41,6 +41,36 @@ data class PreparedCommunityRoomScenario(
     val roomName: String,
 )
 
+internal data class AuthenticatedRoomScenario(
+    val authenticated: AuthenticatedSession,
+    val communityName: String,
+    val roomName: String,
+)
+
+internal suspend fun prepareAuthenticatedRoomScenario(
+    createAuthenticatedSession: suspend () -> AuthenticatedSession,
+): AuthenticatedRoomScenario {
+    val authenticated = createAuthenticatedSession()
+    var prepared = false
+    return try {
+        val suffix = System.currentTimeMillis().toString()
+        val communityName = "sc-$suffix"
+        val roomName = "sr-$suffix"
+        val communityId = createCommunityByApi(authenticated.sessionManager, communityName, "sc$suffix")
+        createRoomByApi(authenticated.sessionManager, roomName, "sr$suffix", communityId)
+        AuthenticatedRoomScenario(authenticated, communityName, roomName).also { prepared = true }
+    } finally {
+        if (!prepared) {
+            runCatching { authenticated.sessionManager.client.close() }
+                .onFailure {
+                    org.slf4j.LoggerFactory.getLogger(
+                        "appium-setup",
+                    ).warn("Failed to close incomplete room scenario", it)
+                }
+        }
+    }
+}
+
 suspend fun prepareFavoriteTopicScenario(
     createAuthenticatedSession: suspend () -> AuthenticatedSession,
 ): FavoriteTopicScenario {

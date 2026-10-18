@@ -17,6 +17,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.sendMessage
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
@@ -130,7 +131,7 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     driver.assertVisibleByText(data.latestMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, data.latestMessage)
     driver.dismissKeyboard()
     driver.navigateBack()
     driver.assertVisibleByTextContaining(data.latestMessage)
@@ -155,7 +156,7 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.assertVisibleByDescription("Send")
     driver.clickByDescription("Send")
     driver.assertVisibleByText(sentMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, sentMessage)
     driver.dismissKeyboard()
     driver.navigateBack()
     driver.assertVisibleByTextContaining(sentMessage)
@@ -164,16 +165,23 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.saveSnapshot("activity-after-read-send")
 }
 
-private suspend fun waitUntilRoomRead(data: ActivityScenario) {
+private suspend fun waitUntilRoomRead(data: ActivityScenario, expectedMessage: String) {
     val deadline = System.currentTimeMillis() + java.time.Duration.ofSeconds(30).toMillis()
     while (System.currentTimeMillis() < deadline) {
-        val count =
+        val activity =
             data.viewer.sessionManager.getUserRooms(PaginationQuery()).getOrThrow()
-                .activities.single { it.room.id == data.roomId }.unreadMessageCount
-        if (count == 0L) return
+                .activities.single { it.room.id == data.roomId }
+        val latestMessage =
+            when (val content = activity.latestMessage?.content) {
+                is TopicContent.Plain -> content.plain
+                is TopicContent.Extracted -> content.plain
+                else -> null
+            }
+        // An optimistic UI echo can precede persistence; zero unread on the old message is insufficient.
+        if (latestMessage == expectedMessage && activity.unreadMessageCount == 0L) return
         delay(500.milliseconds)
     }
-    error("Reading the room did not clear its unread messages")
+    error("Expected latest room message to be persisted and read")
 }
 
 private suspend fun sendActivityMessages(
@@ -216,7 +224,7 @@ private suspend fun scenarioOpenActivityContext(driver: AppTestDriver, data: Act
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     driver.assertVisibleByText(data.latestMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, data.latestMessage)
     driver.navigateBack()
     driver.assertVisibleByText("Unread rooms")
     driver.assertVisibleByTextContaining(pinnedTopic)

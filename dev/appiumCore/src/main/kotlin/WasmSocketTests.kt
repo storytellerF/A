@@ -4,10 +4,6 @@
 
 package com.storyteller_f.a.dev.appium
 
-import com.storyteller_f.a.api.NewCommunity
-import com.storyteller_f.a.api.NewRoom
-import com.storyteller_f.a.client.core.createCommunity
-import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.signOutAll
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -43,22 +39,14 @@ fun testBrowserSocketServerExpiry(testName: String, target: AppAppiumHelper, pla
 fun testBrowserSocketReconnect(testName: String, target: AppAppiumHelper, platform: WasmAppiumHelper) =
     runAppiumBlockingTest {
         platform.runTest(testName, target, setup = { ports ->
-            AppiumTestSetup(target.createAuthenticatedSession(ports))
+            AppiumTestSetup(prepareAuthenticatedRoomScenario { target.createAuthenticatedSession(ports) })
         }) { scope, data ->
             try {
-                scenarioSignIn(scope.driver, data.session.pemPrivateKey)
+                scenarioSignIn(scope.driver, data.authenticated.session.pemPrivateKey)
                 scope.driver.dismissDialog()
                 val probe = (scope.driver as WasmAppTestDriver).socketProbe()
                 probe.awaitOpen()
-                val suffix = System.currentTimeMillis().toString()
-                val communityName = "sc-$suffix"
-                val roomName = "sr-$suffix"
-                val community =
-                    data.sessionManager.createCommunity(
-                        NewCommunity(communityName, "c$suffix"),
-                    ).getOrThrow()
-                data.sessionManager.createRoom(NewRoom(roomName, "r$suffix", communityId = community.id)).getOrThrow()
-                scenarioPublishTopicInRoom(scope.driver, communityName, roomName)
+                scenarioPublishTopicInRoom(scope.driver, data.communityName, data.roomName)
                 assertTrue(probe.count("sent") > 0)
                 assertTrue(probe.count("received") > 0)
                 val opened = probe.count("opened")
@@ -66,21 +54,21 @@ fun testBrowserSocketReconnect(testName: String, target: AppAppiumHelper, platfo
                 probe.disconnect()
                 probe.awaitOpen(opened)
                 assertEquals(sent, probe.count("sent"), "Reconnection must not replay the published topic")
-                val content = "socket-after-reconnect-$suffix"
+                val content = "socket-after-reconnect-${System.currentTimeMillis()}"
                 scope.driver.inputText(content)
                 scope.driver.clickByDescription("Send")
                 scope.driver.assertVisibleByText(content)
                 scope.restart()
                 val restarted = (scope.driver as WasmAppTestDriver).socketProbe()
                 restarted.awaitOpen()
-                scenarioVerifyInjectedSessionLoaded(scope.driver, data.session.address)
+                scenarioVerifyInjectedSessionLoaded(scope.driver, data.authenticated.session.address)
                 scope.driver.clickByText("Sign out")
                 scope.driver.clickByText("Yes")
                 scope.driver.clickByDescription("avatar")
                 scope.driver.assertVisibleByText("Sign in")
                 restarted.assertNoFurtherAttempts()
             } finally {
-                data.sessionManager.client.close()
+                data.authenticated.sessionManager.client.close()
             }
         }
     }
