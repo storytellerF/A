@@ -186,9 +186,10 @@
   keep badge labels localized and test their presence/absence alongside row counts.
 - Keep read-marker upserts monotonic and atomic; history navigation and late requests must not rewind
   the stored marker. Verify both exact counts and the legacy unread-room aggregate.
-- Native room-cell accessibility must preserve merged visible content; keep platform-specific browser
-  test-overlay labels separate. Resize Windows Java-agent test windows through their verified native
-  handle and convert viewport dimensions for window DPI.
+- Native room-cell accessibility must preserve merged visible content. Room names must contribute
+  to merged native descriptions when previews supply descriptions; keep browser-only labels separate.
+  Resize Windows Java-agent test windows through their verified native handle and convert viewport
+  dimensions for window DPI.
 
 - Browser Appium previews need explicit text/action bridge nodes; keep the bridge disabled outside test
   mode and preserve native merged accessibility. Select equal-stack overlay nodes in foreground paint
@@ -310,7 +311,10 @@
 - JVM coroutine stack-trace recovery can copy exceptions across dispatchers; verify the original
   failure through its cause chain and check that cleanup failures remain suppressed on it.
 
-- Start Edge E2E at about:blank; its external MSN new-tab load can block the first WebDriver navigation before the local test URL is sent. Preserve normal page loading and test timeouts.
+- Initialize Edge with a browser-level DevTools blank target and close its isolated startup tabs
+  before page-scoped WebDriver commands, which can wait on the external MSN new-tab navigation.
+  A bare about:blank arg is parsed as a switch. Verify one blank target on fresh launch and restart;
+  preserve normal browser windows, viewport checks and page-load timeouts.
 - Current Windows Chrome can enforce a 504px content minimum. Browser activity resize tests use that explicit compact width across the matrix and retain exact viewport/draft assertions; see DEVELOPMENT.md.
 
 - Keep raw Appium/CLI/server artifacts under build/test-results/<task>/artifacts/<class>/<test>;
@@ -318,3 +322,13 @@
   and finalizes each task with one reports/<task>/index.html. Do not scan or render reports inside cases.
   Keep report generation independent of live fixtures and serialize independent builds sharing outputs.
   Do not add hashes, counters, random suffixes or container startup retries. See DEVELOPMENT.md.
+
+- E2E read completion must identify the expected persisted message as well as zero unread;
+  optimistic local echoes can precede server persistence.
+
+- Close the panel modal navigation drawer when authentication is cleared so sign-out or
+  revocation exposes the sign-in page rather than leaving an anonymous navigation overlay. Keep
+  its account actions outside the scrolling navigation list so compact windows expose sign-out.
+
+- Prepare authentication/socket E2E community and room fixtures before application launch;
+  cached pagers need not observe setup writes performed through another client after Home mounts.

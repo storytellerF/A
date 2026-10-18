@@ -430,11 +430,30 @@ The `wasm-browser-test-interop` convention is applied to `shared` and `client/ro
 
 Browser activity resize scenarios use a strict 504px compact content viewport: Windows Chrome enforces that minimum (522px outer width with 18px frame), while Firefox permits 500px. The 504px case still exercises bottom navigation, alongside 900px and 1600px layouts; viewport equality and draft preservation assertions remain strict.
 
-Edge E2E sessions start at `about:blank`, so the first WebDriver navigation does not wait for the external MSN new-tab page. Profiles remain isolated and the normal page-load strategy and timeouts are preserved.
+Edge E2E creates an `about:blank` target through the browser's
+[DevTools HTTP endpoint](https://chromedevtools.github.io/devtools-protocol/index.html#http-endpoints)
+before issuing page-scoped WebDriver commands, then closes the isolated browser's startup tabs.
+Those commands would otherwise wait for Edge's external MSN new-tab navigation. Bare URLs in
+ChromiumDriver args are parsed as switches, so they do not select a positional startup document.
+The profile-persistence E2E verifies one blank target on fresh launch and restart, alongside Cookie
+and IndexedDB retention. Normal browser windows, page loading, strict viewport checks and timeouts remain unchanged.
 
 The `app/composeApp` browser bundle disables resolution of unused `events`, `fs`, `os` and `path` externals emitted by transitive Kotlin wrappers. These generated namespace aliases have no browser callers; do not add Node polyfills for them. Validate both the library production bundle through `assemble` and the real `app/webApp` browser entry through the three-browser E2E matrix.
 
 Navigation tests compare `NavBackStack.toList()` with the expected history, because wrapper object equality is not the cross-platform contract for the stack contents.
+
+### E2E navigation and readiness
+
+Room-row native accessibility merges the room-name description with message-preview descriptions.
+Keep the label on the name Text so previews and unread counts remain available to native readers.
+Session-revocation and socket-reconnection scenarios prepare communities and rooms before launching
+the application. A cached pager need not observe setup writes performed through another client after
+Home has mounted; these scenarios test session lifecycle rather than cross-client list refresh.
+Activity read/send scenarios wait for the expected server-side latest message and zero unread together;
+the optimistic UI echo alone does not establish persistence or read-marker completion.
+
+Panel drawers keep account actions below the scrolling navigation list, visible in compact windows.
+Clearing authentication closes the modal drawer so it cannot cover the sign-in page.
 
 ### Local Android test initialization
 
