@@ -2,6 +2,8 @@
  * This is a private project. All rights reserved.
  */
 
+import org.apache.tools.ant.filters.FixCrLfFilter
+
 plugins {
     application
 }
@@ -11,6 +13,8 @@ val dockerContext = layout.buildDirectory.dir("test-docker-context")
 val copyTestDockerDistribution = tasks.register<Sync>("copyTestDockerDistribution") {
     group = "verification"
     description = "Prepares an isolated context for this service's prebuilt test image."
+    val shellScriptLineEnding = "lf"
+    inputs.property("shellScriptLineEnding", shellScriptLineEnding)
     from(distribution.flatMap { it.archiveFile }) {
         into("deploy/build")
     }
@@ -20,6 +24,8 @@ val copyTestDockerDistribution = tasks.register<Sync>("copyTestDockerDistributio
             "build_scripts/stage-distributions.sh", "docker/cli-entrypoint.sh",
             "tool_scripts/flush-database.sh", "tool_scripts/terminal-log.sh",
         )
+        // Linux containers must not inherit CRLF from a Windows working tree.
+        filter<FixCrLfFilter>("eol" to FixCrLfFilter.CrLf.newInstance(shellScriptLineEnding))
         into("scripts")
     }
     into(dockerContext)

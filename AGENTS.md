@@ -64,7 +64,7 @@
 - `build-and-test.sh` only orchestrates device/UI and end-to-end tests through `--android`, `--desktop`, `--compose`, and `--e2e`; run ordinary unit tests directly with Gradle.
 - Appium sources and runners belong to the independent `*Appium` modules under `src/appiumTest/kotlin`. They depend on built or installed application artifacts, not application implementation code.
 - Appium `appiumTest` tasks must disable Gradle up-to-date reuse so every explicit E2E invocation drives the target again.
-- Appium tests compose a target helper (`AppAppiumHelper` or `PanelAppiumHelper`) with a platform helper (`AndroidAppiumHelper` or `DesktopAppiumHelper`). Keep concrete test methods as calls to shared `test*ByHelper` functions; target helpers create sessions and platform helpers own launch, cleanup, and log collection.
+- Appium tests pass target/platform helpers to the typed `AppiumTestBase` constructor. Shared test flows are base extension functions that read its helpers and JUnit test name; concrete test methods pass only scenario options. Target helpers create sessions and platform helpers own launch, cleanup, and log collection.
 - Cloud server integration tests and Appium E2E tests use PostgreSQL with dedicated filesystem RPC and Lucene RPC containers. Do not reintroduce H2, MinIO, or Elasticsearch into these test topologies.
 - Keep filesystem and Lucene RPC services business-independent. Translate business search models in backend adapters; clients download object contents directly from filesystem HTTP rather than through server.
 - Define filesystem and Lucene RPC contracts in their respective `services/*-protocol` modules. Service runtime code must not depend on `backend/core`, `shared`, or `api`; map business storage/search types in backend adapters. Keep service configuration independent of flavor env files.
@@ -186,9 +186,10 @@
   keep badge labels localized and test their presence/absence alongside row counts.
 - Keep read-marker upserts monotonic and atomic; history navigation and late requests must not rewind
   the stored marker. Verify both exact counts and the legacy unread-room aggregate.
-- Native room-cell accessibility must preserve merged visible content; keep platform-specific browser
-  test-overlay labels separate. Resize Windows Java-agent test windows through their verified native
-  handle and convert viewport dimensions for window DPI.
+- Native room-cell accessibility must preserve merged visible content. Room names must contribute
+  to merged native descriptions when previews supply descriptions; keep browser-only labels separate.
+  Resize Windows Java-agent test windows through their verified native handle and convert viewport
+  dimensions for window DPI.
 
 - Browser Appium previews need explicit text/action bridge nodes; keep the bridge disabled outside test
   mode and preserve native merged accessibility. Select equal-stack overlay nodes in foreground paint
@@ -285,9 +286,9 @@
   and service shutdown closes the credential cache and HTTP engine. Exercise the production factory
   in authentication, region propagation and resource-lifecycle tests.
 
-- Appium artifacts belong to the invocation's `AppiumTestReport` directory. Keep allocation atomic,
+- Appium artifacts belong to the case's raw `AppiumTestReport` directory. Let Gradle clear task outputs,
   preserve the original test failure during collection, and register private runtime paths for cleanup
-  before report generation. Link artifacts through static HTML viewers so server MIME defaults cannot force
+  before raw result metadata is written. Link artifacts through static HTML viewers so server MIME defaults cannot force
   downloads. See DEVELOPMENT.md for the report entry point and isolation contract.
 
 - Filesystem/Lucene use SLF4J directly, without Napier or shared/business dependencies. Keep their Logback
@@ -297,3 +298,37 @@
 - Appium 11 does not transitively provide Selenium support utilities. Declare selenium-support explicitly
   when using Selenium waits; Appium elements are AppiumWebElement, not RemoteWebElement. Treat a missing
   page source as a diagnostic collection failure instead of writing an empty artifact.
+
+- Keep server/Appium/CLI Testcontainers topology in dev/testInfrastructure. Callers own Ktor test-host,
+  platform forwarding and business assertions; use explicit host versus container environments.
+  Register resources before startup, export logs before Testcontainers removes failed containers,
+  and preserve the original failure while completing cancellation-safe cleanup.
+
+- Normalize Linux test-image shell scripts to LF in copyTestDockerDistribution, preserving source
+  line endings so Windows checkouts cannot break container entrypoints. Track the filtering policy
+  as a task input so existing Sync contexts are regenerated when the policy changes.
+
+- JVM coroutine stack-trace recovery can copy exceptions across dispatchers; verify the original
+  failure through its cause chain and check that cleanup failures remain suppressed on it.
+
+- Initialize Edge with a browser-level DevTools blank target and close its isolated startup tabs
+  before page-scoped WebDriver commands, which can wait on the external MSN new-tab navigation.
+  A bare about:blank arg is parsed as a switch. Verify one blank target on fresh launch and restart;
+  preserve normal browser windows, viewport checks and page-load timeouts.
+- Current Windows Chrome can enforce a 504px content minimum. Browser activity resize tests use that explicit compact width across the matrix and retain exact viewport/draft assertions; see DEVELOPMENT.md.
+
+- Keep raw Appium/CLI/server artifacts under build/test-results/<task>/artifacts/<class>/<test>;
+  Appium adds its platform. The test-artifact-reports convention clears raw files before Test executes
+  and finalizes each task with one reports/<task>/index.html. Do not scan or render reports inside cases.
+  Keep report generation independent of live fixtures and serialize independent builds sharing outputs.
+  Do not add hashes, counters, random suffixes or container startup retries. See DEVELOPMENT.md.
+
+- E2E read completion must identify the expected persisted message as well as zero unread;
+  optimistic local echoes can precede server persistence.
+
+- Close the panel modal navigation drawer when authentication is cleared so sign-out or
+  revocation exposes the sign-in page rather than leaving an anonymous navigation overlay. Keep
+  its account actions outside the scrolling navigation list so compact windows expose sign-out.
+
+- Prepare authentication/socket E2E community and room fixtures before application launch;
+  cached pagers need not observe setup writes performed through another client after Home mounts.

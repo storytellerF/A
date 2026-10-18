@@ -201,6 +201,7 @@ fun RoomRowContent(
         Column(Modifier.weight(1f).padding(start = 8.dp, end = 12.dp)) {
             Text(
                 roomInfo?.name.orEmpty(),
+                Modifier.appiumSemantics(text = roomInfo?.name),
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

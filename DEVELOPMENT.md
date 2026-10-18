@@ -428,7 +428,37 @@ Browser suites use Chrome Headless; install Chrome or set `CHROME_BIN` before ru
 
 The `wasm-browser-test-interop` convention is applied to `shared` and `client/room`. It lowers only the `kotlinx-io` Node `createRequire` getter in generated `.import-object.mjs` files, preserving its module URL while preventing a bare `import.meta` alias from reaching Karma classic-script bundles. The loader is tracked as a test input and has regression coverage via `node --test config/webpack/wasm-node-import-meta.test.cjs`. It does not patch cached dependencies or generated files.
 
+Browser activity resize scenarios use a strict 504px compact content viewport: Windows Chrome enforces that minimum (522px outer width with 18px frame), while Firefox permits 500px. The 504px case still exercises bottom navigation, alongside 900px and 1600px layouts; viewport equality and draft preservation assertions remain strict.
+
+Edge E2E creates an `about:blank` target through the browser's
+[DevTools HTTP endpoint](https://chromedevtools.github.io/devtools-protocol/index.html#http-endpoints)
+before issuing page-scoped WebDriver commands, then closes the isolated browser's startup tabs.
+Those commands would otherwise wait for Edge's external MSN new-tab navigation. Bare URLs in
+ChromiumDriver args are parsed as switches, so they do not select a positional startup document.
+The profile-persistence E2E verifies one blank target on fresh launch and restart, alongside Cookie
+and IndexedDB retention. Normal browser windows, page loading, strict viewport checks and timeouts remain unchanged.
+
+The `app/composeApp` browser bundle disables resolution of unused `events`, `fs`, `os` and `path` externals emitted by transitive Kotlin wrappers. These generated namespace aliases have no browser callers; do not add Node polyfills for them. Validate both the library production bundle through `assemble` and the real `app/webApp` browser entry through the three-browser E2E matrix.
+
 Navigation tests compare `NavBackStack.toList()` with the expected history, because wrapper object equality is not the cross-platform contract for the stack contents.
+
+Appium runners pass their target and platform helpers to the typed `AppiumTestBase`
+constructor. Shared test flows extend that base and obtain both helpers and the JUnit test name
+from it; concrete test methods only supply scenario options, such as `privateRoom = true`.
+Wasm-only extensions require a `WasmAppiumHelper` receiver type.
+
+### E2E navigation and readiness
+
+Room-row native accessibility merges the room-name description with message-preview descriptions.
+Keep the label on the name Text so previews and unread counts remain available to native readers.
+Session-revocation and socket-reconnection scenarios prepare communities and rooms before launching
+the application. A cached pager need not observe setup writes performed through another client after
+Home has mounted; these scenarios test session lifecycle rather than cross-client list refresh.
+Activity read/send scenarios wait for the expected server-side latest message and zero unread together;
+the optimistic UI echo alone does not establish persistence or read-marker completion.
+
+Panel drawers keep account actions below the scrolling navigation list, visible in compact windows.
+Clearing authentication closes the modal drawer so it cannot cover the sign-in page.
 
 ### Local Android test initialization
 
@@ -697,20 +727,33 @@ Run `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug -
 ### Appium artifact reports
 
 Every Android, desktop and Wasm helper invocation writes a report under the runner module's
-`build/reports/appium/index.html`. Open that index to find the exact test name, platform, result,
+`build/reports/<test task>/index.html`. Open that index to find the exact test name, platform, result,
 failure stack and all collected artifacts. Per-case reports link readable backend console logs,
 service log archives, application logs, screenshots/page sources, Android recordings and available
 failure diagnostics. Collection errors appear separately from the original test failure.
 
-Directories are grouped by suite/platform/test name. Each component uses a bounded safe name plus
-a deterministic SHA-256 prefix to distinguish sanitization collisions. Atomic `attempt-N` directory
-creation isolates repeated runs, retries, same-named invocations and concurrent processes without
-UUIDs or overwrites. Keep the whole report tree when exporting reports so relative links work.
+Server integration, CLI E2E and Appium tests write raw files under
+`build/test-results/<test task>/artifacts/<test class>/<test name>/`. Appium adds a platform/browser
+subdirectory. Names remain readable without hashes, random suffixes or attempt counters; filesystem-invalid
+characters and reserved device names are percent-encoded. Each case writes `result.properties`, logs,
+screenshots and other collected files without generating HTML or scanning other cases.
+
+The `test-artifact-reports` convention owns the two phases. Before an executing Test task, it clears
+only that task's raw artifact directory. Cached and up-to-date Test tasks retain their collected results.
+The `<test task>ArtifactReport` JavaExec finalizer then generates a standalone report under
+`build/reports/<test task>/index.html`, including artifact copies and safe HTML viewers. It runs after
+test failures too. Gradle's native JUnit XML and HTML results remain in their normal locations.
+Run the finalizer directly to regenerate reports from saved raw results without running tests.
+Serialize independent builds that target the same module/task output directories.
+Keep the generated report tree intact when exporting it so relative artifact links work.
 Private injected sessions and desktop runtime storage are removed before report generation.
 
-Run the report lifecycle and filesystem regression tests with
-`./gradlew :dev:appiumCore:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
-These tests do not require an Appium server, Docker or a device.
+Run Appium collection lifecycle tests with
+`./gradlew :dev:appiumCore:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` without
+an Appium server or a device. Shared metadata, HTML viewer and generator tests live in
+`:dev:testInfrastructure:test`, whose full suite also includes a real Redis startup-failure test.
+The former Appium viewer tests moved there with the shared renderer; lifecycle assertions now verify raw
+metadata first, then explicitly invoke aggregation to check generated pages and links.
 
 Artifact links open static HTML viewers rather than relying on server MIME mappings. Log/text/XML/HTML
 content is escaped; tar, tar.gz and zip files show an archive listing with text previews without extracting
@@ -733,3 +776,36 @@ are not evidence of successful log collection. In Loki, query
 `{job="lucene"} |= "Lucene service starting"` to verify the independent services.
 Confirm returned records include the matching `/var/log/A/<service>/` filename;
 container stdout alone does not verify the shared-volume/Promtail/Loki chain.
+
+
+### Shared Testcontainers fixtures
+
+`dev/testInfrastructure` owns the test topology for server integration tests, Appium and CLI E2E.
+`useBaseServiceFixture` creates an isolated network, PostgreSQL, Redis, filesystem and Lucene services.
+Its `hostEnvironment` contains mapped host endpoints; `containerEnvironment` contains Docker-network
+aliases. The full `useBackendFixture` adds preset initialization, WebSocket, HTTP server and worker.
+Each invocation owns independent containers and data; no container reuse or shared database is enabled.
+Ktor test-host setup and business assertions stay in server tests. Appium retains device forwarding,
+browser origins and session-expiry actions. CLI E2E retains process driving and assertions.
+
+Fixtures copy presets through the Docker API, never a host bind mount. Gradle image tasks remain
+responsible for building the images before tests. The context copy normalizes shell scripts to LF
+without modifying working-tree line endings. Inputs are resolved relative to the repository,
+and container logging ignores the host `LOG_PATH` from test.env.
+
+Blocking Testcontainers startup runs on Dispatchers.IO. Cancellation waits for the current native
+startup call to return, then releases the registered resources with non-suspending Java IO cleanup.
+The owning scope runs on Dispatchers.IO; Kotlin use retains the original failure and suppresses
+close errors. Cleanup
+exports console logs and application log archives before container removal, including readiness
+failures inside Testcontainers. Cleanup continues after collection/removal errors and attaches them
+to the original failure; without an original failure it reports the cleanup error.
+Appium and CLI service logs use the raw case's `logs` directory; server integration container logs
+use `logs/containers` and SQL explanations use `explain`. Fixture cleanup exports files before writing
+the case result metadata, so task-level report generation never needs a live container or device.
+Full-backend containers use Testcontainers' default single startup attempt. Collection errors have *.error.txt records.
+
+Run `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test` through the Docker wrapper,
+with `-Pserver.flavor=dev -Pserver.buildType=debug`. The infrastructure tests include a real Redis
+readiness failure to verify logs survive startup cleanup. Validate the complete backend through
+`:app:cliE2e:e2eTest :panel:cliE2e:e2eTest` and the existing Appium suites.

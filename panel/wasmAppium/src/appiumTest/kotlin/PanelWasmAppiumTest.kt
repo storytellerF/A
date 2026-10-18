@@ -16,29 +16,27 @@ import java.time.Duration
 import kotlin.test.Test
 
 @RunWith(Parameterized::class)
-class PanelWasmAppiumTest(private val browserType: WasmBrowser) : AppiumTestBase() {
+class PanelWasmAppiumTest(private val browserType: WasmBrowser) :
+    AppiumTestBase<PanelAppiumHelper, WasmAppiumHelper>(
+        PanelAppiumHelper(),
+        WasmAppiumHelper(
+            resolveWasmDistribution(),
+            By.cssSelector("[data-appium-text='Sign in'], [data-appium-text='Overview']"),
+            browserType,
+            Dimension(500, 800),
+        ),
+    ) {
     companion object {
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun browsers() = WasmBrowser.entries
     }
 
-    private val targetHelper = PanelAppiumHelper()
-    private val platformHelper =
-        WasmAppiumHelper(
-            resolveWasmDistribution(),
-            By.cssSelector("[data-appium-text='Sign in'], [data-appium-text='Overview']"),
-            browserType,
-            Dimension(500, 800),
-        )
+    @Test
+    fun `test explicit sign out survives restart`() = testPanelSignoutPersistenceByHelper()
 
     @Test
-    fun `test explicit sign out survives restart`() =
-        testPanelSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
-
-    @Test
-    fun `test sign in survives restart and revocation requires explicit login`() =
-        testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in survives restart and revocation requires explicit login`() = testPanelSigninLifecycleByHelper()
 
     @Test
     fun `test html semantics bridge mounts`() =
@@ -67,12 +65,11 @@ class PanelWasmAppiumTest(private val browserType: WasmBrowser) : AppiumTestBase
     }
 
     @Test
-    fun `test panel sign in by injected private session`() =
-        testPanelInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test panel sign in by injected private session`() = testPanelInjectedSessionByHelper()
+}
 
-    private fun resolveWasmDistribution(): File {
-        val distribution = File("build/wasmDistribution")
-        return distribution.takeIf { File(it, "index.html").isFile }
-            ?: error("Wasm distribution was not prepared; run :panel:wasmAppium:prepareWasmDistribution first.")
-    }
+private fun resolveWasmDistribution(): File {
+    val distribution = File("build/wasmDistribution")
+    return distribution.takeIf { File(it, "index.html").isFile }
+        ?: error("Wasm distribution was not prepared; run :panel:wasmAppium:prepareWasmDistribution first.")
 }

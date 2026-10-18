@@ -4,6 +4,7 @@
 
 package device_based
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -363,7 +366,7 @@ class HomeAdaptiveUiTest {
                         room,
                         null,
                         width.value >= 760.dp,
-                        Modifier.fillMaxWidth().padding(16.dp),
+                        Modifier.fillMaxWidth().clickable {}.testTag("room-row").padding(16.dp),
                         { Box(Modifier.requiredSize(60.dp, 60.dp)) },
                         {},
                         preview,
@@ -371,6 +374,14 @@ class HomeAdaptiveUiTest {
                 }
             }
         }
+        val descriptions =
+            onNodeWithTag("room-row").fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription)
+        // Native accessible names prefer merged descriptions over text when a preview provides one.
+        descriptions?.let { labels ->
+            assertTrue(labels.contains("Room preview"))
+            assertTrue(labels.contains("Recent message"))
+        }
+        onNodeWithText("Room preview").assertExists()
         onNodeWithText("Recent message").assertExists()
         onNodeWithText("42").assertExists()
         runOnIdle { width.value = 390.dp }

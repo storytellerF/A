@@ -17,6 +17,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.sendMessage
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.type.ObjectType
@@ -37,39 +38,35 @@ private data class ActivityScenario(
     val pinnedTopic: String?,
 )
 
-fun testActivityPreviewByHelper(
-    testName: String,
-    target: AppAppiumHelper,
-    platform: PlatformAppiumHelper,
-    privateRoom: Boolean = false,
-) = runAppiumBlockingTest {
-    platform.runTest(
-        testName = testName,
-        target = target,
-        setup = { ports ->
-            val data =
-                if (privateRoom) {
-                    preparePrivateActivityScenario { target.createAuthenticatedSession(ports) }
-                } else {
-                    prepareActivityScenario { target.createAuthenticatedSession(ports) }
-                }
-            AppiumTestSetup(data)
-        },
-    ) { scope, data ->
-        try {
-            scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
-            scope.driver.dismissDialog()
-            scenarioReadAndSendActivity(scope.driver, data)
-        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
-            throw cancelled
-        } catch (failure: IllegalStateException) {
-            scope.driver.saveSnapshot("activity-failed")
-            throw failure
-        } finally {
-            data.viewer.sessionManager.client.close()
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityPreviewByHelper(privateRoom: Boolean = false) =
+    runAppiumBlockingTest {
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val data =
+                    if (privateRoom) {
+                        preparePrivateActivityScenario { targetHelper.createAuthenticatedSession(ports) }
+                    } else {
+                        prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) }
+                    }
+                AppiumTestSetup(data)
+            },
+        ) { scope, data ->
+            try {
+                scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
+                scope.driver.dismissDialog()
+                scenarioReadAndSendActivity(scope.driver, data)
+            } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+                throw cancelled
+            } catch (failure: IllegalStateException) {
+                scope.driver.saveSnapshot("activity-failed")
+                throw failure
+            } finally {
+                data.viewer.sessionManager.client.close()
+            }
         }
     }
-}
 
 private suspend fun prepareActivityScenario(createSession: suspend () -> AuthenticatedSession): ActivityScenario {
     val owner = createSession()
@@ -111,8 +108,8 @@ private suspend fun prepareActivityScenario(createSession: suspend () -> Authent
 }
 
 private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: ActivityScenario) {
-    // Native Firefox windows enforce a 500px minimum; this still exercises bottom navigation.
-    val compactWidth = if (driver is WasmAppTestDriver) 500 else 480
+    // Native Chrome on Windows requires 504px and Firefox requires 500px; both use bottom navigation.
+    val compactWidth = if (driver is WasmAppTestDriver) 504 else 480
     driver.clickByText("Rooms")
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertVisibleByText("3")
@@ -130,7 +127,7 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     driver.assertVisibleByText(data.latestMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, data.latestMessage)
     driver.dismissKeyboard()
     driver.navigateBack()
     driver.assertVisibleByTextContaining(data.latestMessage)
@@ -155,7 +152,7 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.assertVisibleByDescription("Send")
     driver.clickByDescription("Send")
     driver.assertVisibleByText(sentMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, sentMessage)
     driver.dismissKeyboard()
     driver.navigateBack()
     driver.assertVisibleByTextContaining(sentMessage)
@@ -164,16 +161,23 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.saveSnapshot("activity-after-read-send")
 }
 
-private suspend fun waitUntilRoomRead(data: ActivityScenario) {
+private suspend fun waitUntilRoomRead(data: ActivityScenario, expectedMessage: String) {
     val deadline = System.currentTimeMillis() + java.time.Duration.ofSeconds(30).toMillis()
     while (System.currentTimeMillis() < deadline) {
-        val count =
+        val activity =
             data.viewer.sessionManager.getUserRooms(PaginationQuery()).getOrThrow()
-                .activities.single { it.room.id == data.roomId }.unreadMessageCount
-        if (count == 0L) return
+                .activities.single { it.room.id == data.roomId }
+        val latestMessage =
+            when (val content = activity.latestMessage?.content) {
+                is TopicContent.Plain -> content.plain
+                is TopicContent.Extracted -> content.plain
+                else -> null
+            }
+        // An optimistic UI echo can precede persistence; zero unread on the old message is insufficient.
+        if (latestMessage == expectedMessage && activity.unreadMessageCount == 0L) return
         delay(500.milliseconds)
     }
-    error("Reading the room did not clear its unread messages")
+    error("Expected latest room message to be persisted and read")
 }
 
 private suspend fun sendActivityMessages(
@@ -216,7 +220,7 @@ private suspend fun scenarioOpenActivityContext(driver: AppTestDriver, data: Act
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     driver.assertVisibleByText(data.latestMessage)
-    waitUntilRoomRead(data)
+    waitUntilRoomRead(data, data.latestMessage)
     driver.navigateBack()
     driver.assertVisibleByText("Unread rooms")
     driver.assertVisibleByTextContaining(pinnedTopic)
@@ -250,48 +254,52 @@ private suspend fun preparePrivateActivityScenario(
     }
 }
 
-fun testRoomActivityRefreshByHelper(testName: String, target: AppAppiumHelper, platform: PlatformAppiumHelper) =
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testRoomActivityRefreshByHelper() =
     runAppiumBlockingTest {
-        platform.runTest(
-            testName = testName,
-            target = target,
-            setup = { ports -> AppiumTestSetup(prepareActivityScenario { target.createAuthenticatedSession(ports) }) },
-        ) { scope, data ->
-            try {
-                val driver = scope.driver
-                scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
-                driver.dismissDialog()
-                driver.clickByText("Rooms")
-                driver.assertVisibleByTextContaining(data.latestMessage)
-                driver.assertVisibleByText("3")
-                val activity =
-                    data.viewer.sessionManager.getUserRooms(
-                        PaginationQuery(),
-                    ).getOrThrow().activities.single { it.room.id == data.roomId }
-                data.viewer.sessionManager.addReadLog(
-                    UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
-                ).getOrThrow()
-                driver.refreshList()
-                driver.assertVisibleByTextContaining(data.latestMessage)
-                driver.assertNotVisibleByText("3")
-                if (driver is AndroidAppTestDriver) {
-                    driver.assertUnreadRoomsIndicator(false)
-                } else if (driver is WasmAppTestDriver) {
-                    driver.assertUnreadRoomsIndicator(false)
-                } else {
-                    driver.assertNotVisibleByText("Unread rooms")
-                }
-            } finally {
-                data.viewer.sessionManager.client.close()
+    platformHelper.runTest(
+        testName = testName,
+        target = targetHelper,
+        setup = { ports ->
+            AppiumTestSetup(
+                prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) },
+            )
+        },
+    ) { scope, data ->
+        try {
+            val driver = scope.driver
+            scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
+            driver.dismissDialog()
+            driver.clickByText("Rooms")
+            driver.assertVisibleByTextContaining(data.latestMessage)
+            driver.assertVisibleByText("3")
+            val activity =
+                data.viewer.sessionManager.getUserRooms(
+                    PaginationQuery(),
+                ).getOrThrow().activities.single { it.room.id == data.roomId }
+            data.viewer.sessionManager.addReadLog(
+                UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
+            ).getOrThrow()
+            driver.refreshList()
+            driver.assertVisibleByTextContaining(data.latestMessage)
+            driver.assertNotVisibleByText("3")
+            if (driver is AndroidAppTestDriver) {
+                driver.assertUnreadRoomsIndicator(false)
+            } else if (driver is WasmAppTestDriver) {
+                driver.assertUnreadRoomsIndicator(false)
+            } else {
+                driver.assertNotVisibleByText("Unread rooms")
             }
+        } finally {
+            data.viewer.sessionManager.client.close()
         }
     }
+}
 
 private fun AppTestDriver.resizeActivityViewport(width: Int, height: Int) {
     when (this) {
         is DesktopAppTestDriver -> resizeWindow(width, height)
         is WasmAppTestDriver -> resizeViewport(width, height)
-        else -> error("The current test platform does not support window resizing")
+        else -> error("The current test platformHelper does not support window resizing")
     }
 }
 

@@ -3,6 +3,7 @@
  */
 
 plugins {
+    id("test-artifact-reports")
     `java-library`
     alias(libs.plugins.kotlinJvm)
 }
@@ -19,6 +20,7 @@ kotlin {
 val desktopBridgeLibraries by configurations.creating
 
 dependencies {
+    api(projects.dev.testInfrastructure)
     implementation(libs.asm)
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.jna.platform)

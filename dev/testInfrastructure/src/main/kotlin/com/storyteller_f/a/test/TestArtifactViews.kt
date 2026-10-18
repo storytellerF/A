@@ -2,7 +2,7 @@
  * This is a private project. All rights reserved.
  */
 
-package com.storyteller_f.a.dev.appium
+package com.storyteller_f.a.test
 
 import org.apache.commons.compress.archivers.ArchiveInputStream
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -17,7 +17,7 @@ private const val ARCHIVE_ENTRY_LIMIT = 100
 private const val ARCHIVE_BYTE_LIMIT = 8 * 1024 * 1024
 
 /** Static HTML previews work with ordinary file servers and do not execute collected markup. */
-internal fun renderAppiumArtifacts(directory: File): String {
+fun renderTestArtifacts(directory: File): String {
     val files =
         directory.walkTopDown().onEnter { it.name != VIEW_DIRECTORY }
             .filter { it.isFile && it.name != "index.html" }.sortedBy { it.path }.toList()
@@ -108,7 +108,7 @@ private fun renderText(bytes: ByteArray): String {
     return "$notice<pre>$content</pre>"
 }
 
-private fun encodeArtifactPath(path: Path): String =
+internal fun encodeArtifactPath(path: Path): String =
     path.joinToString("/") { segment ->
     java.net.URLEncoder.encode(segment.toString(), Charsets.UTF_8).replace("+", "%20")
 }

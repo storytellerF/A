@@ -6,19 +6,17 @@ package com.storyteller_f.a.dev.appium
 
 import kotlin.test.Test
 
-class PanelDesktopAppiumTest : AppiumTestBase() {
-    private val targetHelper = PanelAppiumHelper()
-    private val platformHelper = DesktopAppiumHelper()
+class PanelDesktopAppiumTest :
+    AppiumTestBase<PanelAppiumHelper, DesktopAppiumHelper>(
+        PanelAppiumHelper(),
+        DesktopAppiumHelper(),
+    ) {
+    @Test
+    fun `test explicit sign out survives restart`() = testPanelSignoutPersistenceByHelper()
 
     @Test
-    fun `test explicit sign out survives restart`() =
-        testPanelSignoutPersistenceByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test sign in survives restart and revocation requires explicit login`() = testPanelSigninLifecycleByHelper()
 
     @Test
-    fun `test sign in survives restart and revocation requires explicit login`() =
-        testPanelSigninLifecycleByHelper(name.methodName, targetHelper, platformHelper)
-
-    @Test
-    fun `test panel sign in by injected private session`() =
-        testPanelInjectedSessionByHelper(name.methodName, targetHelper, platformHelper)
+    fun `test panel sign in by injected private session`() = testPanelInjectedSessionByHelper()
 }

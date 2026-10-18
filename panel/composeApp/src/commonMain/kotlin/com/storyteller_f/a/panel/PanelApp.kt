@@ -54,6 +54,7 @@ import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -178,6 +179,9 @@ fun App() {
 
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    LaunchedEffect(panelAccountInstance.isAlreadySign) {
+        if (!panelAccountInstance.isAlreadySign) drawerState.close()
+    }
     val controller = panelAccountInstance.controller
     val task = panelAccountInstance.task
     val nav =
@@ -286,9 +290,10 @@ internal fun calculatePanelPaneDirective(contentSize: DpSize, windowPosture: Pos
 @Composable
 private fun PanelDrawer(scope: CoroutineScope, drawerState: DrawerState, nav: PanelNav, permanent: Boolean) {
     val scrollContent: @Composable ColumnScope.() -> Unit = {
-        Column(Modifier.verticalScroll(rememberScrollState())) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             PanelDrawerContent(scope, drawerState, nav)
         }
+        PanelSignoutEntry(scope)
     }
     if (permanent) {
         PermanentDrawerSheet(content = scrollContent)
@@ -350,7 +355,6 @@ private fun PanelDrawerContent(scope: CoroutineScope, drawerState: DrawerState, 
         stringResource(Res.string.worker_task_configurations),
         onNavigate(scope, drawerState) { nav.gotoWorkerTasks() },
     )
-    PanelSignoutEntry(scope)
 }
 
 @Composable

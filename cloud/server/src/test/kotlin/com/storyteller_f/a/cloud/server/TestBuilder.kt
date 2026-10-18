@@ -6,7 +6,6 @@ package com.storyteller_f.a.cloud.server
 
 import com.github.vertical_blank.sqlformatter.SqlFormatter
 import com.perraco.utils.SnowflakeFactory
-import com.storyteller_f.a.backend.core.ContainerImages
 import com.storyteller_f.a.backend.core.loadAvif
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.client.core.AuthKey
@@ -28,6 +27,10 @@ import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
 import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.buildBackendFromEnv
+import com.storyteller_f.a.test.createTestArtifactDirectory
+import com.storyteller_f.a.test.recordTestArtifacts
+import com.storyteller_f.a.test.testArtifactRoot
+import com.storyteller_f.a.test.useBaseServiceFixture
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -59,24 +62,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.containers.PostgreSQLContainer
-import org.testcontainers.containers.wait.strategy.Wait
-import org.testcontainers.utility.DockerImageName
 import java.io.File
 import java.net.ServerSocket
 import java.net.SocketTimeoutException
-import java.time.Duration
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 import com.storyteller_f.a.cloud.ws.module as wsModule
 
 private const val TEST_WS_URL = "ws://localhost/ws"
 private const val TEST_SESSION_SECRET = "test-session-secret"
-private const val FILESYSTEM_PORT = 8820
-private const val LUCENE_PORT = 8821
 
 private typealias TestRoomReceiver = suspend (
     RoomFrame,
@@ -96,98 +92,54 @@ class TestMate(val applicationTestBuilder: ApplicationTestBuilder, val workerBac
 
 @OptIn(ExperimentalUuidApi::class)
 fun test(overrideEnv: Map<String, String> = emptyMap(), block: suspend TestMate.() -> Unit) {
-    val uuid = Uuid.random().toHexString()
-    val logPath = File("build/test/session/$uuid/logs").canonicalPath
-    System.setProperty("LOG_PATH", logPath)
+    val testFrame =
+        Exception().stackTrace.first { frame ->
+            frame.className.startsWith("com.storyteller_f.a.cloud.server.") &&
+                Class.forName(frame.className).declaredMethods.any { method ->
+                    method.name == frame.methodName && method.isAnnotationPresent(Test::class.java)
+                }
+        }
+    val methodName = testFrame.methodName
+    val reportDirectory =
+        createTestArtifactDirectory(
+            testArtifactRoot(),
+            testFrame.className.substringAfterLast('.'),
+            methodName,
+        )
+    System.setProperty("LOG_PATH", reportDirectory.resolve("logs").canonicalPath)
     setupKmpLogger()
     SnowflakeFactory.setMachine(0)
     loadCryptoLibIfNeed()
     loadAvif()
-    val traceElements = Exception().stackTrace
-    val methodNameIndex =
-        traceElements.indexOfFirst {
-            it.fileName != "TestBuilder.kt"
+    Napier.i { "start test `$methodName`" }
+    runBlocking {
+        recordTestArtifacts(reportDirectory, testFrame.className.substringAfterLast('.'), methodName) {
+            startTestContainerTest(
+                reportDirectory,
+                mapOf(
+                    "SESSION_SECRET" to TEST_SESSION_SECRET,
+                    "METHOD_NAME" to methodName,
+                ) + overrideEnv,
+                block,
+            )
         }
-    if (methodNameIndex < 0) {
-        error("test not found")
     }
-    val methodName = traceElements[methodNameIndex + 1].methodName
-    Napier.i {
-        "start test `$methodName` $uuid"
-    }
-    System.setProperty("api.version", "1.44")
-    startTestContainerTest(
-        uuid,
-        mapOf(
-            "SESSION_SECRET" to TEST_SESSION_SECRET,
-            "METHOD_NAME" to methodName,
-        ) + overrideEnv,
-        block,
-    )
     Napier.i {
         "test done `$methodName`"
     }
 }
 
-private fun startTestContainerTest(uuid: String, overrideEnv: Map<String, String>, block: suspend TestMate.() -> Unit) {
-    runBlocking {
-        val env = mutableMapOf<String, String>()
-        usePostgresqlTestContainer(env) {
-            useFilesystemTestContainer(env) {
-                useLuceneTestContainer(env) {
-                    useSigninRedisContainer(env) { doTest(uuid, env + overrideEnv, block) }
-                }
-            }
-        }
+private suspend fun startTestContainerTest(
+    reportDirectory: File,
+    overrideEnv: Map<String, String>,
+    block: suspend TestMate.() -> Unit,
+) {
+    useBaseServiceFixture(reportDirectory.resolve("logs/containers")) { services ->
+        doTest(reportDirectory, services.hostEnvironment + overrideEnv, block)
     }
 }
 
-private suspend fun usePostgresqlTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    PostgreSQLContainer(ContainerImages.POSTGRESQL).apply {
-        withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
-    }.use { container ->
-        container.start()
-        env["DATABASE_URI"] =
-            "r2dbc:postgresql://${container.host}:${container.firstMappedPort}/${container.databaseName}"
-        env["DATABASE_DRIVER"] = "postgresql"
-        env["DATABASE_USER"] = container.username
-        env["DATABASE_PASS"] = container.password
-        block()
-    }
-}
-
-private suspend fun useFilesystemTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    GenericContainer(DockerImageName.parse("a-filesystem:latest")).apply {
-        withEnv("FILESYSTEM_PUBLIC_URL", "http://filesystem:8822")
-        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
-        withExposedPorts(FILESYSTEM_PORT, 8822)
-        waitingFor(
-            Wait.forHttp("/health").forPort(FILESYSTEM_PORT).withStartupTimeout(Duration.ofSeconds(30)),
-        )
-    }.use { container ->
-        container.start()
-        env["MEDIA_SERVICE"] = "filesystem"
-        env["FILESYSTEM_RPC_URL"] =
-            "ws://${container.host}:${container.getMappedPort(FILESYSTEM_PORT)}/rpc"
-        env["FILESYSTEM_PUBLIC_URL"] = "http://${container.host}:${container.getMappedPort(8822)}"
-        block()
-    }
-}
-
-private suspend fun useLuceneTestContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {
-        withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))
-        withExposedPorts(LUCENE_PORT)
-        waitingFor(Wait.forHttp("/health").forPort(LUCENE_PORT).withStartupTimeout(Duration.ofSeconds(30)))
-    }.use { container ->
-        container.start()
-        env["SEARCH_SERVICE"] = "lucene"
-        env["LUCENE_RPC_URL"] = "ws://${container.host}:${container.getMappedPort(LUCENE_PORT)}/rpc"
-        block()
-    }
-}
-
-private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
+private fun doTest(reportDirectory: File, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
     testApplication {
         environment {
             config =
@@ -215,7 +167,7 @@ private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMa
                 val task = CompletableDeferred<Unit>()
                 val job =
                     launch(Dispatchers.IO) {
-                        receiveExplainResult(task, port, uuid)
+                        receiveExplainResult(task, port, reportDirectory)
                     }
                 task.await()
                 testMate.block()
@@ -227,7 +179,7 @@ private fun doTest(uuid: String, env: Map<String, String>, block: suspend TestMa
     }
 }
 
-private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: Int, uuid: String) {
+private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: Int, reportDirectory: File) {
     withContext(Dispatchers.IO) {
         ServerSocket(port).apply {
             soTimeout = 1000
@@ -240,7 +192,7 @@ private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: 
                         socket.getInputStream().bufferedReader().use {
                             val explainResult =
                                 commonJson.decodeFromString<ExplainResult>(it.readText())
-                            saveDatabaseExplainResult(explainResult, uuid)
+                            saveDatabaseExplainResult(explainResult, reportDirectory)
                         }
                     }
                 } catch (_: SocketTimeoutException) {
@@ -261,14 +213,15 @@ private suspend fun receiveExplainResult(task: CompletableDeferred<Unit>, port: 
     }
 }
 
-fun saveDatabaseExplainResult(explainResult: ExplainResult, uuid: String) {
+fun saveDatabaseExplainResult(explainResult: ExplainResult, reportDirectory: File) {
     val dialect = explainResult.dialect
     val statements = explainResult.sql
     val result = explainResult.result
     val stackTraceString = explainResult.stackTraceString
     val file =
         File(
-            "./build/test/session/$uuid/$dialect/${extractTableNames(
+            reportDirectory,
+            "explain/$dialect/${extractTableNames(
                 statements,
             ).joinToString("/")}/${md5(statements)}.explain",
         )
@@ -452,13 +405,3 @@ suspend fun <R1, R2> TestMate.loginPanelSession(
 suspend fun <R> TestMate.withWorkerBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
 
 suspend fun <R> TestMate.withCliBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
-
-private suspend fun useSigninRedisContainer(env: MutableMap<String, String>, block: suspend () -> Unit) {
-    GenericContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
-        withExposedPorts(6379)
-    }.use { container ->
-        container.start()
-        env["REDIS_ENDPOINT"] = "${container.host}:${container.getMappedPort(6379)}"
-        block()
-    }
-}
