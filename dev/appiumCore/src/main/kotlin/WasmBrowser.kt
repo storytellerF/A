@@ -8,7 +8,6 @@ import org.openqa.selenium.Dimension
 import org.openqa.selenium.WebDriver
 import org.openqa.selenium.chrome.ChromeDriver
 import org.openqa.selenium.chrome.ChromeOptions
-import org.openqa.selenium.edge.EdgeDriver
 import org.openqa.selenium.edge.EdgeOptions
 import org.openqa.selenium.firefox.FirefoxDriver
 import org.openqa.selenium.firefox.FirefoxOptions
@@ -39,10 +38,9 @@ enum class WasmBrowser {
                     },
                 )
 
-            // Edge otherwise opens MSN; WebDriver waits for that navigation before the first command.
             EDGE ->
-                EdgeDriver(
-                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize) + "about:blank").also {
+                createBlankEdgeDriver(
+                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize)).also {
                         if (binary != null) it.setBinary(binary.canonicalPath)
                         it.setExperimentalOption("prefs", mapOf("intl.accept_languages" to "en-US,en"))
                     },

@@ -19,6 +19,7 @@ suspend fun testWasmProfilePersistence(browserType: WasmBrowser, distribution: F
         browserType.withProfile { profile ->
             val first = browserType.createDriver(profile, Dimension(500, 800))
             try {
+                assertEdgeBlankStartup(browserType, first)
                 first.get(server.bootstrapUrl)
                 first.manage().addCookie(
                     Cookie.Builder("profile-test", "synthetic").path("/").isHttpOnly(true)
@@ -31,6 +32,7 @@ suspend fun testWasmProfilePersistence(browserType: WasmBrowser, distribution: F
             }
             val restarted = browserType.createDriver(profile, Dimension(500, 800))
             try {
+                assertEdgeBlankStartup(browserType, restarted)
                 restarted.get(server.bootstrapUrl)
                 val cookie = restarted.manage().getCookieNamed("profile-test")
                 assertEquals("synthetic", cookie?.value)
@@ -44,6 +46,13 @@ suspend fun testWasmProfilePersistence(browserType: WasmBrowser, distribution: F
                 restarted.quit()
             }
         }
+    }
+}
+
+private fun assertEdgeBlankStartup(browserType: WasmBrowser, browser: WebDriver) {
+    if (browserType == WasmBrowser.EDGE) {
+        assertEquals("about:blank", browser.currentUrl)
+        assertEquals(1, browser.windowHandles.size)
     }
 }
 
