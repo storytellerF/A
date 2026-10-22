@@ -29,10 +29,12 @@ class LinuxDriver extends BaseDriver {
     const args = Array.isArray(appArgs) ? appArgs : appArgs.split(' ').filter(Boolean);
 
     this._assertDisplay();
+    this._enableAccessibility();
 
     this.log.info(`Launching app: ${app} ${args.join(' ')}`);
     this.appProcess = spawn(app, args, {
       detached: false,
+      cwd: caps.appWorkingDir || undefined,
       env: { ...process.env, ...(caps.appEnv || {}) },
     });
     this.appPid = this.appProcess.pid;
@@ -217,13 +219,36 @@ class LinuxDriver extends BaseDriver {
     return name;
   }
 
+  async _elementGeometry(elementId) {
+    const { objectPath } = this._parseElement(elementId);
+    const result = await this._atspi({ action: 'element_geometry', pid: this.appPid, path: objectPath });
+    if (result.stale || result.error === 'app not found') {
+      throw new errors.StaleElementReferenceError(result.error);
+    }
+    if (!result.ok) throw new Error(result.error || 'Element geometry is unavailable');
+    return result;
+  }
+
+  async getElementRect(elementId) {
+    return (await this._elementGeometry(elementId)).rect;
+  }
+
   async getLocation(elementId) {
-    const { cx, cy } = this._parseElement(elementId);
-    return { x: cx, y: cy };
+    const { x, y } = await this.getElementRect(elementId);
+    return { x, y };
+  }
+
+  async getSize(elementId) {
+    const { width, height } = await this.getElementRect(elementId);
+    return { width, height };
   }
 
   async elementDisplayed(elementId) {
-    return true;
+    return (await this._elementGeometry(elementId)).visible;
+  }
+
+  async elementEnabled(elementId) {
+    return (await this._elementGeometry(elementId)).enabled;
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -239,7 +264,82 @@ class LinuxDriver extends BaseDriver {
     this._xdotool('key', 'alt+Left');
   }
 
+  // Window geometry belongs to the launched application, never the desktop's
+  // currently focused window (which could be another process or a dialog).
+  _currentWindowId() {
+    if (!Number.isSafeInteger(this.appPid) || this.appPid <= 0) {
+      throw new errors.NoSuchWindowError('No launched application window');
+    }
+    const output = this._windowTool('search', '--onlyvisible', '--pid', this.appPid);
+    const ids = [...new Set(output.trim().split(/\s+/).filter(Boolean))];
+    if (ids.length !== 1 || !/^\d+$/.test(ids[0])) {
+      throw new errors.NoSuchWindowError('Expected exactly one visible window owned by the application');
+    }
+    return ids[0];
+  }
+
+  _windowTool(...args) {
+    const result = spawnSync('xdotool', args.map(String), { encoding: 'utf8', timeout: 10000 });
+    if (result.error || result.status !== 0) {
+      throw new errors.UnknownError(`Application window command failed: ${args[0]}`);
+    }
+    return result.stdout;
+  }
+
+  _windowRect(id) {
+    const output = this._windowTool('getwindowgeometry', '--shell', id);
+    const values = Object.fromEntries([...output.matchAll(/^(X|Y|WIDTH|HEIGHT)=(-?\d+)$/gm)]
+      .map((match) => [match[1].toLowerCase(), Number(match[2])]));
+    if (Object.keys(values).length !== 4 || values.width <= 0 || values.height <= 0) {
+      throw new errors.NoSuchWindowError('Application window has no usable geometry');
+    }
+    return values;
+  }
+
+  async getWindowRect() {
+    return this._windowRect(this._currentWindowId());
+  }
+
+  async getWindowSize(handle = 'current') {
+    if (handle !== 'current') throw new errors.NoSuchWindowError('Only the current application window is supported');
+    const { width, height } = await this.getWindowRect();
+    return { width, height };
+  }
+
+  async setWindowSize(width, height, handle = 'current') {
+    if (handle !== 'current') throw new errors.NoSuchWindowError('Only the current application window is supported');
+    return this.setWindowRect(null, null, width, height);
+  }
+
+  async setWindowRect(x, y, width, height) {
+    for (const [name, value] of Object.entries({ x, y, width, height })) {
+      if (value != null && (!Number.isSafeInteger(value) ||
+          ((name === 'width' || name === 'height') && value <= 0))) {
+        throw new errors.InvalidArgumentError(`Invalid window ${name}`);
+      }
+    }
+    const id = this._currentWindowId();
+    const current = this._windowRect(id);
+    if (width != null || height != null) {
+      this._windowTool('windowsize', '--sync', id, width ?? current.width, height ?? current.height);
+    }
+    if (x != null || y != null) {
+      this._windowTool('windowmove', '--sync', id, x ?? current.x, y ?? current.y);
+    }
+    return this._windowRect(id);
+  }
+
   // ── Page source ───────────────────────────────────────────────────────────
+
+  async getScreenshot() {
+    const result = await this._atspi({ action: 'screenshot' });
+    const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    if (!result.ok || typeof result.data !== 'string' ||
+        !Buffer.from(result.data, 'base64').subarray(0, 8).equals(signature)) {
+      throw new errors.UnknownError(`Desktop screenshot failed: ${result.error || 'invalid PNG'}`);
+    }
+    return result.data;
+  }
 
   async getPageSource() {
     const result = await this._atspi({ action: 'page_source', pid: this.appPid });
@@ -270,6 +370,17 @@ class LinuxDriver extends BaseDriver {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  _enableAccessibility() {
+    // AT clients activate the native AccessKit provider through the session bus.
+    const result = spawnSync('gdbus', [
+      'call', '--session', '--dest', 'org.a11y.Bus', '--object-path', '/org/a11y/bus',
+      '--method', 'org.freedesktop.DBus.Properties.Set', 'org.a11y.Status', 'IsEnabled', '<true>',
+    ], { encoding: 'utf8', timeout: 10000 });
+    if (result.error || result.status !== 0) {
+      throw new Error(`Cannot enable session accessibility: ${result.error?.message || result.stderr}`);
+    }
+  }
 
   _assertDisplay() {
     const result = this._displayInfo();

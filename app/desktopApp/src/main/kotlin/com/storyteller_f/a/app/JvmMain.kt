@@ -6,8 +6,6 @@ package com.storyteller_f.a.app
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
 import com.storyteller_f.a.app.common.Downloader
 import com.storyteller_f.a.app.common.DownloaderImpl
 import com.storyteller_f.a.app.common.ExternalUriHandler
@@ -17,6 +15,7 @@ import com.storyteller_f.a.app.common.UploaderImpl
 import com.storyteller_f.a.app.utils.AppPlatformImpl
 import com.storyteller_f.a.app.utils.appPlatformImpl
 import com.storyteller_f.a.client.compose_core.components.ConstPlayItem
+import com.storyteller_f.a.client.compose_core.components.DesktopWindow
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlaySession
 import com.storyteller_f.a.client.compose_core.components.LocalMediaPlayerService
 import com.storyteller_f.a.client.compose_core.components.MediaPlaySession
@@ -26,12 +25,13 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.utils.safeMessage
+import dev.nucleusframework.application.NucleusBackend
+import dev.nucleusframework.application.nucleusApplication
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import java.awt.BorderLayout
 import java.awt.Button
-import java.awt.Desktop
 import java.awt.Dialog
 import java.awt.Frame
 import java.awt.TextArea
@@ -79,7 +79,7 @@ private val jvmMediaPlayerService =
 fun main(args: Array<String>) {
     appPlatformImpl = JvmAppPlatformImpl
     setupKmpLogger()
-    initForJvmMain(args) { exitCode -> exitProcess(exitCode) }
+    initForJvmMain { exitCode -> exitProcess(exitCode) }
     loadCryptoLibIfNeed()
     val taskRegister = SimpleTaskRegister(GlobalScope)
     val provider =
@@ -88,8 +88,9 @@ fun main(args: Array<String>) {
 
             override suspend fun getUploader(): Uploader = UploaderImpl(uiViewModel, taskRegister)
         }
-    application {
-        Window(
+    nucleusApplication(args = args, backend = NucleusBackend.Tao, enableSingleInstance = false) {
+        onDeepLink { uri -> ExternalUriHandler.onNewUri(uri.toString()) }
+        DesktopWindow(
             onCloseRequest = ::exitApplication,
             title = "A",
         ) {
@@ -104,7 +105,7 @@ fun main(args: Array<String>) {
     }
 }
 
-private fun initForJvmMain(args: Array<String>, exitApplication: (Int) -> Unit) {
+private fun initForJvmMain(exitApplication: (Int) -> Unit) {
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
         Napier.e(e) {
             "uncaught exception"
@@ -121,15 +122,6 @@ private fun initForJvmMain(args: Array<String>, exitApplication: (Int) -> Unit) 
             add(button, BorderLayout.SOUTH)
             setSize(300, 300)
             isVisible = true
-        }
-    }
-    if (System.getProperty("os.name").indexOf("Mac") > -1) {
-        Desktop.getDesktop().setOpenURIHandler { uri ->
-            ExternalUriHandler.onNewUri(uri.uri.toString())
-        }
-    } else {
-        args.getOrNull(0)?.let {
-            ExternalUriHandler.onNewUri(it)
         }
     }
 }

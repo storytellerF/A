@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "workspace": "../..",
+  "environment": {
+    "APPIUM_DESKTOP_PLATFORM": "Linux"
+  },
+  "appium": {
+    "cleanup_roots": [
+      "app/desktopAppium/build/test/appium/private",
+      "panel/desktopAppium/build/test/appium/private"
+    ],
+    "launch": {
+      "kind": "java-argfile",
+      "inputs": [
+        "appium.session.file"
+      ],
+      "outputs": [
+        "appium.desktop.pid.file",
+        "appium.desktop.log"
+      ],
+      "directories": [
+        "java.util.prefs.userRoot",
+        "app.protected.storage.dir",
+        "appium.desktop.tmpdir",
+        "java.io.tmpdir"
+      ],
+      "services": [
+        "appium.server.url",
+        "appium.ws.url"
+      ]
+    }
+  },
+  "requirements": "desktop-requirements.json"
+}

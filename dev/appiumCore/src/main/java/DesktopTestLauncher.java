@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Keeps the agent discovery directory intact until premain finishes, then isolates app data. */
+/** Runs the prebuilt desktop entry point with isolated state, PID and file logging. */
 public final class DesktopTestLauncher {
     private DesktopTestLauncher() {}
 

@@ -144,6 +144,9 @@ kotlin {
             implementation(libs.ui.test)
         }
         jvmMain.dependencies {
+            implementation(libs.androidx.navigationevent.compose)
+            implementation(libs.nucleus.application)
+            implementation(libs.nucleus.decorated.window.tao)
             implementation(libs.jna.platform)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)

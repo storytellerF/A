@@ -90,6 +90,7 @@ import com.storyteller_f.a.client.compose_core.utils.restoreFromStorage
 import com.storyteller_f.a.client.compose_core.utils.signinActivity
 import com.storyteller_f.a.client.core.ClientSessionState
 import com.storyteller_f.a.client.core.ConstPassHolder
+import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.UserPass
@@ -483,11 +484,16 @@ sealed interface IAccountInstance {
             scope.launch {
                 processEvent(database, events)
             }
-            scope.launch {
-                if (passHolder.currentUserPass != null && sessionManager.model.userHandler.data.value == null) {
-                    sessionManager.login()
-                }
-            }
+        }
+
+        /** Authenticates before this account is published or starts protected background requests. */
+        suspend fun authenticate() {
+            sessionManager.login()
+            val failure = sessionManager.model.userHandler.state.value as? LoadingState.Error
+            if (failure != null) throw failure.e
+            checkNotNull(
+                sessionManager.model.userHandler.data.value,
+            ) { "Child account authentication did not complete" }
             scope.launch {
                 val jobs = sessionManager.startBackgroundTask()
                 try {
@@ -561,10 +567,11 @@ class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, v
         instance.value = IAccountInstance.None(viewModelScope, httpUrl, wsServerUrl)
     }
 
-    fun switchUser(main: IAccountInstance.Regular, rawUserPass: RawUserPass) {
+    suspend fun switchUser(main: IAccountInstance.Regular, rawUserPass: RawUserPass) {
         val old = instance.value
-        if (old is IAccountInstance.Child) old.close()
-        instance.value =
+        val currentMain = if (old is IAccountInstance.Child) old.main else old
+        check(currentMain === main) { "Main account changed before child authentication" }
+        val child =
             IAccountInstance.Child(
                 viewModelScope,
                 rawUserPass.rawUSerPass.address,
@@ -573,6 +580,13 @@ class UIViewModel(val viewModelScope: CoroutineScope, val wsServerUrl: String, v
                 main,
                 ConstPassHolder(rawUserPass),
             )
+        try {
+            child.authenticate()
+            check(instance.compareAndSet(old, child)) { "Active account changed during child authentication" }
+        } finally {
+            if (instance.value !== child) child.close()
+        }
+        if (old is IAccountInstance.Child) old.close()
     }
 
     fun login(address: String, data: String, signature: String, userPass: UserPass, userInfo: UserInfo? = null) {

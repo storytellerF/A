@@ -265,6 +265,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
+        platform.requireE2eAvailable()
         val report = AppiumTestReport(target.suiteName, "desktop-${platform.name.lowercase()}", testName)
         report.run {
             val browserCapture =
@@ -344,7 +345,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                         DesktopAppiumFailureDumper.Context(
                             outputDir = report.directory.resolve("diagnostics"),
                             appLabel = config.appLabel,
-                            sessionFile = sessionFile,
                             logDir = logDir,
                             appLogFile = appLogFile,
                         ),
@@ -358,7 +358,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                     report.captureDriver(activeDriver)
                     report.collect("Driver shutdown") { activeDriver.quit() }
                 }
-                report.collect("Launch script cleanup") { launchScript.delete() }
+                report.collect("Launch script cleanup") { launchScript.deleteRecursively() }
             }
         }
     }
@@ -391,22 +391,20 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         val browserCapture: DesktopBrowserCapture?,
     )
 
-    private fun buildLaunchScript(context: LaunchScriptContext): File {
+    private suspend fun buildLaunchScript(context: LaunchScriptContext): File {
         val runtimeDir = context.runtimeDir
         val appLogFile = context.appLogFile
         val runtimeClasspath = context.runtimeClasspath
         val config = context.config
         val browserCapture = context.browserCapture
         val javaExec = resolveDesktopJava(platform)
-        val atspiClasspath =
+        val launchClasspath =
             listOfNotNull(
                 runtimeClasspath,
-                "/usr/share/java/java-atk-wrapper.jar".takeIf { platform == DesktopTestPlatform.Linux },
                 File(
                     DesktopTestLauncher::class.java
                         .protectionDomain.codeSource.location.toURI(),
-                ).canonicalPath
-                    .takeIf { platform == DesktopTestPlatform.Windows },
+                ).canonicalPath,
             )
                 .joinToString(File.pathSeparator)
         val prefsDir = runtimeDir.resolve("prefs").also { it.mkdirs() }
@@ -415,11 +413,11 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         val script =
             File.createTempFile(
                 config.scriptPrefix,
-                if (platform == DesktopTestPlatform.Windows) ".args" else ".sh",
+                if (platform != DesktopTestPlatform.Mac) ".args" else ".sh",
                 scriptDir,
             )
-        val arguments = buildLaunchArguments(context, atspiClasspath, prefsDir, tmpDir)
-        if (platform == DesktopTestPlatform.Windows) {
+        val arguments = buildLaunchArguments(context, launchClasspath, prefsDir, tmpDir)
+        if (platform != DesktopTestPlatform.Mac) {
             script.writeText(buildJavaArgumentFile(arguments))
             return script
         }
@@ -439,7 +437,11 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
             ),
         )
         script.setExecutable(true)
-        return script
+        return if (platform == DesktopTestPlatform.Mac) {
+            buildDesktopMacBundle(script, arguments, javaExec).also { signDesktopMacBundle(it) }
+        } else {
+            script
+        }
     }
 
     private fun buildLaunchArguments(
@@ -456,8 +458,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
             buildList {
                 add("-Duser.language=en")
                 add("-Duser.country=US")
-                add("--add-opens=java.desktop/sun.awt=ALL-UNNAMED")
-                add("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED")
                 add("-Dappium.server.url=http://127.0.0.1:${ports.server}")
                 if (config.includeWsUrl) {
                     add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
@@ -469,23 +469,15 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                     add("-Djava.io.tmpdir=${tmpDir.canonicalPath}")
                 }
                 add("-XX:ErrorFile=${appLogFile.parentFile.canonicalPath}/hs_err_pid%p.log")
-                if (platform == DesktopTestPlatform.Linux) {
-                    add("-Djavax.accessibility.assistive_technologies=org.GNOME.Accessibility.AtkWrapper")
-                }
                 if (platform == DesktopTestPlatform.Windows) {
-                    val bridgeAgent =
-                        requireNotNull(System.getProperty("desktop.windows.bridge.agent")) {
-                            "Desktop Windows bridge agent is not configured; run the desktop appiumTest task"
-                        }
-                    add("-javaagent:$bridgeAgent")
                     add("-Djava.util.prefs.PreferencesFactory=${DesktopTestPreferences::class.java.name}")
-                    add("-Dappium.desktop.tmpdir=${tmpDir.canonicalPath}")
-                    add("-Dappium.desktop.log=${appLogFile.canonicalPath}")
-                    add("-Dappium.desktop.pid.file=${sessionFile.canonicalPath}.pid")
                 }
+                add("-Dappium.desktop.tmpdir=${tmpDir.canonicalPath}")
+                add("-Dappium.desktop.log=${appLogFile.canonicalPath}")
+                add("-Dappium.desktop.pid.file=${sessionFile.canonicalPath}.pid")
                 add("-cp")
                 add(runtimeClasspath)
-                if (platform == DesktopTestPlatform.Windows) add(DesktopTestLauncher::class.java.name)
+                add(DesktopTestLauncher::class.java.name)
                 add(config.mainClassName)
             }
         return arguments

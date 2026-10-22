@@ -23,6 +23,9 @@ dependencies {
     implementation(projects.client.composeCore)
     implementation(projects.shared)
 
+    implementation(libs.foundation)
+    implementation(libs.nucleus.application)
+    implementation(libs.nucleus.decorated.window.tao)
     implementation(compose.desktop.currentOs)
     implementation(libs.kotlinx.coroutines.swing)
     implementation(libs.napier)

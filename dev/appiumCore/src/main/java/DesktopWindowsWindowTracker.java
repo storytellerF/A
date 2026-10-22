@@ -4,76 +4,51 @@
 
 package com.storyteller_f.a.dev.appium;
 
-import com.sun.jna.Pointer;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Function;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef.HWND;
-import com.sun.jna.ptr.IntByReference;
 import io.appium.java_client.AppiumDriver;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-/** Switch only between the launched JVM's native frame and its dialogs. */
+/** Uses guest-side window discovery and mutations, including for remote Appium. */
 public final class DesktopWindowsWindowTracker {
     private final AppiumDriver driver;
-    private final int processId;
-    private final HWND mainWindow;
-    private final int guiThreadId;
-    private String currentHandle;
+    private final long processId;
+    private final String mainHandle;
 
     public DesktopWindowsWindowTracker(AppiumDriver driver, long processId) {
         this.driver = driver;
-        this.processId = Math.toIntExact(processId);
-        currentHandle = driver.getWindowHandle();
-        mainWindow = new HWND(Pointer.createConstant(Long.parseUnsignedLong(currentHandle.substring(2), 16)));
-        IntByReference owner = new IntByReference();
-        guiThreadId = User32.INSTANCE.GetWindowThreadProcessId(mainWindow, owner);
-        if (owner.getValue() != this.processId) {
-            throw new IllegalStateException("DesktopDriver window does not belong to the launched test JVM");
-        }
+        this.processId = processId;
+        mainHandle = driver.getWindowHandle();
+        inspect(List.of(mainHandle));
     }
 
     public void synchronizeWindow() {
-        HWND foreground = User32.INSTANCE.GetForegroundWindow();
-        HWND target = belongsToApp(foreground) ? foreground : findDialogOrMainWindow();
-        String handle = "0x" + Long.toHexString(Pointer.nativeValue(target.getPointer()));
-        if (!handle.equals(currentHandle) || !belongsToApp(foreground)) {
-            driver.switchTo().window(handle);
-            currentHandle = handle;
-        }
+        List<Map<String, Object>> windows = windows();
+        Map<String, Object> state = inspect(windows.stream().map(window -> (String) window.get("handle")).toList());
+        List<?> owned = (List<?>) state.get("ownedHandles");
+        String foreground = (String) state.get("foregroundHandle");
+        String target = foreground != null ? foreground : windows.stream()
+                .filter(window -> !mainHandle.equals(window.get("handle")))
+                .map(window -> (String) window.get("handle"))
+                .filter(owned::contains)
+                .findFirst().orElse(mainHandle);
+        if (!owned.contains(target)) throw new IllegalStateException("Owned test window is no longer visible");
+        if (foreground == null || !target.equals(driver.getWindowHandle())) driver.switchTo().window(target);
     }
 
-    /** Java-agent roots cannot use DesktopDriver's UIA resize path. */
+    /** Resize the owned native window on the Appium host using its actual DPI. */
     public void resizeWindow(int width, int height) {
-        int dpi = NativeLibrary.getInstance("user32").getFunction("GetDpiForWindow", Function.ALT_CONVENTION)
-                .invokeInt(new Object[] {mainWindow});
-        if (dpi <= 0) throw new IllegalStateException("The owned test window has no DPI");
-        int physicalWidth = Math.round(width * dpi / 96.0f);
-        int physicalHeight = Math.round(height * dpi / 96.0f);
-        User32.INSTANCE.ShowWindow(mainWindow, 9);
-        if (!User32.INSTANCE.SetWindowPos(mainWindow, null, 0, 0, physicalWidth, physicalHeight, 0x0002 | 0x0004)) {
-            throw new IllegalStateException("Failed to resize the owned test window");
-        }
+        driver.executeScript("desktop: resizeWindow", Map.of(
+                "processId", processId, "handle", mainHandle, "width", width, "height", height));
     }
 
-    private HWND findDialogOrMainWindow() {
-        List<HWND> dialogs = new ArrayList<>();
-        User32.INSTANCE.EnumThreadWindows(guiThreadId, (window, ignored) -> {
-            if (belongsToApp(window) && User32.INSTANCE.IsWindowVisible(window)) {
-                char[] className = new char[256];
-                int length = User32.INSTANCE.GetClassName(window, className, className.length);
-                if (new String(className, 0, length).equals("SunAwtDialog")) dialogs.add(window);
-            }
-            return true;
-        }, null);
-        return dialogs.isEmpty() ? mainWindow : dialogs.getFirst();
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> windows() {
+        return (List<Map<String, Object>>) driver.executeScript("windows: getWindows");
     }
 
-    private boolean belongsToApp(HWND window) {
-        if (window == null) return false;
-        IntByReference owner = new IntByReference();
-        User32.INSTANCE.GetWindowThreadProcessId(window, owner);
-        return owner.getValue() == processId;
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> inspect(List<String> handles) {
+        return (Map<String, Object>) driver.executeScript("desktop: inspectWindows", Map.of(
+                "processId", processId, "mainHandle", mainHandle, "handles", handles));
     }
 }

@@ -1,5 +1,4 @@
 [versions]
-asm = "9.11"
 jna = "5.19.1"
 aboutlibrariesComposeM3 = "15.3.0"
 aboutlibrariesCore = "15.3.0"
@@ -21,7 +20,9 @@ compose-multiplatform-lifecycle = "2.11.0"
 compose-plugin = "1.12.1"
 composeHotReload = "1.2.0"
 composePdf = "2.0.0"
-composeNativeWebview = "1.0.0-beta-02"
+composeNativeWebview = "1.0.3"
+nucleus = "2.5.18"
+androidx-navigationevent = "1.1.2"
 connectivity = "2.5.3"
 connector = "3.3.5"
 coreSplashscreen = "1.2.0"
@@ -135,8 +136,10 @@ zoomimageComposeCoil3 = "1.7.0"
 webrtcJava = "0.16.0"
 
 [libraries]
+androidx-navigationevent-compose = { module = "androidx.navigationevent:navigationevent-compose", version.ref = "androidx-navigationevent" }
+nucleus-application = { module = "dev.nucleusframework:nucleus.nucleus-application", version.ref = "nucleus" }
+nucleus-decorated-window-tao = { module = "dev.nucleusframework:nucleus.decorated-window-tao", version.ref = "nucleus" }
 ktor-webrtc = { module = "io.ktor:ktor-client-webrtc", version.ref = "ktor" }
-asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibrariesCore" }
@@ -181,7 +184,7 @@ commons-imaging = { module = "org.apache.commons:commons-imaging", version.ref =
 commons-logging = { module = "commons-logging:commons-logging", version.ref = "commonsLogging" }
 components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "componentsResources" }
 compose-pdf = { module = "dev.zt64:compose-pdf", version.ref = "composePdf" }
-compose-native-webview = { module = "io.github.kdroidfilter:composewebview", version.ref = "composeNativeWebview" }
+compose-native-webview = { module = "dev.nucleusframework:composewebview", version.ref = "composeNativeWebview" }
 connectivity-compose = { module = "dev.jordond.connectivity:connectivity-compose", version.ref = "connectivity" }
 connectivity-compose-device = { module = "dev.jordond.connectivity:connectivity-compose-device", version.ref = "connectivity" }
 connectivity-compose-http = { module = "dev.jordond.connectivity:connectivity-compose-http", version.ref = "connectivity" }

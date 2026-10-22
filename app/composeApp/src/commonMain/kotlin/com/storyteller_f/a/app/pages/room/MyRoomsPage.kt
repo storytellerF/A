@@ -48,6 +48,7 @@ import com.storyteller_f.a.app.common.createJoinedRoomsViewModel
 import com.storyteller_f.a.app.pages.ActivityMessageContent
 import com.storyteller_f.a.app.pages.RememberUnreadBadgeRefresh
 import com.storyteller_f.a.app.pages.community.CommunityIconWithDialog
+import com.storyteller_f.a.app.pages.roomActivityDescription
 import com.storyteller_f.a.app.room_community
 import com.storyteller_f.a.app.room_members
 import com.storyteller_f.a.app.room_no_community
@@ -196,7 +197,10 @@ fun RoomRowContent(
     communityIcon: @Composable () -> Unit,
     activity: RoomActivityPreview? = null,
 ) {
-    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier.appiumSemantics(text = roomActivityDescription(roomInfo?.name.orEmpty(), activity)),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         roomIcon()
         Column(Modifier.weight(1f).padding(start = 8.dp, end = 12.dp)) {
             Text(

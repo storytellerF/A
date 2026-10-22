@@ -262,6 +262,9 @@ fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSignoutPersistence
         scenarioSignIn(scope.driver, data.pemPrivateKey)
         scope.driver.clickByText("Sign out")
         scope.driver.clickByText("Yes")
+        // Restart only after asynchronous sign-out has reached its observable completion state.
+        scope.driver.clickByDescription("avatar")
+        scope.driver.assertVisibleByText("Sign in")
         scope.restart()
         scope.driver.clickByDescription("avatar")
         scope.driver.assertVisibleByText("Sign in")

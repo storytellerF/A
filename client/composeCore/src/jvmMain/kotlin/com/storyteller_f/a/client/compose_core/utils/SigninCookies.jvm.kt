@@ -35,7 +35,7 @@ internal actual suspend fun readProtectedValue(key: String): String? =
             }
 
         Platform.isMac() ->
-            readSecret(listOf("security", "find-generic-password", "-s", "A-signin", "-a", name, "-w"))
+            MacKeychain.read("A-signin", name)
                 ?.let { Base64.decode(it.trim()).decodeToString() }
 
         else -> readSecret(listOf("secret-tool", "lookup", "application", "A-signin", "account", name))
@@ -52,10 +52,7 @@ internal actual suspend fun writeProtectedValue(key: String, value: String) =
             saveProtectedFile(name, Crypt32Util.cryptProtectData(value.encodeToByteArray()))
 
         Platform.isMac() ->
-            writeSecret(
-                listOf("security", "-i"),
-                "add-generic-password -U -s A-signin -a $name -w ${Base64.encode(value.encodeToByteArray())}\n",
-            )
+            MacKeychain.write("A-signin", name, Base64.encode(value.encodeToByteArray()))
 
         else ->
             writeSecret(
@@ -81,9 +78,12 @@ private fun saveProtectedFile(name: String, encrypted: ByteArray) {
     }
 }
 
-private fun credentialName(key: String) =
-    MessageDigest.getInstance("SHA-256").digest(key.encodeToByteArray())
-    .joinToString("") { "%02x".format(Locale.ROOT, it) }
+private fun credentialName(key: String): String {
+    val scope = System.getProperty("app.protected.storage.dir").takeIf { Platform.isMac() }
+    val scopedKey = if (scope == null) key else "$scope\u0000$key"
+    return MessageDigest.getInstance("SHA-256").digest(scopedKey.encodeToByteArray())
+        .joinToString("") { "%02x".format(Locale.ROOT, it) }
+}
 
 private suspend fun readSecret(command: List<String>): String? =
     coroutineScope {

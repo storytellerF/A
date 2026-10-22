@@ -41,8 +41,8 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.storyteller_f.a.client.asciidoc_parser.buildAsciidocPreviewHtml
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.utils.readCodeFence
-import io.github.kdroidfilter.webview.web.WebView
-import io.github.kdroidfilter.webview.web.rememberWebViewStateWithHTMLData
+import dev.nucleusframework.webview.web.WebView
+import dev.nucleusframework.webview.web.rememberWebViewStateWithHTMLData
 import kotlinx.coroutines.launch
 
 @Composable
@@ -137,6 +137,7 @@ private fun AsciidocPreviewCard(source: String, openPreview: () -> Unit) {
 private fun AsciidocPreviewDialog(html: String, previewTitle: String, onDismissRequest: () -> Unit) {
     val state = rememberWebViewStateWithHTMLData(data = html, mimeType = "text/html")
     state.webSettings.isJavaScriptEnabled = true
+    state.webSettings.desktopWebSettings.incognito = true
     BasicAlertDialog(onDismissRequest = onDismissRequest) {
         Surface(
             modifier =

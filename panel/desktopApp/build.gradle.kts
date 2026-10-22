@@ -20,8 +20,12 @@ kotlin {
 
 dependencies {
     implementation(projects.panel.composeApp)
+    implementation(projects.client.composeCore)
     implementation(projects.shared)
 
+    implementation(libs.foundation)
+    implementation(libs.nucleus.application)
+    implementation(libs.nucleus.decorated.window.tao)
     implementation(compose.desktop.currentOs)
     implementation(libs.napier)
 }
