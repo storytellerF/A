@@ -5,16 +5,38 @@ Called as a subprocess with JSON input/output.
 """
 import sys
 import json
+import base64
 import time
 import pyatspi
 
 
+class ApplicationGroup:
+    """One process can register multiple independent AT-SPI providers."""
+    name = "Application"
+    description = ""
+
+    def __init__(self, applications):
+        self.children = applications
+        self.childCount = len(applications)
+
+    def getRoleName(self):
+        return "application"
+
+    def getChildAtIndex(self, index):
+        return self.children[index]
+
+
 def get_app(app_pid):
     desktop = pyatspi.Registry.getDesktop(0)
-    for app in desktop:
-        if app and app.get_process_id() == app_pid:
-            return app
-    return None
+    applications = [app for app in desktop if app and app.get_process_id() == app_pid]
+    if not applications:
+        return None
+    return applications[0] if len(applications) == 1 else ApplicationGroup(applications)
+
+
+def node_identity(node):
+    # Object paths are unique only within one D-Bus connection, not one PID.
+    return node.app.bus_name + node.path
 
 
 def wait_for_app(app_pid, timeout=30):
@@ -69,7 +91,7 @@ def node_to_dict(node, depth=0, max_depth=20):
 
 def matches_label(value, expected):
     # Compose can expose the same semantic label more than once.
-    return value == expected or all(part.strip() == expected for part in value.split(","))
+    return value == expected or any(part.strip() == expected for part in value.split(","))
 
 
 def find_nodes(node, strategy, selector, results, max_results=10):
@@ -107,7 +129,7 @@ def find_nodes(node, strategy, selector, results, max_results=10):
         if selector == "//text-field":
             try:
                 state = node.getState()
-                matched = role == "text" and state.contains(pyatspi.STATE_EDITABLE)
+                matched = role in ("text", "entry", "password text") and state.contains(pyatspi.STATE_EDITABLE)
             except Exception:
                 matched = False
         elif m:
@@ -191,7 +213,7 @@ def find_by_path(node, object_path):
     if node is None or not object_path:
         return None
     try:
-        if node.path == object_path:
+        if not isinstance(node, ApplicationGroup) and node_identity(node) == object_path:
             if node.getState().contains(pyatspi.STATE_DEFUNCT):
                 return None
             return node
@@ -211,6 +233,25 @@ def find_by_path(node, object_path):
 def main():
     cmd = json.loads(sys.stdin.read())
     action = cmd["action"]
+
+    if action == "screenshot":
+        try:
+            import gi
+            gi.require_version("Gdk", "3.0")
+            from gi.repository import Gdk
+            window = Gdk.get_default_root_window()
+            if window is None:
+                raise RuntimeError("No desktop window is available")
+            pixels = Gdk.pixbuf_get_from_window(window, 0, 0, window.get_width(), window.get_height())
+            if pixels is None:
+                raise RuntimeError("Desktop pixels are unavailable")
+            success, data = pixels.save_to_bufferv("png", [], [])
+            if not success:
+                raise RuntimeError("Desktop PNG encoding failed")
+            print(json.dumps({"ok": True, "data": base64.b64encode(bytes(data)).decode("ascii")}))
+        except Exception as error:
+            print(json.dumps({"ok": False, "error": str(error)}))
+        return
 
     if action == "wait_for_app":
         app = wait_for_app(cmd["pid"], cmd.get("timeout", 30))
@@ -254,7 +295,7 @@ def main():
             cx, cy = get_center(node)
             elements.append({
                 "id": i,
-                "path": node.path,
+                "path": node_identity(node),
                 "name": node.name or "",
                 "role": node.getRoleName(),
                 "cx": cx,
@@ -290,7 +331,7 @@ def main():
             return
         index = cmd.get("index", 0)
         object_path = cmd.get("path")
-        target = next((node for node in results if node.path == object_path), None) if object_path else (
+        target = next((node for node in results if node_identity(node) == object_path), None) if object_path else (
             results[index] if len(results) > index else None
         )
         if not target:
@@ -299,6 +340,33 @@ def main():
         ok, action_name = perform_action(target)
         cx, cy = get_center(target)
         print(json.dumps({"ok": ok, "action": action_name, "cx": cx, "cy": cy}))
+
+    elif action == "element_geometry":
+        app = get_app(cmd["pid"])
+        target = find_by_path(app, cmd.get("path"))
+        if target is None:
+            print(json.dumps({"ok": False, "stale": True, "error": "element no longer exists"}))
+            return
+        try:
+            state = target.getState()
+            try:
+                component = target.queryComponent()
+            except NotImplementedError:
+                # Nonvisual/transient AT-SPI objects have no Component interface.
+                print(json.dumps({"ok": True, "rect": {"x": 0, "y": 0, "width": 0, "height": 0},
+                                  "visible": False, "enabled": state.contains(pyatspi.STATE_ENABLED)}))
+                return
+            bounds = component.getExtents(pyatspi.DESKTOP_COORDS)
+            print(json.dumps({
+                "ok": True,
+                "rect": {"x": bounds.x, "y": bounds.y, "width": bounds.width, "height": bounds.height},
+                "visible": state.contains(pyatspi.STATE_SHOWING) and bounds.width > 0 and bounds.height > 0,
+                "enabled": state.contains(pyatspi.STATE_ENABLED),
+            }))
+        except Exception as error:
+            stale = find_by_path(get_app(cmd["pid"]), cmd.get("path")) is None
+            print(json.dumps({"ok": False, "stale": stale,
+                              "error": "element no longer exists" if stale else str(error) or type(error).__name__}))
 
     elif action == "set_text":
         app = wait_for_app(cmd["pid"], cmd.get("timeout", 15))

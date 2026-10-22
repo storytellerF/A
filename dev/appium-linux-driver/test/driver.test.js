@@ -5,6 +5,50 @@ const test = require('node:test');
 const { LinuxDriver } = require('../lib/driver');
 const { errors } = require('@appium/base-driver');
 
+test('window sizing targets only the launched process and returns its actual geometry', async () => {
+  const driver = new LinuxDriver();
+  driver.appPid = 123;
+  const calls = [];
+  let width = 1280;
+  driver._windowTool = (...args) => {
+    calls.push(args);
+    if (args[0] === 'search') return '456\n';
+    if (args[0] === 'windowsize') { width = args[3]; return ''; }
+    if (args[0] === 'getwindowgeometry') return `X=10\nY=20\nWIDTH=${width}\nHEIGHT=800\n`;
+    throw new Error('Unexpected window command');
+  };
+  assert.deepEqual(await driver.setWindowSize(480, 800), { x: 10, y: 20, width: 480, height: 800 });
+  assert.deepEqual(calls[0], ['search', '--onlyvisible', '--pid', 123]);
+  assert.ok(calls.some(args => JSON.stringify(args) === JSON.stringify(['windowsize', '--sync', '456', 480, 800])));
+});
+
+test('ambiguous application windows cannot resize an arbitrary desktop window', async () => {
+  const driver = new LinuxDriver();
+  driver.appPid = 123;
+  driver._windowTool = (...args) => {
+    assert.equal(args[0], 'search');
+    return '456\n789\n';
+  };
+  await assert.rejects(driver.setWindowSize(480, 800), errors.NoSuchWindowError);
+});
+
+test('invalid window dimensions fail before touching the application', async () => {
+  const driver = new LinuxDriver();
+  driver._windowTool = () => { throw new Error('Unexpected window access'); };
+  await assert.rejects(driver.setWindowSize(-1, 800), errors.InvalidArgumentError);
+  await assert.rejects(driver.setWindowSize(480, 0), errors.InvalidArgumentError);
+  await assert.rejects(driver.setWindowSize(480, 800, 'foreign'), errors.NoSuchWindowError);
+});
+
+test('desktop screenshots return native PNG data and reject capture failures', async () => {
+  const driver = new LinuxDriver();
+  const image = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aC1cAAAAASUVORK5CYII=';
+  driver._atspi = async command => { assert.equal(command.action, 'screenshot'); return { ok: true, data: image }; };
+  assert.equal(await driver.getScreenshot(), image);
+  driver._atspi = async () => ({ ok: false, error: 'display disconnected' });
+  await assert.rejects(driver.getScreenshot(), /display disconnected/);
+});
+
 test('default implicit wait returns an empty lookup without polling', async () => {
   const driver = new LinuxDriver();
   let calls = 0;
@@ -142,4 +186,24 @@ test('dialog dismissal sends Escape without changing page-back behavior', async 
   await driver.back();
   assert.deepEqual(commands, [['key', 'Escape'], ['key', 'alt+Left']]);
   await assert.rejects(driver.execute('linux: unsupported'), errors.UnknownCommandError);
+});
+
+
+test('element geometry resolves saved identity and never returns a cached center', async () => {
+  const driver = new LinuxDriver();
+  driver.appPid = 123;
+  driver.elements.set('1', { objectPath: ':1.9/node', cx: 999, cy: 999 });
+  let rect = { x: 20, y: 30, width: 80, height: 40 };
+  driver._atspi = async command => {
+    assert.equal(command.path, ':1.9/node');
+    return { ok: true, rect, visible: true, enabled: false };
+  };
+  assert.deepEqual(await driver.getLocation('1'), { x: 20, y: 30 });
+  rect = { x: 40, y: 50, width: 100, height: 60 };
+  assert.deepEqual(await driver.getElementRect('1'), rect);
+  assert.deepEqual(await driver.getSize('1'), { width: 100, height: 60 });
+  assert.equal(await driver.elementDisplayed('1'), true);
+  assert.equal(await driver.elementEnabled('1'), false);
+  driver._atspi = async () => ({ ok: false, stale: true, error: 'element no longer exists' });
+  await assert.rejects(driver.getElementRect('1'), errors.StaleElementReferenceError);
 });

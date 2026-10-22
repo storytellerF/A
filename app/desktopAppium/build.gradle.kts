@@ -5,11 +5,9 @@
 plugins {
     alias(libs.plugins.kotlinJvm)
     id("appium-test-concurrency")
-    id("desktop-appium-agent")
 }
 
 val appiumTest = sourceSets.create("appiumTest")
-val accessibilityDumpAgentJar = tasks.named<Jar>("accessibilityDumpAgentJar")
 
 kotlin {
     jvmToolchain(21)
@@ -42,15 +40,5 @@ tasks.register<Test>("appiumTest") {
         ":cloud:filesystem-service:buildTestDockerImage",
         ":cloud:lucene-service:buildTestDockerImage",
         ":app:desktopApp:writeAppiumRuntimeClasspath",
-        accessibilityDumpAgentJar,
     )
-    systemProperty(
-        "desktop.accessibility.dump.agent",
-        accessibilityDumpAgentJar.flatMap { it.archiveFile }.get().asFile.canonicalPath,
-    )
-    jvmArgs("--add-modules", "jdk.attach")
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.compilerArgs.addAll(listOf("--add-modules", "jdk.attach"))
 }

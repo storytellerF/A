@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import io.appium.java_client.AppiumBy
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.remote.AppiumWebElement
 import org.openqa.selenium.By
@@ -20,7 +21,12 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         } else {
             null
         }
-    private val nameAttribute = if (platform == DesktopTestPlatform.Windows) "Name" else "name"
+    private val nameAttribute =
+        when (platform) {
+            DesktopTestPlatform.Windows -> "Name"
+            DesktopTestPlatform.Mac -> "label"
+            DesktopTestPlatform.Linux -> "name"
+        }
     private val valueAttribute = if (platform == DesktopTestPlatform.Windows) "Value" else "value"
     suspend fun assertAsciidocPreviewOpened() {
         assertVisibleByDescription("close preview")
@@ -31,36 +37,72 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
     }
 
     override suspend fun clickByText(text: String) {
-        clickElement { findTextElement(text, false) }
+        clickElement(textTarget = true) { findTextElement(text, false) }
     }
 
     override suspend fun clickByTextContaining(text: String) {
-        clickElement { findTextElement(text, true) }
+        clickElement(textTarget = true) { findTextElement(text, true) }
     }
 
     private fun findDescriptionElement(description: String): org.openqa.selenium.WebElement =
         WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
             windows?.synchronizeWindow()
-            driver.findElements(By.xpath("//*[@$nameAttribute='$description']")).firstOrNull()
-                // Incoming content follows the outgoing scene during Compose navigation transitions.
-                ?: driver.findElements(By.xpath("//*[${namePredicate(description)}]")).lastOrNull()
+            if (platform == DesktopTestPlatform.Mac) {
+                driver.findElements(AppiumBy.iOSNsPredicateString("label == ${macPredicateLiteral(description)}"))
+                    .firstOrNull()
+                    ?: driver.findElements(AppiumBy.iOSNsPredicateString(macTextPredicate(description, false)))
+                        .lastOrNull()
+            } else {
+                driver.findElements(By.xpath("//*[@$nameAttribute='$description']")).firstOrNull()
+                    // Incoming content follows the outgoing scene during Compose navigation transitions.
+                    ?: driver.findElements(By.xpath("//*[${namePredicate(description)}]")).lastOrNull()
+            }
         }
 
-    private fun clickElement(findElement: () -> org.openqa.selenium.WebElement) {
-        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+    private fun clickElement(
+        textTarget: Boolean = false,
+        findElement: () -> org.openqa.selenium.WebElement,
+    ): org.openqa.selenium.WebElement {
+        var previousBounds: org.openqa.selenium.Rectangle? = null
+        return WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
             .ignoring(StaleElementReferenceException::class.java)
             .until {
-                performElementClick(findElement())
-                true
+                val element = findElement()
+                // Semantics can appear before a navigation animation settles.
+                val bounds = element.rect
+                val ready = bounds == previousBounds && element.isDisplayed && element.isEnabled
+                previousBounds = bounds
+                if (!ready) return@until null
+                performElementClick(element, textTarget)
+                element
             }
     }
 
-    private fun performElementClick(element: org.openqa.selenium.WebElement) {
+    private fun performElementClick(element: org.openqa.selenium.WebElement, textTarget: Boolean) {
         if (platform == DesktopTestPlatform.Windows) {
-            driver.executeScript(
-                "windows: invoke",
-                mapOf("elementId" to (element as AppiumWebElement).id),
-            )
+            val elementId = (element as AppiumWebElement).id
+            val focusable = element.getAttribute("IsKeyboardFocusable").equals("true", ignoreCase = true)
+            if (focusable && element.tagName == "TabItem") {
+                driver.executeScript("windows: setFocus", mapOf("elementId" to elementId))
+                driver.executeScript("windows: keys", mapOf("actions" to listOf(mapOf("virtualKeyCode" to 0x20))))
+            } else if (element.getAttribute("IsInvokePatternAvailable").equals("true", ignoreCase = true)) {
+                if (focusable) driver.executeScript("windows: setFocus", mapOf("elementId" to elementId))
+                driver.executeScript("windows: invoke", mapOf("elementId" to elementId))
+            } else if (element.getAttribute("IsSelectionItemPatternAvailable").equals("true", ignoreCase = true)) {
+                driver.executeScript("windows: select", mapOf("elementId" to elementId))
+            } else {
+                // Let Tao process cursor movement before pressing at the target's position.
+                driver.executeScript("windows: hover", mapOf("endElementId" to elementId, "durationMs" to 200))
+                driver.executeScript("windows: click", mapOf("elementId" to elementId, "durationMs" to 100))
+            }
+        } else if (platform == DesktopTestPlatform.Mac && textTarget) {
+            // A text container's center can hit an embedded control instead of its own label.
+            val point =
+                desktopTextClickPoint(
+                    element.rect,
+                    element.findElements(AppiumBy.iOSNsPredicateString("TRUEPREDICATE")).map { it.rect },
+                )
+            driver.executeScript("macos: click", mapOf("x" to point.x, "y" to point.y))
         } else {
             element.click()
         }
@@ -69,6 +111,10 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
     override suspend fun inputText(text: String) {
         if (platform == DesktopTestPlatform.Windows) {
             inputWindowsText(text)
+            return
+        }
+        if (platform == DesktopTestPlatform.Mac) {
+            inputMacText(text)
             return
         }
         // A navigation transition can retire an editor after lookup; re-locate its current identity.
@@ -87,12 +133,29 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
             windows?.synchronizeWindow()
             val element = driver.findElements(By.xpath("//Edit")).lastOrNull() ?: return@until false
             driver.executeScript(
-                "windows: invoke",
+                "windows: setFocus",
                 mapOf("elementId" to (element as AppiumWebElement).id),
             )
-            element.getAttribute("States")?.split(",")?.contains("focused") == true
+            element.getAttribute("HasKeyboardFocus").toBoolean()
         }
         driver.executeScript("windows: keys", mapOf("actions" to buildWindowsTextActions(text), "forceUnicode" to true))
+    }
+
+    private fun inputMacText(text: String) {
+        val editor =
+            clickElement {
+                listOf("XCUIElementTypeTextField", "XCUIElementTypeSecureTextField", "XCUIElementTypeTextView")
+                    .flatMap { driver.findElements(By.className(it)) }.lastOrNull()
+                    ?: throw org.openqa.selenium.NoSuchElementException("No macOS text editor is available")
+            }
+        // Send physical keys to the focused app; targeting the editor resolves its hierarchy for every key.
+        driver.executeScript(
+            "macos: keys",
+            mapOf("keys" to buildMacTextKeys(text)),
+        )
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
+            editor.getAttribute("value")?.replace("\r\n", "\n") == text.replace("\r\n", "\n")
+        }
     }
 
     override suspend fun assertVisibleByDescription(description: String) {
@@ -108,38 +171,66 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
     }
 
     private fun findTextElement(text: String, contains: Boolean): org.openqa.selenium.WebElement =
-        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
-            windows?.synchronizeWindow()
-            val predicate = if (contains) "contains(@$nameAttribute,'$text')" else namePredicate(text)
-            driver.findElements(By.xpath("//*[@$nameAttribute='$text']")).lastOrNull()
-                ?: driver.findElements(By.xpath("//*[$predicate]")).lastOrNull()
-                ?: if (platform == DesktopTestPlatform.Windows) {
-                    driver.findElements(By.xpath("//Text | //Edit | //Unknown")).lastOrNull { element ->
-                        val value = element.text
-                        if (contains) value.contains(text) else value == text
-                    }
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+            .ignoring(StaleElementReferenceException::class.java)
+            .until {
+                windows?.synchronizeWindow()
+                if (platform == DesktopTestPlatform.Mac) {
+                    driver.findElements(AppiumBy.iOSNsPredicateString("label == ${macPredicateLiteral(text)}"))
+                        .lastOrNull()
+                        ?: driver.findElements(AppiumBy.iOSNsPredicateString(macTextPredicate(text, contains)))
+                            .lastOrNull()
+                        ?: if (contains) findMacValueContaining(text) else null
                 } else {
-                    val named =
-                        if (contains) {
-                            null
+                    val predicate = if (contains) "contains(@$nameAttribute,'$text')" else namePredicate(text)
+                    driver.findElements(By.xpath("//*[@$nameAttribute='$text']")).lastOrNull()
+                        ?: driver.findElements(By.xpath("//*[$predicate]")).lastOrNull()
+                        ?: if (platform == DesktopTestPlatform.Windows) {
+                            driver.findElements(By.xpath("//Text | //Edit | //Unknown")).lastOrNull { element ->
+                                val value = element.text
+                                if (contains) value.contains(text) else value == text
+                            }
                         } else {
-                            driver.findElements(By.xpath("//*[contains(@name,'$text')]"))
-                                .lastOrNull { matchesDesktopLabel(it.getAttribute("name").orEmpty(), text) }
+                            val named =
+                                if (contains) {
+                                    null
+                                } else {
+                                    driver.findElements(By.xpath("//*[contains(@name,'$text')]"))
+                                        .lastOrNull { matchesDesktopLabel(it.getAttribute("name").orEmpty(), text) }
+                                }
+                            val valuePredicate = if (contains) "contains(@value,'$text')" else "@value='$text'"
+                            named ?: driver.findElements(By.xpath("//*[$valuePredicate]")).lastOrNull()
                         }
-                    val valuePredicate = if (contains) "contains(@value,'$text')" else "@value='$text'"
-                    named ?: driver.findElements(By.xpath("//*[$valuePredicate]")).lastOrNull()
                 }
-        }
+            }
+
+    private fun findMacValueContaining(text: String): org.openqa.selenium.WebElement? =
+        listOf(
+        "XCUIElementTypeStaticText",
+        "XCUIElementTypeTextField",
+        "XCUIElementTypeSecureTextField",
+        "XCUIElementTypeTextView",
+    )
+        .flatMap { driver.findElements(By.className(it)) }
+        .lastOrNull { it.getAttribute("value").orEmpty().contains(text) }
 
     private fun namePredicate(value: String): String =
         if (platform == DesktopTestPlatform.Windows) {
         "contains(concat(', ', @Name, ', '), ', $value, ')"
+    } else if (platform == DesktopTestPlatform.Mac) {
+        "@title='$value' or contains(concat(', ', @label, ', '), ', $value, ') or @value='$value'"
     } else {
         "@name='$value'"
     }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
-        assertNotVisible(By.xpath("//*[${namePredicate(text)} or @$valueAttribute='$text']"), timeoutSeconds)
+        val locator =
+            if (platform == DesktopTestPlatform.Mac) {
+                AppiumBy.iOSNsPredicateString(macTextPredicate(text, false))
+            } else {
+                By.xpath("//*[${namePredicate(text)} or @$valueAttribute='$text']")
+            }
+        assertNotVisible(locator, timeoutSeconds)
     }
 
     private fun assertNotVisible(locator: By, timeoutSeconds: Long) {
@@ -153,6 +244,8 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         if (platform == DesktopTestPlatform.Windows) {
             windows?.synchronizeWindow()
             driver.executeScript("windows: keys", mapOf("actions" to listOf(mapOf("virtualKeyCode" to 0x1B))))
+        } else if (platform == DesktopTestPlatform.Mac) {
+            driver.executeScript("macos: keys", mapOf("keys" to listOf("XCUIKeyboardKeyEscape")))
         } else {
             driver.executeScript("linux: dismissDialog")
         }
@@ -160,9 +253,10 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
 
     override suspend fun navigateBack() {
         if (platform == DesktopTestPlatform.Windows) {
-            clickByDescription("back")
+            // UIA Invoke can activate a background back button through a modal scene layer.
+            dismissDialog()
         } else {
-            driver.navigate().back()
+            clickByDescription("back")
         }
     }
 
@@ -170,6 +264,8 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
         windows?.synchronizeWindow()
         if (windows != null) {
             windows.resizeWindow(width, height)
+        } else if (platform == DesktopTestPlatform.Mac) {
+            driver.executeScript("macos: adjustWindow", mapOf("width" to width, "height" to height))
         } else {
             driver.manage().window().size = org.openqa.selenium.Dimension(width, height)
         }
@@ -198,3 +294,25 @@ internal fun buildWindowsTextActions(text: String): List<Map<String, Any>> =
 /** AT-SPI may append comma-separated suffix labels, including an empty badge suffix. */
 internal fun matchesDesktopLabel(name: String, label: String): Boolean =
     name == label || name.split(", ").any { it == label }
+
+internal fun buildMacTextKeys(text: String): List<Any> =
+    listOf(mapOf("key" to "a", "modifierFlags" to 16), "XCUIKeyboardKeyDelete") +
+        text.replace("\r\n", "\n").codePoints().toArray().map { code ->
+            if (code == 10) "XCUIKeyboardKeyReturn" else String(Character.toChars(code))
+        }
+
+internal fun macPredicateLiteral(value: String): String {
+    val escaped =
+        value.replace("""\""", """\\""").replace("'", """\'""")
+            .replace("\n", """\n""").replace("\r", """\r""")
+    return "'$escaped'"
+}
+
+internal fun macTextPredicate(value: String, contains: Boolean): String {
+    val literal = macPredicateLiteral(value)
+    // XCTest evaluates these predicates in the target process. CONTAINS on numeric values can abort it.
+    if (contains) return "label CONTAINS $literal OR title CONTAINS $literal"
+    return "label == $literal OR label BEGINSWITH ${macPredicateLiteral("$value, ")} " +
+        "OR label ENDSWITH ${macPredicateLiteral(", $value")} " +
+        "OR label CONTAINS ${macPredicateLiteral(", $value, ")} OR title == $literal OR value == $literal"
+}

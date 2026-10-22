@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "desktop": {
+    "width": 1920,
+    "height": 1080
+  },
+  "platforms": {
+    "Windows": {
+      "java": 21,
+      "appium": {
+        "version": "3.2.2",
+        "drivers": {
+          "desktopdriver": "2.8.0"
+        },
+        "plugins": {
+          "desktop-windows": "0.1.0"
+        }
+      },
+      "environment": [
+        "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER"
+      ]
+    },
+    "Linux": {
+      "java": 21,
+      "appium": {
+        "version": "3.2.2",
+        "drivers": {
+          "linux": "0.1.0"
+        },
+        "plugins": {}
+      },
+      "packages": [
+        "openjdk-21-jre",
+        "libwebkit2gtk-4.1-0",
+        "libgtk-3-0t64",
+        "libasound2t64",
+        "libgl1-mesa-dri",
+        "libglx-mesa0",
+        "libx11-6",
+        "libxext6",
+        "libxrender1",
+        "libxtst6",
+        "libxi6",
+        "libxrandr2",
+        "libfontconfig1",
+        "libfreetype6",
+        "fonts-dejavu-core"
+      ],
+      "classpath": [
+        "org.jetbrains.skiko:skiko-awt-runtime-linux-x64:0.150.1"
+      ]
+    }
+  }
+}

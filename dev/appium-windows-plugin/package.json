@@ -1,0 +1,10 @@
+{
+  "name": "a-desktop-windows-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.cjs",
+  "scripts": {"test": "node --test test/*.test.cjs"},
+  "peerDependencies": {"appium": "^3.2.2"},
+  "dependencies": {"koffi": "2.14.1"},
+  "appium": {"pluginName": "desktop-windows", "mainClass": "DesktopWindowsPlugin"}
+}

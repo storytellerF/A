@@ -66,8 +66,7 @@ failed decryption preserve the existing unavailable/failure representation, neve
 There is no new background polling or session renewal. Consumers request fresh data on explicit refresh
 or existing feature events; after read, exit, unpin or deletion the next request reflects current state.
 
-Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest` through the QEMU skill's
-`run-testcontainers.sh`, with the usual dev/debug properties. PostgreSQL plus the existing filesystem and
+Run `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest` against the configured Docker-compatible backend, with the usual dev/debug properties. PostgreSQL plus the existing filesystem and
 Lucene RPC containers cover room-page activity ordering, totals beyond loaded pages, direct-message
 counts/read markers, both cursor directions,
 read-only rooms, deletion, private wire/client content, membership loss, pinned scope and request limits.
@@ -117,14 +116,13 @@ marks the room read through another session, then verifies that UI refresh clear
 together. On wide Android
 viewports it also verifies unread/pinned context; the desktop variant adds repeated narrow/medium/wide/
 short-window resizing and draft retention. Existing room-publication E2E remains compatible. Windows
-viewport changes target the verified test JVM's native window, with DPI conversion; Java-agent elements
-cannot use the driver's UIA window-resize path.
+viewport changes target the verified test JVM's native window through Appium, with DPI conversion.
 
 Run `:app:androidAppium:appiumTest --tests '*test activity previews*'` with the usual dev/debug properties
 through the configured Docker test environment and a leased device. Temporary Android size/density,
 power and locale changes must be restored. Desktop acceptance uses the same named test under
 `:app:desktopAppium:appiumTest` after preparing its runtime classpath. It requires an interactive unlocked
-desktop for native keyboard/Escape input; an AWT accessibility tree alone is insufficient. Do not claim
+desktop for native keyboard/Escape input; an accessibility tree alone is insufficient. Do not claim
 native desktop or browser acceptance from Android/host results. Keep issue #60 open through review and
 remaining platform checks.
 
@@ -230,60 +228,13 @@ Tests select `BUILDER_STAGE=prebuilt-builder`, which only extracts the distribut
 mount shared Gradle caches. The root Dockerfile defaults to `source-builder` for deployment;
 source compilation remains inside Docker with shared writable cache locks. Testcontainers only starts images.
 
-With native Docker, run Gradle normally. With QEMU on Windows, compile the QEMU skill's generic
-Docker proxy once with `build-docker-proxy.sh`, then run Gradle through `run-testcontainers.sh`.
-The wrapper places the proxy on PATH. It applies Docker ignore rules to the local build context
-and streams the archive over SSH to guest `docker buildx build --load`. No shared host mount or
-project-specific VM image list is required; secrets must remain excluded by `.dockerignore`.
+Run Gradle against a Docker-compatible backend configured by the operator. Required test images
+are built by Gradle through the Docker CLI available on PATH; the Docker API and published service
+ports must also be reachable by the host tests. An external environment runner may provide these
+connections transparently. Keep provider installation, networking implementation, private profiles
+and lifecycle commands outside this repository. Do not restart a shared backend during another run.
+Build contexts must continue excluding secrets through `.dockerignore`.
 
-### Windows gvproxy networking and legacy slirp diagnosis
-
-The current plugin backend is upstream gvproxy v0.9.0 over a loopback TCP QEMU
-socket, using guest MAC `5a:94:ef:e4:0c:ee`, guest `192.168.127.2`, and gateway/DNS
-`192.168.127.1`. The plugin registers SSH, Docker API and published-port forwards
-through the loopback services API; gvproxy does not discover Docker mappings itself.
-Guest and container DNS use gvproxy directly; Unbound and forced TCP DNS are removed.
-Keep the Docker automatic range and registered same-port range consistent. The updated AgentStart1/me.codex QEMU 0.5.0 defaults to `20000–20127` on both platforms; the persistent test guest has been migrated to that 128-port pool. Always use the active skill profile's resolved range. Recovery coordinates QEMU/gvproxy stop and start
-and re-registers rules; upstream accepts one QEMU transport connection per process.
-Do not restart a VM used by another session, add connection-failure retries, or use
-SSH networking bridges to hide direct-forward failures.
-
-The installed qemu-alpine-docker 0.4.1 plugin includes the gvproxy lifecycle scripts. Resolve its current installation path from the loaded skill and use those scripts consistently. Do not mix older cached slirp lifecycle scripts with the gvproxy VM.
-
-The following capacity evidence describes the legacy `-netdev user` backend:
-
-
-The installed MSYS2 QEMU 11.0.1 Windows main loop uses a 64-socket `fd_set` for slirp
-polling. Forward listeners and active connections share that capacity. Socket binding can
-succeed even when the socket is omitted from polling, so a successful TCP connect does
-not prove that forwarded application traffic works. A controlled same-service probe
-passed all 48 forwards; with 64 forwards plus SSH, Docker and one dummy listener, the
-last four HTTP forwards failed. Reversing rule order moved the failure to the other four
-ports while guest HTTP stayed healthy. The installed executable contains the same
-64-entry checks as upstream `util/main-loop.c` and MinGW's `FD_SET` implementation.
-
-For the legacy slirp backend, direct-forward ranges must reserve space for active connections;
-large static ranges require a QEMU build with a larger `FD_SETSIZE` or a polling
-implementation that supports the required socket count. Merely widening a profile
-cannot change the executable's compiled capacity. SSH forwarding is a diagnostic
-alternative, with different performance: the local PostgreSQL probe measured about
-3.4 seconds for 100 queries over SSH versus 20–23 milliseconds through direct QEMU
-forwarding. Do not treat successful SSH probes as a fix for QEMU forwarding.
-
-Docker caches its automatic publish range when the daemon initializes. Match that
-range to the VM's same-port forwards: set guest `net.ipv4.ip_local_port_range` before
-Docker starts, then restore the kernel range to `32768 60999` after startup so outbound
-connections do not compete with published ports. A persistent sysctl file can establish
-the initialization range at boot, but restoration must follow Docker startup. After any
-Docker/VM restart, verify assigned ports and guest/host health requests before testing.
-Do not restart a shared daemon while others use its containers.
-
-Use the skill's existing Docker CLI proxy and `run-testcontainers.sh`, with JDK 21 and
-`-Pserver.flavor=dev -Pserver.buildType=debug`. Let Gradle build required test images.
-
-A device-independent E2E smoke test is `:app:cliE2e:e2eTest --tests '*CliE2eTest'` (also pass
-`-Pserver.flavor=dev -Pserver.buildType=debug`). Filter by class: Kotlin `internal` test
-methods acquire module-specific JVM name suffixes, so an exact source-method filter will not match.
 
 ## Wasm Nginx configuration
 
@@ -402,13 +353,15 @@ DLL naming and dependency installation remain the caller's responsibility.
 
 Desktop E2E helpers select the host platform by default. `APPIUM_DESKTOP_PLATFORM` can explicitly select `Windows` or `Linux`; the Appium server must run on that same platform. Other platforms fail with an explicit error.
 
-- Windows: use Appium 3 with `appium driver install --source=npm appium-desktop-driver@2.8.0` (verified with DesktopDriver 2.8.0). The helper launches the JDK 21 JVM with `appium:javaSwing=true`, uses a JVM argument file for long classpaths, and operates on the Java accessibility tree. No WinAppDriver or Java Access Bridge installation is required for this driver.
-- Linux: use the repository driver with `appium driver install --source=local "$PWD/dev/appium-linux-driver"`. It uses open-source AT-SPI2 through `python3-pyatspi`, `xdotool`, `xdpyinfo`, and `/usr/share/java/java-atk-wrapper.jar`. The driver rejects unavailable or zero-size displays before launching the JVM. It does not depend on `libstdspalinux.so`. The package is currently tested from source; publishing it is a separate step.
-- Linux driver regression tests: run `npm ci` and `npm test` in `dev/appium-linux-driver`. Element handles retain AT-SPI object paths across navigation changes; Click and text-input commands preserve the saved identity; text input resolves that path directly, including when labels change. Missing or defunct targets return a stale-element error, including disappearance during a write. Text-input failures never select another editable control or use cached coordinates; non-stale editable-text failures are reported directly. Lookups respect the WebDriver implicit wait rather than adding a fixed wait.
+- Windows: use Appium 3 with `appium driver install --source=npm appium-desktop-driver@2.8.0`. The helper launches the JDK 21 JVM using a quoted argument file with `appium:javaSwing=false` and operates on Tao's native UIA tree. No Java accessibility agent, bytecode patch, Java Access Bridge or WinAppDriver is needed. Queries use native UIA. Controls settle to visible/stable bounds before activation. Windows uses native focus and Space to activate focusable TabItem controls. Other controls with InvokePattern use DesktopDriver's `windows: invoke` after focus where available; SelectionItemPattern uses `windows: select`. The Tao tab provider exposes InvokePattern and keyboard focus without SelectionItemPattern; focus/Space activation was checked in a real native session. Remaining controls use `windows: hover` (200 ms) followed by `windows: click` (100 ms press). These are standard native UIA/keyboard operations; failed actions are not retried and assertions remain unchanged. Windows back navigation sends native Escape through the existing keyboard interface, allowing the active dialog/navigation dispatcher to consume it first; invoking a background back button can bypass a modal scene layer. Text entry uses native focus/keys. For native non-password Edit controls with an available ValuePattern, the standard Appium extension returns that value through DesktopDriver's existing `windows: getValue` interface. DesktopDriver's TextPattern fallback can return the control caption instead of its typed value. Other controls, passwords and WebView contexts retain their original behavior. The normal Windows Appium extension maps the exact UIA `0x80040201` / `UIA_E_ELEMENTNOTAVAILABLE` code to the standard stale-element response, allowing existing waits to re-locate retired controls. The COM message about event subscribers is misleading for this UIA code; unrelated errors remain unchanged and the extension never retries commands itself. Test assertions and timeout budgets remain unchanged. Child accounts authenticate before being published to the UI or starting protected background requests. Failure/cancellation closes the unpublished account, leaves the previous account active and reports the failure through the existing dialog; publication rejects a superseded account. The account chooser closes when the active account instance changes, so a successful switch cannot leave its modal sheet intercepting the next toolbar click.
+- Linux: use the repository driver with `appium driver install --source=local "$PWD/dev/appium-linux-driver"`. It uses open-source AT-SPI2 through `python3-pyatspi`, `xdotool`, `xdpyinfo`, `gdbus` and GDK 3. The driver enables `org.a11y.Status.IsEnabled` on its desktop session bus before launching the application. A process can register both GTK and AccessKit providers; queries traverse all providers owned by that PID, and element identities include the D-Bus connection plus object path. The driver rejects unavailable or zero-size displays before launching the JVM. Window-size/rectangle commands target the single visible window owned by the launched PID; ambiguous ownership fails rather than resizing the focused desktop window. Screenshots return PNG data from the active X11 display using GDK 3 (`gir1.2-gtk-3.0`). It does not depend on `libstdspalinux.so`. The package is currently tested from source; publishing it is a separate step.
+- Linux driver regression tests: run `npm ci` and `npm test` in `dev/appium-linux-driver`. Element handles retain AT-SPI D-Bus connection/object-path pairs across navigation changes; Click and text-input commands preserve the saved identity; text input resolves that path directly, including when labels change. Missing or defunct targets return a stale-element error, including disappearance during a write. Text-input failures never select another editable control or use cached coordinates; non-stale editable-text failures are reported directly. Lookups respect the WebDriver implicit wait rather than adding a fixed wait. Live geometry, visibility and enabled-state queries resolve the saved identity; the shared helper waits for stable, visible controls inside its existing timeout. Merged room and activity cards expose the room, visible message/metadata and unread count as one complete accessible description. Match complete comma-separated label parts, rather than arbitrary substrings.
 - `APPIUM_DESKTOP_SERVER_URL` defaults to `http://127.0.0.1:4723`; `APP_DESKTOP_TEST_JAVA` optionally selects the Java executable.
-- Test JVMs use English UI labels, a JVM-local Preferences factory on Windows, and isolated database and protected-storage directories. Windows app logs go to the same per-test desktop log files as Linux. Desktop accessibility maps the existing `appiumSemantics` labels/actions so image descriptions do not hide account and topic text. Android retains its native semantics. The Windows launcher preserves the system temporary directory during Java-agent initialization before switching the application to its isolated directory. Gradle also builds a test-only compatibility agent: DesktopDriver 2.8.0 calls the removed Component.getPeer() method on JDK 21, so this agent replaces its getHwnd lookup with the JDK 21 AWT peer field lookup and dispatches accessibility read queries on Swing EDT (mutating commands retain the driver's existing EDT dispatch). It opens the two required java.desktop packages only to the test agent module. The agent verifies the supported bridge bytecode before installing transformations; unsupported bridge versions or method signatures fail explicitly; installed Appium files are not patched. The helper records the launched JVM PID and switches between that process's native frame and dialogs. Session cleanup force-closes the test JVM and deletes its PID file.
+- Test JVMs use English UI labels, a JVM-local Preferences factory on Windows, and isolated database and protected-storage directories. The launcher records the JVM PID and writes application logs into each test report. Window enumeration/switching uses DesktopDriver's remote interfaces; the project Appium extension validates process/thread ownership and performs DPI-aware native-window resizing on the Appium server. Session cleanup force-closes the test JVM and deletes its PID file. Test helpers never operate on host windows using a remote process ID.
 
-Build `:app:desktopApp:writeAppiumRuntimeClasspath` and `:panel:desktopApp:writeAppiumRuntimeClasspath` with `-Pserver.flavor=dev -Pserver.buildType=debug` before running `:app:desktopAppium:appiumTest` and `:panel:desktopAppium:appiumTest`. Run these suites sequentially on the same desktop. Docker/Testcontainers must be available for the backend services; on Windows use the QEMU Docker proxy described above.
+Build `:app:desktopApp:writeAppiumRuntimeClasspath` and `:panel:desktopApp:writeAppiumRuntimeClasspath` with `-Pserver.flavor=dev -Pserver.buildType=debug` before running `:app:desktopAppium:appiumTest` and `:panel:desktopAppium:appiumTest`. Run these suites sequentially on the same desktop. Docker/Testcontainers must be available for the backend services; use the operator-provided Docker endpoint.
+
+Linux desktop applications use Tao with native X11/Wayland and AT-SPI support. Provide a graphical session, compatible system graphics libraries and WebKitGTK; a headless-only OS image is insufficient. Configure enough desktop space for the test window bounds at the active DPI before running either platform.
 
 For Linux desktop E2E, install `xvfb`, `openbox`, `x11-utils`, `dbus`, `libsecret-tools`, `gnome-keyring`, the Linux driver dependencies above, and Appium on PATH. Authentication scenarios require an unlocked native keyring on the isolated D-Bus session; use an isolated `XDG_DATA_HOME` rather than the personal desktop keyring. Then run:
 
@@ -420,7 +373,7 @@ The runner owns a 1600×1000 virtual X11 display, a window manager, a separate D
 
 Do not use a disconnected user Xwayland session for unattended testing: the display can report 0×0 while Java and the X11 window remain alive. In the diagnosed failure, repeated thread dumps found the UI thread in Skiko `swapBuffers` and ATK waiting for UI dispatch; AT-SPI subsequently stopped exposing the application. An owned display removes that dependency rather than masking missing elements. See [Skiko's rendering properties](https://github.com/JetBrains/skiko/blob/master/skiko/src/jvmMain/kotlin/org/jetbrains/skiko/SkikoProperties.kt) for the independent rendering/vsync controls used during diagnosis.
 
-Appium selectors use English consistently. Desktop JVMs set en/US; browser E2E variants set en-US preferences. Android 13+ fixtures capture the original app locale before clearing data, temporarily set en-US, and restore the original override after cleanup without changing the system language. Linux modal dismissal sends Escape through the dedicated `linux: dismissDialog` driver command; page back retains Alt+Left. Older Android devices must already have an English system locale. Browser lifecycle scenarios restart each browser with an isolated in-place profile so HttpOnly Cookies and encrypted IndexedDB records must survive process termination.
+Appium selectors use English consistently. Desktop JVMs set en/US; browser E2E variants set en-US preferences. Android 13+ fixtures capture the original app locale before clearing data, temporarily set en-US, and restore the original override after cleanup without changing the system language. Linux modal dismissal sends Escape through the dedicated `linux: dismissDialog` driver command. Desktop test navigation sends native Escape on Windows to preserve modal priority; Linux uses the application’s labeled back action through Appium. The Linux driver’s low-level back command remains an Alt+Left key action. Older Android devices must already have an English system locale. Browser lifecycle scenarios restart each browser with an isolated in-place profile so HttpOnly Cookies and encrypted IndexedDB records must survive process termination.
 
 ### Wasm browser unit tests
 
@@ -465,7 +418,7 @@ Clearing authentication closes the modal drawer so it cannot cover the sign-in p
 Host test bases are abstract. Android host tests that access ICU or Compose resources run with Robolectric; resource tests initialize the Compose AndroidContextProvider. AsciiDoc preview tests belong to headlessTest and run on Android host, JVM and Wasm; the Javet parser test and its npm fixtures belong to jvmAndroidTest because its native Java APIs do not support Wasm. Gradle prepares the fixture dependencies with npm ci (npm must be on PATH); a missing dependency fails the test. Robolectric resolves Javet's JVM loader on its host runtime classpath, while Android production keeps the Android loader.
 ### Android Appium fixture lifecycle
 
-The Android helper clears the previous test app before creating backend containers and rebinding `adb reverse`, then force-stops it after recording/log export and session shutdown, before backend teardown. `noReset` preserves app processes after a session closes; those processes must not keep requesting an old host port while the next fixture replaces its reverse target. ADB rejects a device connection to a target absent from its current reverse configuration with a fatal exit ([upstream guard](https://android.googlesource.com/platform/packages/modules/adb/%2B/HEAD/adb.cpp)). This is a fixture ownership issue, separate from QEMU forwarding. Do not bypass the guard, add connection retries, or relax test timeouts.
+The Android helper clears the previous test app before creating backend containers and rebinding `adb reverse`, then force-stops it after recording/log export and session shutdown, before backend teardown. `noReset` preserves app processes after a session closes; those processes must not keep requesting an old host port while the next fixture replaces its reverse target. ADB rejects a device connection to a target absent from its current reverse configuration with a fatal exit ([upstream guard](https://android.googlesource.com/platform/packages/modules/adb/%2B/HEAD/adb.cpp)). This is a fixture ownership issue, separate from environment transport. Do not bypass the guard, add connection retries, or relax test timeouts.
 
 ### File upload integrity
 
@@ -536,7 +489,7 @@ five minutes. User/panel sign-out-all endpoints delete that account's Redis sess
 `cloud/runtime` tests use an isolated Redis container; server integration fixtures also include Redis
 alongside PostgreSQL and the filesystem/Lucene RPC services. Run client host tests with
 `./gradlew :client:core:jvmTest :client:composeCore:jvmTest -Pserver.flavor=sample -Pserver.buildType=test`.
-Run Redis regression tests with `:cloud:runtime:test` through the QEMU Testcontainers wrapper on Windows.
+Run Redis regression tests with `:cloud:runtime:test` against the configured Docker-compatible backend.
 
 Authenticated Appium fixtures now inject the Cookie obtained by an explicit setup login along with the
 synthetic account key. Native fixtures load that Cookie into an isolated memory jar; browser fixtures
@@ -570,7 +523,7 @@ Android encrypts records with AES-GCM and an Android Keystore key, committing ci
 SharedPreferences `protected-data`, excluded from cloud backup and device transfer in both Android
 apps because the Keystore key cannot be transferred with it. Windows stores DPAPI ciphertext under `~/.a/protected-storage/`
 using atomic file replacement, avoiding Java Preferences' per-value size limit. macOS stores secrets
-in Keychain; Linux uses Secret Service through `secret-tool`, with bounded, cancellable subprocesses.
+in Keychain through native Security framework calls. This avoids the `security -i` interactive parser’s 4096-byte command limit without placing secret data in process arguments. The existing Base64 payload format remains compatible. When `app.protected.storage.dir` is set, macOS account names include its hashed namespace so independent tests cannot share account history; unset production storage names remain unchanged. Linux uses Secret Service through `secret-tool`, with bounded, cancellable subprocesses.
 Account history persistence fails if protected storage is unavailable; Cookie persistence may retain
 an in-memory login but never falls back to plaintext. Browser account records and non-extractable
 AES-GCM keys use IndexedDB. Record names are authenticated as additional data. This protects stored
@@ -611,7 +564,7 @@ The default Kotlin daemon maximum heap is 8 GB (gradle.properties), raised from 
 
 The Gradle daemon maximum heap is 6 GB, raised from 4 GB to give in-process Compose Detekt analysis more headroom. Kotlin daemon heap remains independently configured at 8 GB.
 
-The expanded host-test allowlist includes in-process Ktor fixtures and local Lucene/filesystem tests with unique temporary directories. App JVM tests already exclude device_based UI tests; their protected-history test is confined to one class. dev/appiumCore tests exercise bridge/capability helpers rather than Appium suites. Modules mixing ordinary tests with Docker integration (backend/core, backend/minio, backend/filesystem, backend/lucene, cloud/runtime, cloud/server and cloud/cli) now use the same worker-based fork capacity after reviewing per-container mapped ports and isolated storage. cloud/worker is also allowlisted after reviewing all five test classes: its LiteRT tests substitute backend factories and do not initialize a native engine or execute model inference; remaining tests cover client construction, JSON/configuration and scheduling/moderation logic. Fork capacity does not reserve VM resources: unrestricted container startup on the 4 GB/4 CPU test guest produced Elasticsearch readiness timeouts. A seven-module validation with -PunitTest.maxParallelForks=4 passed 106 tests; this is a per-run override, not the project default. Increasing the local test VM to 8 GB subsequently passed the same 106-test selection with the default 28 workers and no fork override; guest memory peaked at 6290 MiB. To reproduce that resource setup, copy the installed skill dev.profile into an untracked local profile, set VM_MEMORY=8192, and pass that profile to lifecycle scripts and run-testcontainers.sh with --profile. Keep Docker and gvproxy port ranges aligned. client/kotbase and client/sqlite-now are not included in settings.gradle.kts.
+The expanded host-test allowlist includes in-process Ktor fixtures and local Lucene/filesystem tests with unique temporary directories. App JVM tests already exclude device_based UI tests; their protected-history test is confined to one class. dev/appiumCore tests exercise bridge/capability helpers rather than Appium suites. Modules mixing ordinary tests with Docker integration (backend/core, backend/minio, backend/filesystem, backend/lucene, cloud/runtime, cloud/server and cloud/cli) now use the same worker-based fork capacity after reviewing per-container mapped ports and isolated storage. cloud/worker is also allowlisted after reviewing all five test classes: its LiteRT tests substitute backend factories and do not initialize a native engine or execute model inference; remaining tests cover client construction, JSON/configuration and scheduling/moderation logic. Fork capacity does not reserve VM resources: unrestricted container startup on the 4 GB/4 CPU test guest produced Elasticsearch readiness timeouts. A seven-module validation with -PunitTest.maxParallelForks=4 passed 106 tests; this is a per-run override, not the project default. Increasing the local test VM to 8 GB subsequently passed the same 106-test selection with the default 28 workers and no fork override; guest memory peaked at 6290 MiB. Backend resource sizing and private lifecycle configuration belong to the operator; keep published service-port ranges aligned with the environment transport. client/kotbase and client/sqlite-now are not included in settings.gradle.kts.
 
 Signin lifecycle regression coverage is in cloud/runtime RedisSessionStorageTest and cloud/server SigninLifecycleTest. The latter uses the existing PostgreSQL/Redis/filesystem/Lucene fixtures and checks real HTTP/WS cookie sharing, policy-close after revocation and panel session restore/revoke. Administrator signup must issue the success Cookie immediately; signout is idempotent after expiry, while signout-all requires an authenticated account.
 
@@ -809,3 +762,85 @@ Run `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test` throu
 with `-Pserver.flavor=dev -Pserver.buildType=debug`. The infrastructure tests include a real Redis
 readiness failure to verify logs survive startup cleanup. Validate the complete backend through
 `:app:cliE2e:e2eTest :panel:cliE2e:e2eTest` and the existing Appium suites.
+
+## Configured desktop test environments
+
+Tests require a Docker-compatible backend and an Appium desktop endpoint. Set
+`APPIUM_DESKTOP_SERVER_URL` and `APPIUM_DESKTOP_PLATFORM` for the target, then use the normal host command:
+
+```bash
+./gradlew :app:desktopAppium:appiumTest --tests '*test sign up' \
+  -Pserver.flavor=dev -Pserver.buildType=debug --console=plain
+```
+
+`dev/test-environments/local.json`, `windows-remote.json` and `linux-remote.json` describe the project workspace
+and JVM file/service roles for an external environment runner. Connection profiles, VM lifecycle,
+transport setup and runner installation belong to the operator's environment, outside this project.
+The remote runner must stage host-built classpath/JDK/native artifacts after compilation, provide
+backend reachability, collect logs and clean private state. Neither application nor test methods
+know which environment provider is used. Both app and panel use the same role configuration. Linux launches use the same quoted JVM argument-file contract as Windows, with an Appium argument array and working directory. A cross-platform runner must translate host paths/classpath separators, supply an existing target JDK and matching prebuilt native runtime JARs, and return declared output files. The Gradle test JVM and backend fixtures remain on the host; the target desktop runs only the application. Linux requires a graphical Appium session with AT-SPI and an unlocked isolated native keyring. Select `APPIUM_DESKTOP_PLATFORM=Linux` and run the two normal Gradle tasks in one invocation: `./gradlew :app:desktopAppium:appiumTest :panel:desktopAppium:appiumTest --continue -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`.
+
+`dev/test-environments/desktop-requirements.json` is the portable source of desktop runtime requirements: Java/Appium versions, normal drivers/extensions, Linux binary runtime packages, matching native classpath artifacts and desktop dimensions. Both remote environment files reference it. Connection profiles, prebuilt bundle locations and platform provisioning remain operator-owned. Prepare the target from these requirements before running the normal host Gradle tests; the application runs remotely, while tests and backend fixtures remain on the host.
+
+For special runtime dependencies, a platform may declare `hooks.host_prepare` entries with literal `command` argv, relative `cwd` and `timeout_seconds`, or `hooks.guest_setup` entries with a relative self-contained `script`, `interpreter`, literal `arguments` and `timeout_seconds`. Host preparation may compile or package dependencies. Guest initialization may configure the OS and install prebuilt artifacts, but must not compile applications, test code or native dependencies. Guest hooks receive opaque `TEST_DESKTOP_USER` and `TEST_RUNTIME_ASSETS` values so scripts do not need provider-specific usernames or storage paths. Hooks must remain in the foreground, fail on errors and avoid logging credentials. The environment initializer preserves private logs and stops on failure/timeout; changed guest script contents require reinitialization. These are ordinary project setup scripts; they must not reference AI-plugin installation paths, VM providers or private connection profiles.
+
+Native accessibility diagnostics are the page source returned by the active Appium session and the report's screenshots. Collection errors remain separate attachments and preserve the original test failure. Tao does not expose an AWT accessibility tree; the former attach-agent exporter and Java bridge were removed rather than reporting an empty AWT tree as native diagnostics.
+
+Use Appium 3.2.2 with DesktopDriver 2.8.0 in an interactive logged-in Windows session. Prepare `dev/appium-windows-plugin` with prebuilt dependencies, install it through Appium's local plugin installation and activate `--use-plugins desktop-windows`. Its native dependency is pinned in package-lock.json. Standard remote window enumeration/switching stays in DesktopDriver; this extension supplies process/thread ownership checks, logical-pixel native-window resizing and complete physical-pixel screenshots. It restores the Appium thread's DPI context after native calls, keeps resized windows inside their monitor work area, and rejects dimensions that cannot fit. After a validated inspect/resize request registers the session process, screenshot capture uses DWM visible bounds and excludes invisible resize borders; it rejects reused handles and verifies that the session application is foreground before reading pixels. Other Appium drivers retain their standard screenshot behavior. This avoids the logical-pixel UIA bounds observed with Tao at 150% display scaling. Neither path calls host User32/JNA. Local desktop runs also require this extension. The full suite resizes windows up to 1600×1000 logical pixels, so the monitor work area must accommodate that size; validation uses a 1920×1080 desktop at 100% scaling. Native screenshot/resize behavior was also checked separately at 150% scaling.
+
+**macOS desktop E2E is paused** until the resumption criteria in [the Skiko investigation](#macos-e2e-pause-and-skiko-investigation) are verified. The retained integration uses Appium 3 with `appium-mac2-driver@4.5.0` and a compatible full Xcode installation (Sonoma 14.8 uses Xcode 16.2). Select Xcode's developer directory, accept its license and complete first launch. Build WebDriverAgentMac and grant its runner and Xcode Helper Accessibility permission in the dedicated logged-in test account. After the pause is lifted, select `APPIUM_DESKTOP_PLATFORM=Mac` with the normal `APPIUM_DESKTOP_SERVER_URL`. The runner creates an ad-hoc-signed temporary application bundle using the JDK’s precompiled native launcher for Launch Services, uses Mac2 native predicate/class locators, waits for a visible, enabled click target with stable native bounds, clicks text containers in an area not covered by their descendants when available, and uses native keys and window adjustment (JVM text input uses `macos: keys` with value readback because XCTest `typeText` can return success without changing a Compose editor), and removes the bundle during cleanup. Applications and tests require a prebuilt macOS JDK 21 and matching native runtime libraries. Intel macOS additionally needs a matching SQLite JNI library: the official SQLite bundled 2.7.0 JVM artifact includes macOS ARM64, but no x64 binary. Prepare an x64 resource JAR on the host/designated build environment with the release's JNI sources (AndroidX commit `190a3431c064ca5e90e451b3443714ae684b8127`), SQLite 3.50.1 and its upstream compile flags, and add `natives/osx_x64/libsqliteJni.dylib` to the application runtime classpath. Validate an actual query before UI tests; do not substitute another platform binary or silently compile it in a work VM. A ready Appium endpoint alone does not verify UI automation; verify a real session, source, screenshot and click before running the suites.
+
+### Native desktop windows, WebView and video
+
+Both desktop entry points use `nucleusApplication(backend = NucleusBackend.Tao)` and the shared `DesktopWindow` adapter around `DecoratedWindow`, with a title bar and the existing application content/providers. The adapter binds Escape key-down to the window composition's `NavigationEventDispatcher` through a lifecycle-owned `NavigationEventInput`, matching Compose's AWT window mediator. This preserves dialog dismissal and navigation priority without a test-only dismissal path; root navigation remains protected by its existing enabled state. They deliberately disable Nucleus's additional single-instance lock so parallel isolated processes and restart tests keep their existing lifecycle. Deep links use Nucleus's native `onDeepLink` handler and the original application callback, avoiding the AWT-only Apple Event handler on macOS. Normal packaging still uses the Compose Gradle application configuration and Java 21.
+
+[ComposeNativeWebview 1.0.3](https://github.com/NucleusFramework/ComposeNativeWebview/releases/tag/v1.0.3) uses `dev.nucleusframework:composewebview`; shared imports use `dev.nucleusframework.webview`. Its [1.0.0 migration](https://github.com/NucleusFramework/ComposeNativeWebview/releases/tag/v1.0.0) removed the Swing/Wry desktop backend. Pin the application and Tao runtime modules to stable Nucleus 2.5.18. AsciiDoc HTML previews use a temporary/incognito WebView profile, avoiding the WebView2 default data directory beside the Java executable (which can be read-only). WebView remains an embedded native surface: WebView2 on Windows, WKWebView on macOS and WebKitGTK on Linux. Compose dialogs use scene layers inside the Tao host, preserving the native WebView parent and application composition locals. The old `desktop-native-webview` convention, checksum-guarded Wry binding transform, JNA AppKit dispatcher and transform test have been removed. A dependency migration is not evidence that the historical macOS deadlock or Skiko stall is fixed; the macOS E2E pause below still applies.
+
+Desktop video uses VLC's callback surface rather than `SwingPanel` or an AWT player component. `DesktopVideoHost` owns playback state and native lifetime on an injected serial dispatcher, runs native construction/commands/disposal on a worker dispatcher, and consumes a conflated stream of copied opaque BGRA frames. Stream aspect-ratio/rotation metadata is read on the worker after VLC reports readiness; the visible image keeps that ratio even when the decoder output buffer has different dimensions. The Compose adapter builds raster images off the UI thread and renders the latest frame, playback controls and loading/failure state. Source changes and composition disposal cancel the owner and release the player/factory. A compatible system VLC installation is required; portable installations can provide their native library directory through JNA's standard `jna.library.path` and VLC's `VLC_PLUGIN_PATH`. Neither runtime installation nor media playback authorizes guest compilation.
+
+Run `:client:composeCore:jvmTest --tests '*DesktopVideoHostTest' :dev:appiumCore:test` for frame ownership, playback lifecycle and launch-capability checks. Verify actual decoded video frames, pause/resume, native accessibility queries/input, modal dismissal, window resizing, AsciiDoc preview and restart persistence on an isolated Windows/Linux desktop. Preserve the existing business assertions and timeout budgets. Re-run macOS integration only after its explicit pause is lifted.
+
+Work VMs run applications and tests using host-built artifacts. Guest compilation, including native dependency install hooks, requires an explicit user request. VM/Appium setup or a test request alone does not permit it; do not add guest compilation fallbacks or enlarge VM resources for builds. Transport failures fail the test instead of launching the application on the host.
+
+## macOS E2E pause and Skiko investigation
+
+Status as of 2026-10-21: macOS desktop E2E is paused. The shared desktop test entry rejects Mac targets before creating backend fixtures, report directories or Appium sessions. It reports an explicit error instead of silently skipping tests or reporting a pass. Windows and Linux targets remain enabled. Retained macOS integration code and pure unit tests do not authorize running the desktop E2E suite during this pause.
+
+Resume only after either an upstream Skiko fix has been verified against the observed software-rendering stall, or the test VM has working GPU acceleration that allows Skiko to use a hardware renderer. WHPX accelerates the virtual CPU; it does not by itself provide guest GPU acceleration. A display device, a visible desktop, or selecting an OpenGL option is insufficient evidence of a hardware renderer.
+
+### Observed failure and evidence
+
+The affected environment used Intel macOS 14.8, JDK 21, Skiko 0.150.1, Appium Mac2 4.5.0 and XCTest. The VM had four virtual CPUs and 4 GiB RAM, used WHPX, and lacked a usable Metal adapter. Skiko fell back to CPU rendering. These findings do not establish the same latency on physical Macs or other architectures.
+
+Repeated stacks showed the AWT event thread spending time in `ComponentColorModel.getRGBComponent`, `OpaqueCopyAnyToArgb` and `OGLGeneralBlit`, reached from `SoftwareContextHandler.flush`. During accessibility queries, AppKit waited for AWT through `CAccessibility.invokeAndWait`. Consequently native queries and physical-key input could wait behind software frame uploads. Recorded diagnostic queries took approximately 4–28 seconds; these samples were not a controlled cross-platform benchmark.
+
+The [upstream 0.150.1 uploader](https://github.com/JetBrains/skiko/blob/v0.150.1/skiko/src/awtMain/kotlin/org/jetbrains/skiko/context/SoftwareContextHandler.kt) reads the full native bitmap into a byte array, creates a byte raster and a `BufferedImage` using `ComponentColorModel`, then draws that image through Java2D. The native bitmap is premultiplied; the image constructor describes its raster as not premultiplied. The observed conversion path justified investigating both image representation and alpha handling, rather than extending test timeouts.
+
+### Removed experimental patch
+
+The experiment replaced the pinned software uploader with a host-compiled class using a cached Gradle artifact transform. The exact reviewed `skiko-awt:0.150.1` JAR had SHA-256 `bb610ada28509ebee3a623c0469aff3665689fbec73d118055f3dbf5a37211f5`. The transform rejected different bytes; it was not an upstream release or a supported extension API.
+
+The replacement retained a native premultiplied BGRA bitmap and copied its live pixels directly into a reusable `BufferedImage.TYPE_INT_ARGB_PRE` integer buffer. Explicit little-endian interpretation preserved BGRA-to-ARGB channel order. This avoided the intermediate frame-sized byte allocation and byte-component color conversion. Completely opaque frames used `AlphaComposite.Src`; translucent frames retained source-over blending. The experiment preserved the macOS transparent-window clear and released its native bitmap and graphics resources.
+
+A separate experiment inserted an opt-in period cap into Skiko's existing `FrameLimiter`. Its removed JVM property was `desktop.software.maxFps`: unset/zero preserved the upstream period, and values 1–240 selected a minimum period without speeding up an already slower upstream schedule. The test environment selected 10 FPS. This was an environment accommodation, not a general performance fix: it reduced animation smoothness, and the hook modified the shared limiter rather than being structurally confined to software rendering. It should not be restored as a purported software-only setting.
+
+The runtime class replacement, Gradle convention, shared-limiter hook, replacement source, patch-specific tests and dedicated Skiko test dependencies have now been removed. Both desktop applications resolve the upstream Skiko artifact again. Experimental transformed JARs in operator archives are historical diagnostics and must not be staged for new acceptance runs. Remove the obsolete JVM property from Appium default capabilities as well as launcher options; it no longer has an implementation in the project.
+
+### Historical validation and limits
+
+Three patch-specific host tests covered channel order and premultiplication/compositing, replacement of previous frame contents, and limiter default/configured/slower-period behavior. A separate native scheduling probe and WebView fix addressed an independent AppKit/EDT mutual wait. Text-click targeting and asynchronous sign-out synchronization were also corrected separately.
+
+On 2026-10-21 the combined experimental setup completed one full macOS desktop E2E run: 15 application tests and 3 panel tests, with both JUnit suites and the whole runner exiting successfully. The existing 10-minute test timeout, 15-second UI wait and original assertions remained in place. Across 1,066 element-query commands, median duration was 69 ms, P95 was 338 ms and maximum was 826 ms. Physical-key command batches had median duration approximately 6.65 seconds and maximum 11.60 seconds; batch contents and lengths varied. One native click still took 18.54 seconds.
+
+Those results validate that combined experimental environment, not the Skiko patch in isolation. They do not certify the unpatched runtime after this rollback or justify resuming the paused suite. The historical pass must not be presented as current macOS acceptance.
+
+Before proposing an upstream Skiko change, isolate the uploader optimization in a synthetic reproducer, measure frame-upload CPU time and allocations separately, and verify opaque/translucent rendering, partial alpha, repeated frames, resize, HiDPI, transparent windows, supported CPU architectures and all desktop software-rendering backends. The extra full-frame alpha scan also needs performance evaluation. Broader renderer compatibility was not established by the three unit tests or the macOS E2E run.
+
+The WebView AppKit run-loop adapter was an independent dependency fix, separate from Skiko. It was later removed by the ComposeNativeWebview/Tao migration above. No upstream Issue or PR has been submitted for these findings. The migration does not lift the macOS E2E pause.
+
+### Resumption procedure
+
+1. Record the fixed upstream Skiko version and relevant change, or evidence that the VM actually uses hardware-accelerated Metal/OpenGL instead of a software implementation. Verify the affected rendering and accessibility paths without restoring the local Skiko class replacement or frame cap.
+2. Review and remove the explicit macOS E2E pause in the shared desktop helper and its corresponding unit-test expectation. Update this status and the operator's paused launch entry points after confirming the prerequisite; do not introduce an unconditional bypass flag.
+3. Build applications, tests and required native dependencies on the host or designated build machine, then stage fresh classpaths containing the intended upstream Skiko artifact. Keep private connection profiles and environment orchestration outside this project. Do not fall back to TCG or compile in a work VM without explicit authorization.
+4. Verify an actual Appium session, query, input with value readback, native WebView lifecycle and screenshots, then run all 18 desktop E2E cases from clean report roots with the existing budgets and assertions. Record a new acceptance result separately from the historical experimental reports.

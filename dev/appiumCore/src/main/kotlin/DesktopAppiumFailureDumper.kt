@@ -8,13 +8,7 @@ import io.appium.java_client.AppiumDriver
 import java.io.File
 
 object DesktopAppiumFailureDumper {
-    internal data class Context(
-        val outputDir: File,
-        val appLabel: String,
-        val sessionFile: File,
-        val logDir: File,
-        val appLogFile: File,
-    )
+    internal data class Context(val outputDir: File, val appLabel: String, val logDir: File, val appLogFile: File)
 
     internal fun dumpOnFailure(context: Context, driver: AppiumDriver?, throwable: Throwable) {
         val outputDir = context.outputDir
@@ -30,7 +24,6 @@ object DesktopAppiumFailureDumper {
         )
 
         dumpPageSource(driver, outputDir)
-        dumpAwtAccessibilityTree(context.appLabel, context.sessionFile, outputDir)
         copyDesktopLogs(context.appLabel, context.logDir, context.appLogFile, outputDir)
     }
 
@@ -44,55 +37,6 @@ object DesktopAppiumFailureDumper {
         }.onFailure {
             File(outputDir, "appium-page-source.error.txt").writeText(it.stackTraceToString())
         }
-    }
-
-    private fun dumpAwtAccessibilityTree(appLabel: String, sessionFile: File, outputDir: File) {
-        val pid = findDesktopAppPid(sessionFile)
-        if (pid == null) {
-            File(outputDir, "awt-accessibility-tree.error.txt")
-                .writeText("$appLabel process not found for session file: ${sessionFile.canonicalPath}\n")
-            return
-        }
-
-        val agentPath = System.getProperty("desktop.accessibility.dump.agent")
-        if (agentPath.isNullOrBlank()) {
-            File(outputDir, "awt-accessibility-tree.error.txt")
-                .writeText("System property desktop.accessibility.dump.agent is not configured\n")
-            return
-        }
-
-        val output = File(outputDir, "awt-accessibility-tree.txt")
-        runCatching {
-            DesktopAccessibilityDumpAttacher.dump(pid.toString(), File(agentPath).canonicalPath, output.canonicalPath)
-            waitForDump(output)
-        }.onFailure {
-            File(outputDir, "awt-accessibility-tree.error.txt").writeText(it.stackTraceToString())
-        }
-    }
-
-    private fun findDesktopAppPid(sessionFile: File): Long? {
-        val pidFile = File("${sessionFile.canonicalPath}.pid")
-        if (pidFile.isFile) {
-            return pidFile.readText().trim().toLongOrNull()
-                ?.takeIf { ProcessHandle.of(it).map(ProcessHandle::isAlive).orElse(false) }
-        }
-        val marker = "-Dappium.session.file=${sessionFile.canonicalPath}"
-        return ProcessHandle.allProcesses()
-            .filter { process ->
-                process.info().commandLine().orElse("").contains(marker)
-            }
-            .mapToLong { it.pid() }
-            .findFirst()
-            .orElse(-1L)
-            .takeIf { it > 0L }
-    }
-
-    private fun waitForDump(output: File) {
-        repeat(50) {
-            if (output.isFile && output.length() > 0) return
-            Thread.sleep(100)
-        }
-        error("Timed out waiting for AWT accessibility dump: ${output.canonicalPath}")
     }
 
     private fun copyDesktopLogs(appLabel: String, logDir: File, appLogFile: File, outputDir: File) {

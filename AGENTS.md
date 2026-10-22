@@ -69,7 +69,7 @@
 - Keep filesystem and Lucene RPC services business-independent. Translate business search models in backend adapters; clients download object contents directly from filesystem HTTP rather than through server.
 - Define filesystem and Lucene RPC contracts in their respective `services/*-protocol` modules. Service runtime code must not depend on `backend/core`, `shared`, or `api`; map business storage/search types in backend adapters. Keep service configuration independent of flavor env files.
 - Lucene RPC uses explicit named fields with independent indexing, storage and DocValues settings, not business JSON payloads. Do not inject fixed ID fields or expose ID-specific RPC operations; adapters declare business identifiers, queries and sort fields. Keep `Lucene*Document` conversion classes in backend adapters.
-- Gradle owns test image construction: `distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`, using the root Dockerfile. Testcontainers only starts the resulting images. Keep image tasks in the shared convention plugin, and use the QEMU skill's Docker CLI proxy on Windows rather than a separate test Dockerfile.
+- Gradle owns test image construction: `distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`, using the root Dockerfile. Testcontainers only starts the resulting images. Keep image tasks in the shared convention plugin, and use the configured Docker-compatible backend rather than a separate test Dockerfile.
 - Do not reintroduce the removed H2 service or Docker target; `r2dbc-h2` supports only file and memory protocols, not the remote database topology required here.
 
 ## Additional AI Collaboration Rules
@@ -88,16 +88,16 @@
 - Paging errors: check how `RemoteKeyStorage`/`RemoteKeyRoomStorage` saves and reads cursors.
 - Data not persisted: check `*RoomStorage.save`/`observeData` implementations and `commonJson` serialization.
 
-- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver with the Java accessibility agent and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Preserve the agent discovery temp directory until premain completes, then isolate application data. Set app.protected.storage.dir inside the test runtime directory; the Preferences factory does not isolate protected-value files.
-- Linux Appium element handles must retain stable AT-SPI object paths. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target. Text input must pass and resolve the saved object path directly; never reselect by result index or fall back to another editable control.
+- Desktop Appium suites must run sequentially on one desktop. Windows uses DesktopDriver native UIA (`javaSwing=false`) and a JVM-local Preferences factory; do not rely on java.util.prefs.userRoot to isolate Windows test state. Do not reintroduce the removed AWT agent/bytecode compatibility patch. Set app.protected.storage.dir inside the test runtime directory; the Preferences factory does not isolate protected-value files.
+- Linux Appium must enable session accessibility and query every AT-SPI provider owned by the launched PID. Element handles must retain the D-Bus connection and stable object path; object paths alone can collide across providers. When a target disappears during navigation, return a stale-element error and re-locate the control; never fall back to cached coordinates for a disappeared target. Text input must pass and resolve the saved object path directly; never reselect by result index or fall back to another editable control.
 - Shared Wasm browser test configuration belongs to the wasm-browser-test-interop convention. A later useKarma call replaces the framework configuration, so do not override it in consuming modules; track loader files as task inputs and preserve the configuration cache.
 
 - JUnit host test initialization bases must be abstract so test discovery does not run the base itself. Keep the two conflicting Detekt abstract-class rule exceptions scoped to PlatformHeadlessTest files.
 
-- Diagnose QEMU forwarding with guest/host application probes and the installed binary's polling capacity. Listener binding or successful TCP connect alone does not prove forwarding; do not report SSH bridging as a fix for direct-forward failures.
+- Diagnose remote service forwarding with target/host application probes and the installed transport's polling capacity. Listener binding or successful TCP connect alone does not prove forwarding; do not report SSH bridging as a fix for direct-forward failures.
 - For intermittent connection-refused/reset failures, compare guest health with concurrent host connection probes. Serial health or passing focused reruns alone does not establish cross-test state interference; distinguish per-listener backlog from total polling capacity.
 
-- The QEMU plugin now uses verified upstream gvproxy over loopback TCP. Keep Docker automatic publish ranges aligned with explicit gvproxy rules, use gvproxy DNS for guest/containers, and coordinate both processes during recovery. Confirm the shared VM is idle before migration/restart. Never use SSH networking bridges, diagnostic DLL replacement, added connection retries, skipped tests or relaxed timeouts as a permanent forwarding fix.
+- When an external Docker backend uses gvproxy over loopback TCP, Keep Docker automatic publish ranges aligned with explicit gvproxy rules, use gvproxy DNS for guest/containers, and coordinate both processes during recovery. Confirm the shared VM is idle before migration/restart. Never use SSH networking bridges, diagnostic DLL replacement, added connection retries, skipped tests or relaxed timeouts as a permanent forwarding fix.
 
 - Preserve Git executable modes when copying Windows sources into an isolated Linux test checkout; ordinary Windows archive metadata can remove launcher execution permissions.
 - Keep Android test app shutdown and reverse-port replacement in the fixture order documented in DEVELOPMENT.md; noReset must not leave an old app requesting removed host targets.
@@ -128,7 +128,7 @@
 
 - Compare build concurrency using the same explicit tasks and rerun/cache policy. Two-module compilation, six-module compilation and full assemble timings are different workloads and cannot establish a parallelism speedup or regression.
 
-- Verify VM state with sufficient read permissions before concluding it is stopped; sandbox probes can report inaccessible services. When applying skill templates to a legacy idle guest, normalize generated Linux scripts to LF and preserve the default Docker publish pool while restoring disjoint outbound ports. Never infer published plugin versions from a dirty local checkout; check the configured marketplace origin and branch.
+- Verify VM state with sufficient read permissions before concluding it is stopped; sandbox probes can report inaccessible services. When applying skill templates to a legacy idle guest, normalize generated Linux scripts to LF and preserve the default Docker publish pool while restoring disjoint outbound ports. Verify the installed environment tooling independently of project configuration.
 
 - Create upload and chunk staging files atomically with unique names per request; client filenames and upload IDs are not unique across processes. Keep body reception inside the cleanup boundary. Real RPC shutdown waits invoked from runTest must use a real dispatcher so virtual time cannot expire before IO completes; preserve the existing timeout duration.
 
@@ -181,14 +181,14 @@
   first displayed row; paging spacers and loading rows occupy indices. New messages can replace the
   visible topic without changing the scroll index.
 - Verify an interactive, unlocked foreground desktop before Windows Appium keyboard tests. An accessible
-  AWT tree does not prove OS input is available; do not bypass empty-editor failures with fake content.
+  native tree does not prove OS input is available; do not bypass empty-editor failures with fake content.
 - Refresh the Home unread navigation badge on read/message/membership events and lifecycle resume;
   keep badge labels localized and test their presence/absence alongside row counts.
 - Keep read-marker upserts monotonic and atomic; history navigation and late requests must not rewind
   the stored marker. Verify both exact counts and the legacy unread-room aggregate.
 - Native room-cell accessibility must preserve merged visible content. Room names must contribute
   to merged native descriptions when previews supply descriptions; keep browser-only labels separate.
-  Resize Windows Java-agent test windows through their verified native handle and convert viewport
+  Resize Windows native test windows through their verified native handle and convert viewport
   dimensions for window DPI.
 
 - Browser Appium previews need explicit text/action bridge nodes; keep the bridge disabled outside test
@@ -332,3 +332,20 @@
 
 - Prepare authentication/socket E2E community and room fixtures before application launch;
   cached pagers need not observe setup writes performed through another client after Home mounts.
+
+- Desktop window discovery/focus must use remote Appium interfaces. Keep process/thread ownership, DPI-aware resizing and physical-pixel screenshot capture in dev/appium-windows-plugin on the Appium host; do not restore host User32/JNA calls. Remote diagnostics must never attach to a guest PID on the host. Keep environment-provider installation and private connection profiles outside the project. Project JSON declares artifact/service roles only; the external environment runner owns staging, forwards and private-session cleanup. Collect native page source and screenshots through Appium; keep test methods free of SSH/VM transport code. See DEVELOPMENT.md for the environment contract.
+
+- Work VMs are test/runtime environments. Unless the user explicitly requests guest compilation, build applications, test code and dependencies on the host or the existing designated build environment, then stage prebuilt artifacts. Installing Appium/VMs or requesting E2E tests does not authorize guest builds, including native dependency install hooks. Do not silently fall back to guest compilation or enlarge VM resources for it.
+
+- macOS desktop E2E is paused until an upstream Skiko fix or working VM GPU acceleration has been verified. Do not launch macOS E2E, bypass its preflight guard, restore local Skiko class replacements/frame caps, or treat historical patched-runtime reports as current acceptance. Keep the original test budgets and assertions. See DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation for evidence and resumption criteria.
+- Mac2 coordinate clicks must wait for visible, enabled controls with stable bounds during Compose navigation. For text containers, prefer their own uncovered area over a center point inside a nested interactive control; keep this geometry covered by unit tests.
+- Desktop WebView requires the pinned Nucleus Tao runtime and native window entry points. Do not restore the removed Swing/Wry transform or embed SwingPanel in a Tao window. Keep video native lifetime in DesktopVideoHost and copied-frame rendering in the Compose adapter. Observe asynchronous sign-out completion before testing restart persistence; do not extend UI timeouts or remove post-restart assertions.
+
+- Linux desktop E2E requires graphical Tao/X11 and AT-SPI runtime libraries. Window geometry commands must target the launched PID and reject ambiguous visible windows, never the focused desktop window. Preserve native screenshot failures as collection errors; see DEVELOPMENT.md for driver dependencies.
+
+- Tao desktop windows must bind Escape to the composition's NavigationEventDispatcher with a lifecycle-owned NavigationEventInput, matching Compose's AWT mediator. Preserve overlay priority and disabled root navigation; do not replace dialog dismissal with test-only UI controls.
+- Merged clickable activity/room cards must retain message previews and unread counts in their accessible description. Native providers may expose only the first merged contentDescription; provide a complete row description and match whole label parts in automation.
+
+- Windows and Linux desktop E2E share the quoted JVM argument-file launch contract. Keep Linux Appium arguments as an array and honor its working directory. Remote environment runners translate paths and provide prebuilt target JDK/native dependencies; keep Gradle tests and backend fixtures on the host and provider connections outside the project.
+
+- Declare desktop runtime dependencies and optional project setup hooks in dev/test-environments/desktop-requirements.json. Keep VM hardware, credentials and provider launch commands outside the project. Host preparation may build; guest initialization hooks remain limited to runtime configuration and prebuilt dependency installation.

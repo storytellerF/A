@@ -75,6 +75,11 @@ fun AccountSwitch() {
     if (!supportsChildAccountSwitching) return
     val accountSwitcher = LocalAccountSwitcher.current
     var expand by accountSwitcher.state
+    val instance by LocalUiViewModel.current.instance.collectAsState()
+    LaunchedEffect(instance) {
+        // The chooser belongs to the previous account after a successful switch.
+        expand = false
+    }
     val sheetState = rememberModalBottomSheetState()
     BaseSheet(expand, sheetState, {
         expand = false
@@ -237,9 +242,7 @@ suspend fun AppGlobalDialogController.switchUser(childAccountInfo: ChildAccountI
                         derPublicKey = publicKey,
                     )
                 }
-            RawUserPass(RawUserPassInfo(address, authKey))
+            uiViewModel.switchUser(mainInstance, RawUserPass(RawUserPassInfo(address, authKey)))
         }
-    }.getOrNull()?.let {
-        uiViewModel.switchUser(mainInstance, it)
     }
 }

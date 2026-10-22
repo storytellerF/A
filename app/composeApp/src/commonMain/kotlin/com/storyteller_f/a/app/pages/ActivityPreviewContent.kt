@@ -86,7 +86,7 @@ fun <T> ActivityPreviewSection(
 fun RoomActivityPreviewContent(preview: RoomActivityPreview, modifier: Modifier = Modifier, open: () -> Unit = {}) {
     Column(
         modifier.fillMaxWidth().clickable(onClick = open)
-            .appiumSemantics(text = preview.room.name, onClick = open).padding(8.dp),
+            .appiumSemantics(text = roomActivityDescription(preview.room.name, preview), onClick = open).padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -113,14 +113,7 @@ fun RoomActivityPreviewContent(preview: RoomActivityPreview, modifier: Modifier 
 @Composable
 fun ActivityMessageContent(message: MessagePreview?, modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        val summaryText =
-            when (val summary = message?.summary) {
-                is MessageSummary.Text -> summary.value
-                MessageSummary.Unavailable -> stringResource(Res.string.activity_unavailable)
-                MessageSummary.Attachment -> stringResource(Res.string.activity_attachments)
-                MessageSummary.Empty -> stringResource(Res.string.activity_empty_message)
-                null -> stringResource(Res.string.activity_no_messages)
-            }
+        val summaryText = activityMessageSummary(message)
         Text(
             summaryText,
             Modifier.appiumSemantics(text = summaryText),
@@ -140,4 +133,29 @@ fun ActivityMessageContent(message: MessagePreview?, modifier: Modifier = Modifi
             }
         }
     }
+}
+
+/** A merged clickable row must retain the message and badge in its accessible name. */
+@Composable
+internal fun roomActivityDescription(roomName: String, activity: RoomActivityPreview?): String =
+    if (activity == null) {
+    roomName
+} else {
+    listOfNotNull(
+        roomName,
+        activityMessageSummary(activity.message),
+        activity.message?.author,
+        activity.message?.time,
+        activity.unreadCount.takeIf { it > 0 }?.toString(),
+    ).joinToString(", ")
+}
+
+@Composable
+private fun activityMessageSummary(message: MessagePreview?): String =
+    when (val summary = message?.summary) {
+    is MessageSummary.Text -> summary.value
+    MessageSummary.Unavailable -> stringResource(Res.string.activity_unavailable)
+    MessageSummary.Attachment -> stringResource(Res.string.activity_attachments)
+    MessageSummary.Empty -> stringResource(Res.string.activity_empty_message)
+    null -> stringResource(Res.string.activity_no_messages)
 }

@@ -5,10 +5,11 @@
 package com.storyteller_f.a.panel
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
+import com.storyteller_f.a.client.compose_core.components.DesktopWindow
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
+import dev.nucleusframework.application.NucleusBackend
+import dev.nucleusframework.application.nucleusApplication
 import io.github.aakira.napier.Napier
 import java.awt.BorderLayout
 import java.awt.Button
@@ -23,8 +24,8 @@ fun main() {
     loadCryptoLibIfNeed()
     @Suppress("OPT_IN_USAGE")
     val panelUiViewModel = PanelUIViewModel(kotlinx.coroutines.GlobalScope, getDesktopPanelServerUrl())
-    application {
-        Window(
+    nucleusApplication(backend = NucleusBackend.Tao, enableSingleInstance = false) {
+        DesktopWindow(
             onCloseRequest = ::exitApplication,
             title = "Panel",
         ) {

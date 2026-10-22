@@ -178,7 +178,8 @@ messages above as the source of truth.
 - The included Gradle wrapper (`./gradlew`)
 - Git Bash on Windows for repository shell scripts
 - Docker with Compose support for the local service stack
-- Desktop AsciiDoc previews use the system WebView engine: WebView2 on Windows, WKWebView on macOS, and WebKitGTK on Linux.
+- Desktop windows use Nucleus Tao. AsciiDoc previews use the system WebView engine: WebView2 on Windows, WKWebView on macOS, and WebKitGTK on Linux.
+- Desktop video playback requires VLC and uses its native frame callbacks.
 
 ### Build Commands
 
@@ -283,3 +284,7 @@ Calls end when the call page is closed. Browser calls require HTTPS and camera/m
 permission. CLI clients do not provide audio/video calls.
 
 The iOS adapter and permissions are included; build and device acceptance require macOS/Xcode.
+
+Desktop end-to-end tests use platform-specific Appium drivers. Windows and Linux testing remain available; macOS desktop E2E is temporarily paused pending a verified Skiko fix or working VM GPU acceleration. See the [development guide](DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation) for findings and resumption requirements.
+
+Remote desktop E2E runs the application in the target environment while Gradle tests, backend fixtures and compilation stay on the host. Windows and Linux environment configurations share the same JVM artifact/service contract and project-owned desktop dependency requirements; connection details belong to the operator. Compilation inside a work VM requires an explicit user request; VM/Appium setup or a test request alone does not permit it.
