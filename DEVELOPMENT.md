@@ -878,5 +878,70 @@ The result, crypto-boundary and request-error tests cover null success, error co
 ordinary failures, cancellation and the distinction between business 401 and session authentication failure.
 Existing host and integration tests consume CustomResult directly; their business assertions remain applicable.
 
-Host PDF snapshot tests require the Regular faces of Noto Serif and Noto Sans Mono to be registered
-and visible to a fresh JVM. Having font files in a directory alone does not guarantee JVM visibility.
+## PDF font sources and variable-font instancing
+
+`cloud/openpdf` loads embedded font data directly, without AWT enumeration, FontFactory registration,
+or user-installed fonts. Each PDF gets independent, uncached OpenPDF BaseFont objects and fresh Font
+styles. Only immutable instance bytes are cached (up to 16 entries); identity includes source SHA-256,
+collection face index, sorted axes including defaults, and engine version. Failed/cancelled work is not
+published. The synchronous PdfService boundary retains native ownership until each call completes;
+exception conversion preserves cancellation. Native calls are never replayed automatically.
+
+Static faces take priority independently for Regular (400) and Bold (700). Bundled static Noto Serif SC
+and Noto Sans Mono faces make default PDF generation independent of a native HarfBuzz installation.
+Bold uses actual outlines; italic uses explicit PDF obliquing. Noto Sans Mono has fixed Latin advances
+but no Chinese coverage: code preserves CJK runs through the explicitly proportional serif fallback.
+Unknown code glyphs fail rather than disappearing. Plain body and signature-table text also use embedded fonts.
+
+To supply fonts, set JVM property `pdf.font.directory` **before the first PDF request**. This replaces both
+bundled families. Use `serif-regular.ttf`, `serif-bold.ttf`, `mono-regular.ttf`, `mono-bold.ttf`; optional
+`serif-variable.ttf` and `mono-variable.ttf` supply a missing static weight through the `wght` axis.
+Backup variable files are read lazily only when the requested static weight is absent; an unreadable
+unused backup cannot block static faces.
+Static slots must contain static fonts. A selected invalid static face fails explicitly rather than silently
+falling back. The repository also supports standalone SFNT and TTC face indices. Static TrueType/OpenType
+fonts pass directly to OpenPDF; variable instancing currently accepts TrueType `glyf` outlines only and
+rejects unsupported outlines/axes/ranges. All unrequested variation axes pin to their declared defaults.
+
+Variable fonts require matching public HarfBuzz core/subset shared libraries **8.3.1 or newer** and JNA.
+The adapter copies source memory into a DUPLICATE blob and releases every blob, face and subset input
+in reverse order, after copying result bytes. It validates that `fvar`/`gvar` are absent from the result.
+It does not use JDK or Skiko private libraries, Python, subprocesses, or installed-font discovery at runtime.
+
+- Windows: use the [official HarfBuzz release bundle](https://github.com/harfbuzz/harfbuzz/releases), with
+  `libharfbuzz-0.dll`, `libharfbuzz-subset-0.dll` and their bundled dependencies together. Put that directory
+  on `PATH`, and set `JAVA_TOOL_OPTIONS=-Djna.library.path=C:/tools/harfbuzz` when testing through Gradle.
+- Linux: install `harfbuzz-subset` (Alpine) or a matching `libharfbuzz-subset0` (Debian/Ubuntu), verifying
+  the version. Alpine Docker runtime targets require `harfbuzz-subset>=8.3.1`. The Jammy worker uses the
+  `pdf-font-native` Docker stage to build HarfBuzz 14.6.0 from a SHA-256-pinned official release because
+  Jammy's packaged version predates the required API. Native compilation stays inside Docker.
+- macOS: install a matching HarfBuzz core/subset package and expose its library directory to JNA.
+  Absolute overrides `pdf.harfbuzz.core.library` and `pdf.harfbuzz.library` are available for all platforms.
+
+HarfBuzz uses its [Old MIT license](https://github.com/harfbuzz/harfbuzz/blob/14.6.0/COPYING); the native
+Docker stage carries COPYING. Font assets carry their separate SIL OFL 1.1 licenses beside the fonts.
+The original fonts are pinned to google/fonts revision
+`e7db6ca603fd4862010383ff17ffd6cc4ffac1c0`, directories `ofl/notoserifsc` and `ofl/notosansmono`.
+Test fixtures preserve the original variable sources. Committed static assets were instantiated with
+HarfBuzz 14.6.0, all glyphs retained, weight 400/700 and all other axes at defaults. Regenerate them using
+`:cloud:openpdf:generateBundledPdfFonts -Pserver.flavor=dev -Pserver.buildType=dev`; this explicit maintenance
+task requires HarfBuzz 14.6.0 and performs no network access. Run builds/tests in a subsequent invocation
+so resource processing consumes the regenerated files. Verify hashes after changing the engine or inputs.
+
+| Font asset | SHA-256 |
+| --- | --- |
+| `mono-bold.ttf` | `581b09a29334f21762cbc74ac84839bcbce3a2d3b77b8c572bab061924012a08` |
+| `mono-regular.ttf` | `4457c54aa779067d3ba69012a27c46bd2f9c8cd4b91ff07c639f844ee11b6ea9` |
+| `serif-bold.ttf` | `dc5eba2f7191315c43a57140faea5e157b25726fa72151035ffbb34607a3d05d` |
+| `serif-regular.ttf` | `6626a2dca972a07ee41d7f614defe56ede07a41203033e43f23f260082844011` |
+| `NotoSansMono[wdth,wght].ttf` | `2cb2adb378a8f574213e23df697050b83c54c27df465a2015552740b2769a081` |
+| `NotoSerifSC[wght].ttf` | `050080d9255a86808f2945bffac582b31ef32bc36411ce29563b4961670c66f9` |
+
+Run `./gradlew :cloud:openpdf:test -Pserver.flavor=dev -Pserver.buildType=dev --console=plain` with the public
+native libraries available. Tests cover static priority without any native calls, mixed static/variable
+families, collection faces, malformed input, axis bounds, native loading errors, cancellation, resource
+cleanup, concurrent cache publication, real Regular/Bold rendering, embedding, bilingual text extraction,
+fixed mono advances and per-document isolation. Generated diagnostic PDFs/PNGs live under the module's
+`build/test-output/fonts`; Poppler can independently render those PDFs for visual review. Existing server
+snapshot references may change because they previously depended on host fonts and implicit default text
+fonts; review intended visual changes before explicitly updating a reference. Never auto-accept comparisons.

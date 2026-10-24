@@ -34,7 +34,7 @@ FROM ${BUILDER_STAGE} AS builder
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS server
 
-RUN apk add --no-cache libavif-dev font-noto-all
+RUN apk add --no-cache libavif-dev font-noto-all 'harfbuzz-subset>=8.3.1'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -49,11 +49,31 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/server/ .
 ENTRYPOINT ["sh", "./bin/server"]
 
+# Jammy's distro HarfBuzz predates variable-font instancing. Build the public core/subset
+# libraries in a matching container, independently of the application distribution.
+FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS pdf-font-native
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl cmake ninja-build g++ xz-utils && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /src
+RUN curl --fail --location --retry 3 --output harfbuzz.tar.xz \
+    https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz && \
+    echo "d07a007327277708a2a73ae437887cdbaf282937f6d03ca5467723e9099af586  harfbuzz.tar.xz" | sha256sum -c - && \
+    tar -xJf harfbuzz.tar.xz && \
+    cmake -S harfbuzz-14.6.0 -B native-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/opt/pdf-fonts -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON \
+    -DHB_BUILD_SUBSET=ON -DHB_BUILD_UTILS=OFF -DHB_BUILD_RASTER=OFF -DHB_BUILD_VECTOR=OFF -DHB_BUILD_GPU=OFF && \
+    cmake --build native-build --parallel 2 && cmake --install native-build && \
+    mkdir -p /opt/pdf-fonts/licenses && cp harfbuzz-14.6.0/COPYING /opt/pdf-fonts/licenses/HarfBuzz-COPYING
+
 FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS worker
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libavif-dev libvulkan1 && \
+    apt-get install -y --no-install-recommends libavif-dev libvulkan1 libstdc++6 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=pdf-font-native /opt/pdf-fonts/lib/ /usr/local/lib/
+COPY --from=pdf-font-native /opt/pdf-fonts/licenses/ /usr/share/doc/pdf-harfbuzz/
+RUN ldconfig
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -70,7 +90,7 @@ ENTRYPOINT ["sh", "./bin/worker"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS ws
 
-RUN apk add --no-cache libavif-dev font-noto-all
+RUN apk add --no-cache libavif-dev font-noto-all 'harfbuzz-subset>=8.3.1'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -87,7 +107,7 @@ ENTRYPOINT ["sh", "./bin/ws"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS cli
 
-RUN apk add --no-cache libavif-dev font-noto-all netcat-openbsd
+RUN apk add --no-cache libavif-dev font-noto-all 'harfbuzz-subset>=8.3.1' netcat-openbsd
 
 ARG APP_UID=1000
 ARG APP_GID=1000
