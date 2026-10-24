@@ -878,5 +878,102 @@ The result, crypto-boundary and request-error tests cover null success, error co
 ordinary failures, cancellation and the distinction between business 401 and session authentication failure.
 Existing host and integration tests consume CustomResult directly; their business assertions remain applicable.
 
-Host PDF snapshot tests require the Regular faces of Noto Serif and Noto Sans Mono to be registered
-and visible to a fresh JVM. Having font files in a directory alone does not guarantee JVM visibility.
+## PDF font sources and variable-font instancing
+
+`cloud/openpdf` discovers installed font files without AWT enumeration or private JDK font APIs.
+No PDF font binaries, font test resources or font-generation task are shipped in the PDF module.
+Install fonts before the first PDF request and restart the process after changing the installation.
+Discovery reads only SFNT/TTC directories, Unicode family names and OS/2 metrics, not outline/variation
+contents. The metadata layout follows the [OpenType specification](https://learn.microsoft.com/en-us/typography/opentype/spec/otff).
+Selected file contents load lazily; an unused variable fallback is never fully read or instantiated.
+
+Discovery searches these standard locations recursively (TTF/OTF/TTC/OTC):
+
+- Windows: `%WINDIR%/Fonts` and `%LOCALAPPDATA%/Microsoft/Windows/Fonts`.
+- Linux: `/usr/share/fonts`, `/usr/local/share/fonts`, `~/.fonts` and `$XDG_DATA_HOME/fonts`
+  (default `~/.local/share/fonts`). Custom fontconfig-only paths require the explicit directory override below.
+- macOS: `/System/Library/Fonts`, `/Library/Fonts` and `~/Library/Fonts`.
+
+Body family preference is Noto Serif SC, Noto Serif CJK SC, then Source Han Serif SC. Monospace preference
+is Noto Sans Mono, DejaVu Sans Mono, Liberation Mono, Consolas, then Menlo. Upright static Regular (400)
+and Bold (700) faces take priority independently across the supported families; a variable source supplies
+only missing weights. Install a body family covering the document's languages; code preserves missing
+monospace glyph runs through the explicitly proportional body fallback. Unknown code glyphs fail rather
+than disappearing. Bold uses real outlines and italic uses PDF obliquing. Missing required faces fail with
+an installation error instead of using implicit PDF fonts. Collection face indices are preserved.
+
+For Linux installations, use system packages such as `font-noto-cjk` and `font-dejavu` (Alpine), or
+`fonts-noto-cjk` and `fonts-dejavu-core` (Ubuntu/Debian). The Docker runtime installs system font packages;
+it does not copy fonts from application resources. Windows/macOS operators can install Noto Serif SC
+through the OS font manager and use installed Consolas/Menlo for code.
+
+The optional JVM property `pdf.font.directory`, set before the first PDF request, replaces discovery for
+both roles. Use `serif-regular.ttf`, `serif-bold.ttf`, `mono-regular.ttf`, `mono-bold.ttf`; optional
+`serif-variable.ttf` and `mono-variable.ttf` supply missing static weights through `wght`. The same basenames with `.otf` are also accepted; `.ttf` wins
+when both extensions exist for one slot. Static slots must
+contain static fonts. An invalid selected static face fails explicitly. Backup variable files are read
+only when the requested static weight is absent; an unreadable unused backup cannot block static faces
+(P2 regression). No fallback file is automatically downloaded, copied or registered.
+
+Each PDF owns uncached OpenPDF BaseFont objects and fresh Font styles. Only immutable instance bytes
+are cached (up to 16 entries), keyed by source SHA-256, collection face index, sorted axes including defaults
+and engine version. Failed instancing and thrown cancellation exceptions are not published. HarfBuzz
+calls are synchronous and cannot be safely interrupted by cancelling a coroutine Job. Native ownership
+lasts until the call returns and cleanup finishes; the awaiting coroutine still receives cancellation.
+A completed, validated immutable instance may already be cached when that cancellation is delivered.
+
+Standalone static TrueType/OpenType fonts need no native instancing library. Variable TrueType `glyf`
+fonts and static TrueType/CFF collection extraction require matching public HarfBuzz core/subset libraries **8.3.1 or newer**
+and JNA. CFF2 variable fonts require **HarfBuzz 13.0.0+**: pin all axes, then use the public
+`HB_SUBSET_FLAGS_DOWNGRADE_CFF2` flag to produce static CFF1 outlines compatible with OpenPDF.
+The adapter preserves existing subset flags and rejects output retaining CFF2 or variation tables.
+Older libraries fail explicitly before allocating CFF2 handles; TrueType and static CFF retain the 8.3.1 minimum.
+Unsupported axes/ranges fail explicitly. All unrequested axes pin to their defaults. The adapter copies source memory into a DUPLICATE blob and releases every native handle
+in reverse order after copying result bytes. Instantiated output must not retain `fvar`/`gvar`.
+
+- Windows: use the [official HarfBuzz release bundle](https://github.com/harfbuzz/harfbuzz/releases), with
+  `libharfbuzz-0.dll`, `libharfbuzz-subset-0.dll` and their dependencies together. Put the directory on
+  `PATH`; for Gradle tests set `JAVA_TOOL_OPTIONS=-Djna.library.path=C:/tools/harfbuzz`.
+- Linux: install matching `harfbuzz-subset` (Alpine) or `libharfbuzz-subset0` (Debian/Ubuntu), verifying the
+  version. Alpine runtime targets require `harfbuzz-subset>=13.0.0`. The Jammy worker's `pdf-font-native`
+  Docker stage builds HarfBuzz 14.6.0 from a SHA-256-pinned release because Jammy's package is too old.
+- macOS: install matching HarfBuzz core/subset libraries and expose their directory to JNA.
+  Absolute overrides `pdf.harfbuzz.core.library` and `pdf.harfbuzz.library` are available on all platforms.
+
+The native Docker stage carries HarfBuzz's [Old MIT license](https://github.com/harfbuzz/harfbuzz/blob/14.6.0/COPYING).
+Font installation and licensing remain the responsibility of the system package/font installation.
+Production instancing uses no Python, subprocesses, JDK/Skiko private libraries or font registration.
+
+Run `./gradlew :cloud:openpdf:test -Pserver.flavor=dev -Pserver.buildType=dev --console=plain` with an
+installed standalone variable TrueType Noto Serif SC/CJK SC or Source Han Serif SC, mono Regular/Bold faces, and
+public native libraries. Also provide a standalone CFF2 Chinese variable font (Noto Serif SC/CJK SC
+or Source Han Serif SC), either installed in a standard location or via the test-only JVM property
+`pdf.test.cff2.font` pointing at the original OTF file. Pass it to Gradle workers through
+`JAVA_TOOL_OPTIONS=-Dpdf.test.cff2.font=/path/to/NotoSerifSC-VF.otf` alongside any JNA path setting.
+Missing prerequisites fail tests explicitly; there are no downloads, font registration or silent skips.
+For reproducible local preparation, the [official Noto CJK source](https://github.com/notofonts/noto-cjk/blob/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/Variable/OTF/Subset/NotoSerifSC-VF.otf)
+has SHA-256 `71b4d3ded2d90ff43bb75a4e48cdbe170f0b8d5486dc89ff87f2a1728b56da64`.
+Multi-axis and collection regressions additionally use external Source Serif 4 Variable Roman/Italic
+OTF inputs from [adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif/tree/80d3f8894c09c937bebfa9011247d2e1c79fd6f4/VAR).
+Set test-only properties `pdf.test.cff2.multiaxis.font` (Roman) and `pdf.test.cff2.collection.font`
+(Italic) through the same `JAVA_TOOL_OPTIONS`. Both inputs have `wght` and `opsz` axes with matching ranges.
+Pinned SHA-256 values are `867b73c6a954a4a64616906d179f94572a748790a1d022ebeeff07f56ea0221a`
+(Roman) and `68220a94535e9cffb9b7d844140583ac2a3195eabdd4890b15f83272c8bfcfe4` (Italic).
+Tests construct aligned collections in memory, compare each extracted face with its standalone source,
+verify face-index cache separation, and compare optical-size-dependent advances. A separate fixed-opsz
+case renders identical text at weights 400/700 using NORMAL PDF style, checks heavier actual bold outlines,
+and verifies the output OS/2 weight values. To validate the regression guard, isolate a mutation that
+pins all defaults but overrides only the first sorted axis (opsz). The optical-size case must still pass
+while the fixed-opsz weight case fails because both renders use the default weight. Run this mutation in
+a disposable worktree and restore correct sources before final test/build/static checks. Cancellation testing
+uses public table callbacks to pause inside a real `hb_subset_or_fail` call, cancels the owner Job,
+then releases the callback and verifies completed conversion, reverse handle release and cancelled delivery.
+The synchronous C callback uses an isolated blocking coroutine bridge; test deadlines and native work
+run on real dispatchers, and failure cleanup always releases the gate and joins the worker.
+Keep external verification inputs outside source/resource trees; do not commit font binaries. Tests generate static integration inputs in memory from the installed variable font. Synthetic
+metadata fixtures cover discovery, collection indices and malformed/unrelated fonts without shipping
+font programs. Tests also cover static priority, P2 deferred IO, mixed families, axes, native failures,
+cancellation, reverse cleanup, concurrent cache publication, rendering, bilingual extraction, embedding,
+mono advances, CFF2 downgrade/version gating and per-document ownership. Diagnostic PDFs/PNGs live in `cloud/openpdf/build/test-output/fonts`.
+Review intended visual differences before explicitly updating existing server snapshot references;
+never auto-accept comparisons.

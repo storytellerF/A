@@ -21,4 +21,8 @@ dependencies {
     implementation(libs.markdown)
     implementation(libs.openpdf)
     implementation(libs.highlights)
+    implementation(libs.jna)
+    testImplementation(kotlin("test"))
+    testImplementation(libs.pdfbox)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
