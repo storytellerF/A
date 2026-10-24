@@ -30,6 +30,13 @@ label; previews stay in memory and are not saved as plaintext.
 After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted
 request still reports failure; failed operations and partial uploads are not replayed automatically.
 
+## PDF snapshots
+
+PDF snapshots embed bundled Chinese and Latin Regular/Bold fonts, so viewing or generating a snapshot
+requires no user-installed fonts. Code uses a true monospace Latin font, with a separate Chinese fallback.
+Deployments can supply static or variable TrueType fonts; a matching static face takes priority.
+See [PDF font setup](DEVELOPMENT.md#pdf-font-sources-and-variable-font-instancing) for deployment options.
+
 ## Worker Configuration
 
 Worker task settings are stored per task type. A task without a persisted configuration does not run.

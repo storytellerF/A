@@ -358,4 +358,8 @@
   so typed failures stay intact without passing through endpoint4k's Kotlin Result-based invocation overloads.
 
 - Preserve typed failure categories through `fromError` conversions; do not infer authentication or permission
-  failures solely from the diagnostic exception class. Host PDF tests need JVM-visible Noto Serif and Noto Sans Mono Regular.
+  failures solely from the diagnostic exception class. PDF tests use bundled static fonts; variable-font tests require public HarfBuzz core/subset libraries (8.3.1+), never user-font registration.
+
+- PDF font selection prefers static weight faces; pin all remaining VF axes explicitly before OpenPDF embedding. Cache font bytes only and create document-owned OpenPDF objects. See DEVELOPMENT.md for asset provenance and native-library setup.
+
+- Read backup variable-font data only when a missing static weight needs it; unused fallback IO failures must not block available static faces.
