@@ -11,6 +11,15 @@ import kotlin.test.assertSame
 
 internal class ScenarioErrorTest {
     @Test
+    fun `database authentication survives scene changes`() {
+        val cause = IllegalStateException("authentication required")
+        val database = DatabaseError.Unauthenticated(cause)
+        val community = assertIs<CommunityError.Unauthenticated>(CommunityError.fromError(database))
+        val room = assertIs<RoomError.Unauthenticated>(RoomError.fromError(community))
+        assertSame(cause, room.cause)
+    }
+
+    @Test
     fun `unexpected errors are not reclassified by cause`() {
         val cause = IllegalArgumentException("provider failed")
         val mapped = TopicError.fromError(RoomError.Unexpected(cause))

@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.NewCommunity
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.NewTopic
 import com.storyteller_f.a.api.PaginationQuery
+import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTitle
@@ -30,19 +31,36 @@ import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.type.ObjectType
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.datetime.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class CommunityTest {
+    @Test
+    fun `anonymous joined community detail requires login`() =
+        test(mapOf("DISABLE_TEST_WS" to "true")) {
+        val objectId = attachSession { createCommunityForTest().id }.custom
+        noneSession {
+            val failure =
+                assertFailsWith<ServerErrorException> {
+                    client.get("/communities/$objectId?fillJoinInfo=true").body<CommunityInfo>()
+                }
+            assertEquals(HttpStatusCode.Unauthorized, failure.status)
+        }
+    }
+
     @Test
     fun `get community by id`() =
         test {
