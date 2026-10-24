@@ -860,7 +860,9 @@ cause for logging and terminal consumers such as Paging, loading state and HTTP 
 
 Use explicit `mapError(ScenarioError::fromError)` conversion between scenarios.
 Exception classification uses `ScenarioError.from`; typed error conversion preserves authentication,
-permission, input and constraint categories independently of the diagnostic exception class. Pure mapping/composition does not catch exceptions.
+permission, input and constraint categories independently of the diagnostic exception class.
+Reviewer construction captures provider initialization failures at the factory boundary so the worker can
+retry initialization without cancelling its sibling tasks. Pure mapping/composition does not catch exceptions.
 `captureFailure` requires the boundary's error mapper, catches ordinary exceptions, and propagates coroutine
 cancellation and fatal errors. Browser crypto normalizes JavaScript exceptions at the platform boundary.
 Exception-based interoperability uses `getOrThrow`; new business decisions should inspect typed variants.

@@ -16,6 +16,7 @@ import com.storyteller_f.a.backend.core.buildRoomSearchService
 import com.storyteller_f.a.backend.core.buildTopicSearchService
 import com.storyteller_f.a.backend.core.buildUserSearchService
 import com.storyteller_f.a.backend.core.databaseConnection
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.mediaService
 import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
@@ -74,7 +75,7 @@ fun main() {
     val backend = buildBackendFromEnv(env)
     runBlocking {
         TopicSafetyReviewerProvider {
-            createTopicSafetyReviewer(backend)
+            createTopicSafetyReviewer(backend.database.getBackendConfig(LlmConfig.CONFIG_KEY))
         }.use { reviewerProvider ->
             Napier.i {
                 "worker started"
@@ -117,34 +118,34 @@ internal class TopicSafetyReviewerProvider(
     }
 }
 
-internal suspend fun createTopicSafetyReviewer(backend: Backend): CustomResult<TopicSafetyReviewer?, WorkerError> =
-    backend.database.getBackendConfig(LlmConfig.CONFIG_KEY)
-        .andThen(
-            WorkerError::fromError,
-        ) { value ->
-            if (value == null) {
-                CustomResult.success(
-                    null,
-                )
-            } else {
-                captureFailure(WorkerError::from) { commonJson.decodeFromString<LlmConfig>(value) }
-            }
-        }
-        .andThenPresent(WorkerError::fromError) { config ->
-            Napier.i(tag = MODERATION_LOG_TAG) {
-                "using LLM provider: ${config.provider}"
-            }
+internal fun createTopicSafetyReviewer(
+    configResult: CustomResult<String?, DatabaseError>,
+): CustomResult<TopicSafetyReviewer?, WorkerError> =
+    configResult
+    .andThen(
+        WorkerError::fromError,
+    ) { value ->
+        if (value == null) {
             CustomResult.success(
-                KoogTopicSafetyReviewer.create(config),
+                null,
             )
+        } else {
+            captureFailure(WorkerError::from) { commonJson.decodeFromString<LlmConfig>(value) }
         }
-        .onSuccess { reviewer ->
-            if (reviewer == null) {
-                Napier.w(tag = MODERATION_LOG_TAG) {
-                    "LLM configuration not found; topic moderation will retry after configuration is added"
-                }
+    }
+    .andThenPresent(WorkerError::fromError) { config ->
+        Napier.i(tag = MODERATION_LOG_TAG) {
+            "using LLM provider: ${config.provider}"
+        }
+        captureFailure(WorkerError::from) { KoogTopicSafetyReviewer.create(config) }
+    }
+    .onSuccess { reviewer ->
+        if (reviewer == null) {
+            Napier.w(tag = MODERATION_LOG_TAG) {
+                "LLM configuration not found; topic moderation will retry after configuration is added"
             }
-        }.mapError(WorkerError::fromError)
+        }
+    }.mapError(WorkerError::fromError)
 
 private fun CoroutineScope.startWorkerTasks(
     backend: Backend,

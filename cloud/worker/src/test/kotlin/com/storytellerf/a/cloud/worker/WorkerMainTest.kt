@@ -5,18 +5,56 @@ package com.storytellerf.a.cloud.worker
 
 import com.storyteller_f.a.cloud.worker.TopicSafetyReviewerProvider
 import com.storyteller_f.a.cloud.worker.WORKER_TASK_POLL_MILLIS
+import com.storyteller_f.a.cloud.worker.createTopicSafetyReviewer
 import com.storyteller_f.a.cloud.worker.executeConfiguredTaskIteration
 import com.storyteller_f.result.CustomResult
+import com.storyteller_f.shared.commonJson
+import com.storyteller_f.shared.model.LlmConfig
+import com.storyteller_f.shared.model.LlmProvider
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.WorkerTask
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 internal class WorkerMainTest {
+    @Test
+    fun `reviewer retries after factory failure`() =
+        runTest {
+        val config = commonJson.encodeToString(LlmConfig(provider = LlmProvider.OPENAI))
+        val reviewer = TopicSafetyReviewer { false }
+        var attempts = 0
+        TopicSafetyReviewerProvider {
+            attempts += 1
+            if (attempts == 1) {
+                createTopicSafetyReviewer(CustomResult.success(config))
+            } else {
+                CustomResult.success(reviewer)
+            }
+        }.use { provider ->
+            assertNull(provider.get())
+            assertSame(reviewer, provider.get())
+            assertSame(reviewer, provider.get())
+            assertEquals(2, attempts)
+        }
+    }
+
+    @Test
+    fun `reviewer initialization preserves cancellation`() =
+        runTest {
+        val cancellation = CancellationException("initialization cancelled")
+        TopicSafetyReviewerProvider { throw cancellation }.use { provider ->
+            assertSame(cancellation, assertFailsWith<CancellationException> { provider.get() })
+        }
+    }
+
     @Test
     fun `reviewer provider retries initialization`() {
         runTest {
