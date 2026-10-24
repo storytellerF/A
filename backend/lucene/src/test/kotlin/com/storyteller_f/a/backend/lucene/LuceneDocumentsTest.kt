@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UserDocument
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.services.lucene.api.LuceneRpc
 import com.storyteller_f.services.lucene.api.RpcLuceneDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery

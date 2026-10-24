@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
 import org.openqa.selenium.edge.EdgeDriver
 import org.openqa.selenium.edge.EdgeOptions
 import org.openqa.selenium.json.Json
@@ -30,7 +33,9 @@ internal fun createBlankEdgeDriver(options: EdgeOptions): EdgeDriver {
         driver.switchTo().window(target)
         driver
     } catch (failure: Throwable) {
-        runCatching { driver.quit() }.exceptionOrNull()?.let(failure::addSuppressed)
+        captureFailure(
+            ArtifactCollectionError::CollectionFailed,
+        ) { driver.quit() }.exceptionOrNull()?.let(failure::addSuppressed)
         throw failure
     }
 }

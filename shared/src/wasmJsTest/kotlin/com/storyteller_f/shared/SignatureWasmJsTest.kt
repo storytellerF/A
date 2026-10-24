@@ -4,6 +4,7 @@
 
 package com.storyteller_f.shared
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.utils.md5
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -95,6 +96,9 @@ class SignatureWasmJsTest {
         val aesKey = ByteArray(32) { it.toByte() }
         val encryptedAesKey = encryptionAlgorithm.kemEncrypt(encryptionPublicKey, aesKey).getOrThrow()
 
-        assertContentEquals(aesKey, encryptionAlgorithm.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow())
+        assertContentEquals(
+            aesKey,
+            encryptionAlgorithm.kemDecrypt(encryptionPrivateKey, encryptedAesKey).getOrThrow(),
+        )
     }
 }

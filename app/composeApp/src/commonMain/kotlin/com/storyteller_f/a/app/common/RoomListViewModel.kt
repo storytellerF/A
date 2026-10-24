@@ -23,6 +23,8 @@ import com.storyteller_f.a.client.core.getUnreadMessageCount
 import com.storyteller_f.a.client.core.getUserRooms
 import com.storyteller_f.a.client.core.searchCommunityRooms
 import com.storyteller_f.a.client.core.searchCurrentUserRooms
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
@@ -47,7 +49,7 @@ internal val previewCoordination = Dispatchers.Default.limitedParallelism(1)
 abstract class RoomListViewModel : PagingViewModel<RoomInfo>() {
     internal val previews = RoomListPreviewHost(previewCoordination, Dispatchers.Default)
 
-    protected suspend fun captureRoomPage(key: String?, response: Result<RoomInfoListResponse>) =
+    protected suspend fun <E> captureRoomPage(key: String?, response: CustomResult<RoomInfoListResponse, E>) =
         response.onSuccess { previews.acceptPage(key, it) }
 }
 
@@ -116,7 +118,7 @@ class UnreadMessageCountViewModel(sessionManager: UserSessionManager) : SimpleVi
             if (sessionManager.currentIsAlreadySignUp) {
                 sessionManager.getUnreadMessageCount()
             } else {
-                Result.success(UnreadMessageCountResponse(0))
+                CustomResult.success(UnreadMessageCountResponse(0))
             }
         }
 }

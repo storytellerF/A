@@ -50,6 +50,10 @@ import com.storyteller_f.a.client.core.getWorkerTasks
 import com.storyteller_f.a.client.core.markTaskRecordForRetry
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.updateWorkerTask
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
@@ -738,7 +742,10 @@ internal class WorkerTasksViewModel(private val sessionManager: PanelSessionMana
                 },
                 onFailure = { failure ->
                     mutableUiState.update {
-                        it.copy(isLoading = false, error = failure.message ?: "Failed to load task configurations")
+                        it.copy(
+                            isLoading = false,
+                            error = failure.cause.message ?: "Failed to load task configurations",
+                        )
                     }
                 },
             )
@@ -774,7 +781,7 @@ internal class WorkerTasksViewModel(private val sessionManager: PanelSessionMana
                 onFailure = { failure ->
                     setSaving(type, false)
                     mutableUiState.update {
-                        it.copy(error = failure.message ?: "Failed to save task configuration")
+                        it.copy(error = failure.cause.message ?: "Failed to save task configuration")
                     }
                 },
             )

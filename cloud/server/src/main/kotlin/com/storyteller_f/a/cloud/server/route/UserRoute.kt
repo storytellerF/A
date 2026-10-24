@@ -50,18 +50,20 @@ import com.storyteller_f.a.cloud.core.service.searchUserJoinedCommunities
 import com.storyteller_f.a.cloud.core.service.searchUsers
 import com.storyteller_f.a.cloud.core.service.setupTotp
 import com.storyteller_f.a.cloud.core.service.updateUser
+import com.storyteller_f.a.cloud.error.ServerError
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.auth.usePrincipalOrNull
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.cloud.server.common.invoke
 import com.storyteller_f.a.cloud.server.common.pagination
 import com.storyteller_f.a.cloud.server.common.pagingGenerator
-import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.Route
 import kotlinx.collections.immutable.ImmutableList
 
@@ -226,7 +228,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
                 RoomInfoListResponse(l, p)
             }) { fetch ->
                 backend.getUserJoinedRooms(uid, fetch)
-            }.mapResult { backend.fillRoomActivities(uid, it) }
+            }.andThen(ServerError::fromError) { backend.fillRoomActivities(uid, it) }
         }
     }
     CustomApi.Users.JoinedRooms.search(handleResult(backend)) { q ->
@@ -235,7 +237,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
                 RoomInfoListResponse(l, p)
             }) { fetch ->
                 backend.searchCurrentUserRooms(uid, fetch, q)
-            }.mapResult { backend.fillRoomActivities(uid, it) }
+            }.andThen(ServerError::fromError) { backend.fillRoomActivities(uid, it) }
         }
     }
 }

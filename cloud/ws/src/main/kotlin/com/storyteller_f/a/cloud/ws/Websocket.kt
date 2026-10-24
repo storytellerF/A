@@ -8,15 +8,20 @@ import com.maxmind.geoip2.DatabaseReader
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.a.cloud.error.WebSocketError
 import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.remoteIp
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapResult
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -69,29 +74,29 @@ suspend fun DefaultWebSocketServerSession.useWebSocket(uid: PrimaryKey, block: s
 data class Notification(val title: String, val message: String)
 
 interface NotificationDispatcher {
-    suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit>
+    suspend fun dispatch(frame: RoomFrame.NewTopicInfo): CustomResult<Unit, WebSocketError>
 }
 
 class WebsocketDispatcher(val session: DefaultWebSocketServerSession) : NotificationDispatcher {
-    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> =
-        cancellableRunCatching {
-        session.sendFrame(frame)
-    }
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): CustomResult<Unit, WebSocketError> =
+        captureFailure(WebSocketError::from) {
+            session.sendFrame(frame)
+        }
 }
 
 class ExternalDispatcher(val client: HttpClient, val endpointUrl: String) : NotificationDispatcher {
-    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): Result<Unit> =
-        cancellableRunCatching {
-        val content =
-            when (val content = frame.topicInfo.content) {
-                is TopicContent.Plain -> content.plain
-                else -> ""
+    override suspend fun dispatch(frame: RoomFrame.NewTopicInfo): CustomResult<Unit, WebSocketError> =
+        captureFailure(WebSocketError::from) {
+            val content =
+                when (val content = frame.topicInfo.content) {
+                    is TopicContent.Plain -> content.plain
+                    else -> ""
+                }
+            client.post(endpointUrl) {
+                contentType(ContentType.Application.Json)
+                setBody(Notification("new topic", content))
             }
-        client.post(endpointUrl) {
-            contentType(ContentType.Application.Json)
-            setBody(Notification("new topic", content))
         }
-    }
 }
 
 suspend fun DefaultWebSocketServerSession.webSocketContent(reader: DatabaseReader, backend: Backend) {
@@ -220,8 +225,8 @@ suspend fun DefaultWebSocketServerSession.processNewMessage(
             messageResponseFlow.emit(raw)
         }
     }.onFailure {
-        val message = it.message ?: "unknown error"
-        call.application.log.error(it)
+        val message = it.cause.message ?: "unknown error"
+        call.application.log.error(it.cause)
         sendFrame(RoomFrame.Error(message))
     }
 }
@@ -234,7 +239,7 @@ private suspend fun dispatchNewMessage(backend: Backend, httpClient: HttpClient)
 
 suspend fun dispatchNewMessageFrame(backend: Backend, httpClient: HttpClient, frame: RoomFrame.NewTopicInfo) {
     backend.database.container.getJoinedUserList(frame.topicInfo.rootId)
-        .mapResult { list ->
+        .andThen(WebSocketError::fromError) { list ->
             val memberJoins =
                 list.filter {
                     it.uid != frame.topicInfo.author
@@ -257,14 +262,14 @@ suspend fun dispatchNewMessageFrame(backend: Backend, httpClient: HttpClient, fr
         }.onSuccess {
             it.forEach { dispatcher ->
                 dispatcher.dispatch(frame).onFailure { throwable ->
-                    Napier.e(throwable = throwable) {
-                        "send topic to room members failed: ${throwable.message ?: "<none>"}"
+                    Napier.e(throwable = throwable.cause) {
+                        "send topic to room members failed: ${throwable.cause.message ?: "<none>"}"
                     }
                 }
             }
         }.onFailure {
-            Napier.e(throwable = it) {
-                "send topic to room members failed: ${it.message ?: "<none>"}"
+            Napier.e(throwable = it.cause) {
+                "send topic to room members failed: ${it.cause.message ?: "<none>"}"
             }
         }
 }

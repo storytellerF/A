@@ -9,13 +9,18 @@ import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.cloud.core.service.isTwoFactorEnabled
+import com.storyteller_f.a.cloud.error.ServerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import io.ktor.http.auth.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -56,7 +61,8 @@ inline fun AuthenticationConfig.custom(name: String? = null, configure: CustomAu
     register(provider)
 }
 
-typealias CustomValidator = suspend (UserSession, ApplicationCall, CustomCredential?) -> Result<CustomPrincipal?>
+typealias CustomValidator =
+    suspend (UserSession, ApplicationCall, CustomCredential?) -> CustomResult<CustomPrincipal?, ServerError>
 typealias CustomChallenge = suspend (UserSession, ApplicationCall) -> Unit
 
 class CustomAuthProvider(private val config: Config) : AuthenticationProvider(config) {
@@ -138,14 +144,14 @@ suspend fun ApplicationCall.saveSuccessSession(session: UserSession.TwoFactorPen
 fun ApplicationCall.getData(): String = getSession().data
 
 /** An explicit sign-in gets a fresh, single-use server challenge and rotates the current credential. */
-suspend fun ApplicationCall.beginSigninChallenge(): Result<String> {
+suspend fun ApplicationCall.beginSigninChallenge(): CustomResult<String, ServerError> {
     if (request.headers["X-Requested-With"] != "A-client") {
-        return Result.failure(ForbiddenException())
+        return CustomResult.Failure(ServerError.from(ForbiddenException())).mapError(ServerError::fromError)
     }
     clearSigninSession()
     val pending = createPendingSession(request.origin.remoteAddress)
     setSession(pending)
-    return Result.success(pending.data)
+    return CustomResult.success(pending.data)
 }
 
 /** Anonymous/background requests never issue a pending cookie that could overwrite a new login. */
@@ -187,19 +193,19 @@ fun Application.configureAuth(backend: Backend) {
                             call.request.headers["X-Account-Id"]?.let { it.toLongOrNull() == session.id } != false &&
                             call.isSigninSessionValid()
                         ) {
-                            Result.success(CustomPrincipal(session.id))
+                            CustomResult.success(CustomPrincipal(session.id))
                         } else {
-                            Result.success(null)
+                            CustomResult.success(null)
                         }
                     }
 
-                    is UserSession.TwoFactorPending -> Result.success(null)
+                    is UserSession.TwoFactorPending -> CustomResult.success(null)
 
-                    is UserSession.Pending -> Result.success(null)
-                }.mapResultIfNotNull { principal ->
+                    is UserSession.Pending -> CustomResult.success(null)
+                }.andThenPresent(ServerError::fromError) { principal ->
                     val uid = principal.uid
-                    backend.database.user.getRawUser(ObjectFetch.IdFetch(uid)).mapResultIfNotNull {
-                        Result.success(principal.copy(readOnly = it.user.status == UserStatus.READ_ONLY))
+                    backend.database.user.getRawUser(ObjectFetch.IdFetch(uid)).andThenPresent(ServerError::fromError) {
+                        CustomResult.success(principal.copy(readOnly = it.user.status == UserStatus.READ_ONLY))
                     }
                 }
             }
@@ -216,15 +222,15 @@ fun Application.configureAuth(backend: Backend) {
                             call.request.headers["X-Account-Id"]?.let { it.toLongOrNull() == session.id } != false &&
                             call.isSigninSessionValid()
                         ) {
-                            Result.success(CustomPrincipal(session.id))
+                            CustomResult.success(CustomPrincipal(session.id))
                         } else {
-                            Result.success(null)
+                            CustomResult.success(null)
                         }
                     }
 
-                    is UserSession.TwoFactorPending -> Result.success(null)
+                    is UserSession.TwoFactorPending -> CustomResult.success(null)
 
-                    is UserSession.Pending -> Result.success(null)
+                    is UserSession.Pending -> CustomResult.success(null)
                 }
             }
             challenge { _, call ->
@@ -234,42 +240,42 @@ fun Application.configureAuth(backend: Backend) {
     }
 }
 
-suspend fun Backend.getUserAuthData(credential: CustomCredential): Result<UserAuthData?> {
+suspend fun Backend.getUserAuthData(credential: CustomCredential): CustomResult<UserAuthData?, ServerError> {
     val userDatabase = database.user
     return when (credential) {
         is CustomCredential.AidCredential -> userDatabase.getUserAuthDataByAid(credential.aid)
         is CustomCredential.IdCredential -> userDatabase.getUserAuthDataById(credential.id)
         is CustomCredential.AddressCredential -> userDatabase.getUserAuthDataByAddress(credential.ad)
-    }
+    }.mapError(ServerError::fromError)
 }
 
 suspend fun ApplicationCall.checkApiRequest(
     backend: Backend,
     credential: CustomCredential,
     session: UserSession.Pending,
-): Result<CustomPrincipal?> {
-    if (session.label != "user") return Result.success(null)
+): CustomResult<CustomPrincipal?, ServerError> {
+    if (session.label != "user") return CustomResult.success(null)
     val sig = credential.sig
     return when {
         backend.customConfig.buildType != "prod" &&
             credential is CustomCredential.IdCredential &&
             sig == credential.id.toString() -> {
             val id = credential.id
-            backend.database.user.getRawUser(ObjectFetch.IdFetch(id)).mapIfNotNull {
+            backend.database.user.getRawUser(ObjectFetch.IdFetch(id)).mapPresent {
                 saveSuccessSession(session, id)
                 CustomPrincipal(id)
             }
         }
 
         sig.isNotBlank() && session.data.isNotBlank() -> {
-            backend.getUserAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+            backend.getUserAuthData(credential).andThenPresent(ServerError::fromError) { (pubKey, id, algo) ->
                 getAlgo(algo).verify(
                     pubKey,
                     sig,
                     finalData(session.data),
-                ).mapResult { isVerified ->
+                ).andThen(ServerError::fromError) { isVerified ->
                     if (!isVerified) {
-                        Result.success(null)
+                        CustomResult.success(null)
                     } else {
                         backend.isTwoFactorEnabled(id).map {
                             if (it) {
@@ -285,36 +291,36 @@ suspend fun ApplicationCall.checkApiRequest(
         }
 
         else -> {
-            Result.success(null)
+            CustomResult.success(null)
         }
-    }
+    }.mapError(ServerError::fromError)
 }
 
-suspend fun Backend.getAdminAuthData(credential: CustomCredential): Result<UserAuthData?> =
+suspend fun Backend.getAdminAuthData(credential: CustomCredential): CustomResult<UserAuthData?, ServerError> =
     when (credential) {
-    is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
-    is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
-    else -> Result.failure(ForbiddenException())
-}
+        is CustomCredential.IdCredential -> database.panelAccount.getUserAuthDataById(credential.id)
+        is CustomCredential.AddressCredential -> database.panelAccount.getUserAuthDataByAddress(credential.ad)
+        else -> CustomResult.Failure(ServerError.from(ForbiddenException()))
+    }.mapError(ServerError::fromError)
 
 suspend fun ApplicationCall.checkAdminApiRequest(
     backend: Backend,
     credential: CustomCredential,
     session: UserSession.Pending,
-): Result<CustomPrincipal?> {
-    if (session.label != "panel") return Result.success(null)
+): CustomResult<CustomPrincipal?, ServerError> {
+    if (session.label != "panel") return CustomResult.success(null)
     val sig = credential.sig
     if (!sig.isNotBlank() || !session.data.isNotBlank()) {
-        return Result.success(null)
+        return CustomResult.success(null)
     }
-    return backend.getAdminAuthData(credential).mapResultIfNotNull { (pubKey, id, algo) ->
+    return backend.getAdminAuthData(credential).andThenPresent(ServerError::fromError) { (pubKey, id, algo) ->
         getAlgo(algo).verify(
             pubKey,
             sig,
             finalData(session.data),
-        ).mapIfNotNull {
+        ).mapPresent {
             saveSuccessSession(session, id)
             CustomPrincipal(id)
         }
-    }
+    }.mapError(ServerError::fromError)
 }

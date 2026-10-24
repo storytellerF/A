@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.storyteller_f.a.app.LocalGlobalTask
 import com.storyteller_f.a.app.common.OnAddReaction
 import com.storyteller_f.a.app.common.OnRemoveReaction
+import com.storyteller_f.a.app.error.ReactionActionError
 import com.storyteller_f.a.client.compose_core.components.BaseSheet
 import com.storyteller_f.a.client.compose_core.components.GlobalTaskContext
 import com.storyteller_f.a.client.compose_core.components.NestedGlobalTask
@@ -32,6 +33,10 @@ import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.addReaction
 import com.storyteller_f.a.client.core.deleteReaction
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.TopicInfo
 import org.kodein.emoji.Emoji
@@ -137,7 +142,7 @@ private fun EmojiItem(emojiSize: Dp, topic: TopicInfo, emoji: Emoji, hideSheet: 
 internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
     topic: TopicInfo,
     emojiText: String,
-): Result<ReactionInfo> {
+): CustomResult<ReactionInfo, ReactionActionError> {
     val existing =
         topic.extension?.reactions?.firstOrNull {
             it.emoji == emojiText
@@ -157,19 +162,19 @@ internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager
         emitEvent(OnAddReaction(it, topic))
     }.onFailure {
         emitEvent(OnRemoveReaction(fakeInfo.copy(count = fakeInfo.count - 1), topic))
-    }
+    }.mapError(ReactionActionError::fromError)
 }
 
 internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
     topic: TopicInfo,
     emojiText: String,
     existing: ReactionInfo,
-): Result<ReactionInfo> {
+): CustomResult<ReactionInfo, ReactionActionError> {
     val fakeInfo = existing.copy(count = existing.count - 1)
     emitEvent(OnRemoveReaction(fakeInfo, topic))
     return request { deleteReaction(emojiText, topic.id) }.onSuccess {
         emitEvent(OnRemoveReaction(it, topic))
     }.onFailure {
         emitEvent(OnRemoveReaction(existing, topic))
-    }
+    }.mapError(ReactionActionError::fromError)
 }

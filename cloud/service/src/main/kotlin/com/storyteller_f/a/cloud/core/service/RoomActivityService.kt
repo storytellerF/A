@@ -16,37 +16,40 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.getRawTopicListByIds
 import com.storyteller_f.a.backend.core.processTopicToRawTopic
 import com.storyteller_f.a.backend.core.types.RoomActivityRecord
+import com.storyteller_f.a.cloud.core.service.error.RoomActivityError
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapResult
 import kotlinx.collections.immutable.toImmutableList
 
 /** Adds activity only for eligible rooms from this exact page; private bodies stay encrypted. */
 suspend fun Backend.fillRoomActivities(uid: PrimaryKey?, response: RoomInfoListResponse?) =
-    cancellableRunCatching {
-    if (uid == null || response == null || response.data.isEmpty()) return@cancellableRunCatching response
-    val records = database.container.getRoomActivityRecords(uid, response.data.map { it.id }).getOrThrow()
-    val activities = processRoomActivities(uid, records).associateBy { it.room.id }
-    response.copy(activities = response.data.mapNotNull { activities[it.id] }.toImmutableList())
-}
+    captureFailure(RoomActivityError::from) {
+        if (uid == null || response == null || response.data.isEmpty()) return@captureFailure response
+        val records = database.container.getRoomActivityRecords(uid, response.data.map { it.id }).getOrThrow()
+        val activities = processRoomActivities(uid, records).associateBy { it.room.id }
+        response.copy(activities = response.data.mapNotNull { activities[it.id] }.toImmutableList())
+    }
 
 suspend fun Backend.getUnreadMessageCount(uid: PrimaryKey) =
     database.container.getUserUnreadMessageCount(uid).map { UnreadMessageCountResponse(it) }
 
 suspend fun Backend.getUnreadRoomActivities(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    cancellableRunCatching {
-    checkActivityPageSize(fetch)
-    val page = database.container.getUnreadRoomActivityRecords(uid, fetch).getOrThrow()
-    PaginationResult(processRoomActivities(uid, page.list), page.total)
-}
+    captureFailure(RoomActivityError::from) {
+        checkActivityPageSize(fetch)
+        val page = database.container.getUnreadRoomActivityRecords(uid, fetch).getOrThrow()
+        PaginationResult(processRoomActivities(uid, page.list), page.total)
+    }
 
 suspend fun Backend.getJoinedPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    cancellableRunCatching {
-    checkActivityPageSize(fetch)
-    val page = database.topic.getJoinedCommunityPinnedTopics(uid, fetch).getOrThrow()
-    val rawTopics = database.processTopicToRawTopic(uid, page.list).getOrThrow()
-    PaginationResult(processRawTopicToTopicInfo(rawTopics, uid, false).getOrThrow().orEmpty(), page.total)
-}
+    captureFailure(RoomActivityError::from) {
+        checkActivityPageSize(fetch)
+        val page = database.topic.getJoinedCommunityPinnedTopics(uid, fetch).getOrThrow()
+        val rawTopics = database.processTopicToRawTopic(uid, page.list).getOrThrow()
+        PaginationResult(processRawTopicToTopicInfo(rawTopics, uid, false).getOrThrow().orEmpty(), page.total)
+    }
 
 private suspend fun Backend.processRoomActivities(
     uid: PrimaryKey,
@@ -57,7 +60,10 @@ private suspend fun Backend.processRoomActivities(
         getRoomInfoList(ObjectListFetch.IdListFetch(records.map { it.roomId }), uid)
             .getOrThrow().associateBy { it.id }
     val messages =
-        database.getRawTopicListByIds(uid, records.mapNotNull { it.latestMessageId }).mapResult {
+        database.getRawTopicListByIds(
+            uid,
+            records.mapNotNull { it.latestMessageId },
+        ).andThen(RoomActivityError::fromError) {
             processRawTopicToTopicInfo(it, uid, false)
         }.getOrThrow().orEmpty().associateBy { it.id }
     return records.mapNotNull { record ->

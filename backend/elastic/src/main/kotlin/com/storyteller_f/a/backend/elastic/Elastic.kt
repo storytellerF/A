@@ -17,11 +17,13 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.splitKeywords
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.recover
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.recoverResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -36,10 +38,10 @@ import javax.net.ssl.SSLContext
 open class Elastic(val connection: ElasticConnection) {
     val sslContext = getSslContext(connection)
 
-    suspend fun <T> useElasticClient(block: suspend ElasticsearchAsyncClient.() -> T): Result<T> {
+    suspend fun <T> useElasticClient(block: suspend ElasticsearchAsyncClient.() -> T): CustomResult<T, SearchError> {
         val elasticConnection = connection
         val point = Exception("Elasticsearch request call site")
-        return cancellableRunCatching {
+        return captureFailure(SearchError::from) {
             ElasticsearchAsyncClient.of { b ->
                 b.host(elasticConnection.url)
                     .usernameAndPassword(elasticConnection.name, elasticConnection.pass)
@@ -58,27 +60,30 @@ open class Elastic(val connection: ElasticConnection) {
                     it.block()
                 }
             }
-        }.recoverResult { e ->
+        }.recover(SearchError::fromError) { failure ->
+            val e = failure.cause
             if (e is ElasticsearchException) {
                 Napier.e {
                     "elastic search failed ${e.status()}"
                 }
             }
-            Result.failure(
-                when (e) {
-                    is ConnectException,
-                    is ConnectionClosedException,
-                    ->
-                        Exception("elastic service unavailable", e)
+            CustomResult.Failure(
+                SearchError.from(
+                    when (e) {
+                        is ConnectException,
+                        is ConnectionClosedException,
+                        ->
+                            Exception("elastic service unavailable", e)
 
-                    is ElasticsearchException if e.status() == 404 ->
-                        Exception("index not found", e)
+                        is ElasticsearchException if e.status() == 404 ->
+                            Exception("index not found", e)
 
-                    else -> {
-                        point.initCause(e)
-                        point
-                    }
-                },
+                        else -> {
+                            point.initCause(e)
+                            point
+                        }
+                    },
+                ),
             )
         }
     }

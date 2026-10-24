@@ -7,7 +7,10 @@ package com.storyteller_f.a.app.service
 import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
-import com.storyteller_f.shared.utils.cancellableRunCatching
+import com.storyteller_f.a.app.error.ModelGenerationError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.mapError
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.utils.toFile
@@ -30,25 +33,27 @@ actual fun getGPTModelDirectory(): Path {
 class JvmEdgeGPT : GPT {
     override val supportList: List<String> = listOf("litertlm")
 
-    override suspend fun importModel(file: PlatformFile): Result<GPTModel> =
-        cancellableRunCatching {
-        val name = file.file.name
-        require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
-            "unsupported model file: $name"
-        }
-        val target = Path(getGPTModelDirectory(), name)
-        withContext(Dispatchers.IO) {
-            val targetFile = target.toFile()
-            targetFile.parentFile?.mkdirs()
-            file.file.copyTo(targetFile, overwrite = true)
-        }
-        GPTModel(target.name, target.toString())
-    }
+    override suspend fun importModel(file: PlatformFile): CustomResult<GPTModel, ModelGenerationError> =
+        captureFailure(ModelGenerationError::from) {
+            val name = file.file.name
+            require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
+                "unsupported model file: $name"
+            }
+            val target = Path(getGPTModelDirectory(), name)
+            withContext(Dispatchers.IO) {
+                val targetFile = target.toFile()
+                targetFile.parentFile?.mkdirs()
+                file.file.copyTo(targetFile, overwrite = true)
+            }
+            GPTModel(target.name, target.toString())
+        }.mapError(ModelGenerationError::fromError)
 
-    override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> {
+    override suspend fun generate(path: String, prompt: String): CustomResult<Flow<GPTOutput>, ModelGenerationError> {
         val file = File(path)
         if (!file.exists()) {
-            return Result.failure(Exception("modal not exists"))
+            return CustomResult.Failure(
+                ModelGenerationError.from(Exception("modal not exists")),
+            ).mapError(ModelGenerationError::fromError)
         }
         val userHome = System.getProperty("user.home")
         val engineConfig =
@@ -58,7 +63,7 @@ class JvmEdgeGPT : GPT {
                 cacheDir = File(userHome, ".storyteller_f_a/llm-cache").absolutePath,
             )
         val engine = Engine(engineConfig)
-        return cancellableRunCatching {
+        return captureFailure(ModelGenerationError::from) {
             withContext(Dispatchers.IO) {
                 engine.initialize()
             }
@@ -77,7 +82,7 @@ class JvmEdgeGPT : GPT {
                     "engine closed"
                 }
             }
-        }
+        }.mapError(ModelGenerationError::fromError)
     }
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> =

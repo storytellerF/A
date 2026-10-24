@@ -7,8 +7,10 @@ package com.storyteller_f.a.client.compose_core.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import com.storyteller_f.a.client.compose_core.error.UiOperationError
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.SimpleLoadingHandler
+import com.storyteller_f.result.captureFailure
 
 object DefaultMediaPlayListHandlerProvider : MediaPlayListHandlerProvider {
     @Composable
@@ -16,7 +18,7 @@ object DefaultMediaPlayListHandlerProvider : MediaPlayListHandlerProvider {
         val scope = rememberCoroutineScope()
         return remember(remoteMediaItem) {
             SimpleLoadingHandler(scope) {
-                runCatching {
+                captureFailure(UiOperationError::from) {
                     loadMediaPlayList(remoteMediaItem)
                 }
             }

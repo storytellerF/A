@@ -5,8 +5,10 @@
 package com.storyteller_f.a.backend.simple
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.error.LockError
 import com.storyteller_f.a.backend.core.service.LockService
 import com.storyteller_f.a.backend.core.service.LockServiceFactory
+import com.storyteller_f.result.CustomResult
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -15,10 +17,13 @@ import kotlinx.coroutines.withContext
 class NativeLockService : LockService {
     val list = mutableSetOf<String>()
     val lock = Mutex()
-    override suspend fun <T> withLock(key: String, block: suspend () -> Result<T>): Result<T> {
+    override suspend fun <T> withLock(
+        key: String,
+        block: suspend () -> CustomResult<T, LockError>,
+    ): CustomResult<T, LockError> {
         lock.withLock {
             if (list.contains(key)) {
-                return Result.failure(IllegalStateException("key $key is locked"))
+                return CustomResult.Failure(LockError.from(IllegalStateException("key $key is locked")))
             } else {
                 list.add(key)
             }

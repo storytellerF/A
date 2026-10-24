@@ -844,3 +844,39 @@ The WebView AppKit run-loop adapter was an independent dependency fix, separate 
 2. Review and remove the explicit macOS E2E pause in the shared desktop helper and its corresponding unit-test expectation. Update this status and the operator's paused launch entry points after confirming the prerequisite; do not introduce an unconditional bypass flag.
 3. Build applications, tests and required native dependencies on the host or designated build machine, then stage fresh classpaths containing the intended upstream Skiko artifact. Keep private connection profiles and environment orchestration outside this project. Do not fall back to TCG or compile in a work VM without explicit authorization.
 4. Verify an actual Appium session, query, input with value readback, native WebView lifecycle and screenshots, then run all 18 desktop E2E cases from clean report roots with the existing budgets and assertions. Record a new acceptance result separately from the historical experimental reports.
+
+
+## Typed operation results
+
+The business-independent `:result` KMP module defines `CustomResult<T, E>` as `Success(value)` or
+`Failure(error)`. A successful nullable value is distinct from failure. HTTP response handling continues
+mapping successful null to 404, Unit to 200, and other values to the existing response model; CustomResult
+is not serialized into HTTP or RPC payloads.
+
+Operation owners declare sealed error interfaces: shared crypto/content validation, backend database/search/
+object storage, client requests/credentials, and each cloud business service. Signatures must name the
+scenario error; do not erase it to Throwable, Any, or FailureDetails. FailureDetails exposes a diagnostic
+cause for logging and terminal consumers such as Paging, loading state and HTTP response writers.
+
+Use explicit `mapError(ScenarioError::fromError)` conversion between scenarios.
+Exception classification uses `ScenarioError.from`; typed error conversion preserves authentication,
+permission, input and constraint categories independently of the diagnostic exception class.
+Database authentication rejections retain their authentication category through service and HTTP conversion.
+Reviewer construction captures provider initialization failures at the factory boundary so the worker can
+retry initialization without cancelling its sibling tasks. Pure mapping/composition does not catch exceptions.
+`captureFailure` requires the boundary's error mapper, catches ordinary exceptions, and propagates coroutine
+cancellation and fatal errors. Browser crypto normalizes JavaScript exceptions at the platform boundary.
+Exception-based interoperability uses `getOrThrow`; new business decisions should inspect typed variants.
+The old shared Kotlin Result utilities have been removed, without compatibility aliases.
+
+`cloud/runtime` owns endpoint bindings for CustomResult and reuses endpoint4k's parameter decoder and
+HTTP method binding. Import `com.storyteller_f.a.cloud.server.common.invoke` for server routes rather than
+the dependency's Kotlin Result-based invocation. Error containers and platform key encodings do not change
+the external API contract.
+
+The result, crypto-boundary and request-error tests cover null success, error conversion, diagnostic causes,
+ordinary failures, cancellation and the distinction between business 401 and session authentication failure.
+Existing host and integration tests consume CustomResult directly; their business assertions remain applicable.
+
+Host PDF snapshot tests require the Regular faces of Noto Serif and Noto Sans Mono to be registered
+and visible to a fresh JVM. Having font files in a directory alone does not guarantee JVM visibility.

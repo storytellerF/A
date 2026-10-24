@@ -42,6 +42,7 @@ import com.storyteller_f.a.panel.components.InfoTable
 import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.title_detail_title
 import com.storyteller_f.a.panel.title_detail_title_with_info
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType

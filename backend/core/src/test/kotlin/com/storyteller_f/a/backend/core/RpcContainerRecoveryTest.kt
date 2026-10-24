@@ -6,6 +6,7 @@ package com.storyteller_f.a.backend.core
 
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.result.getOrThrow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -57,7 +58,12 @@ class RpcContainerRecoveryTest {
                 )
             val adapter = mediaService(env)
             val content = "restart recovery".encodeToByteArray()
-            val path = Files.createTempFile(Files.createDirectories(Path.of("build/test/recovery")), "upload-", ".txt")
+            val path =
+                Files.createTempFile(
+                    Files.createDirectories(Path.of("build/test/recovery")),
+                    "upload-",
+                    ".txt",
+                )
             try {
                 Files.write(path, content)
                 val sha = MessageDigest.getInstance("SHA-256").digest(content).toHexString()
@@ -70,7 +76,10 @@ class RpcContainerRecoveryTest {
                     "bucket",
                     listOf(UploadPack(path.toFile(), "after", content.size.toLong(), "after", sha)),
                 ).getOrThrow()
-                assertEquals(listOf("after"), adapter.get("bucket", listOf("after")).getOrThrow().map { it.fullName })
+                assertEquals(
+                    listOf("after"),
+                    adapter.get("bucket", listOf("after")).getOrThrow().map { it.fullName },
+                )
             } finally {
                 Files.deleteIfExists(path)
             }

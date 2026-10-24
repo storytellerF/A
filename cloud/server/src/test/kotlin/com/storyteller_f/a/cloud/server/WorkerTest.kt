@@ -22,6 +22,7 @@ import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.a.cloud.worker.doIntroTask
 import com.storyteller_f.a.cloud.worker.doSubscriptionTask
 import com.storyteller_f.a.cloud.worker.doTitleTask
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TaskRecordType

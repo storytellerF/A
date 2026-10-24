@@ -17,6 +17,14 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toPanelLogInfo
 import com.storyteller_f.a.backend.core.types.toTaskRecordInfo
 import com.storyteller_f.a.backend.core.types.toUserInfo
+import com.storyteller_f.a.cloud.core.service.error.AdminError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelLogInfo
 import com.storyteller_f.shared.model.PanelOverview
@@ -27,11 +35,10 @@ import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.getOverview() =
-    cancellableRunCatching {
+    captureFailure(AdminError::from) {
     val userCount = database.user.getUserCount().getOrThrow()
     val topicCount = database.topic.getTopicCount().getOrThrow()
     val communityCount = database.community.getCommunityCount().getOrThrow()
@@ -53,18 +60,20 @@ suspend fun Backend.getOverview() =
     )
 }
 
-suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
+suspend fun Backend.addUser(newUser: NewUser): CustomResult<UserInfo, AdminError> {
     val nickname = newUser.nickname
     if (nickname != null && nickname.isBlank()) {
-        return Result.failure(Exception(CustomBadRequestException("invalid nickname")))
+        return CustomResult.Failure(
+            AdminError.from(Exception(CustomBadRequestException("invalid nickname"))),
+        ).mapError(AdminError::fromError)
     }
-    runCatching {
+    captureFailure(AdminError::from) {
         checkUserNickname(newUser)
         checkAid(newUser.aid, true).getOrThrow()
     }.exceptionOrNull()?.let {
-        return Result.failure(it)
+        return CustomResult.Failure(AdminError.from(it)).mapError(AdminError::fromError)
     }
-    return cancellableRunCatching {
+    return captureFailure(AdminError::from) {
         val authKey = newUser.authKey
         val algoType = authKey.algo
         val (address, pemPubKey) =
@@ -96,16 +105,20 @@ suspend fun Backend.addUser(newUser: NewUser): Result<UserInfo> {
                 notificationId,
             ),
         ).getOrThrow().toUserInfo()
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateUserStatus(
     uid: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateUserStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.user.updateUserStatus(uid, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.user.updateUserStatus(uid, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -117,16 +130,20 @@ suspend fun Backend.updateUserStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateCommunityStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.community.updateCommunityStatus(id, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.community.updateCommunityStatus(id, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -138,16 +155,20 @@ suspend fun Backend.updateCommunityStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateRoomStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.room.updateRoomStatus(id, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.room.updateRoomStatus(id, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -159,16 +180,20 @@ suspend fun Backend.updateRoomStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateTopicStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.topic.updateTopicStatus(id, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.topic.updateTopicStatus(id, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -180,16 +205,20 @@ suspend fun Backend.updateTopicStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateTitleStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.title.updateTitleStatus(id, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.title.updateTitleStatus(id, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -201,16 +230,20 @@ suspend fun Backend.updateTitleStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.updateFileStatus(
     id: com.storyteller_f.shared.type.PrimaryKey,
     body: UpdateObjectStatusBody,
     adminId: com.storyteller_f.shared.type.PrimaryKey?,
-): Result<Unit> {
-    if (adminId == null) return Result.failure(UnauthorizedException())
-    return database.file.updateFileStatus(id, body.status).map {
+): CustomResult<Unit, AdminError> {
+    if (adminId == null) {
+        return CustomResult.Failure(
+            AdminError.from(UnauthorizedException()),
+        ).mapError(AdminError::fromError)
+    }
+    return database.file.updateFileStatus(id, body.status).andThen(AdminError::fromError) {
         val logId = SnowflakeFactory.nextId()
         database.admin.insertPanelLog(
             PanelLog(
@@ -222,24 +255,24 @@ suspend fun Backend.updateFileStatus(
                 createdTime = now(),
             ),
         )
-    }
+    }.mapError(AdminError::fromError)
 }
 
 suspend fun Backend.getPanelLogs(
     targetId: com.storyteller_f.shared.type.PrimaryKey,
     objectType: ObjectType,
     fetch: PrimaryKeyFetch,
-): Result<PaginationResult<PanelLogInfo>> =
+): CustomResult<PaginationResult<PanelLogInfo>, AdminError> =
     database.admin.getPanelLogs(targetId, objectType, fetch).map { result ->
-    PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
-}
+        PaginationResult(result.list.map { it.toPanelLogInfo() }, result.total)
+    }.mapError(AdminError::fromError)
 
 suspend fun Backend.getTaskRecords(
     type: TaskRecordType?,
     isSuccess: Boolean?,
     failureType: String?,
     fetch: PrimaryKeyFetch,
-): Result<PaginationResult<TaskRecordInfo>> {
+): CustomResult<PaginationResult<TaskRecordInfo>, AdminError> {
     val taskRecords =
         database.admin.getTaskRecords(
             type = type,
@@ -249,5 +282,5 @@ suspend fun Backend.getTaskRecords(
         ).map { result ->
             PaginationResult(result.list.map { it.toTaskRecordInfo() }, result.total)
         }
-    return taskRecords
+    return taskRecords.mapError(AdminError::fromError)
 }

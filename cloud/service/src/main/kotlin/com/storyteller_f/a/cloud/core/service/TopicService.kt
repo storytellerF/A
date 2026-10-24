@@ -34,9 +34,23 @@ import com.storyteller_f.a.backend.core.types.RawTopic
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toTopicInfo
+import com.storyteller_f.a.cloud.core.service.error.TopicError
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.firstOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onPresent
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
@@ -50,16 +64,9 @@ import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.checkContent
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
-import com.storyteller_f.shared.utils.firstOrNull
 import com.storyteller_f.shared.utils.groupByPair
-import com.storyteller_f.shared.utils.ifNotNull
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.sha256
 import com.storyteller_f.shared.utils.trimMarkdownUnusedContent
@@ -72,47 +79,53 @@ import java.util.ServiceLoader
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-suspend fun Backend.createPlainTopic(uid: PrimaryKey, newTopic: NewTopic): Result<TopicInfo?> {
+suspend fun Backend.createPlainTopic(uid: PrimaryKey, newTopic: NewTopic): CustomResult<TopicInfo?, TopicError> {
     if (newTopic.parentType == ObjectType.ROOM) {
-        return Result.failure(ForbiddenException("can't use api to add topic in room"))
+        return CustomResult.Failure(
+            TopicError.from(ForbiddenException("can't use api to add topic in room")),
+        ).mapError(TopicError::fromError)
     }
 
     val content = newTopic.content.trim()
 
     if (content.isEmpty()) {
-        return Result.failure(CustomBadRequestException("content is empty"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("content is empty")),
+        ).mapError(TopicError::fromError)
     }
     checkContent(content).exceptionOrNull()?.let {
-        return Result.failure(it)
+        return CustomResult.Failure(TopicError.from(it)).mapError(TopicError::fromError)
     }
     if (content.length > 1000) {
-        return Result.failure(CustomBadRequestException("too long"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("too long")),
+        ).mapError(TopicError::fromError)
     }
 
     return checkRootWritePermission(
         newTopic.parentType,
         newTopic.parentId,
         uid,
-    ).mapResultIfNotNull { (rootType, rootId, level) ->
+    ).andThenPresent(TopicError::fromError) { (rootType, rootId, level) ->
         if (level >= 10) {
-            Result.failure(CustomBadRequestException("not support"))
+            CustomResult.Failure(TopicError.from(CustomBadRequestException("not support")))
         } else if (rootType == ObjectType.ROOM) {
-            Result.failure(ForbiddenException("can't use api to add topic in room"))
+            CustomResult.Failure(TopicError.from(ForbiddenException("can't use api to add topic in room")))
         } else {
             val parentTuple = ObjectTuple(newTopic.parentId, newTopic.parentType)
             val rootTuple = ObjectTuple(rootId, rootType)
             savePlainTopic(uid, content, level, parentTuple, rootTuple)
         }
-    }.ifNotNull {
+    }.onPresent {
         addSubscription(uid, it.tuple())
-    }
+    }.mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.addSubscription(uid: PrimaryKey, objectTuple: ObjectTuple) {
     database.subscription.addSubscription(
         UserSubscription(SnowflakeFactory.nextId(), uid, objectTuple.objectId, objectTuple.objectType, now()),
     ).onFailure {
-        Napier.e(it) {
+        Napier.e(it.cause) {
             "add user subscription failed"
         }
     }
@@ -124,7 +137,7 @@ private suspend fun Backend.savePlainTopic(
     level: Int,
     parentTuple: ObjectTuple,
     rootTuple: ObjectTuple,
-): Result<TopicInfo?> {
+): CustomResult<TopicInfo?, TopicError> {
     val trimmedContent = trimMarkdownUnusedContent(content)
     val newId = SnowflakeFactory.nextId()
     val topic =
@@ -159,33 +172,35 @@ private suspend fun Backend.savePlainTopic(
                 !fileList.contains(it)
             }
         if (notExistsFileList.isNotEmpty()) {
-            return Result.failure(CustomBadRequestException("${notExistsFileList.joinToString()} not exists"))
+            return CustomResult.Failure(
+                TopicError.from(CustomBadRequestException("${notExistsFileList.joinToString()} not exists")),
+            ).mapError(TopicError::fromError)
         }
     }.onFailure {
-        return Result.failure(it)
+        return CustomResult.Failure(TopicError.fromError(it)).mapError(TopicError::fromError)
     }
 
     topicSearchService.saveDocument(
         listOf(TopicDocument.fromTopic(topic, plain)),
     ).onFailure {
-        Napier.e(it) {
+        Napier.e(it.cause) {
             "save plain topic document failed"
         }
     }
-    return buildFileRefs(documentFileList, topic, uid).mapResult {
+    return buildFileRefs(documentFileList, topic, uid).andThen(TopicError::fromError) {
         database.topic.savePlainTopic(topic, plain, it).onSuccess {
             addUserLog(uid, UserLogType.CREATE, topicInfo.tuple())
         }
-    }.mapResult {
+    }.andThen(TopicError::fromError) {
         processTopicAfterCreate(topicInfo, uid)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.buildFileRefs(
     documentFileList: List<String>,
     topic: Topic,
     uid: PrimaryKey,
-): Result<List<FileRef>> =
+): CustomResult<List<FileRef>, TopicError> =
     database.file.getFileRecordByNames(documentFileList).map {
     it.associateBy { fileRecord ->
         fileRecord.fullName
@@ -203,27 +218,27 @@ private suspend fun Backend.buildFileRefs(
             fileId = fileRecord.id,
         )
     }
-}
+}.mapError(TopicError::fromError)
 
-suspend fun Backend.createTopicAtRoom(newTopic: NewRoomTopic, uid: PrimaryKey): Result<TopicInfo?> {
+suspend fun Backend.createTopicAtRoom(newTopic: NewRoomTopic, uid: PrimaryKey): CustomResult<TopicInfo?, TopicError> {
     if (newTopic.parentType != ObjectType.TOPIC && newTopic.parentType != ObjectType.ROOM) {
-        return Result.failure(ForbiddenException())
+        return CustomResult.Failure(TopicError.from(ForbiddenException())).mapError(TopicError::fromError)
     }
     return checkRootWritePermission(
         newTopic.parentType,
         newTopic.parentId,
         uid,
-    ).mapResultIfNotNull {
+    ).andThenPresent(TopicError::fromError) {
         if (it.level >= 10) {
-            Result.failure(CustomBadRequestException("not support"))
+            CustomResult.Failure(TopicError.from(CustomBadRequestException("not support")))
         } else {
-            database.room.checkRoomIsPrivate(it.rootId).mapResultIfNotNull { isPrivate ->
+            database.room.checkRoomIsPrivate(it.rootId).andThenPresent(TopicError::fromError) { isPrivate ->
                 createTopicAtRoom(uid, it, newTopic, isPrivate, newTopic.content)
             }
         }
-    }.ifNotNull {
+    }.onPresent {
         addSubscription(uid, it.tuple())
-    }
+    }.mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.createTopicAtRoom(
@@ -232,17 +247,33 @@ private suspend fun Backend.createTopicAtRoom(
     newTopic: NewRoomTopic,
     isPrivate: Boolean,
     content: TopicContent,
-): Result<TopicInfo?> {
+): CustomResult<TopicInfo?, TopicError> {
     if (isPrivate) {
         if (content !is TopicContent.Encrypted) {
-            return Result.failure(ForbiddenException("Private room only accept encrypted content."))
+            return CustomResult.Failure(
+                TopicError.from(ForbiddenException("Private room only accept encrypted content.")),
+            ).mapError(TopicError::fromError)
         }
-        return saveEncryptedTopic(permission, content, uid, permission.tuple, newTopic.tuple)
+        return saveEncryptedTopic(
+            permission,
+            content,
+            uid,
+            permission.tuple,
+            newTopic.tuple,
+        ).mapError(TopicError::fromError)
     }
     if (content !is TopicContent.Plain) {
-        return Result.failure(ForbiddenException("Public room only accept unencrypted content."))
+        return CustomResult.Failure(
+            TopicError.from(ForbiddenException("Public room only accept unencrypted content.")),
+        ).mapError(TopicError::fromError)
     }
-    return savePlainTopic(uid, content.plain, permission.level, newTopic.tuple, permission.tuple)
+    return savePlainTopic(
+        uid,
+        content.plain,
+        permission.level,
+        newTopic.tuple,
+        permission.tuple,
+    ).mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.saveEncryptedTopic(
@@ -251,7 +282,7 @@ private suspend fun Backend.saveEncryptedTopic(
     uid: PrimaryKey,
     rootTuple: ObjectTuple,
     parentTuple: ObjectTuple,
-) = isKeyVerified(permission.rootId, content.encryptedKey).mapResult { isVerified ->
+) = isKeyVerified(permission.rootId, content.encryptedKey).andThen(TopicError::fromError) { isVerified ->
     if (isVerified) {
         val newId = SnowflakeFactory.nextId()
         val bytes = content.bytes
@@ -274,14 +305,14 @@ private suspend fun Backend.saveEncryptedTopic(
             RawTopic(topic, content).toTopicInfo()
         }
     } else {
-        Result.failure(ForbiddenException("Key not found ${content.encryptedKey.size}"))
+        CustomResult.Failure(TopicError.from(ForbiddenException("Key not found ${content.encryptedKey.size}")))
     }
-}.mapResultIfNotNull { topicInfo ->
+}.andThenPresent(TopicError::fromError) { topicInfo ->
     processTopicAfterCreate(topicInfo, uid)
 }
 
 suspend fun Backend.processTopicAfterCreate(topicInfo: TopicInfo, uid: PrimaryKey) =
-    cancellableRunCatching {
+    captureFailure(TopicError::from) {
     val info =
         if (topicInfo.content is TopicContent.Plain) {
             processTopicFileObject(listOf(topicInfo)).firstOrNull().getOrThrow()
@@ -296,29 +327,29 @@ suspend fun Backend.processTopicAfterCreate(topicInfo: TopicInfo, uid: PrimaryKe
     }
 }
 
-suspend fun Backend.createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey): Result<FileInfo?> =
+suspend fun Backend.createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey): CustomResult<FileInfo?, TopicError> =
     checkTopicReadPermission(
         topicId,
         uid,
-    ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
+    ).andThenPresent(TopicError::fromError) { (hasRead, _, isPrivate) ->
         if (hasRead && !isPrivate) {
             database.getRawTopic(ObjectFetch.IdFetch(topicId), null)
         } else {
-            Result.failure(ForbiddenException("Permission denied"))
+            CustomResult.Failure(TopicError.from(ForbiddenException("Permission denied")))
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         processRawTopicToTopicInfo(listOf(it), uid, false)
-    }.firstOrNull().mapResultIfNotNull { topicInfo ->
-        getUserInfo(ObjectFetch.IdFetch(uid)).mapResultIfNotNull { userInfo ->
+    }.firstOrNull().andThenPresent(TopicError::fromError) { topicInfo ->
+        getUserInfo(ObjectFetch.IdFetch(uid)).andThenPresent(TopicError::fromError) { userInfo ->
             createTopicSnapshot(topicInfo, userInfo, uid)
         }
-    }
+    }.mapError(TopicError::fromError)
 
 private suspend fun Backend.createTopicSnapshot(
     topicInfo: TopicInfo,
     creatorInfo: UserInfo,
     uid: PrimaryKey,
-): Result<FileInfo?> {
+): CustomResult<FileInfo?, TopicError> {
     val topicId = topicInfo.id
     val name = "$uid/$topicId.pdf"
     val pdfFile = File(System.getProperty("java.io.tmpdir"), name)
@@ -326,7 +357,7 @@ private suspend fun Backend.createTopicSnapshot(
     return try {
         getUserInfo(
             ObjectFetch.IdFetch(topicInfo.author),
-        ).mapResultIfNotNull { userInfo ->
+        ).andThenPresent(TopicError::fromError) { userInfo ->
             generateSignedSnapshot(
                 userInfo,
                 creatorInfo,
@@ -335,7 +366,7 @@ private suspend fun Backend.createTopicSnapshot(
                     SnapshotGeneration.KeyStoreGeneration(it.base64, it.pass, pdfFile, signedFile)
                 } ?: SnapshotGeneration.SimpleGeneration(pdfFile),
             )
-        }.mapResultIfNotNull {
+        }.andThenPresent(TopicError::fromError) {
             tryUploadFiles(
                 uid,
                 ObjectType.USER,
@@ -355,7 +386,7 @@ private suspend fun Backend.createTopicSnapshot(
     } finally {
         pdfFile.delete()
         signedFile.delete()
-    }
+    }.mapError(TopicError::fromError)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -364,21 +395,29 @@ suspend fun Backend.generateSignedSnapshot(
     creatorInfo: UserInfo,
     topicInfo: TopicInfo,
     snapshotGeneration: SnapshotGeneration,
-): Result<Unit?> {
+): CustomResult<Unit?, TopicError> {
     val content = topicInfo.content
     if (content !is TopicContent.Plain) {
-        return Result.failure(CustomBadRequestException("unsupported"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("unsupported")),
+        ).mapError(TopicError::fromError)
     }
     val saveToFile = snapshotGeneration.path
-    val parent = saveToFile.parentFile ?: return Result.success(null)
-    if (!parent.exists() && !parent.mkdirs()) return Result.failure(Exception("failed"))
+    val parent = saveToFile.parentFile ?: return CustomResult.success(null)
+    if (!parent.exists() && !parent.mkdirs()) {
+        return CustomResult.Failure(
+            TopicError.from(Exception("failed")),
+        ).mapError(TopicError::fromError)
+    }
     val plainContent = content.plain
     val map = mutableMapOf<String, File>()
     val userHome = System.getProperty("user.home")
     val pdfService =
-        ServiceLoader.load(PdfService::class.java).firstOrNull() ?: return Result.failure(
-            Exception("not register pdf service"),
-        )
+        ServiceLoader.load(PdfService::class.java).firstOrNull() ?: return CustomResult.Failure(
+            TopicError.from(
+                Exception("not register pdf service"),
+            ),
+        ).mapError(TopicError::fromError)
     return try {
         content.fileInfos.forEach {
             val targetFile = File(userHome, "a-temp/${Uuid.random()}")
@@ -401,55 +440,71 @@ suspend fun Backend.generateSignedSnapshot(
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
     } catch (e: Exception) {
-        Result.failure(e)
+        CustomResult.Failure(TopicError.from(e))
     } finally {
         map.forEach {
             it.value.delete()
         }
-    }
+    }.mapError(TopicError::fromError)
 }
 
-suspend fun Backend.getTopic(topicId: PrimaryKey, uid: PrimaryKey?, fillHasCommented: Boolean?): Result<TopicInfo?> {
-    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+suspend fun Backend.getTopic(
+    topicId: PrimaryKey,
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?,
+): CustomResult<TopicInfo?, TopicError> {
+    if (uid == null && fillHasCommented == true) {
+        return CustomResult.Failure(
+            TopicError.from(UnauthorizedException()),
+        ).mapError(TopicError::fromError)
+    }
     return checkTopicReadPermission(
         topicId,
         uid,
-    ).mapResultIfNotNull { permission ->
+    ).andThenPresent(TopicError::fromError) { permission ->
         if (permission.hasRead) {
-            uncheckGetTopicById(topicId, uid).mapIfNotNull {
+            uncheckGetTopicById(topicId, uid).mapPresent {
                 it.copy(hasJoined = it.hasJoined)
             }
         } else {
-            Result.failure(ForbiddenException("Permission Denied"))
+            CustomResult.Failure(TopicError.from(ForbiddenException("Permission Denied")))
         }
-    }
+    }.mapError(TopicError::fromError)
 }
 
-suspend fun Backend.uncheckGetTopicById(topicId: PrimaryKey, uid: PrimaryKey?): Result<TopicInfo?> =
+suspend fun Backend.uncheckGetTopicById(topicId: PrimaryKey, uid: PrimaryKey?): CustomResult<TopicInfo?, TopicError> =
     database.getRawTopic(
         ObjectFetch.IdFetch(topicId),
         uid,
-    ).mapResultIfNotNull { info ->
+    ).andThenPresent(TopicError::fromError) { info ->
         processRawTopicToTopicInfo(listOf(info), uid, true)
-    }.firstOrNull()
+    }.firstOrNull().mapError(TopicError::fromError)
 
-suspend fun Backend.getTopicByAid(aid: String, uid: PrimaryKey?, fillHasCommented: Boolean?): Result<TopicInfo?> {
-    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+suspend fun Backend.getTopicByAid(
+    aid: String,
+    uid: PrimaryKey?,
+    fillHasCommented: Boolean?,
+): CustomResult<TopicInfo?, TopicError> {
+    if (uid == null && fillHasCommented == true) {
+        return CustomResult.Failure(
+            TopicError.from(UnauthorizedException()),
+        ).mapError(TopicError::fromError)
+    }
     return database.getRawTopic(ObjectFetch.AidFetch(aid), uid)
-        .mapResultIfNotNull { info ->
+        .andThenPresent(TopicError::fromError) { info ->
             checkTopicReadPermission(
                 info.topic.id,
                 uid,
-            ).mapResultIfNotNull { (hasRead, hasJoined) ->
+            ).andThenPresent(TopicError::fromError) { (hasRead, hasJoined) ->
                 if (hasRead) {
-                    Result.success(info.copy(hasJoined = hasJoined))
+                    CustomResult.success(info.copy(hasJoined = hasJoined))
                 } else {
-                    Result.failure(ForbiddenException("Permission Denied"))
+                    CustomResult.Failure(TopicError.from(ForbiddenException("Permission Denied")))
                 }
             }
-        }.mapResultIfNotNull { info ->
+        }.andThenPresent(TopicError::fromError) { info ->
             processRawTopicToTopicInfo(listOf(info), uid, true)
-        }.firstOrNull()
+        }.firstOrNull().mapError(TopicError::fromError)
 }
 
 suspend fun Backend.getTopicsByParentId(
@@ -459,21 +514,25 @@ suspend fun Backend.getTopicsByParentId(
     fillHasCommented: Boolean?,
     primaryKeyFetch: PrimaryKeyFetch,
     pinType: TopicPinSearch? = null,
-): Result<PaginationResult<TopicInfo>?> {
-    if (uid == null && fillHasCommented == true) return Result.failure(UnauthorizedException())
+): CustomResult<PaginationResult<TopicInfo>?, TopicError> {
+    if (uid == null && fillHasCommented == true) {
+        return CustomResult.Failure(
+            TopicError.from(UnauthorizedException()),
+        ).mapError(TopicError::fromError)
+    }
     return checkRootReadPermission(
         parentType,
         parentId,
         uid,
-    ).mapResultIfNotNull { (hasRead, _, isPrivate) ->
+    ).andThenPresent(TopicError::fromError) { (hasRead, _, isPrivate) ->
         if (isPrivate && !hasRead) {
-            Result.failure(ForbiddenException("Permission Denied"))
+            CustomResult.Failure(TopicError.from(ForbiddenException("Permission Denied")))
         } else {
-            UNIT_RESULT
+            CustomResult.Success(Unit)
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         uncheckGetTopicsByParentId(uid, parentId, primaryKeyFetch, pinType)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 suspend fun Backend.uncheckGetTopicsByParentId(
@@ -482,7 +541,7 @@ suspend fun Backend.uncheckGetTopicsByParentId(
     primaryKeyFetch: PrimaryKeyFetch,
     pinType: TopicPinSearch? = null,
 ) = database.getRawTopicByParentId(uid, primaryKeyFetch, parentId, pinType)
-    .mapResultIfNotNull { (data, total) ->
+    .andThenPresent(TopicError::fromError) { (data, total) ->
         processRawTopicToTopicInfo(data, uid, true).paging(total)
     }
 
@@ -490,9 +549,9 @@ suspend fun Backend.processRawTopicToTopicInfo(
     topics: List<RawTopic>,
     uid: PrimaryKey?,
     addLatestSubTopic: Boolean,
-): Result<List<TopicInfo>?> {
-    if (topics.isEmpty()) return Result.success(emptyList())
-    return cancellableRunCatching {
+): CustomResult<List<TopicInfo>?, TopicError> {
+    if (topics.isEmpty()) return CustomResult.success(emptyList())
+    return captureFailure(TopicError::from) {
         val rooms = getRoomMapByTopics(topics)
         val subTopicsMap =
             if (addLatestSubTopic) {
@@ -532,9 +591,9 @@ suspend fun Backend.processRawTopicToTopicInfo(
                 ),
             )
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         processTopicFileObject(it)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.getReactionMap(
@@ -575,23 +634,29 @@ suspend fun Backend.searchUserTopics(
     search: CustomApi.Topics.Users.Id.UserTopicSearchQuery,
     primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
-): Result<PaginationResult<TopicInfo>?> {
-    if (search.fillHasCommented == true && uid == null) return Result.failure(UnauthorizedException())
+): CustomResult<PaginationResult<TopicInfo>?, TopicError> {
+    if (search.fillHasCommented == true && uid == null) {
+        return CustomResult.Failure(
+            TopicError.from(UnauthorizedException()),
+        ).mapError(TopicError::fromError)
+    }
 
     val word = search.word.trim()
     if (word.isBlank()) {
-        return Result.success(PaginationResult(emptyList(), 0))
+        return CustomResult.success(PaginationResult(emptyList(), 0))
     }
     if (word.length > 20) {
-        return Result.failure(CustomBadRequestException("word too long"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("word too long")),
+        ).mapError(TopicError::fromError)
     }
 
     // 创建TopicDocumentSearch.Topics对象进行用户主题搜索
     return topicSearchService.searchDocument(
         TopicDocumentSearch.Topics(userId, word, fetch = primaryKeyFetch),
-    ).mapPagingResultNullable { list ->
+    ).mapPagingResultNullable(TopicError::fromError) { list ->
         processTopicsDocument(uid, list)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 /**
@@ -602,31 +667,33 @@ suspend fun Backend.searchRoomTopics(
     search: CustomApi.Topics.Rooms.Id.RoomTopicSearchQuery,
     primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
-): Result<PaginationResult<TopicInfo>?> {
+): CustomResult<PaginationResult<TopicInfo>?, TopicError> {
     if (search.fillHasCommented == true && uid == null) {
-        return Result.failure(UnauthorizedException())
+        return CustomResult.Failure(TopicError.from(UnauthorizedException())).mapError(TopicError::fromError)
     }
     val word = search.word.trim()
     if (word.isBlank()) {
-        return Result.success(PaginationResult(emptyList(), 0))
+        return CustomResult.success(PaginationResult(emptyList(), 0))
     }
     if (word.length > 20) {
-        return Result.failure(CustomBadRequestException("word too long"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("word too long")),
+        ).mapError(TopicError::fromError)
     }
-    return checkRoomReadPermission(roomId, uid).mapResultIfNotNull {
+    return checkRoomReadPermission(roomId, uid).andThenPresent(TopicError::fromError) {
         if (it.isPrivate) {
-            Result.failure(CustomBadRequestException("can't search in private room"))
+            CustomResult.Failure(TopicError.from(CustomBadRequestException("can't search in private room")))
         } else {
-            Result.success(Unit)
+            CustomResult.success(Unit)
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         // 创建TopicDocumentSearch.Topics对象进行房间主题搜索
         topicSearchService.searchDocument(
             TopicDocumentSearch.Topics(roomId, word, fetch = primaryKeyFetch),
         )
-    }.mapPagingResultIfNotNullNullable { list ->
+    }.mapPagingResultIfNotNullNullable(TopicError::fromError) { list ->
         processTopicsDocument(uid, list)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 /**
@@ -637,34 +704,36 @@ suspend fun Backend.searchCommunityTopics(
     search: CustomApi.Topics.Communities.Id.CommunityTopicSearchQuery,
     primaryKeyFetch: OffsetFetch,
     uid: PrimaryKey?,
-): Result<PaginationResult<TopicInfo>?> {
+): CustomResult<PaginationResult<TopicInfo>?, TopicError> {
     if (search.fillHasCommented == true && uid == null) {
-        return Result.failure(UnauthorizedException())
+        return CustomResult.Failure(TopicError.from(UnauthorizedException())).mapError(TopicError::fromError)
     }
     val word = search.word.trim()
     if (word.isBlank()) {
-        return Result.success(PaginationResult(emptyList(), 0))
+        return CustomResult.success(PaginationResult(emptyList(), 0))
     }
     if (word.length > 20) {
-        return Result.failure(CustomBadRequestException("word too long"))
+        return CustomResult.Failure(
+            TopicError.from(CustomBadRequestException("word too long")),
+        ).mapError(TopicError::fromError)
     }
-    return checkCommunityReadPermission(communityId, uid).mapResultIfNotNull {
+    return checkCommunityReadPermission(communityId, uid).andThenPresent(TopicError::fromError) {
         if (it.isPrivate) {
-            Result.failure(CustomBadRequestException("can't search in private community"))
+            CustomResult.Failure(TopicError.from(CustomBadRequestException("can't search in private community")))
         } else {
-            Result.success(Unit)
+            CustomResult.success(Unit)
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         // 创建TopicDocumentSearch.Topics对象进行社区主题搜索
         topicSearchService.searchDocument(
             TopicDocumentSearch.Topics(communityId, word, fetch = primaryKeyFetch),
         )
-    }.mapPagingResultIfNotNullNullable { list ->
+    }.mapPagingResultIfNotNullNullable(TopicError::fromError) { list ->
         processTopicsDocument(uid, list)
-    }
+    }.mapError(TopicError::fromError)
 }
 
-suspend fun Backend.processTopicFileObject(infos: List<TopicInfo>): Result<List<TopicInfo>?> {
+suspend fun Backend.processTopicFileObject(infos: List<TopicInfo>): CustomResult<List<TopicInfo>?, TopicError> {
     // id + mediaLink，此处的mediaLink 应该包含前缀，内部会自动添加前缀
     val fileList =
         documentFileList(infos).filter {
@@ -678,7 +747,7 @@ suspend fun Backend.processTopicFileObject(infos: List<TopicInfo>): Result<List<
         }.distinct()
     // 根据topicId 保存的mediaName 的map
     val fileMap = fileList.groupByPair()
-    return getFileInfoList(fileNameList).mapIfNotNull { fileInfos ->
+    return getFileInfoList(fileNameList).mapPresent { fileInfos ->
         val mediaInfoMap = fileInfos.filterNotNull().associateBy { it.fullName }
         infos.map { info ->
             val content = info.content
@@ -692,7 +761,7 @@ suspend fun Backend.processTopicFileObject(infos: List<TopicInfo>): Result<List<
                 info
             }
         }
-    }
+    }.mapError(TopicError::fromError)
 }
 
 fun documentFileList(documentList: List<TopicInfo>): List<Pair<PrimaryKey, String>> =
@@ -713,76 +782,83 @@ suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,
     primaryKeyFetch: OffsetFetch,
     q: CustomApi.Topics.RecommendQuery,
-): Result<PaginationResult<TopicInfo>?> {
+): CustomResult<PaginationResult<TopicInfo>?, TopicError> {
     if (uid == null && q.fillHasCommented == true) {
-        return Result.failure(UnauthorizedException())
+        return CustomResult.Failure(TopicError.from(UnauthorizedException())).mapError(TopicError::fromError)
     }
     return if (uid != null) {
-        database.community.getJoinedCommunityIds(uid).mapResult { joinedCommunityIds ->
+        database.community.getJoinedCommunityIds(uid).andThen(TopicError::fromError) { joinedCommunityIds ->
             topicSearchService.searchDocument(
-                topicDocumentSearch = TopicDocumentSearch.Recommend(uid, joinedCommunityIds, fetch = primaryKeyFetch),
+                topicDocumentSearch =
+                TopicDocumentSearch.Recommend(
+                    uid,
+                    joinedCommunityIds,
+                    fetch = primaryKeyFetch,
+                ),
             )
         }
     } else {
         topicSearchService.searchDocument(
             topicDocumentSearch = TopicDocumentSearch.RecommendNotLogin(fetch = primaryKeyFetch),
         )
-    }.mapPagingResultNullable { list ->
+    }.mapPagingResultNullable(TopicError::fromError) { list ->
         processTopicsDocument(uid, list)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 private suspend fun Backend.processTopicsDocument(
     uid: PrimaryKey?,
     list: List<TopicDocument>,
-): Result<List<TopicInfo>?> {
+): CustomResult<List<TopicInfo>?, TopicError> {
     val ids =
         list.map {
             it.id
         }
     if (ids.isEmpty()) {
-        return Result.success(emptyList())
+        return CustomResult.success(emptyList())
     }
-    return database.getRawTopicListByIds(uid, ids).mapResult { infos ->
+    return database.getRawTopicListByIds(uid, ids).andThen(TopicError::fromError) { infos ->
         val processedTopics =
             fixedSort(infos, ids) {
                 it.topic.id
             }
         processRawTopicToTopicInfo(processedTopics, uid, addLatestSubTopic = true)
-    }
+    }.mapError(TopicError::fromError)
 }
 
-suspend fun Backend.getTopicByIds(ids: List<PrimaryKey>, uid: PrimaryKey?): Result<List<TopicInfo>?> {
+suspend fun Backend.getTopicByIds(ids: List<PrimaryKey>, uid: PrimaryKey?): CustomResult<List<TopicInfo>?, TopicError> {
     if (ids.isEmpty()) {
-        return Result.success(emptyList())
+        return CustomResult.success(emptyList())
     }
     try {
         ids.forEach {
             val permission = checkTopicReadPermission(it, uid).getOrThrow()
             if (permission == null || !permission.hasRead) {
-                return Result.failure(ForbiddenException("Permission Denied"))
+                return CustomResult.Failure(
+                    TopicError.from(ForbiddenException("Permission Denied")),
+                ).mapError(TopicError::fromError)
             }
         }
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
     } catch (e: Exception) {
-        return Result.failure(e)
+        return CustomResult.Failure(TopicError.from(e)).mapError(TopicError::fromError)
     }
 
-    return database.getRawTopicListByIds(uid, ids).mapResult { infos ->
+    return database.getRawTopicListByIds(uid, ids).andThen(TopicError::fromError) { infos ->
         processRawTopicToTopicInfo(infos, uid, true)
-    }
+    }.mapError(TopicError::fromError)
 }
 
 suspend fun Backend.updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValue: Boolean) =
-    checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
+    checkObjectWritable(ObjectType.TOPIC, topicId).andThenPresent(TopicError::fromError) {
         checkTopicAdminPermission(topicId, uid)
-    }.mapResultIfNotNull {
+    }.andThenPresent(TopicError::fromError) {
         database.getRawTopic(ObjectFetch.IdFetch(topicId), uid)
-    }.mapResultIfNotNull { rawTopic ->
+    }.andThenPresent(TopicError::fromError) { rawTopic ->
         val topicInfo = rawTopic.toTopicInfo()
         if (rawTopic.topic.isPin == newValue) {
-            Result.success(topicInfo)
+            CustomResult.success(topicInfo)
         } else {
             database.topic.updateTopicPinned(topicId, newValue).map { isSuccess ->
                 if (isSuccess) {
@@ -795,6 +871,6 @@ suspend fun Backend.updateTopicPin(uid: PrimaryKey, topicId: PrimaryKey, newValu
     }
 
 suspend fun Backend.getAllTopics(primaryKeyFetch: PrimaryKeyFetch) =
-    database.getAllRawTopics(primaryKeyFetch).mapResult { (topics, total) ->
+    database.getAllRawTopics(primaryKeyFetch).andThen(TopicError::fromError) { (topics, total) ->
         processRawTopicToTopicInfo(topics, uid = null, addLatestSubTopic = true).paging(total)
     }

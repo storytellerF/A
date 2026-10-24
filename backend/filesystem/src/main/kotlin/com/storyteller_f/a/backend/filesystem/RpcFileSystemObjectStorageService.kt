@@ -7,15 +7,17 @@ package com.storyteller_f.a.backend.filesystem
 import com.storyteller_f.a.backend.core.ManagedRpcService
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.RpcServiceProvider
+import com.storyteller_f.a.backend.core.error.ObjectStorageError
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageRecord
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.ObjectStorageServiceFactory
 import com.storyteller_f.a.backend.core.service.ObjectStorageWriteRecord
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
 import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.ktor.http.URLBuilder
 import io.ktor.http.Url
@@ -130,7 +132,10 @@ class FileSystemObjectStorageService(
             }
         }
 
-    override suspend fun getInputStream(bucketName: String, name: String): Result<InputStream> =
+    override suspend fun getInputStream(
+        bucketName: String,
+        name: String,
+    ): CustomResult<InputStream, ObjectStorageError> =
         rpcResult {
         val rpc = connection.acquire()
         val temporary = Files.createTempFile("a-filesystem-rpc-", ".download")
@@ -182,7 +187,11 @@ private class DeletingInputStream(private val path: Path) :
     }
 }
 
-private inline fun <T> rpcResult(block: () -> T): Result<T> = cancellableRunCatching(block)
+private inline fun <T> rpcResult(block: () -> T): CustomResult<T, ObjectStorageError> =
+    captureFailure(
+    ObjectStorageError::from,
+    block,
+)
 
 class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv) = env["MEDIA_SERVICE"] == "filesystem"

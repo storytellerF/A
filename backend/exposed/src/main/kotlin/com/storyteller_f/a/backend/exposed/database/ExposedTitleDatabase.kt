@@ -6,6 +6,7 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.TitleDatabase
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.RawTitle
 import com.storyteller_f.a.backend.core.types.Title
@@ -15,12 +16,13 @@ import com.storyteller_f.a.backend.exposed.map
 import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -107,7 +109,7 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
     override suspend fun getTitleCount() = getTitleCountByPredicate()
 
     override suspend fun getTitle(id: PrimaryKey) =
-        cancellableRunCatching {
+        captureFailure(DatabaseError::from) {
         val list =
             exposedDatabaseSession.dbSearch {
                 search {

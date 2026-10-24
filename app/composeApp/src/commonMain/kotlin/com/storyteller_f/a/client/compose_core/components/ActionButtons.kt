@@ -22,6 +22,7 @@ import com.storyteller_f.a.client.core.addFavorite
 import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.PrimaryKey
 

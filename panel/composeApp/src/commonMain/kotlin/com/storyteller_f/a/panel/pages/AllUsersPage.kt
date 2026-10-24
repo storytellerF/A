@@ -81,6 +81,7 @@ import com.storyteller_f.a.panel.menu
 import com.storyteller_f.a.panel.nickname
 import com.storyteller_f.a.panel.private_key_required
 import com.storyteller_f.a.panel.random
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf
 import io.github.vinceglb.filekit.FileKit

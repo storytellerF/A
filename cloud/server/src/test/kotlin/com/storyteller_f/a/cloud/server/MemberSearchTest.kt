@@ -13,6 +13,7 @@ import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.searchCommunityMembers
 import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.updateUserInfo
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.obj.UpdateUserBody
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -7,6 +7,7 @@ package com.storyteller_f.a.backend.core
 import com.storyteller_f.a.backend.core.service.CopyPack
 import com.storyteller_f.a.backend.core.service.ObjectStorageService
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import java.io.File
 import java.net.URI

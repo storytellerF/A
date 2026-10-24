@@ -29,9 +29,22 @@ import com.storyteller_f.a.backend.core.types.UploadRecord
 import com.storyteller_f.a.backend.core.types.toFileInfo
 import com.storyteller_f.a.backend.core.types.toFileRefInfo
 import com.storyteller_f.a.backend.core.types.toUploadRecordInfo
+import com.storyteller_f.a.cloud.core.service.error.FileError
 import com.storyteller_f.a.cloud.core.utils.cleanImageMeta
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
 import com.storyteller_f.a.cloud.core.utils.readMp3AlbumFromAudioStream
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.firstOrNull
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaType
@@ -40,11 +53,6 @@ import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UploadRecordStatus
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
@@ -65,15 +73,17 @@ suspend fun Backend.getFileList(
     objectTuple: ObjectTuple,
     primaryKeyFetch: PrimaryKeyFetch,
     clientIp: String? = null,
-): Result<PaginationResult<FileInfo>?> {
+): CustomResult<PaginationResult<FileInfo>?, FileError> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
-        return Result.failure(CustomBadRequestException("can't get topic file record"))
+        return CustomResult.Failure(
+            FileError.from(CustomBadRequestException("can't get topic file record")),
+        ).mapError(FileError::fromError)
     }
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
-    return checkRootWritePermission(parentType, parentId, uid).mapResultIfNotNull {
+    return checkRootWritePermission(parentType, parentId, uid).andThenPresent(FileError::fromError) {
         getFileInfoPaginationResult(parentId, primaryKeyFetch, clientIp)
-    }
+    }.mapError(FileError::fromError)
 }
 
 suspend fun Backend.getFileInfoByName(
@@ -81,9 +91,11 @@ suspend fun Backend.getFileInfoByName(
     objectTuple: ObjectTuple,
     word: String,
     clientIp: String? = null,
-): Result<FileInfo?> {
+): CustomResult<FileInfo?, FileError> {
     if (objectTuple.objectType == ObjectType.TOPIC) {
-        return Result.failure(CustomBadRequestException("can't get topic file record"))
+        return CustomResult.Failure(
+            FileError.from(CustomBadRequestException("can't get topic file record")),
+        ).mapError(FileError::fromError)
     }
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
@@ -91,13 +103,13 @@ suspend fun Backend.getFileInfoByName(
         parentType,
         parentId,
         uid,
-    ).mapResultIfNotNull { (_, rootId) ->
+    ).andThenPresent(FileError::fromError) { (_, rootId) ->
         database.file.getFileRecord(rootId, word)
-    }.mapResultIfNotNull { fileRecord ->
+    }.andThenPresent(FileError::fromError) { fileRecord ->
         processFileRecordToFileInfo(listOf(fileRecord), uid, clientIp)
-    }.mapIfNotNull {
+    }.mapPresent {
         it.first()
-    }
+    }.mapError(FileError::fromError)
 }
 
 suspend fun Backend.searchFiles(
@@ -106,31 +118,33 @@ suspend fun Backend.searchFiles(
     objectTuple: ObjectTuple,
     primaryKeyFetch: OffsetFetch,
     clientIp: String? = null,
-): Result<PaginationResult<FileInfo>?> {
+): CustomResult<PaginationResult<FileInfo>?, FileError> {
     val word = query.word.trim()
     if (word.isBlank()) {
-        return Result.success(PaginationResult(emptyList(), 0))
+        return CustomResult.success(PaginationResult(emptyList(), 0))
     }
     val objectId = objectTuple.objectId
     val objectType = objectTuple.objectType
 
     // 如果指定了 objectId 和 objectType，需要检查权限
-    return checkRootWritePermission(objectType, objectId, uid).mapResultIfNotNull {
+    return checkRootWritePermission(objectType, objectId, uid).andThenPresent(FileError::fromError) {
         searchFilesByWord(word, objectId, primaryKeyFetch, clientIp)
-    }
+    }.mapError(FileError::fromError)
 }
 
 suspend fun Backend.uncheckedSearchFiles(
     query: SearchQuery,
     primaryKeyFetch: OffsetFetch,
-): Result<PaginationResult<FileInfo>?> {
+): CustomResult<PaginationResult<FileInfo>?, FileError> {
     val word = query.word
-    return if (word.isBlank()) {
-        Result.success(PaginationResult(emptyList(), 0))
-    } else {
-        // 使用 fileSearchService 搜索
-        searchFilesByWord(word, null, primaryKeyFetch)
-    }
+    return (
+        if (word.isBlank()) {
+            CustomResult.success(PaginationResult(emptyList(), 0))
+        } else {
+            // 使用 fileSearchService 搜索
+            searchFilesByWord(word, null, primaryKeyFetch)
+        }
+        ).mapError(FileError::fromError)
 }
 
 private suspend fun Backend.searchFilesByWord(
@@ -138,51 +152,53 @@ private suspend fun Backend.searchFilesByWord(
     ownerId: PrimaryKey?,
     primaryKeyFetch: OffsetFetch,
     clientIp: String? = null,
-): Result<PaginationResult<FileInfo>?> =
+): CustomResult<PaginationResult<FileInfo>?, FileError> =
+    (
     if (word.isNullOrBlank()) {
-    Result.success(PaginationResult(emptyList(), 0))
-} else {
-    // 使用 fileSearchService 搜索
-    val searchQuery =
-        if (ownerId != null) {
-            FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
-        } else {
-            FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
-        }
-    fileSearchService.searchDocument(searchQuery).mapResultIfNotNull { (documents, total) ->
-        val fileIds = documents.map { it.id }
-        if (fileIds.isEmpty()) {
-            Result.success(PaginationResult(emptyList(), total))
-        } else {
-            database.file.getFileRecordByIds(fileIds).mapResultIfNotNull { fileRecords ->
-                processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
-            }.mapIfNotNull { fileInfos ->
-                PaginationResult(fileInfos, total)
+        CustomResult.success(PaginationResult(emptyList(), 0))
+    } else {
+        // 使用 fileSearchService 搜索
+        val searchQuery =
+            if (ownerId != null) {
+                FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
+            } else {
+                FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
+            }
+        fileSearchService.searchDocument(searchQuery).andThenPresent(FileError::fromError) { (documents, total) ->
+            val fileIds = documents.map { it.id }
+            if (fileIds.isEmpty()) {
+                CustomResult.success(PaginationResult(emptyList(), total))
+            } else {
+                database.file.getFileRecordByIds(fileIds).andThenPresent(FileError::fromError) { fileRecords ->
+                    processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
+                }.mapPresent { fileInfos ->
+                    PaginationResult(fileInfos, total)
+                }
             }
         }
     }
-}
+    ).mapError(FileError::fromError)
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: PrimaryKey) =
-    checkObjectWritable(ObjectType.FILE, fileRecordId).mapResultIfNotNull {
+    checkObjectWritable(ObjectType.FILE, fileRecordId).andThenPresent(FileError::fromError) {
         database.file.getFileRecordByIds(listOf(fileRecordId))
-    }.mapResultIfNotNull { fileRecords ->
+    }.andThenPresent(FileError::fromError) { fileRecords ->
         val fileRecord = fileRecords.first()
         if (fileRecord.owner != uid) {
             throw ForbiddenException("no permission")
         }
         if (fileRecord.contentType.startsWith("audio")) {
-            Result.success(fileRecord)
+            CustomResult.success(fileRecord)
         } else {
-            Result.failure(CustomBadRequestException("not an audio file"))
+            CustomResult.Failure(FileError.from(CustomBadRequestException("not an audio file")))
         }
-    }.mapResultIfNotNull { fileRecord ->
+    }.andThenPresent(FileError::fromError) { fileRecord ->
         objectStorageService.getInputStream(A_FILE_DEFAULT_BUCKET, fileRecord.fullName)
-            .mapResult { input ->
+            .andThen(FileError::fromError) { input ->
                 extractAlbumFromStream(input.buffered(), root, fileRecord)
             }
-            .mapResultIfNotNull { (file, contentType) ->
+            .andThenPresent(FileError::fromError) { (file, contentType) ->
                 val name = newCoverFileName(fileRecord.name, contentType)
                 tryUploadFiles(
                     fileRecord.owner,
@@ -200,13 +216,13 @@ suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: Prim
                     ),
                 )
             }
-    }.mapIfNotNull {
+    }.mapPresent {
         it.firstOrNull()
     }
 
 @OptIn(ExperimentalUuidApi::class)
 private suspend fun extractAlbumFromStream(input: BufferedInputStream, root: File, fileRecord: FileRecord) =
-    cancellableRunCatching {
+    captureFailure(FileError::from) {
         withContext(Dispatchers.IO) {
             input.use {
                 val saveAlbum = { image: ByteArray, mimeType: String ->
@@ -268,16 +284,20 @@ suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
     clientIp: String? = null,
-): Result<PaginationResult<FileInfo>> =
+): CustomResult<PaginationResult<FileInfo>, FileError> =
     database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
-    .mapPagingResultNotNull { list ->
+    .mapPagingResultNotNull(FileError::fromError) { list ->
         processFileRecordToFileInfo(list, uid, clientIp)
-    }
+    }.mapError(FileError::fromError)
 
-suspend fun Backend.getAllFileInfos(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileInfo>> =
-    database.file.getAllFileRecordPaginationList(primaryKeyFetch).mapPagingResultNotNull { list ->
-        processFileRecordToFileInfo(list)
-    }
+suspend fun Backend.getAllFileInfos(
+    primaryKeyFetch: PrimaryKeyFetch,
+): CustomResult<PaginationResult<FileInfo>, FileError> =
+    database.file.getAllFileRecordPaginationList(
+    primaryKeyFetch,
+).mapPagingResultNotNull(FileError::fromError) { list ->
+    processFileRecordToFileInfo(list)
+}.mapError(FileError::fromError)
 
 suspend fun Backend.getUserUploadRecords(uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
     database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).mapPagingNotNull { list ->
@@ -288,27 +308,29 @@ suspend fun Backend.getFileInfoById(
     id: PrimaryKey,
     uid: PrimaryKey? = null,
     clientIp: String? = null,
-): Result<FileInfo?> =
-    database.file.getFileRecordByIds(listOf(id)).mapResultIfNotNull { list ->
-    processFileRecordToFileInfo(list, uid, clientIp)
-}.mapIfNotNull { it.firstOrNull() }
+): CustomResult<FileInfo?, FileError> =
+    database.file.getFileRecordByIds(listOf(id)).andThenPresent(FileError::fromError) { list ->
+        processFileRecordToFileInfo(list, uid, clientIp)
+    }.mapPresent { it.firstOrNull() }.mapError(FileError::fromError)
 
 suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey, clientIp: String? = null) =
-    checkObjectWritable(ObjectType.FILE, p.id).mapResultIfNotNull {
-        database.file.getFileRecordByIds(listOf(p.id)).firstOrNull().mapResultIfNotNull { fileRecord ->
+    checkObjectWritable(ObjectType.FILE, p.id).andThenPresent(FileError::fromError) {
+        database.file.getFileRecordByIds(
+            listOf(p.id),
+        ).firstOrNull().andThenPresent(FileError::fromError) { fileRecord ->
             checkRootReadPermission(
                 fileRecord.ownerType,
                 fileRecord.owner,
                 uid,
-            ).mapResultIfNotNull { permission ->
+            ).andThenPresent(FileError::fromError) { permission ->
                 if (permission.hasRead) {
-                    Result.success(fileRecord)
+                    CustomResult.success(fileRecord)
                 } else {
-                    Result.failure(ForbiddenException())
+                    CustomResult.Failure(FileError.from(ForbiddenException()))
                 }
             }
         }
-    }.mapResultIfNotNull { fileRecord ->
+    }.andThenPresent(FileError::fromError) { fileRecord ->
         lockQuotaInfo(
             ObjectTuple(uid, ObjectType.USER),
             QuotaType.FILE,
@@ -316,9 +338,9 @@ suspend fun Backend.tryCopyFile(p: CommonPath, uid: PrimaryKey, clientIp: String
         ) {
             copyFile(fileRecord, uid)
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(FileError::fromError) {
         processFileRecordToFileInfo(it, uid, clientIp)
-    }.mapIfNotNull {
+    }.mapPresent {
         it.firstOrNull()
     }
 
@@ -329,7 +351,7 @@ private suspend fun Backend.copyFile(fileRecord: FileRecord, newOwner: PrimaryKe
         } else {
             newCopiedFileName(fileRecord.name)
         }
-    }.mapResult { newName ->
+    }.andThen(FileError::fromError) { newName ->
         val id = SnowflakeFactory.nextId()
         val newFileRecord = fileRecord.copy(id = id, owner = newOwner, name = newName, fullName = "$newOwner/$newName")
         objectStorageService.copy(
@@ -363,7 +385,7 @@ suspend fun Backend.tryUploadFiles(
             it.delete()
         }
     }
-}.mapResult {
+}.andThen(FileError::fromError) {
     processFileRecordToFileInfo(it, ownerId, clientIp)
 }
 
@@ -414,7 +436,7 @@ private suspend fun Backend.uploadFilesToStorage(
     ownerId: PrimaryKey,
     ownerType: ObjectType,
     uploadPacks: List<ProcessedUploadPack>,
-): Result<List<FileRecord>> {
+): CustomResult<List<FileRecord>, FileError> {
     val data =
         uploadPacks.map { p ->
             val uploadPack = p.pack
@@ -439,29 +461,29 @@ private suspend fun Backend.uploadFilesToStorage(
     return objectStorageService.upload(
         A_FILE_DEFAULT_BUCKET,
         uploadPacks.map { it.pack },
-    ).mapResult { uploaded ->
+    ).andThen(FileError::fromError) { uploaded ->
         val map = uploaded.associateBy { it.fullName }
         data.forEach { record ->
             if (map[record.fullName] == null) {
                 throw CustomBadRequestException("file upload failed")
             }
         }
-        Result.success(data)
-    }
+        CustomResult.success(data)
+    }.mapError(FileError::fromError)
 }
 
-suspend fun Backend.getFileInfoList(names: List<String>): Result<List<FileInfo?>?> =
+suspend fun Backend.getFileInfoList(names: List<String>): CustomResult<List<FileInfo?>?, FileError> =
     database.file.getFileRecordByNames(
-    names,
-).mapResult { fileRecords ->
-    processFileRecordToFileInfo(fileRecords)
-}
+        names,
+    ).andThen(FileError::fromError) { fileRecords ->
+        processFileRecordToFileInfo(fileRecords)
+    }.mapError(FileError::fromError)
 
 suspend fun Backend.processFileRecordToFileInfo(
     fileRecords: List<FileRecord>,
     uid: PrimaryKey? = null,
     clientIp: String? = null,
-): Result<List<FileInfo>> {
+): CustomResult<List<FileInfo>, FileError> {
     val fileRecordIds = fileRecords.map { it.id }
     val favoriteMap =
         if (uid != null && fileRecordIds.isNotEmpty()) {
@@ -489,15 +511,15 @@ suspend fun Backend.processFileRecordToFileInfo(
                 media.toFileInfo(it.url, it.lastModified, favoriteMap[media.id]?.id, subscriptionMap[media.id]?.id)
             }
         }
-    }
+    }.mapError(FileError::fromError)
 }
 
 suspend fun initChunkUpload(backend: Backend, id: PrimaryKey, body: CustomApi.Files.Chunks.InitBody) =
     backend.checkRootWritePermission(body.objectType, body.objectId, id)
-        .mapResultIfNotNull {
+        .andThenPresent(FileError::fromError) {
             backend.checkQuotaStatus(body.objectId ob body.objectType, body.size, QuotaType.FILE)
         }
-        .mapResultIfNotNull {
+        .andThenPresent(FileError::fromError) {
             backend.database.file.insertUploadRecord(
                 UploadRecord(
                     SnowflakeFactory.nextId(),
@@ -514,7 +536,7 @@ suspend fun initChunkUpload(backend: Backend, id: PrimaryKey, body: CustomApi.Fi
                 ),
             )
         }
-        .mapIfNotNull {
+        .mapPresent {
             CustomApi.Files.Chunks.InitResponse(it.id, body.chunkSize)
         }
 
@@ -524,7 +546,7 @@ suspend fun completeChunkUpload(
     id: PrimaryKey,
     path: CommonPath,
     clientIp: String? = null,
-): Result<FileInfo?> {
+): CustomResult<FileInfo?, FileError> {
     val recordId = path.id
     // 读取上传记录以获取所有者信息
     val record =
@@ -533,13 +555,13 @@ suspend fun completeChunkUpload(
     val expectedSha256 = record.sha256
     val tuple = ObjectTuple(record.objectId, record.objectType)
     return backend.checkRootWritePermission(tuple.objectType, tuple.objectId, id)
-        .mapResultIfNotNull {
+        .andThenPresent(FileError::fromError) {
             val name = record.name
             val totalSize = record.total
             val expectedChunkCount = ((totalSize + record.chunkSize - 1) / record.chunkSize).toInt()
             val newSavedName = newFileName(name)
             val targetFullName = "${tuple.objectId}/$newSavedName"
-            cancellableRunCatching {
+            captureFailure(FileError::from) {
                 // 使用对象存储 compose 在默认桶直接合并到最终路径
                 val chunkRecords =
                     backend.objectStorageService.list(
@@ -589,7 +611,7 @@ suspend fun completeChunkUpload(
                     backend.fileSearchService.saveDocument(
                         listOf(FileDocument.fromFileRecord(fileRecord)),
                     ).onFailure { error ->
-                        Napier.e(error) {
+                        Napier.e(error.cause) {
                             "save file document failed"
                         }
                     }
@@ -599,10 +621,10 @@ suspend fun completeChunkUpload(
                 listOf(fileRecord)
             }.fold(
                 onSuccess = { fileRecords ->
-                    Result.success(fileRecords)
+                    CustomResult.success(fileRecords)
                 },
                 onFailure = { error ->
-                    cancellableRunCatching {
+                    captureFailure(FileError::from) {
                         val quotaInfo = backend.getQuotaInfo(QuotaType.FILE, tuple).getOrThrow()
                         backend.database.file.updateUploadRecordStatus(
                             quotaInfo,
@@ -610,7 +632,7 @@ suspend fun completeChunkUpload(
                             emptyList(),
                         ).getOrThrow()
                     }
-                    cancellableRunCatching {
+                    captureFailure(FileError::from) {
                         backend.objectStorageService.delete(
                             A_FILE_DEFAULT_BUCKET,
                             listOf(
@@ -618,7 +640,7 @@ suspend fun completeChunkUpload(
                             ),
                         ).getOrThrow()
                     }
-                    cancellableRunCatching {
+                    captureFailure(FileError::from) {
                         val sessionObjects =
                             backend.objectStorageService.list(
                                 A_FILE_DEFAULT_BUCKET,
@@ -628,12 +650,12 @@ suspend fun completeChunkUpload(
                             backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sessionObjects).getOrThrow()
                         }
                     }
-                    Result.failure(error)
+                    CustomResult.Failure(FileError.fromError(error))
                 },
             )
-        }.mapResultIfNotNull {
+        }.andThenPresent(FileError::fromError) {
             backend.processFileRecordToFileInfo(it, id, clientIp)
-        }.firstOrNull()
+        }.firstOrNull().mapError(FileError::fromError)
 }
 
 private suspend fun Backend.buildFileRecordFromComposedObject(
@@ -678,7 +700,7 @@ private suspend fun Backend.buildFileRecordFromComposedObject(
 }
 
 private suspend fun cleanChunk(backend: Backend, sortedSources: List<String>, recordId: PrimaryKey) {
-    cancellableRunCatching {
+    captureFailure(FileError::from) {
         backend.objectStorageService.delete(A_FILE_DEFAULT_BUCKET, sortedSources).getOrThrow()
         // 删除整个分片目录下可能残留的对象
         val sessionObjects =
@@ -691,13 +713,13 @@ private suspend fun cleanChunk(backend: Backend, sortedSources: List<String>, re
                 .getOrThrow()
         }
     }.onFailure {
-        Napier.e(it) { "clean chunk failed $recordId $sortedSources" }
+        Napier.e(it.cause) { "clean chunk failed $recordId $sortedSources" }
     }
 }
 
 suspend fun abortChunkUpload(backend: Backend, path: CommonPath) =
-    backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { uploadRecord ->
-        cancellableRunCatching {
+    backend.database.file.getUploadRecord(path.id).andThenPresent(FileError::fromError) { uploadRecord ->
+        captureFailure(FileError::from) {
             // 删除默认桶下对应会话的所有对象，并释放上传锁
             val recordId = path.id
             val tuple = ObjectTuple(uploadRecord.objectId, uploadRecord.objectType)
@@ -714,8 +736,8 @@ suspend fun abortChunkUpload(backend: Backend, path: CommonPath) =
     }
 
 suspend fun getChunkStatus(backend: Backend, path: CommonPath) =
-    backend.database.file.getUploadRecord(path.id).mapResultIfNotNull { record ->
-        cancellableRunCatching {
+    backend.database.file.getUploadRecord(path.id).andThenPresent(FileError::fromError) { record ->
+        captureFailure(FileError::from) {
             // 从对象存储临时桶读取已上传分片索引
             val records =
                 backend.objectStorageService.list(
@@ -745,7 +767,7 @@ suspend fun Backend.uncheckedGetFileRefsByFileId(fileId: PrimaryKey, primaryKeyF
     }
 
 suspend fun Backend.getFileRefsByFileId(uid: PrimaryKey, fileId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
-    checkRootReadPermission(ObjectType.FILE, fileId, uid).mapResultIfNotNull {
+    checkRootReadPermission(ObjectType.FILE, fileId, uid).andThenPresent(FileError::fromError) {
         database.file.getFileRefsByFileId(fileId, primaryKeyFetch).mapPagingNotNull { list ->
             list.map { ref ->
                 ref.toFileRefInfo()

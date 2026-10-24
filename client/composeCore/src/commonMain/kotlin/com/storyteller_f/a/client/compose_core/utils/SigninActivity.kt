@@ -11,6 +11,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.pointer.pointerInput
 import com.storyteller_f.a.client.core.SessionManager
 import com.storyteller_f.a.client.core.recordSigninActivity
+import com.storyteller_f.result.onSuccess
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel

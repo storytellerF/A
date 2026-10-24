@@ -32,6 +32,7 @@ import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.updateUserInfo
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserBody

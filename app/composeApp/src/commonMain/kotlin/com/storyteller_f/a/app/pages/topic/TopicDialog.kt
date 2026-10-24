@@ -47,6 +47,8 @@ import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.components.AppTopicContentView
 import com.storyteller_f.a.app.copy
+import com.storyteller_f.a.app.error.ModelGenerationError
+import com.storyteller_f.a.app.error.TopicActionError
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
 import com.storyteller_f.a.app.pages.room.RoomRefCell
 import com.storyteller_f.a.app.service.GPTOutput
@@ -70,6 +72,11 @@ import com.storyteller_f.a.client.compose_core.utils.getCurrentLanguage
 import com.storyteller_f.a.client.core.createTopicSnapshot
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.unpinTopic
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -215,14 +222,18 @@ private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
     }
 }
 
-suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): Result<TopicInfo> =
+suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): CustomResult<TopicInfo, TopicActionError> =
     useResult {
-    if (topicInfo.isPin) {
-        request { unpinTopic(topicInfo.id) }
-    } else {
-        request { pinTopic(topicInfo.id) }
-    }
-}.onSuccess { context.emitEvent(com.storyteller_f.a.app.common.OnTopicChanged(it)) }
+        if (topicInfo.isPin) {
+            request { unpinTopic(topicInfo.id) }
+        } else {
+            request { pinTopic(topicInfo.id) }
+        }
+    }.onSuccess {
+        context.emitEvent(
+            com.storyteller_f.a.app.common.OnTopicChanged(it),
+        )
+    }.mapError(TopicActionError::fromError)
 
 @OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class)
 @Composable
@@ -243,7 +254,7 @@ fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: T
             ) {
                 if (content is TopicContent.Plain) {
                     // TODO 转成ViewModel
-                    val result by produceState<Result<Flow<GPTOutput>>?>(
+                    val result by produceState<CustomResult<Flow<GPTOutput>, ModelGenerationError>?>(
                         null,
                         content,
                         currentModel,
@@ -269,7 +280,7 @@ fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: T
 
 @Composable
 private fun BoxScope.TopicTranslateSheetInternal(
-    result: Result<Flow<GPTOutput>>?,
+    result: CustomResult<Flow<GPTOutput>, ModelGenerationError>?,
     topicInfo: TopicInfo,
     content: TopicContent.Plain,
 ) {

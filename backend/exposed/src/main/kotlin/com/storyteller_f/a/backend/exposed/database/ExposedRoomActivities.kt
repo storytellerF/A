@@ -6,6 +6,7 @@ package com.storyteller_f.a.backend.exposed.database
 
 import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.RoomActivityRecord
 import com.storyteller_f.a.backend.exposed.count
@@ -14,10 +15,12 @@ import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Rooms
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
@@ -38,8 +41,8 @@ private val latestMessageColumn = Topics.id.max()
 private val unreadMessageColumn = Topics.id.countDistinct()
 
 internal suspend fun ExposedContainerDatabase.queryRoomActivityRecords(uid: PrimaryKey, roomIds: List<PrimaryKey>) =
-    cancellableRunCatching {
-        if (roomIds.isEmpty()) return@cancellableRunCatching emptyList()
+    captureFailure(DatabaseError::from) {
+        if (roomIds.isEmpty()) return@captureFailure emptyList()
         val latest =
             databaseSession.dbSearch {
                 search {

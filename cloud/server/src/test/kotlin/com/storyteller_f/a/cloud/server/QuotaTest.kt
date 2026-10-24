@@ -6,6 +6,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.getQuotaInfo
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob

@@ -20,6 +20,7 @@ application {
 kotlin { jvmToolchain(21) }
 
 dependencies {
+    implementation(projects.result)
     implementation(libs.logback)
     implementation(projects.services.filesystemProtocol)
     implementation(libs.kotlinx.datetime)

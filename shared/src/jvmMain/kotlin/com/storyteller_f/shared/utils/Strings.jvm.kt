@@ -5,9 +5,11 @@
 package com.storyteller_f.shared.utils
 
 import com.ibm.icu.text.UnicodeSet
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.shared.model.ContentValidationError
 import java.text.BreakIterator
 
-actual fun checkContent(text: String): Result<Unit> {
+actual fun checkContent(text: String): CustomResult<Unit, ContentValidationError> {
     val regexp = """^[\p{L}\p{N}\p{P}\p{Z}\p{S}\n]+$"""
     val emojiSet = UnicodeSet("[[:RGI_Emoji:]]").freeze()
     val nerdFontSet =
@@ -26,12 +28,12 @@ actual fun checkContent(text: String): Result<Unit> {
     while (end != BreakIterator.DONE) {
         val sub = text.substring(start, end)
         if (!regexp.toRegex().matches(sub) && !emojiSet.contains(sub) && !nerdFontSet.contains(sub)) {
-            return Result.failure(Exception("unsupported $sub"))
+            return CustomResult.Failure(ContentValidationError.UnsupportedCharacters("unsupported $sub"))
         }
         start = end
         end = breakIterator.next()
     }
-    return UNIT_RESULT
+    return CustomResult.Success(Unit)
 }
 
 actual fun safeFirstUnicode(text: String): String? {

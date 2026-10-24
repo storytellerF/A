@@ -5,11 +5,16 @@
 package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.Backend
-import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ForbiddenException
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.cloud.core.service.FileResponse
+import com.storyteller_f.a.cloud.error.ServerError
 import com.storyteller_f.endpoint4k.ktor.server.handleCaughtException
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.http.ContentDisposition
 import io.ktor.http.HttpHeaders
@@ -17,10 +22,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.log
 import io.ktor.server.auth.principal
-import io.ktor.server.plugins.BadRequestException
-import io.ktor.server.plugins.ContentTransformationException
-import io.ktor.server.plugins.MissingRequestParameterException
-import io.ktor.server.plugins.ParameterConversionException
 import io.ktor.server.request.httpMethod
 import io.ktor.server.response.header
 import io.ktor.server.response.respond
@@ -28,18 +29,21 @@ import io.ktor.server.response.respondFile
 import io.ktor.server.routing.RoutingContext
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 
-inline fun <reified R : Any> omitPrincipal(block: () -> Result<R?>) = block()
+inline fun <reified R : Any, E> omitPrincipal(block: () -> CustomResult<R?, E>) = block()
 
-inline fun <reified R : Any> RoutingContext.usePrincipal(block: (uid: PrimaryKey) -> Result<R?>) =
+inline fun <reified R : Any> RoutingContext.usePrincipal(block: (uid: PrimaryKey) -> CustomResult<R?, FailureDetails>) =
     usePrincipalOrNull { uid ->
         if (uid != null) {
             block(uid)
         } else {
-            Result.failure(UnauthorizedException())
+            CustomResult.Failure(ServerError.from(UnauthorizedException()))
         }
     }
 
-suspend inline fun <reified R : Any> RoutingContext.callRespond(backend: Backend, block: () -> Result<R?>?) {
+suspend inline fun <reified R : Any> RoutingContext.callRespond(
+    backend: Backend,
+    block: () -> CustomResult<R?, FailureDetails>?,
+) {
     try {
         val result = block()
         if (result == null) {
@@ -54,40 +58,31 @@ suspend inline fun <reified R : Any> RoutingContext.callRespond(backend: Backend
     }
 }
 
-inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(block: (uid: PrimaryKey?) -> Result<R?>?): Result<R?>? {
+inline fun <reified R : Any> RoutingContext.usePrincipalOrNull(
+    block: (uid: PrimaryKey?) -> CustomResult<R?, FailureDetails>?,
+): CustomResult<R?, ServerError>? {
     val principal = call.principal<CustomPrincipal>()
     val method = call.request.httpMethod
     return if (principal?.readOnly == true && method !in listOf(HttpMethod.Get, HttpMethod.Head, HttpMethod.Options)) {
-        Result.failure(ForbiddenException("User is read only"))
+        CustomResult.Failure(ServerError.from(ForbiddenException("User is read only")))
     } else {
-        block(principal?.uid)
+        block(principal?.uid)?.mapError(ServerError::fromError)
     }
 }
 
-suspend fun RoutingContext.respondError(e: Throwable, buildType: String) {
-    when (e) {
-        is ForbiddenException -> {
-            call.respond(HttpStatusCode.Forbidden, e.message?.toString().orEmpty())
-        }
+suspend fun RoutingContext.respondError(error: FailureDetails, buildType: String) {
+    when (val failure = ServerError.fromError(error)) {
+        is ServerError.Forbidden -> call.respond(HttpStatusCode.Forbidden, failure.cause.message.orEmpty())
 
-        is UnauthorizedException -> {
-            call.respondUnauthorizedResponse()
-        }
+        is ServerError.Unauthenticated -> call.respondUnauthorizedResponse()
 
-        is MissingRequestParameterException, is ParameterConversionException, is ContentTransformationException -> {
-            call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
-        }
+        is ServerError.InvalidInput -> call.respond(HttpStatusCode.BadRequest, failure.cause.localizedMessage)
 
-        is BadRequestException, is CustomBadRequestException, is IllegalArgumentException, is IllegalStateException -> {
-            call.respond(HttpStatusCode.BadRequest, e.localizedMessage)
-        }
-
-        else -> {
+        is ServerError.Unexpected ->
             call.respond(
                 HttpStatusCode.InternalServerError,
-                if (buildType == "prod") "" else e.message ?: e.toString(),
+                if (buildType == "prod") "" else failure.cause.message ?: failure.cause.toString(),
             )
-        }
     }
 }
 
@@ -100,11 +95,16 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (
     }
 }
 
-inline fun <reified R> handleResult(backend: Backend): suspend RoutingContext.(it: Result<R>) -> Unit = { result ->
+inline fun <reified R> handleResult(
+    backend: Backend,
+): suspend RoutingContext.(it: CustomResult<R, FailureDetails>) -> Unit = { result ->
     handleResultInternal(result, backend.customConfig.buildType)
 }
 
-suspend inline fun <reified R> RoutingContext.handleResultInternal(result: Result<R>, buildType: String) {
+suspend inline fun <reified R, E : FailureDetails> RoutingContext.handleResultInternal(
+    result: CustomResult<R, E>,
+    buildType: String,
+) {
     result.onSuccess { value ->
         when (value) {
             null -> call.respond(HttpStatusCode.NotFound)
@@ -126,6 +126,6 @@ suspend inline fun <reified R> RoutingContext.handleResultInternal(result: Resul
         }
     }.onFailure { throwable ->
         respondError(throwable, buildType)
-        call.application.log.error("Occur server exception", throwable)
+        call.application.log.error("Occur server exception", throwable.cause)
     }
 }

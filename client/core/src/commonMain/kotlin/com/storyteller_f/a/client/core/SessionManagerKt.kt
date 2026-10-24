@@ -9,9 +9,11 @@ package com.storyteller_f.a.client.core
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.a.api.SignUpBody
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -43,7 +45,7 @@ suspend fun UserSessionManager.getUserSignInPass(authKey: AuthKey): SignResult<U
     authKey,
 ) {
     getData()
-}.mapResult { param ->
+}.andThen(CredentialError::fromError) { param ->
     signIn(SignInBody(param.address, param.signature)).map { signIn ->
         when (signIn) {
             is SignInResponse.Success -> {
@@ -66,7 +68,7 @@ suspend fun UserSessionManager.getUserSignUpPass(authKey: AuthKey): SignResult<U
     authKey,
 ) {
     getData()
-}.mapResult { param ->
+}.andThen(CredentialError::fromError) { param ->
     val encryptionPublicKey = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
     signUp(
         SignUpBody(
@@ -89,7 +91,7 @@ suspend fun UserSessionManager.getUserSignUpPass(authKey: AuthKey): SignResult<U
 suspend fun PanelSessionManager.getPanelUserSignUpPass(authKey: AuthKey): SignResult<PanelAccountInfo> =
     prepareSignInFromPrivateKey(authKey) {
         getData()
-    }.mapResult { param ->
+    }.andThen(CredentialError::fromError) { param ->
         val encryptionPublicKey1 = (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
         signUp(
             SignUpBody(
@@ -111,7 +113,7 @@ suspend fun PanelSessionManager.getPanelUserSignUpPass(authKey: AuthKey): SignRe
 suspend fun PanelSessionManager.getPanelUserSignInPass(authKey: AuthKey): SignResult<PanelAccountInfo> =
     prepareSignInFromPrivateKey(authKey) {
         getData()
-    }.mapResult { param ->
+    }.andThen(CredentialError::fromError) { param ->
         signIn(SignInBody(param.address, param.signature)).map { response ->
             SignResult(
                 response,

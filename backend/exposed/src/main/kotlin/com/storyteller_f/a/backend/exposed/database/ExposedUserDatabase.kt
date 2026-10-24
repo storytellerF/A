@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UserAuthData
 import com.storyteller_f.a.backend.core.UserDatabase
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
@@ -40,15 +41,17 @@ import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.encodeRecoveryCodeHashes
 import com.storyteller_f.a.backend.exposed.tables.find
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapPresent
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.md5
 import org.jetbrains.exposed.v1.core.CustomFunction
 import org.jetbrains.exposed.v1.core.JoinType
@@ -91,9 +94,9 @@ class ExposedUserDatabase(
                 is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
             }
         }
-    }.mapResultIfNotNull { user ->
+    }.andThenPresent(DatabaseError::fromError) { user ->
         processUserToRawUser(uid, listOf(user))
-    }.mapIfNotNull {
+    }.mapPresent {
         it.first()
     }
 
@@ -107,7 +110,7 @@ class ExposedUserDatabase(
         }
     }
 
-    override suspend fun createUser(user: User): Result<User> =
+    override suspend fun createUser(user: User): CustomResult<User, DatabaseError> =
         databaseSession.dbQuery {
         createUserRaw(user)
         val aid = user.aid
@@ -228,12 +231,15 @@ class ExposedUserDatabase(
         Users.address eq address
     }
 
-    override suspend fun getRawUsers(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawUser>> {
+    override suspend fun getRawUsers(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey?,
+    ): CustomResult<List<RawUser>, DatabaseError> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         return getUserListByPredicate({
             where {
@@ -242,7 +248,7 @@ class ExposedUserDatabase(
                     is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
                 }
             }
-        }, User::wrapRow).mapResult {
+        }, User::wrapRow).andThen(DatabaseError::fromError) {
             processUserToRawUser(uid, it)
         }
     }
@@ -358,7 +364,7 @@ class ExposedUserDatabase(
             addTaskRecord(record)
         }
 
-    override suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?> {
+    override suspend fun getLatestTaskRecord(type: TaskRecordType): CustomResult<TaskRecord?, DatabaseError> {
         val result =
             databaseSession.dbSearch {
                 search {
@@ -371,14 +377,19 @@ class ExposedUserDatabase(
         return result
     }
 
-    override suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>> =
-        TaskRecordType.entries.fold(Result.success(emptyList())) { result, type ->
-            result.mapResult { summaries ->
-                getTaskRecordSummary(type).mapResult { summary -> Result.success(summaries + summary) }
+    override suspend fun getTaskRecordSummaries(): CustomResult<List<TaskRecordSummary>, DatabaseError> =
+        TaskRecordType.entries.fold(CustomResult.success(emptyList())) { result, type ->
+            result.andThen(DatabaseError::fromError) { summaries ->
+                getTaskRecordSummary(
+                    type,
+                ).andThen(DatabaseError::fromError) { summary -> CustomResult.success(summaries + summary) }
             }
         }
 
-    override suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>> {
+    override suspend fun getTaskRecordsToRetry(
+        type: TaskRecordType,
+        limit: Int,
+    ): CustomResult<List<TaskRecord>, DatabaseError> {
         val result =
             databaseSession.dbSearch {
                 search {
@@ -393,24 +404,27 @@ class ExposedUserDatabase(
         return result
     }
 
-    override suspend fun updateTaskRecordRetryRequested(id: PrimaryKey, isRequested: Boolean): Result<Boolean> =
+    override suspend fun updateTaskRecordRetryRequested(
+        id: PrimaryKey,
+        isRequested: Boolean,
+    ): CustomResult<Boolean, DatabaseError> =
         databaseSession.dbQuery {
-            TaskRecords.update({
-                if (isRequested) {
-                    TaskRecords.id eq id and (TaskRecords.success eq false)
-                } else {
-                    TaskRecords.id eq id
-                }
-            }) {
-                it[TaskRecords.retryRequested] = isRequested
-            } > 0
-        }
+        TaskRecords.update({
+            if (isRequested) {
+                TaskRecords.id eq id and (TaskRecords.success eq false)
+            } else {
+                TaskRecords.id eq id
+            }
+        }) {
+            it[TaskRecords.retryRequested] = isRequested
+        } > 0
+    }
 
-    private suspend fun getTaskRecordSummary(type: TaskRecordType): Result<TaskRecordSummary> =
-        getTaskRecordCount(type, true).mapResult { successCount ->
-            getTaskRecordCount(type, false).mapResult { failureCount ->
-                getRetryRequestedTaskRecordCount(type).mapResult { retryRequestedCount ->
-                    Result.success(
+    private suspend fun getTaskRecordSummary(type: TaskRecordType): CustomResult<TaskRecordSummary, DatabaseError> =
+        getTaskRecordCount(type, true).andThen(DatabaseError::fromError) { successCount ->
+            getTaskRecordCount(type, false).andThen(DatabaseError::fromError) { failureCount ->
+                getRetryRequestedTaskRecordCount(type).andThen(DatabaseError::fromError) { retryRequestedCount ->
+                    CustomResult.success(
                         TaskRecordSummary(
                             type = type,
                             successCount = successCount,
@@ -422,7 +436,10 @@ class ExposedUserDatabase(
             }
         }
 
-    private suspend fun getTaskRecordCount(type: TaskRecordType, isSuccess: Boolean): Result<Long> {
+    private suspend fun getTaskRecordCount(
+        type: TaskRecordType,
+        isSuccess: Boolean,
+    ): CustomResult<Long, DatabaseError> {
         val result =
             databaseSession.dbSearch {
                 search {
@@ -435,7 +452,7 @@ class ExposedUserDatabase(
         return result
     }
 
-    private suspend fun getRetryRequestedTaskRecordCount(type: TaskRecordType): Result<Long> {
+    private suspend fun getRetryRequestedTaskRecordCount(type: TaskRecordType): CustomResult<Long, DatabaseError> {
         val result =
             databaseSession.dbSearch {
                 search {
@@ -529,7 +546,10 @@ class ExposedUserDatabase(
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
         paginationFromResults(
-        getUserListByPredicate({ bindPaginationQuery(Users, primaryKeyFetch) }, User::wrapRow).mapResult {
+        getUserListByPredicate(
+            { bindPaginationQuery(Users, primaryKeyFetch) },
+            User::wrapRow,
+        ).andThen(DatabaseError::fromError) {
             processUserToRawUser(null, it)
         },
         getUserCount(),
@@ -638,33 +658,36 @@ class ExposedUserDatabase(
         Unit
     }
 
-    private suspend fun processUserToRawUser(uid: PrimaryKey?, users: List<User>): Result<List<RawUser>> =
-        cancellableRunCatching {
-            val userIds = users.map { it.id }
-            if (userIds.isEmpty()) return@cancellableRunCatching emptyList()
+    private suspend fun processUserToRawUser(
+        uid: PrimaryKey?,
+        users: List<User>,
+    ): CustomResult<List<RawUser>, DatabaseError> =
+        captureFailure(DatabaseError::from) {
+        val userIds = users.map { it.id }
+        if (userIds.isEmpty()) return@captureFailure emptyList()
 
-            val favoriteMap =
-                if (uid != null) {
-                    combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(userIds), uid)
-                        .getOrThrow().associateBy { it.objectId }
-                } else {
-                    emptyMap()
-                }
-
-            val subscriptionMap =
-                if (uid != null) {
-                    combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(userIds), uid)
-                        .getOrThrow().associateBy { it.objectId }
-                } else {
-                    emptyMap()
-                }
-
-            users.map { user ->
-                RawUser(
-                    user,
-                    favoriteId = favoriteMap[user.id]?.id,
-                    subscriptionId = subscriptionMap[user.id]?.id,
-                )
+        val favoriteMap =
+            if (uid != null) {
+                combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(userIds), uid)
+                    .getOrThrow().associateBy { it.objectId }
+            } else {
+                emptyMap()
             }
+
+        val subscriptionMap =
+            if (uid != null) {
+                combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(userIds), uid)
+                    .getOrThrow().associateBy { it.objectId }
+            } else {
+                emptyMap()
+            }
+
+        users.map { user ->
+            RawUser(
+                user,
+                favoriteId = favoriteMap[user.id]?.id,
+                subscriptionId = subscriptionMap[user.id]?.id,
+            )
         }
+    }
 }

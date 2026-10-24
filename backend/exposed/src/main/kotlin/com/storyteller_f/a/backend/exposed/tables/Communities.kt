@@ -5,11 +5,14 @@
 package com.storyteller_f.a.backend.exposed.tables
 
 import com.storyteller_f.a.backend.core.COMMUNITY_NAME_LENGTH
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.exposed.BaseTable
 import com.storyteller_f.a.backend.exposed.customPrimaryKey
 import com.storyteller_f.a.backend.exposed.memberPolicy
 import com.storyteller_f.a.backend.exposed.objectStatus
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.onFailure
 import com.storyteller_f.shared.model.FontSettings
 import io.github.aakira.napier.Napier
 import kotlinx.serialization.json.Json
@@ -32,8 +35,8 @@ fun Community.Companion.wrapRow(row: ResultRow): Community =
     val fontSettingsJson = row[fontSettings]
     val fontSettings =
         fontSettingsJson?.let {
-            runCatching { json.decodeFromString<FontSettings>(it) }
-                .onFailure { Napier.e("Failed to parse font_settings", it) }
+            captureFailure(DatabaseError::from) { json.decodeFromString<FontSettings>(it) }
+                .onFailure { Napier.e("Failed to parse font_settings", it.cause) }
                 .getOrNull()
         }
     Community(

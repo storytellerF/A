@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.UserInfo
 import io.github.aakira.napier.Napier

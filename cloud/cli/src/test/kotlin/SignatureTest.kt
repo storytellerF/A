@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.cli
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.decryptMessage
 import com.storyteller_f.shared.encryptDataByAES

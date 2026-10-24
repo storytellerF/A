@@ -56,6 +56,10 @@ import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.userSignIn
 import com.storyteller_f.a.client.core.userSignUp
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -149,7 +153,7 @@ suspend fun handleInput(
                     sysLog("Fetching Recommended Topics...")
                     sessionManager.getRecommendTopics(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -159,7 +163,7 @@ suspend fun handleInput(
                         CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.CommunityList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -167,7 +171,7 @@ suspend fun handleInput(
                     sysLog("Fetching Joined Rooms...")
                     sessionManager.getUserRooms(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -175,7 +179,7 @@ suspend fun handleInput(
                     sysLog("Fetching Member List...")
                     sessionManager.searchAllMembers(null, 10, "").fold(
                         onSuccess = { setScreen(Screen.UserList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -183,7 +187,7 @@ suspend fun handleInput(
                     sysLog("Fetching Favorites...")
                     sessionManager.getFavorites(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.FavoriteList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -191,7 +195,7 @@ suspend fun handleInput(
                     sysLog("Fetching Subscriptions...")
                     sessionManager.getSubscriptions(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.SubscriptionList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -260,7 +264,7 @@ suspend fun handleInput(
                     sysLog("Favoriting Topic...")
                     sessionManager.addFavorite(NewFavorite(ObjectType.TOPIC, screen.topic.id)).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) },
+                        onFailure = { sysLogError("Failed to favorite", it.cause) },
                     )
                 }
 
@@ -273,7 +277,7 @@ suspend fun handleInput(
                         ),
                     ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
-                        onFailure = { sysLogError("Failed to subscribe", it) },
+                        onFailure = { sysLogError("Failed to subscribe", it.cause) },
                     )
                 }
 
@@ -294,7 +298,7 @@ suspend fun handleInput(
                 sysLog("Adding Comment...")
                 sessionManager.createTopic(ObjectType.TOPIC, screen.topic.id, line).fold(
                     onSuccess = { sysLog("Comment added successfully") },
-                    onFailure = { sysLogError("Failed to add comment", it) },
+                    onFailure = { sysLogError("Failed to add comment", it.cause) },
                 )
                 setScreen(Screen.TopicDetail(screen.topic))
             }
@@ -307,7 +311,7 @@ suspend fun handleInput(
                 sysLog("Adding Reaction...")
                 sessionManager.addReaction(screen.topic.id, line).fold(
                     onSuccess = { sysLog("Reaction added successfully") },
-                    onFailure = { sysLogError("Failed to add reaction", it) },
+                    onFailure = { sysLogError("Failed to add reaction", it.cause) },
                 )
                 setScreen(Screen.TopicDetail(screen.topic))
             }
@@ -334,7 +338,7 @@ suspend fun handleInput(
                         PaginationQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -345,7 +349,7 @@ suspend fun handleInput(
                         CustomApi.Communities.Id.Rooms.CommunityRoomQuery(size = 10),
                     ).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -353,7 +357,7 @@ suspend fun handleInput(
                     sysLog("Fetching Community Members...")
                     sessionManager.searchCommunityMembers(screen.community.id, null, 10, "").fold(
                         onSuccess = { setScreen(Screen.CommunityMemberList(it.data, screen)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -361,7 +365,7 @@ suspend fun handleInput(
                     sysLog("Joining Community...")
                     sessionManager.joinCommunity(screen.community.id).fold(
                         onSuccess = { sysLog("Joined Community successfully") },
-                        onFailure = { sysLogError("Failed to join", it) },
+                        onFailure = { sysLogError("Failed to join", it.cause) },
                     )
                 }
 
@@ -369,7 +373,7 @@ suspend fun handleInput(
                     sysLog("Exiting Community...")
                     sessionManager.exitCommunity(screen.community.id).fold(
                         onSuccess = { sysLog("Exited Community successfully") },
-                        onFailure = { sysLogError("Failed to exit", it) },
+                        onFailure = { sysLogError("Failed to exit", it.cause) },
                     )
                 }
 
@@ -382,7 +386,7 @@ suspend fun handleInput(
                         ),
                     ).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) },
+                        onFailure = { sysLogError("Failed to favorite", it.cause) },
                     )
                 }
 
@@ -395,7 +399,7 @@ suspend fun handleInput(
                         ),
                     ).fold(
                         onSuccess = { sysLog("Subscribed successfully") },
-                        onFailure = { sysLogError("Failed to subscribe", it) },
+                        onFailure = { sysLogError("Failed to subscribe", it.cause) },
                     )
                 }
 
@@ -460,7 +464,7 @@ suspend fun handleInput(
                     sessionManager.getRoomTopics(screen.room.id, null, PaginationQuery(size = 10))
                         .fold(
                             onSuccess = { setScreen(Screen.TopicList(it.data)) },
-                            onFailure = { sysLogError("Failed", it) },
+                            onFailure = { sysLogError("Failed", it.cause) },
                         )
                 }
 
@@ -468,7 +472,7 @@ suspend fun handleInput(
                     sysLog("Fetching Room Members...")
                     sessionManager.searchRoomMembers(screen.room.id, null, 10, "").fold(
                         onSuccess = { setScreen(Screen.RoomMemberList(it.data, screen)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -476,7 +480,7 @@ suspend fun handleInput(
                     sysLog("Joining Room...")
                     sessionManager.joinRoom(screen.room.id).fold(
                         onSuccess = { sysLog("Joined Room successfully") },
-                        onFailure = { sysLogError("Failed to join", it) },
+                        onFailure = { sysLogError("Failed to join", it.cause) },
                     )
                 }
 
@@ -484,7 +488,7 @@ suspend fun handleInput(
                     sysLog("Exiting Room...")
                     sessionManager.exitRoom(screen.room.id).fold(
                         onSuccess = { sysLog("Exited Room successfully") },
-                        onFailure = { sysLogError("Failed to exit", it) },
+                        onFailure = { sysLogError("Failed to exit", it.cause) },
                     )
                 }
 
@@ -496,7 +500,7 @@ suspend fun handleInput(
                     sysLog("Favoriting Room...")
                     sessionManager.addFavorite(NewFavorite(ObjectType.ROOM, screen.room.id)).fold(
                         onSuccess = { sysLog("Favorited successfully") },
-                        onFailure = { sysLogError("Failed to favorite", it) },
+                        onFailure = { sysLogError("Failed to favorite", it.cause) },
                     )
                 }
 
@@ -505,7 +509,7 @@ suspend fun handleInput(
                     sessionManager.addSubscription(NewSubscription(screen.room.id, ObjectType.ROOM))
                         .fold(
                             onSuccess = { sysLog("Subscribed successfully") },
-                            onFailure = { sysLogError("Failed to subscribe", it) },
+                            onFailure = { sysLogError("Failed to subscribe", it.cause) },
                         )
                 }
 

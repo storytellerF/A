@@ -7,7 +7,9 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.types.Community
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 
@@ -29,13 +31,13 @@ sealed interface CommunityDocumentSearch {
 }
 
 interface CommunitySearchService {
-    suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit>
+    suspend fun saveDocument(documents: List<CommunityDocument>): CustomResult<Unit, SearchError>
 
-    suspend fun clean(): Result<Unit>
+    suspend fun clean(): CustomResult<Unit, SearchError>
 
     suspend fun searchDocument(
         communityDocumentSearch: CommunityDocumentSearch,
-    ): Result<PaginationResult<CommunityDocument>>
+    ): CustomResult<PaginationResult<CommunityDocument>, SearchError>
 }
 
 interface CommunitySearchServiceFactory {

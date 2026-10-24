@@ -16,6 +16,7 @@ import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.cloud.cli.applyPreset
 import com.storyteller_f.a.cloud.worker.doAcgTask
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType

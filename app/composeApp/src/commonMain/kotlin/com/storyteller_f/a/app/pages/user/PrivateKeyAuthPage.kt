@@ -34,6 +34,7 @@ import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.auth_private_key_subtitle
 import com.storyteller_f.a.app.common.AppNavFactory
+import com.storyteller_f.a.app.error.AccountActionError
 import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
@@ -52,8 +53,12 @@ import com.storyteller_f.a.client.core.prepareSignInFromPrivateKey
 import com.storyteller_f.a.client.core.signIn
 import com.storyteller_f.a.client.core.signInTotp
 import com.storyteller_f.a.client.core.signUp
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.AlgoType
-import com.storyteller_f.shared.utils.mapResult
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -207,7 +212,7 @@ internal fun kotlinx.coroutines.CoroutineScope.completePendingTotpSignIn(
                             pending.authKey,
                         ),
                     )
-                Result.success(
+                CustomResult.success(
                     SignResult(
                         userInfo,
                         pending.data,
@@ -253,7 +258,7 @@ internal suspend fun AppGlobalDialogController.performKeySignInAuth(
         val authKey = loadKey()
         prepareSignInFromPrivateKey(authKey) {
             sessionManager.getData()
-        }.mapResult { param ->
+        }.andThen(AccountActionError::fromError) { param ->
             sessionManager.signIn(SignInBody(param.address, param.signature))
                 .map { response ->
                     when (response) {
@@ -323,7 +328,7 @@ private suspend fun AppGlobalDialogController.performSignUpAuth(
                 )
             prepareSignInFromPrivateKey(authKey) {
                 sessionManager.getData()
-            }.mapResult { param ->
+            }.andThen(AccountActionError::fromError) { param ->
                 val encryptionPublicKey =
                     (param.authKey as? AuthKey.Dilithium)?.derEncryptionPublicKey
                 sessionManager.signUp(

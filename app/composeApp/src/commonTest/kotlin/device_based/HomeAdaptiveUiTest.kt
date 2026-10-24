@@ -80,6 +80,7 @@ import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.RoomInfo
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
@@ -297,7 +298,11 @@ class HomeAdaptiveUiTest {
                             items(100) { Text("Message $it", Modifier.requiredSize(200.dp, 48.dp)) }
                         }
                         var draft by rememberSaveable { mutableStateOf("") }
-                        BasicTextField(draft, { draft = it }, Modifier.fillMaxSize().weight(0.2f).testTag("composer"))
+                        BasicTextField(
+                            draft,
+                            { draft = it },
+                            Modifier.fillMaxSize().weight(0.2f).testTag("composer"),
+                        )
                     }
                 }
             }
@@ -461,7 +466,7 @@ class HomeAdaptiveUiTest {
                     androidx.paging.Pager(androidx.paging.PagingConfig(20)) {
                         com.storyteller_f.a.client.compose_core.common.RegularPagingSource<RoomInfo> { _, _ ->
                             loads.value++
-                            Result.success(com.storyteller_f.a.api.RoomInfoListResponse(persistentListOf()))
+                            CustomResult.success(com.storyteller_f.a.api.RoomInfoListResponse(persistentListOf()))
                         }
                     }.flow
             }
@@ -491,12 +496,12 @@ class HomeAdaptiveUiTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         val host =
             ActivityPreviewHost(scope, Dispatchers.Default.limitedParallelism(1), Dispatchers.Default, {
-                Result.success(
+                CustomResult.success(
                     RoomActivityListResponse(
                         persistentListOf(RoomActivityInfo(RoomInfo.EMPTY.copy(name = "Live room"), null, null, 5)),
                     ),
                 )
-            }, { Result.success(TopicInfoListResponse(persistentListOf())) })
+            }, { CustomResult.success(TopicInfoListResponse(persistentListOf())) })
         try {
             setContent {
                 CompositionLocalProvider(LocalLifecycleOwner provides owner) {

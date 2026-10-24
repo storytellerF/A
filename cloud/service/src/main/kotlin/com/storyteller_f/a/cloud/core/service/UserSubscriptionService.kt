@@ -13,49 +13,64 @@ import com.storyteller_f.a.backend.core.addIfNotExists
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.toUserSubscriptionInfo
+import com.storyteller_f.a.cloud.core.service.error.UserSubscriptionError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.firstOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.UserSubscriptionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.addSubscription(uid: PrimaryKey, newSubscription: NewSubscription) =
-    checkObjectWritable(newSubscription.objectType, newSubscription.objectId).mapResultIfNotNull {
-        addIfNotExists({
-            database.subscription.getSubscription(uid, newSubscription.objectId)
-        }, {
-            val id = SnowflakeFactory.nextId()
-            val userSubscription =
-                UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
-            database.subscription.addSubscription(userSubscription).onSuccess {
-                addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
-            }
-        })
-    }.mapResultIfNotNull {
-        processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
-    }.firstOrNull()
+    checkObjectWritable(
+    newSubscription.objectType,
+    newSubscription.objectId,
+).andThenPresent(UserSubscriptionError::fromError) {
+    addIfNotExists({
+        database.subscription.getSubscription(uid, newSubscription.objectId)
+    }, {
+        val id = SnowflakeFactory.nextId()
+        val userSubscription =
+            UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
+        database.subscription.addSubscription(userSubscription).onSuccess {
+            addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
+        }
+    })
+}.andThenPresent(UserSubscriptionError::fromError) {
+    processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
+}.firstOrNull()
 
 suspend fun Backend.removeSubscription(uid: PrimaryKey, subscriptionId: PrimaryKey) =
     database.subscription.getSubscription(subscriptionId)
-        .mapResultIfNotNull { subscription ->
+        .andThenPresent(UserSubscriptionError::fromError) { subscription ->
             if (subscription.uid == uid) {
-                checkObjectWritable(subscription.objectType, subscription.objectId).mapResultIfNotNull {
+                checkObjectWritable(
+                    subscription.objectType,
+                    subscription.objectId,
+                ).andThenPresent(UserSubscriptionError::fromError) {
                     database.subscription.removeSubscription(subscriptionId).onSuccess {
                         addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
                     }
                 }
             } else {
-                Result.failure(ForbiddenException("No permission to remove this subscription"))
+                CustomResult.Failure(
+                    UserSubscriptionError.from(ForbiddenException("No permission to remove this subscription")),
+                )
             }
         }
 
 suspend fun Backend.removeSubscriptionByObject(uid: PrimaryKey, objectId: PrimaryKey) =
     database.subscription.getSubscription(uid, objectId)
-        .mapResultIfNotNull { subscription ->
-            checkObjectWritable(subscription.objectType, subscription.objectId).mapResultIfNotNull {
+        .andThenPresent(UserSubscriptionError::fromError) { subscription ->
+            checkObjectWritable(
+                subscription.objectType,
+                subscription.objectId,
+            ).andThenPresent(UserSubscriptionError::fromError) {
                 database.subscription.removeSubscription(subscription.id).onSuccess {
                     addUserLog(uid, UserLogType.REMOVE_SUBSCRIPTION, subscription.objectTuple())
                 }
@@ -63,14 +78,17 @@ suspend fun Backend.removeSubscriptionByObject(uid: PrimaryKey, objectId: Primar
         }
 
 suspend fun Backend.getUserSubscriptions(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    database.subscription.getUserSubscriptions(uid, fetch).mapPagingResultNotNull { list ->
+    database.subscription.getUserSubscriptions(
+        uid,
+        fetch,
+    ).mapPagingResultNotNull(UserSubscriptionError::fromError) { list ->
         processUserSubscriptionToUserSubscriptionInfo(uid, list)
     }
 
 suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo(
     uid: PrimaryKey,
     userSubscriptions: List<UserSubscription>,
-) = cancellableRunCatching {
+) = captureFailure(UserSubscriptionError::from) {
     userSubscriptions.map {
         val favoriteInfo = it.toUserSubscriptionInfo()
         when (it.objectType) {

@@ -7,6 +7,7 @@ package com.storyteller_f.a.backend.exposed.database
 import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.FileDatabase
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.FileRecord
 import com.storyteller_f.a.backend.core.types.FileRef
@@ -22,6 +23,7 @@ import com.storyteller_f.a.backend.exposed.tables.FileRefs
 import com.storyteller_f.a.backend.exposed.tables.Quotas
 import com.storyteller_f.a.backend.exposed.tables.UploadRecords
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.ObjectStatus
@@ -61,8 +63,8 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         first(FileRecord::wrapRow)
     }
 
-    override suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>> {
-        if (ids.isEmpty()) return Result.success(emptyList())
+    override suspend fun getFileRecordByIds(ids: List<PrimaryKey>): CustomResult<List<FileRecord>, DatabaseError> {
+        if (ids.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             search {
                 FileRecords.selectAll().where {
@@ -83,9 +85,9 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         map(FileRecord::wrapRow)
     }
 
-    override suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>> {
+    override suspend fun getFileRecordByNames(names: List<String>): CustomResult<List<FileRecord>, DatabaseError> {
         if (names.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         return databaseSession.dbSearch {
             search {
@@ -188,46 +190,46 @@ class ExposedFileDatabase(val databaseSession: ExposedDatabaseSession) : FileDat
         fileRecords
     }
 
-    override suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord> =
+    override suspend fun insertUploadRecord(record: UploadRecord): CustomResult<UploadRecord, DatabaseError> =
         databaseSession.dbQuery {
-        check(
-            UploadRecords.insert {
-                it[UploadRecords.id] = record.id
-                it[UploadRecords.createdTime] = record.createdTime
-                it[UploadRecords.objectId] = record.objectId
-                it[UploadRecords.objectType] = record.objectType
-                it[UploadRecords.status] = record.status
-                it[UploadRecords.total] = record.total
-                it[UploadRecords.progress] = record.progress
-                it[UploadRecords.name] = record.name
-                it[UploadRecords.chunkSize] = record.chunkSize
-                it[UploadRecords.sha256] = record.sha256
-                it[UploadRecords.crc32c] = record.crc32c
-            }.insertedCount > 0,
-        ) {
-            "insert upload record failed"
+            check(
+                UploadRecords.insert {
+                    it[UploadRecords.id] = record.id
+                    it[UploadRecords.createdTime] = record.createdTime
+                    it[UploadRecords.objectId] = record.objectId
+                    it[UploadRecords.objectType] = record.objectType
+                    it[UploadRecords.status] = record.status
+                    it[UploadRecords.total] = record.total
+                    it[UploadRecords.progress] = record.progress
+                    it[UploadRecords.name] = record.name
+                    it[UploadRecords.chunkSize] = record.chunkSize
+                    it[UploadRecords.sha256] = record.sha256
+                    it[UploadRecords.crc32c] = record.crc32c
+                }.insertedCount > 0,
+            ) {
+                "insert upload record failed"
+            }
+            check(
+                Quotas.update({
+                    Quotas.ownerId eq record.objectId and
+                        (Quotas.quotaType eq QuotaType.FILE) and
+                        (Quotas.lockId eq null)
+                }) {
+                    it[this.lockId] = record.id
+                } > 0,
+            ) {
+                "lock quota failed"
+            }
+            record
         }
-        check(
-            Quotas.update({
-                Quotas.ownerId eq record.objectId and
-                    (Quotas.quotaType eq QuotaType.FILE) and
-                    (Quotas.lockId eq null)
-            }) {
-                it[this.lockId] = record.id
-            } > 0,
-        ) {
-            "lock quota failed"
-        }
-        record
-    }
 
     override suspend fun updateUploadRecordStatus(
         quotaInfo: QuotaInfo,
         record: UploadRecord,
         fileRecordList: List<FileRecord>,
-    ): Result<List<FileRecord>> {
+    ): CustomResult<List<FileRecord>, DatabaseError> {
         if (record.status == UploadRecordStatus.PENDING) {
-            return Result.failure(CustomBadRequestException("can't update pending record"))
+            return CustomResult.Failure(DatabaseError.from(CustomBadRequestException("can't update pending record")))
         }
         return databaseSession.dbQuery {
             check(

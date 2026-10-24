@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
 import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
@@ -92,7 +95,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
                 )?.toString().orEmpty()
             check(actualValue == expectedValue) { "Wasm HTML input changed the supplied text" }
         } catch (throwable: Throwable) {
-            runCatching { saveFailureSnapshot("input") }
+            captureFailure(ArtifactCollectionError::CollectionFailed) { saveFailureSnapshot("input") }
             throw throwable
         }
     }
@@ -160,7 +163,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
             }
             waitForUiCommit()
         } catch (throwable: Throwable) {
-            runCatching { saveFailureSnapshot("click") }
+            captureFailure(ArtifactCollectionError::CollectionFailed) { saveFailureSnapshot("click") }
             throw throwable
         }
     }
@@ -192,7 +195,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
         try {
             findOnScreen(locator)
         } catch (throwable: Throwable) {
-            runCatching { saveFailureSnapshot("assert-visible") }
+            captureFailure(ArtifactCollectionError::CollectionFailed) { saveFailureSnapshot("assert-visible") }
             throw throwable
         }
     }
@@ -203,7 +206,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
                 browser.findElements(locator).none(::isOnScreen)
             }
         } catch (throwable: Throwable) {
-            runCatching { saveFailureSnapshot("assert-not-visible") }
+            captureFailure(ArtifactCollectionError::CollectionFailed) { saveFailureSnapshot("assert-not-visible") }
             throw throwable
         }
     }
@@ -215,7 +218,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
     }
 
     private fun isOnScreen(element: WebElement): Boolean =
-        runCatching {
+        captureFailure(ArtifactCollectionError::CollectionFailed) {
         (browser as JavascriptExecutor).executeScript(
             """
             const rect = arguments[0].getBoundingClientRect();
@@ -226,7 +229,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
             """.trimIndent(),
             element,
         ) == true
-    }.getOrDefault(false)
+    }.getOrElse { false }
 
     private fun descriptionLocator(description: String) =
         By.cssSelector(
@@ -238,7 +241,7 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
     private fun saveFailureSnapshot(prefix: String) {
         val outputDir = File("build/test/appium-debug/WasmAppiumTest").also(File::mkdirs)
         val name = "$prefix-${System.currentTimeMillis()}"
-        runCatching {
+        captureFailure(ArtifactCollectionError::CollectionFailed) {
             File(outputDir, "$name.html").writeText(browser.pageSource.orEmpty())
             val diagnostics =
                 (browser as JavascriptExecutor).executeScript(

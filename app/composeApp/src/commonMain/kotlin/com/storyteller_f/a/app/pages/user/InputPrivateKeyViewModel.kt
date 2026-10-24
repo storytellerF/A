@@ -6,6 +6,8 @@ package com.storyteller_f.a.app.pages.user
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +31,7 @@ class InputPrivateKeyViewModel : ViewModel() {
                     getDerPublicKeyFromPrivateKey(privateKey)
                         .onSuccess { privateKeyError.value = null }
                         .onFailure { throwable ->
-                            privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                            privateKeyError.value = throwable.cause.message ?: throwable.cause::class.simpleName
                         }
                         .getOrNull()
                 }
@@ -45,7 +47,7 @@ class InputPrivateKeyViewModel : ViewModel() {
                     calcAddress(publicKey)
                         .onSuccess { privateKeyError.value = null }
                         .onFailure { throwable ->
-                            privateKeyError.value = throwable.message ?: throwable::class.simpleName
+                            privateKeyError.value = throwable.cause.message ?: throwable.cause::class.simpleName
                         }
                         .getOrNull()
                 }

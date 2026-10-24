@@ -10,14 +10,15 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.TopicDocument
 import com.storyteller_f.a.backend.core.service.TopicDocumentSearch
 import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.TopicSearchServiceFactory
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.github.aakira.napier.Napier
 
 class ElasticTopicSearchService(connection: ElasticConnection) :
@@ -27,36 +28,36 @@ class ElasticTopicSearchService(connection: ElasticConnection) :
         private const val INDEX_NAME = "topics"
     }
 
-    override suspend fun saveDocument(documents: List<TopicDocument>): Result<Unit> {
-        if (documents.isEmpty()) return UNIT_RESULT
+    override suspend fun saveDocument(documents: List<TopicDocument>): CustomResult<Unit, SearchError> {
+        if (documents.isEmpty()) return CustomResult.Success(Unit)
         return useElasticClient {
             saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 
-    override suspend fun getDocuments(idList: List<PrimaryKey>): Result<List<TopicDocument?>> {
-        if (idList.isEmpty()) return Result.success(emptyList())
+    override suspend fun getDocuments(idList: List<PrimaryKey>): CustomResult<List<TopicDocument?>, SearchError> {
+        if (idList.isEmpty()) return CustomResult.success(emptyList())
         return useElasticClient {
             getDocumentList(idList, INDEX_NAME, TopicDocument::class.java)
         }
     }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         topicDocumentSearch: TopicDocumentSearch,
-    ): Result<PaginationResult<TopicDocument>> {
+    ): CustomResult<PaginationResult<TopicDocument>, SearchError> {
         if (topicDocumentSearch is TopicDocumentSearch.AllCommunityRoot && topicDocumentSearch.word.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         if (topicDocumentSearch is TopicDocumentSearch.Topics && topicDocumentSearch.word.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         if (topicDocumentSearch is TopicDocumentSearch.All && topicDocumentSearch.word.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(topicDocumentSearch)
         Napier.i {

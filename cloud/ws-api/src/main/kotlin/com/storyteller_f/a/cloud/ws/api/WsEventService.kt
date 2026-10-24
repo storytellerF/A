@@ -4,8 +4,10 @@
 
 package com.storyteller_f.a.cloud.ws.api
 
+import com.storyteller_f.a.cloud.error.WebSocketError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.onFailure
 import com.storyteller_f.shared.obj.RoomFrame
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -30,7 +32,7 @@ class WsEventPublisher(private val rpcUrl: String?) {
         if (url.isNullOrBlank()) {
             return
         }
-        cancellableRunCatching {
+        captureFailure(WebSocketError::from) {
             HttpClient(OkHttp) {
                 install(WebSockets)
                 installKrpc()
@@ -49,7 +51,7 @@ class WsEventPublisher(private val rpcUrl: String?) {
                 rpcClient.withService<WsEventService>().publishNewTopic(frame)
             }
         }.onFailure {
-            Napier.e(it) {
+            Napier.e(it.cause) {
                 "publish websocket event failed"
             }
         }

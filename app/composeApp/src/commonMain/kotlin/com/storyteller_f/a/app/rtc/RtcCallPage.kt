@@ -78,6 +78,7 @@ import com.storyteller_f.a.app.rtc_waiting
 import com.storyteller_f.a.app.rtc_you
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.sendFrame
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.compose.resources.stringResource

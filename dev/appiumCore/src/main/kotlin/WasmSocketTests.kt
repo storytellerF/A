@@ -5,6 +5,7 @@
 package com.storyteller_f.a.dev.appium
 
 import com.storyteller_f.a.client.core.signOutAll
+import com.storyteller_f.result.getOrThrow
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

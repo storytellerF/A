@@ -13,6 +13,10 @@ import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onFailure
 import com.storyteller_f.shared.type.ObjectType
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -61,7 +65,7 @@ internal suspend fun prepareAuthenticatedRoomScenario(
         AuthenticatedRoomScenario(authenticated, communityName, roomName).also { prepared = true }
     } finally {
         if (!prepared) {
-            runCatching { authenticated.sessionManager.client.close() }
+            captureFailure(ArtifactCollectionError::CollectionFailed) { authenticated.sessionManager.client.close() }
                 .onFailure {
                     org.slf4j.LoggerFactory.getLogger(
                         "appium-setup",

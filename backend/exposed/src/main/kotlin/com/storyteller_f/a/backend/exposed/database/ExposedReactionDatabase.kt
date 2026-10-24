@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.Cursor
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionDatabase
 import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Reaction
@@ -21,14 +22,16 @@ import com.storyteller_f.a.backend.exposed.query.bindPaginationQuery
 import com.storyteller_f.a.backend.exposed.tables.ReactionRecords
 import com.storyteller_f.a.backend.exposed.tables.Reactions
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.groupByPair
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
@@ -49,7 +52,7 @@ import org.jetbrains.exposed.v1.r2dbc.upsert
 
 class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : ReactionDatabase {
     override suspend fun statsReactionRecord(objectId: PrimaryKey, emoji: String, objectType: ObjectType) =
-        getReactionCountForEmoji(listOf(objectId), emoji).mapResult { reactionCountList ->
+        getReactionCountForEmoji(listOf(objectId), emoji).andThen(DatabaseError::fromError) { reactionCountList ->
             val triple = reactionCountList.firstOrNull()
             if (triple == null) {
                 databaseSession.dbQuery {
@@ -96,14 +99,14 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
             }
             count()
         },
-    ).mapPagingResultNotNull { list ->
+    ).mapPagingResultNotNull(DatabaseError::fromError) { list ->
         processReactionToReactionInfo(uid, list)
     }
 
     private suspend fun processReactionToReactionInfo(uid: PrimaryKey?, list: List<Reaction>) =
         (
         if (uid == null) {
-            Result.success(emptyMap())
+            CustomResult.success(emptyMap())
         } else {
             val objectIdList = list.map { it.objectId }.distinct()
             hasReactedEmoji(objectIdList, uid).map {
@@ -127,8 +130,8 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
     override suspend fun hasReactedEmoji(
         objectIdList: List<PrimaryKey>,
         uid: PrimaryKey,
-    ): Result<List<Pair<Long, String>>> {
-        if (objectIdList.isEmpty()) return Result.success(emptyList())
+    ): CustomResult<List<Pair<Long, String>>, DatabaseError> {
+        if (objectIdList.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             search {
                 ReactionRecords.select(ReactionRecords.objectId, ReactionRecords.emoji).where {
@@ -149,7 +152,7 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
                 }
             }
             first { Reaction.wrapRow(it) }
-        }.mapResultIfNotNull {
+        }.andThenPresent(DatabaseError::fromError) {
             hasReactedForEmoji(objectId, uid, emojiText).map { hasReacted ->
                 ReactionInfo(it.emoji, it.objectId, it.count, hasReacted, it.lastReactionId)
             }
@@ -168,9 +171,9 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
         }
 
     override suspend fun deleteReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey) =
-        getReactionRecordInfo(uid, emoji, objectId).mapResult { recordInfo ->
+        getReactionRecordInfo(uid, emoji, objectId).andThen(DatabaseError::fromError) { recordInfo ->
             if (recordInfo == null) {
-                Result.success(true)
+                CustomResult.success(true)
             } else {
                 deleteReaction(recordInfo.id)
             }
@@ -219,8 +222,10 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
         }
     }
 
-    override suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
-        if (objectIdList.isEmpty()) return Result.success(emptyList())
+    override suspend fun getReactionCount(
+        objectIdList: List<PrimaryKey>,
+    ): CustomResult<List<Pair<Long, Long>>, DatabaseError> {
+        if (objectIdList.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             search {
                 Reactions.selectAll().where { Reactions.objectId inList objectIdList }

@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.RestartableRpcServer
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.services.lucene.api.LuceneRpc
 import com.storyteller_f.services.lucene.api.RpcLuceneDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery

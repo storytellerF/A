@@ -7,7 +7,9 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.types.Room
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -31,11 +33,13 @@ sealed interface RoomDocumentSearch {
 }
 
 interface RoomSearchService {
-    suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit>
+    suspend fun saveDocument(documents: List<RoomDocument>): CustomResult<Unit, SearchError>
 
-    suspend fun clean(): Result<Unit>
+    suspend fun clean(): CustomResult<Unit, SearchError>
 
-    suspend fun searchDocument(roomDocumentSearch: RoomDocumentSearch): Result<PaginationResult<RoomDocument>>
+    suspend fun searchDocument(
+        roomDocumentSearch: RoomDocumentSearch,
+    ): CustomResult<PaginationResult<RoomDocument>, SearchError>
 }
 
 interface RoomSearchServiceFactory {

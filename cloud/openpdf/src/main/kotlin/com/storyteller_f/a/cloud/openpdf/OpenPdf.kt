@@ -4,11 +4,15 @@
 
 package com.storyteller_f.a.cloud.openpdf
 
+import com.storyteller_f.a.cloud.pdf.PdfError
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.a.cloud.pdf.getMonoFont
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
@@ -85,9 +89,9 @@ class OpenPdf : PdfService {
         map: Map<String, File>,
         snapshotGeneration: SnapshotGeneration,
         pdfGenerationSpec: PdfGenerationSpec,
-    ): Result<Unit> {
+    ): CustomResult<Unit, PdfError> {
         val saveToFile = snapshotGeneration.path
-        return runCatching {
+        return captureFailure(PdfError::from) {
             val fontName = getFont().fontName
             saveToFile.outputStream().use {
                 Document().apply {

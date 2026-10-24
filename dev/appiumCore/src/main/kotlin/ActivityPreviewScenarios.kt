@@ -17,6 +17,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
 import com.storyteller_f.a.client.core.sendMessage
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserRead

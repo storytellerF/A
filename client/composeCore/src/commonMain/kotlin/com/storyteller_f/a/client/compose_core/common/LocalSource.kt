@@ -12,6 +12,8 @@ import androidx.paging.RemoteMediator
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.request
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.storage.RemoteKeyStorageWrapper
 import com.storyteller_f.storage.RemoteKeys
@@ -31,7 +33,7 @@ class CachedLoadingHandler<T : Any>(
     flow: Flow<T?>,
     private val scope: CoroutineScope,
     private val onSave: suspend (T) -> Unit,
-    private val loader: suspend () -> Result<T>,
+    private val loader: suspend () -> CustomResult<T, FailureDetails>,
 ) : LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
 

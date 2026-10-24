@@ -88,6 +88,7 @@ import com.storyteller_f.a.app.common.createRoomViewModel
 import com.storyteller_f.a.app.common.hasRoute
 import com.storyteller_f.a.app.common.hasRouteFlow
 import com.storyteller_f.a.app.error
+import com.storyteller_f.a.app.error.RoomActionError
 import com.storyteller_f.a.app.exclamation_mark
 import com.storyteller_f.a.app.exit_room
 import com.storyteller_f.a.app.files_title
@@ -140,6 +141,10 @@ import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.sendMessage
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getPlatform
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
@@ -150,7 +155,6 @@ import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -774,7 +778,7 @@ private suspend fun joinRoom(
 ) {
     globalDialogController.useResult {
         request {
-            cancellableRunCatching {
+            captureFailure(RoomActionError::from) {
                 val communityId = roomInfo.communityId
                 if (communityId != null) {
                     check(getCommunityInfo(communityId).getOrThrow().isJoined) {

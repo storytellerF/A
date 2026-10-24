@@ -6,10 +6,15 @@
 
 package com.storyteller_f.shared
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.shared.model.CryptoError
 import kotlinx.serialization.Serializable
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.js.ExperimentalWasmJsInterop
+import kotlin.js.JsException
+import com.storyteller_f.shared.model.captureCrypto as captureCommonCrypto
 
 @OptIn(ExperimentalWasmJsInterop::class)
 @JsModule("ml-crypto")
@@ -54,13 +59,13 @@ private infix fun ByteArray.xor(other: ByteArray): ByteArray {
     return ByteArray(size) { index -> (this[index].toInt() xor other[index].toInt()).toByte() }
 }
 
-actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
-    runCatching {
-    MlCrypto.p256PublicKeyDer(pemPrivateKeyStr)
-}
+actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
+    captureCrypto {
+        MlCrypto.p256PublicKeyDer(pemPrivateKeyStr)
+    }
 
-actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
-    runCatching { MlCrypto.p256PrivateKeyDer(pemPrivateKeyStr) }
+actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
+    captureCrypto { MlCrypto.p256PrivateKeyDer(pemPrivateKeyStr) }
 
 actual suspend fun ripemd160Platform(data: ByteArray): ByteArray =
     MlCrypto.ripemd160Hex(data.toHexString()).hexToByteArray()
@@ -72,32 +77,38 @@ actual val AlgoDilithium: Algo =
     object : Algo {
         override val encryptionAlgo: EncryptionAlgo = createEncryptionAlgo()
 
-        override suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result<Boolean> =
-            runCatching { MlCrypto.mlDsa65Verify(derSignature, data, derPublicKey) }
+        override suspend fun verify(
+            derPublicKey: String,
+            derSignature: String,
+            data: String,
+        ): CustomResult<Boolean, CryptoError> =
+            captureCrypto { MlCrypto.mlDsa65Verify(derSignature, data, derPublicKey) }
 
-        override suspend fun signature(derPrivateKey: String, data: String): Result<String> =
-            runCatching { MlCrypto.mlDsa65Sign(data, derPrivateKey) }
+        override suspend fun signature(derPrivateKey: String, data: String): CustomResult<String, CryptoError> =
+            captureCrypto { MlCrypto.mlDsa65Sign(data, derPrivateKey) }
 
-        override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> =
-            runCatching { pemToRaw(pemPrivateKey, "PRIVATE KEY").toHexString() }
+        override suspend fun getDerPrivateKey(pemPrivateKey: String): CustomResult<String, CryptoError> =
+            captureCrypto { pemToRaw(pemPrivateKey, "PRIVATE KEY").toHexString() }
 
-        override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result<String> =
-            runCatching { rawToPem(derPrivateKey.hexToByteArray(), "PRIVATE KEY") }
+        override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): CustomResult<String, CryptoError> =
+            captureCrypto { rawToPem(derPrivateKey.hexToByteArray(), "PRIVATE KEY") }
 
-        override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result<String> =
-            runCatching { pemToRaw(pemPublicKeyStr, "PUBLIC KEY").toHexString() }
+        override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): CustomResult<String, CryptoError> =
+            captureCrypto { pemToRaw(pemPublicKeyStr, "PUBLIC KEY").toHexString() }
 
-        override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result<String> =
-            runCatching { rawToPem(derPublicKey.hexToByteArray(), "PUBLIC KEY") }
+        override suspend fun getPemPublicKeyFromDer(derPublicKey: String): CustomResult<String, CryptoError> =
+            captureCrypto { rawToPem(derPublicKey.hexToByteArray(), "PUBLIC KEY") }
 
-        override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> =
-            runCatching { MlCrypto.mlDsa65PublicKey(getDerPrivateKey(pemPrivateKeyStr).getOrThrow()) }
+        override suspend fun getDerPublicKeyFromPrivateKey(
+            pemPrivateKeyStr: String,
+        ): CustomResult<String, CryptoError> =
+            captureCrypto { MlCrypto.mlDsa65PublicKey(getDerPrivateKey(pemPrivateKeyStr).getOrThrow()) }
 
-        override suspend fun calcAddress(derPublicKeyStr: String): Result<String> =
+        override suspend fun calcAddress(derPublicKeyStr: String): CustomResult<String, CryptoError> =
             calcAddressSHA256AndRipemd160(derPublicKeyStr)
 
-        override suspend fun generatePemKeyPair(): Result<Pair<String, String>> =
-            runCatching {
+        override suspend fun generatePemKeyPair(): CustomResult<Pair<String, String>, CryptoError> =
+            captureCrypto {
             val keyPair = commonJson.decodeFromString<MlKeyPair>(MlCrypto.mlDsa65KeyPair())
             rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to
                 rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY")
@@ -105,52 +116,70 @@ actual val AlgoDilithium: Algo =
 
         private fun createEncryptionAlgo(): EncryptionAlgo =
             object : Type2Algo {
-            override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result<ByteArray> =
-                runCatching {
-                    val encapsulation =
-                        commonJson.decodeFromString<MlKemEncapsulation>(
-                            MlCrypto.mlKem768Encapsulate(derPublicKeyStr),
-                        )
-                    encapsulation.cipherText.hexToByteArray() +
-                        (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray())
-                }
-
-            override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result<ByteArray> =
-                runCatching {
-                    require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
-                    val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
-                    val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
-                    encryptedAesKey xor
-                        MlCrypto.mlKem768Decapsulate(
-                            cipherText.toHexString(),
-                            derPrivateKeyStr,
-                        ).hexToByteArray()
-                }
-
-            override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> =
-                runCatching {
-                val keyPair = commonJson.decodeFromString<MlKeyPair>(MlCrypto.mlKem768KeyPair())
-                rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to
-                    rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY")
+            override suspend fun kemEncrypt(
+                derPublicKeyStr: String,
+                aesKeyBytes: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                val encapsulation =
+                    commonJson.decodeFromString<MlKemEncapsulation>(
+                        MlCrypto.mlKem768Encapsulate(derPublicKeyStr),
+                    )
+                encapsulation.cipherText.hexToByteArray() +
+                    (aesKeyBytes xor encapsulation.sharedSecret.hexToByteArray())
             }
 
-            override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String> =
-                runCatching {
-                    MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString())
+            override suspend fun kemDecrypt(
+                derPrivateKeyStr: String,
+                encrypted: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
+                val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
+                val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
+                encryptedAesKey xor
+                    MlCrypto.mlKem768Decapsulate(
+                        cipherText.toHexString(),
+                        derPrivateKeyStr,
+                    ).hexToByteArray()
+            }
+
+            override suspend fun generateEncryptionPemKeyPair(): CustomResult<Pair<String, String>, CryptoError> =
+                captureCrypto {
+                    val keyPair = commonJson.decodeFromString<MlKeyPair>(MlCrypto.mlKem768KeyPair())
+                    rawToPem(keyPair.privateKey.hexToByteArray(), "PRIVATE KEY") to
+                        rawToPem(keyPair.publicKey.hexToByteArray(), "PUBLIC KEY")
                 }
+
+            override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(
+                pemPrivateKeyStr: String,
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
+                MlCrypto.mlKem768PublicKey(pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString())
+            }
 
             override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(
                 pemPrivateKeyStr: String,
-            ): Result<String> =
-                runCatching {
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
                 pemToRaw(pemPrivateKeyStr, "PRIVATE KEY").toHexString()
             }
 
             override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(
                 derPrivateKeyStr: String,
-            ): Result<String> =
-                runCatching {
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
                 rawToPem(derPrivateKeyStr.hexToByteArray(), "PRIVATE KEY")
             }
         }
     }
+
+@OptIn(ExperimentalWasmJsInterop::class)
+private inline fun <T> captureCrypto(block: () -> T): CustomResult<T, CryptoError> =
+    try {
+    captureCommonCrypto(block)
+} catch (failure: JsException) {
+    CustomResult.Failure(
+        CryptoError.OperationFailed(IllegalStateException(failure.message ?: "Browser crypto failed")),
+    )
+}

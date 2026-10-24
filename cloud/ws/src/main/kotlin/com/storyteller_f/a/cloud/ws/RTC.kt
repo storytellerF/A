@@ -6,12 +6,15 @@ package com.storyteller_f.a.cloud.ws
 
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.cloud.core.service.checkRootReadPermission
+import com.storyteller_f.a.cloud.error.WebSocketError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.sendSerialized
@@ -61,10 +64,10 @@ private suspend fun notifyPeerLeft(session: RtcSession, uid: PrimaryKey) {
     session.socketMap.filterKeys {
         it != uid
     }.values.forEach { socket ->
-        cancellableRunCatching {
+        captureFailure(WebSocketError::from) {
             socket.sendFrame(RoomFrame.PeerLeft(uid, session.roomId))
         }.onFailure { e ->
-            Napier.e(e) {
+            Napier.e(e.cause) {
                 "send PeerLeft"
             }
         }
@@ -75,7 +78,7 @@ private suspend fun syncRtcMediaState(session: RtcSession, uid: PrimaryKey, sock
     session.mediaStateMap.filterKeys {
         it != uid
     }.forEach { (peerUid, state) ->
-        cancellableRunCatching {
+        captureFailure(WebSocketError::from) {
             socket.sendFrame(
                 RoomFrame.PeerMediaState(
                     uid = peerUid,
@@ -85,7 +88,7 @@ private suspend fun syncRtcMediaState(session: RtcSession, uid: PrimaryKey, sock
                 ),
             )
         }.onFailure { e ->
-            Napier.e(e) {
+            Napier.e(e.cause) {
                 "sync PeerMediaState"
             }
         }
@@ -137,7 +140,7 @@ private suspend fun processStartCall(
             syncRtcMediaState(list, uid, session)
         }
     }.onFailure {
-        session.sendFrame(RoomFrame.Error(it.message?.toString().orEmpty()))
+        session.sendFrame(RoomFrame.Error(it.cause.message?.toString().orEmpty()))
     }
 }
 

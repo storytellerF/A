@@ -35,6 +35,7 @@ import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -504,7 +505,11 @@ class TopicTest {
             }) {
                 joinRoom(privateRoomId).getOrThrow()
                 val roomInfo2 = getRoomInfo(privateRoomId).getOrThrow()
-                val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
+                val keys =
+                    getRoomMembersPublicKeys(
+                        privateRoomId,
+                        PaginationQuery(null, size = 10),
+                    ).getOrThrow().data
                 createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
                 }
@@ -556,7 +561,12 @@ class TopicTest {
             val roomInfo = getRoomInfo(publicRoomId).getOrThrow()
             val keys = getRoomMembersPublicKeys(publicRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
             createTopicInRoomAndWait(receivedFrame2) {
-                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from dilithium", keys)
+                sendMessage(
+                    ObjectTuple(roomInfo.id, ObjectType.ROOM),
+                    roomInfo.isPrivate,
+                    "hello from dilithium",
+                    keys,
+                )
             }
         }
     }
@@ -595,7 +605,12 @@ class TopicTest {
             val roomInfo = getRoomInfo(privateRoomId).getOrThrow()
             val keys = getRoomMembersPublicKeys(privateRoomId, PaginationQuery(null, size = 10)).getOrThrow().data
             createTopicInRoomAndWait(receivedFrame2) {
-                sendMessage(ObjectTuple(roomInfo.id, ObjectType.ROOM), roomInfo.isPrivate, "hello from dilithium", keys)
+                sendMessage(
+                    ObjectTuple(roomInfo.id, ObjectType.ROOM),
+                    roomInfo.isPrivate,
+                    "hello from dilithium",
+                    keys,
+                )
             }
         }
     }

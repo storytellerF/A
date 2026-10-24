@@ -52,6 +52,7 @@ import com.storyteller_f.a.panel.tab_basic_info
 import com.storyteller_f.a.panel.tab_logs
 import com.storyteller_f.a.panel.tab_topics
 import com.storyteller_f.a.panel.topic_detail_title_with_info
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody

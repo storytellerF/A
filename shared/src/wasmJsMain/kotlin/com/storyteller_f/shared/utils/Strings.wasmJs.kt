@@ -4,14 +4,17 @@
 
 package com.storyteller_f.shared.utils
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.shared.model.ContentValidationError
+
 actual fun safeFirstUnicode(text: String): String? =
     js("""text.match(/^[\p{L}\p{N}\p{P}\p{Z}\p{S}\p{Emoji_Presentation}]/gu)[0]""")
 
-actual fun checkContent(text: String): Result<Unit> =
+actual fun checkContent(text: String): CustomResult<Unit, ContentValidationError> =
     if (checkContentRaw(text)) {
-    Result.success(Unit)
+    CustomResult.Success(Unit)
 } else {
-    Result.failure(IllegalArgumentException("invalid content"))
+    CustomResult.Failure(ContentValidationError.UnsupportedCharacters("invalid content"))
 }
 
 @Suppress("UnusedParameter")

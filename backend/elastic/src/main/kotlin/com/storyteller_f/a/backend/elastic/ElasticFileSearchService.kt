@@ -8,11 +8,13 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.FileDocument
 import com.storyteller_f.a.backend.core.service.FileDocumentSearch
 import com.storyteller_f.a.backend.core.service.FileSearchService
 import com.storyteller_f.a.backend.core.service.FileSearchServiceFactory
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 
 class ElasticFileSearchService(connection: ElasticConnection) :
@@ -22,21 +24,21 @@ class ElasticFileSearchService(connection: ElasticConnection) :
         const val INDEX_NAME = "files"
     }
 
-    override suspend fun saveDocument(documents: List<FileDocument>): Result<Unit> =
+    override suspend fun saveDocument(documents: List<FileDocument>): CustomResult<Unit, SearchError> =
         useElasticClient {
-        saveDocumentList(connection, documents, INDEX_NAME)
-    }
+            saveDocumentList(connection, documents, INDEX_NAME)
+        }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         fileDocumentSearch: FileDocumentSearch,
-    ): Result<PaginationResult<FileDocument>> {
+    ): CustomResult<PaginationResult<FileDocument>, SearchError> {
         if (fileDocumentSearch is FileDocumentSearch.Keyword && fileDocumentSearch.word.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(fileDocumentSearch)
         Napier.i {

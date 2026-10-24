@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.openqa.selenium.By
@@ -44,7 +47,7 @@ class PanelWasmAppiumTest(private val browserType: WasmBrowser) :
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
             browserType.withBrowser(Dimension(500, 800)) { browser ->
                 browser.get("${server.url}?appium=true")
-                runCatching {
+                captureFailure(ArtifactCollectionError::CollectionFailed) {
                     WebDriverWait(browser, Duration.ofSeconds(30)).until(
                         ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-appium-text='Sign in']")),
                     )
@@ -57,7 +60,7 @@ class PanelWasmAppiumTest(private val browserType: WasmBrowser) :
                     throw AssertionError(
                         "Panel Wasm semantics did not mount; requested=${server.requestedPaths}; " +
                             "body=$body; errors=$errors",
-                        cause,
+                        cause.cause,
                     )
                 }
             }

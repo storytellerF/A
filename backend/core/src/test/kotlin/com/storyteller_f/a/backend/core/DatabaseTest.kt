@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Room
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.MemberPolicy
 import com.storyteller_f.shared.model.PassType

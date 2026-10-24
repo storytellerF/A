@@ -57,6 +57,7 @@ import com.storyteller_f.a.client.compose_core.utils.supportsChildAccountSwitchi
 import com.storyteller_f.a.client.core.RawUserPass
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.addChildAccount
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.algoRunCatching
 import com.storyteller_f.shared.getAlgo

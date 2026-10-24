@@ -66,6 +66,7 @@ import com.storyteller_f.a.cloud.core.service.updateRoomStatus
 import com.storyteller_f.a.cloud.core.service.updateTitleStatus
 import com.storyteller_f.a.cloud.core.service.updateTopicStatus
 import com.storyteller_f.a.cloud.core.service.updateUserStatus
+import com.storyteller_f.a.cloud.error.ServerError
 import com.storyteller_f.a.cloud.server.auth.beginSigninChallenge
 import com.storyteller_f.a.cloud.server.auth.clearAllSigninSessions
 import com.storyteller_f.a.cloud.server.auth.clearSigninSession
@@ -76,11 +77,13 @@ import com.storyteller_f.a.cloud.server.auth.isSigninSessionValid
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.cloud.server.common.invoke
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.WorkerTask
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.Routing
 import kotlinx.collections.immutable.toImmutableList
@@ -111,16 +114,16 @@ fun Route.bindProtectedAdminRoute(backend: Backend) {
     }
     AdminApi.signOutAll(handleResult(backend)) {
         call.clearAllSigninSessions()
-        UNIT_RESULT
+        CustomResult.Success(Unit)
     }
     AdminApi.activity(handleResult(backend)) {
         if (call.isSigninSessionValid(
                 active = true,
             )
         ) {
-            UNIT_RESULT
+            CustomResult.Success(Unit)
         } else {
-            Result.failure(com.storyteller_f.a.backend.core.UnauthorizedException())
+            CustomResult.Failure(ServerError.from(com.storyteller_f.a.backend.core.UnauthorizedException()))
         }
     }
     AdminApi.overview(handleResult(backend)) {
@@ -434,7 +437,7 @@ private fun Route.bindAdminTaskRecordRoutes(backend: Backend) {
 fun Routing.bindUnauthenticatedPanelRoute(backend: Backend) {
     AdminApi.signOut(handleResult(backend)) {
         call.clearSigninSession()
-        UNIT_RESULT
+        CustomResult.Success(Unit)
     }
     AdminApi.signIn.invoke(handleResult(backend)) { api ->
         call.consumeSigninChallenge()

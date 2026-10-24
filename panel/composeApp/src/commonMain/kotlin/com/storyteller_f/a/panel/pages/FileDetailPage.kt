@@ -60,6 +60,7 @@ import com.storyteller_f.a.panel.tab_basic_info_file
 import com.storyteller_f.a.panel.tab_file_refs
 import com.storyteller_f.a.panel.tab_info
 import com.storyteller_f.a.panel.tab_logs
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType

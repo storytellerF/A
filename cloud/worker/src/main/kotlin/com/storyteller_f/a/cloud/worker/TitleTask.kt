@@ -10,9 +10,16 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Title
+import com.storyteller_f.a.cloud.error.WorkerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import com.storytellerf.a.cloud.worker.getSystemUserId
@@ -27,30 +34,33 @@ suspend fun Backend.doTitleTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE)
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = TITLE_LOG_TAG, throwable = failure) {
+            Napier.e(tag = TITLE_LOG_TAG, throwable = failure.cause) {
                 "title task failed"
             }
         },
     )
 }
 
-private suspend fun Backend.executeTitleTask(fetchSize: Int): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.TITLE, fetchSize).mapResult { retryRecords ->
+private suspend fun Backend.executeTitleTask(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getTaskRecordsToRetry(
+        TaskRecordType.TITLE,
+        fetchSize,
+    ).andThen(WorkerError::fromError) { retryRecords ->
         if (retryRecords.isEmpty()) {
             processNextTitles(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processTitleRetry(retryRecord)
             }
-            Result.success(Unit)
+            CustomResult.success(Unit)
         }
-    }
+    }.mapError(WorkerError::fromError)
 
-private suspend fun Backend.processNextTitles(fetchSize: Int): Result<Unit> =
-    database.user.getLatestTaskRecord(TaskRecordType.TITLE).mapResult { taskRecord ->
+private suspend fun Backend.processNextTitles(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getLatestTaskRecord(TaskRecordType.TITLE).andThen(WorkerError::fromError) { taskRecord ->
         val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
         database.title.getAllRawTitles(PrimaryKeyFetch(cursor, fetchSize))
-    }.mapResult { result ->
+    }.andThen(WorkerError::fromError) { result ->
         if (result.list.isEmpty()) {
             Napier.i(tag = TITLE_LOG_TAG) {
                 "no title to send"
@@ -63,8 +73,8 @@ private suspend fun Backend.processNextTitles(fetchSize: Int): Result<Unit> =
                 processTitle(rawTitle.title, retryRecordId = null)
             }
         }
-        Result.success(Unit)
-    }
+        CustomResult.success(Unit)
+    }.mapError(WorkerError::fromError)
 
 private suspend fun Backend.processTitleRetry(record: TaskRecord) {
     executeTaskObject(
@@ -105,7 +115,7 @@ private suspend fun Backend.processTitleNotification(title: Title, successRecord
     }
 }
 
-private fun Result<Unit>.logTitleResult(objectId: PrimaryKey) {
+private fun CustomResult<Unit, WorkerError>.logTitleResult(objectId: PrimaryKey) {
     fold(
         onSuccess = {
             Napier.i(tag = TITLE_LOG_TAG) {
@@ -113,7 +123,7 @@ private fun Result<Unit>.logTitleResult(objectId: PrimaryKey) {
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = TITLE_LOG_TAG, throwable = failure) {
+            Napier.e(tag = TITLE_LOG_TAG, throwable = failure.cause) {
                 "failed to process title $objectId"
             }
         },

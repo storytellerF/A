@@ -12,6 +12,12 @@ import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ReactionFetch
+import com.storyteller_f.a.cloud.error.ServerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.ReactionInfo
@@ -19,8 +25,6 @@ import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.obj.ReactionCursorKey
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapCatchingNotNull
-import com.storyteller_f.shared.utils.mapResult
 import io.ktor.util.converters.DefaultConversionService
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -113,9 +117,9 @@ object GeneralOffsetPagingGenerator : OffsetPagingGenerator<Any>()
 suspend fun <T, F : Fetch, Response : ListResponse<T>> PageableQuery.pagination(
     generator: PagingGenerator<T, F>,
     responseBuilder: (ImmutableList<T>, Pagination<String>) -> Response,
-    block: suspend (F) -> Result<PaginationResult<T>?>,
-): Result<Response?> =
-    runCatching {
+    block: suspend (F) -> CustomResult<PaginationResult<T>?, FailureDetails>,
+): CustomResult<Response?, ServerError> =
+    captureFailure(ServerError::from) {
     val size = size
     require(size > 0) {
         "Invalid query size"
@@ -127,10 +131,13 @@ suspend fun <T, F : Fetch, Response : ListResponse<T>> PageableQuery.pagination(
         "Invalid query"
     }
     generator.parse(prePageToken, nextPageToken, size)
-}.mapResult { f ->
-    block(f).mapCatchingNotNull { (list, count) ->
-        val (pre, next) = generator.generate(list, f)
-        responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
+}.andThen(ServerError::fromError) { f ->
+    block(f).andThenPresent(ServerError::fromError) { page ->
+        captureFailure(ServerError::from) {
+            val (list, count) = page
+            val (pre, next) = generator.generate(list, f)
+            responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
+        }
     }
 }
 

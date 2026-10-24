@@ -103,6 +103,8 @@ import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.utils.CurrentWindowSizeClass
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.abortChunkUpload
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -337,7 +339,7 @@ private fun UploadFileActionButton() {
                 if (f != null) {
                     fileProvider.getUploader()?.upload(persistentListOf(PlatformClientFile(f)))
                 }
-                Result.success(Unit)
+                CustomResult.success(Unit)
             }
         }
     }) {
@@ -609,7 +611,7 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         fileProvider.getDownloader()?.pause(d.fileInfo.id)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {
@@ -626,7 +628,7 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         fileProvider.getDownloader()?.resume(d.fileInfo.id)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {
@@ -645,7 +647,7 @@ private fun DownloadStatusButton(d: DownloadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         fileProvider.getDownloader()?.download(d.fileInfo)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {
@@ -863,7 +865,7 @@ fun CancelUploadButton(uploadInfo: UploadInfo, updateDropdown: (Boolean) -> Unit
                         }.getOrThrow()
                     }
                     modelStorage.upload.delete(UploadCollection(myUid), uploadInfo.pathHash)
-                    Result.success(Unit)
+                    CustomResult.success(Unit)
                 }
             }
         },
@@ -888,7 +890,7 @@ private fun UploadStatusButton(file: UploadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         provider.getUploader()?.resume(file.pathHash)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {
@@ -901,7 +903,7 @@ private fun UploadStatusButton(file: UploadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         provider.getUploader()?.resume(file.pathHash)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {
@@ -914,7 +916,7 @@ private fun UploadStatusButton(file: UploadInfo?) {
                 globalDialogController.launch {
                     useResult {
                         provider.getUploader()?.pause(file.pathHash)
-                        Result.success(Unit)
+                        CustomResult.success(Unit)
                     }
                 }
             }) {

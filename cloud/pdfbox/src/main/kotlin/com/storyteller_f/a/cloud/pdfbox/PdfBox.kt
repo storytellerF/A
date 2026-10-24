@@ -1,5 +1,10 @@
 package com.storyteller_f.a.cloud.pdfbox
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.map
+import com.storyteller_f.result.firstOrNull
+import com.storyteller_f.a.cloud.pdf.PdfError
+
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.PdfService
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
@@ -7,7 +12,6 @@ import com.storyteller_f.a.cloud.pdf.collectPlainText
 import com.storyteller_f.a.cloud.pdf.getFont
 import com.storyteller_f.a.cloud.pdf.getMonoFont
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
 import com.storyteller_f.shared.utils.readCodeFence
@@ -53,7 +57,7 @@ class PdfBox : PdfService {
         map: Map<String, File>,
         snapshotGeneration: SnapshotGeneration,
         pdfGenerationSpec: PdfGenerationSpec
-    ): Result<Unit> {
+    ): CustomResult<Unit, PdfError> {
         val saveToFile = snapshotGeneration.path
         Document(50f, 50f, 50f, 50f).apply {
             val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
@@ -82,7 +86,7 @@ class PdfBox : PdfService {
 
             is SnapshotGeneration.SimpleGeneration -> Unit
         }
-        return UNIT_RESULT
+        return CustomResult.Success(Unit)
     }
 }
 

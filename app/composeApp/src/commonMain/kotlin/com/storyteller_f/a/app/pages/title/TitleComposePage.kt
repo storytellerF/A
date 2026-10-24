@@ -74,6 +74,7 @@ import com.storyteller_f.a.app.common.createRoomSearchViewModel
 import com.storyteller_f.a.app.common.createSearchCommunitiesViewModel
 import com.storyteller_f.a.app.common.createTitleComposeViewModel
 import com.storyteller_f.a.app.components.AppTopicContentView
+import com.storyteller_f.a.app.error.TitleActionError
 import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.community.CommunityList
 import com.storyteller_f.a.app.pages.community.CommunityRefCell
@@ -87,6 +88,13 @@ import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.safeArea
 import com.storyteller_f.a.client.core.createTitle
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -257,7 +265,7 @@ private fun ExpireTimePickerDialog(
     }
     val initialValue =
         remember(show, init) {
-            runCatching {
+            captureFailure(TitleActionError::from) {
                 LocalDateTime.parse(init)
             }.getOrElse {
                 now()
@@ -276,7 +284,7 @@ private fun ExpireTimePickerDialog(
         confirmButton = {
             TextButton(onClick = {
                 val candidate = buildExpireTimeText(year, month, day, hour, minute, second)
-                runCatching {
+                captureFailure(TitleActionError::from) {
                     LocalDateTime.parse(candidate)
                 }.onSuccess {
                     onConfirm(candidate)
@@ -546,12 +554,14 @@ private fun TitleTypeSelector(titleType: TitleType, updateTitleType: (TitleType)
     }
 }
 
-private suspend fun AppGlobalDialogController.createTitle(newTitle: NewTitle): Result<TitleInfo> =
+private suspend fun AppGlobalDialogController.createTitle(
+    newTitle: NewTitle,
+): CustomResult<TitleInfo, TitleActionError> =
     request {
     createTitle(newTitle)
 }.onSuccess { title ->
     emitEvent(OnTitleCreated(title))
-}
+}.mapError(TitleActionError::fromError)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

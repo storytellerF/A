@@ -14,18 +14,21 @@ import com.storyteller_f.a.backend.core.addIfNotExists
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.types.UserFavorite
 import com.storyteller_f.a.backend.core.types.toUserFavoriteInfo
+import com.storyteller_f.a.cloud.core.service.error.FavoriteError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.firstOrNull
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.UserFavoriteInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.firstOrNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.addFavorite(uid: PrimaryKey, newFavorite: NewFavorite) =
-    checkObjectWritable(newFavorite.objectType, newFavorite.objectId).mapResultIfNotNull {
+    checkObjectWritable(newFavorite.objectType, newFavorite.objectId).andThenPresent(FavoriteError::fromError) {
         addIfNotExists({
             database.favorite.getFavorite(uid, newFavorite.objectId)
         }) {
@@ -35,26 +38,29 @@ suspend fun Backend.addFavorite(uid: PrimaryKey, newFavorite: NewFavorite) =
                 addUserLog(uid, UserLogType.ADD_FAVORITE, newFavorite.tuple())
             }
         }
-    }.mapResultIfNotNull {
+    }.andThenPresent(FavoriteError::fromError) {
         processUserFavoriteToUserFavoriteInfo(uid, listOf(it))
     }.firstOrNull()
 
 suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
-    database.favorite.getFavorite(id).mapResultIfNotNull { userFavorite ->
+    database.favorite.getFavorite(id).andThenPresent(FavoriteError::fromError) { userFavorite ->
         if (userFavorite.uid == uid) {
-            checkObjectWritable(userFavorite.objectType, userFavorite.objectId).mapResultIfNotNull {
+            checkObjectWritable(
+                userFavorite.objectType,
+                userFavorite.objectId,
+            ).andThenPresent(FavoriteError::fromError) {
                 database.favorite.removeFavorite(id).onSuccess {
                     addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
                 }
             }
         } else {
-            Result.failure(ForbiddenException())
+            CustomResult.Failure(FavoriteError.from(ForbiddenException()))
         }
     }
 
 suspend fun Backend.deleteFavoriteByObject(uid: PrimaryKey, objectId: PrimaryKey) =
-    database.favorite.getFavorite(uid, objectId).mapResultIfNotNull { userFavorite ->
-        checkObjectWritable(userFavorite.objectType, userFavorite.objectId).mapResultIfNotNull {
+    database.favorite.getFavorite(uid, objectId).andThenPresent(FavoriteError::fromError) { userFavorite ->
+        checkObjectWritable(userFavorite.objectType, userFavorite.objectId).andThenPresent(FavoriteError::fromError) {
             database.favorite.removeFavorite(userFavorite.id).onSuccess {
                 addUserLog(uid, UserLogType.REMOVE_FAVORITE, userFavorite.objectTuple())
             }
@@ -62,12 +68,12 @@ suspend fun Backend.deleteFavoriteByObject(uid: PrimaryKey, objectId: PrimaryKey
     }
 
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
-    database.favorite.getUserFavorites(uid, fetch).mapPagingResultNotNull {
+    database.favorite.getUserFavorites(uid, fetch).mapPagingResultNotNull(FavoriteError::fromError) {
         processUserFavoriteToUserFavoriteInfo(uid, it)
     }
 
 suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userFavorite: List<UserFavorite>) =
-    cancellableRunCatching {
+    captureFailure(FavoriteError::from) {
         val topicIds = mutableListOf<PrimaryKey>()
         val communityIds = mutableListOf<PrimaryKey>()
         val roomIds = mutableListOf<PrimaryKey>()
@@ -90,7 +96,7 @@ suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userF
         val topics = getTopicByIds(topicIds, uid).getOrNull()?.associateBy { it.id }.orEmpty()
         val communities =
             database.community.getRawCommunities(ObjectListFetch.IdListFetch(communityIds))
-                .mapResult { processRawCommunityToCommunityInfo(it) }
+                .andThen(FavoriteError::fromError) { processRawCommunityToCommunityInfo(it) }
                 .getOrNull()?.associateBy { it.id }.orEmpty()
         val rooms =
             getRoomInfoList(ObjectListFetch.IdListFetch(roomIds), uid)
@@ -101,7 +107,7 @@ suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userF
         val titles = titleIds.mapNotNull { getTitleInfo(it).getOrNull() }.associateBy { it.id }
         val files =
             database.file.getFileRecordByIds(fileIds)
-                .mapResult { processFileRecordToFileInfo(it) }
+                .andThen(FavoriteError::fromError) { processFileRecordToFileInfo(it) }
                 .getOrNull()?.associateBy { it.id }.orEmpty()
 
         userFavorite.map {

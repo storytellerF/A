@@ -5,6 +5,7 @@
 package com.storyteller_f.a.cloud.cli
 
 import com.storyteller_f.a.backend.core.Backend
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import io.github.aakira.napier.Napier
 import kotlinx.cli.ExperimentalCli

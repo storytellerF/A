@@ -22,6 +22,9 @@ import com.storyteller_f.a.api.SignUpBody
 import com.storyteller_f.a.api.TopicQuery
 import com.storyteller_f.a.api.TotpCodeBody
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.PosterSearch
@@ -65,11 +68,11 @@ import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.Input
 
-suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): Result<R> {
+suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.() -> R): CustomResult<R, RequestError> {
     val point = Exception("Service request call site")
     return try {
         val value = client.block()
-        Result.success(value)
+        CustomResult.success(value)
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
     } catch (e: SessionIdentityChangedException) {
@@ -82,7 +85,7 @@ suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.(
         failServiceRequest(point, e)
     } catch (e: Throwable) {
         failServiceRequest(point, e)
-    }
+    }.mapError(RequestError::fromError)
 }
 
 suspend fun UserSessionManager.getRoomInfo(id: PrimaryKey) =
@@ -663,13 +666,13 @@ suspend fun UserSessionManager.userTitles(
     status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-): Result<ListResponse<TitleInfo>> =
+): CustomResult<ListResponse<TitleInfo>, RequestError> =
     serviceCatching {
     CustomApi.Users.Id.Titles.get(
         CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
         CommonPath(uid),
     )
-}
+}.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.createTitle(newTitle: NewTitle) =
     serviceCatching {
@@ -729,15 +732,15 @@ suspend fun UserSessionManager.getTopicList(
     COMMUNITY -> getCommunityTopics(id, pinSearch, paginationQuery)
     USER -> getUserTopics(id, pinSearch, paginationQuery)
     TOPIC -> getTopicTopics(id, pinSearch, paginationQuery)
-    else -> Result.failure(IllegalArgumentException("unrecognized $type"))
+    else -> CustomResult.Failure(RequestError.from(IllegalArgumentException("unrecognized $type")))
 }
 
-suspend fun UserSessionManager.addReadLog(info: UpdateUserRead): Result<Unit> =
+suspend fun UserSessionManager.addReadLog(info: UpdateUserRead): CustomResult<Unit, RequestError> =
     serviceCatching {
     CustomApi.Users.Read.add(info) {
         contentType(ContentType.Application.Json)
     }
-}
+}.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.addDevice(endpointUrl: String) =
     serviceCatching {
@@ -763,14 +766,17 @@ suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) =
 
 suspend fun UserSessionManager.addChildAccount(
     childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256,
-): Result<ChildAccountInfo> {
-    val userPass = passHolder.currentUserPass ?: return Result.failure(IllegalStateException("User not authenticated"))
+): CustomResult<ChildAccountInfo, RequestError> {
+    val userPass =
+        passHolder.currentUserPass ?: return CustomResult.Failure(
+            RequestError.from(IllegalStateException("User not authenticated")),
+        ).mapError(RequestError::fromError)
     return serviceCatching {
         val request = userPass.encryptChildAccount(childAlgoType).getOrThrow()
         CustomApi.Accounts.ChildAccounts.add(request) {
             contentType(ContentType.Application.Json)
         }
-    }
+    }.mapError(RequestError::fromError)
 }
 
 suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) =
@@ -851,25 +857,25 @@ suspend fun UserSessionManager.getUserOverview() =
 suspend fun UserSessionManager.getQuotaInfo(
     objectTuple: ObjectTuple,
     quotaType: QuotaType = QuotaType.FILE,
-): Result<QuotaInfo> =
+): CustomResult<QuotaInfo, RequestError> =
     serviceCatching {
     CustomApi.Files.quota(CustomApi.Files.QuotaQuery(objectTuple.objectId, objectTuple.objectType, quotaType))
-}
+}.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.getFileInfo(fileId: PrimaryKey) =
     serviceCatching {
     CustomApi.Files.Id.get(CommonPath(fileId))
 }
 
-suspend fun UserSessionManager.hasUnreadRooms(): Result<UnreadRoomsResponse> =
+suspend fun UserSessionManager.hasUnreadRooms(): CustomResult<UnreadRoomsResponse, RequestError> =
     serviceCatching {
     CustomApi.Users.Unread.hasUnreadRooms()
-}
+}.mapError(RequestError::fromError)
 
 internal class SessionIdentityChangedException : Exception("Login identity changed; explicit sign-in is required")
 
-private fun <R> failServiceRequest(point: Exception, failure: Throwable): Result<R> {
+private fun <R> failServiceRequest(point: Exception, failure: Throwable): CustomResult<R, RequestError> {
     point.addSuppressed(failure)
     Napier.e(point) { "serviceCatching" }
-    return Result.failure(failure)
+    return CustomResult.Failure(RequestError.from(failure)).mapError(RequestError::fromError)
 }

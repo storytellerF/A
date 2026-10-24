@@ -11,6 +11,7 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
+import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
@@ -29,6 +30,7 @@ import com.storyteller_f.a.client.core.sendFrame
 import com.storyteller_f.a.client.core.updateRoomInfo
 import com.storyteller_f.a.cloud.core.service.checkRoomWritePermission
 import com.storyteller_f.a.cloud.ws.rtcSession
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
 import com.storyteller_f.shared.model.TitleType
@@ -39,7 +41,10 @@ import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,12 +57,33 @@ import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class RoomTest {
+    @Test
+    fun `anonymous joined room detail requires login`() =
+        test(mapOf("DISABLE_TEST_WS" to "true")) {
+        val objectId =
+            attachSession {
+                createPublicRoomForTest(
+                    createCommunityForTest().id,
+                    "room",
+                    "Room",
+                ).id
+            }.custom
+        noneSession {
+            val failure =
+                assertFailsWith<ServerErrorException> {
+                    client.get("/rooms/$objectId?fillJoinInfo=true").body<RoomInfo>()
+                }
+            assertEquals(HttpStatusCode.Unauthorized, failure.status)
+        }
+    }
+
     @Test
     fun `test notification room is readable but cannot send`() =
         test(mapOf("DISABLE_TEST_WS" to "true")) {

@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.finalData
 import io.github.aakira.napier.Napier
 import io.ktor.client.call.HttpClientCall
@@ -167,7 +170,7 @@ fun <U> SingleFlightCustomAuthConfig.configClientAuth(
             false
         } else {
             manager.updateSignature(data, null)
-            runCatching {
+            captureFailure(CredentialError::from) {
                 manager.updateSignature(data, session.signature(finalData(data)).getOrThrow())
             }.fold({
                 Napier.v(tag = "ClientAuth") {
@@ -175,7 +178,7 @@ fun <U> SingleFlightCustomAuthConfig.configClientAuth(
                 }
                 true
             }, {
-                Napier.e("refreshSignature failed", it, tag = "ClientAuth")
+                Napier.e("refreshSignature failed", it.cause, tag = "ClientAuth")
                 false
             })
         }

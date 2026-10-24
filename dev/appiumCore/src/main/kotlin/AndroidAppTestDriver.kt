@@ -4,6 +4,8 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
 import io.appium.java_client.AppiumBy
 import io.appium.java_client.android.AndroidDriver
 import kotlinx.coroutines.delay
@@ -129,7 +131,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
                     .until(ExpectedConditions.presenceOfElementLocated(AppiumBy.androidUIAutomator(selector)))
             assertTrue(element.isDisplayed)
         } catch (throwable: Throwable) {
-            runCatching {
+            captureFailure(ArtifactCollectionError::CollectionFailed) {
                 saveDebugSnapshot("assert-visible-failed-${System.currentTimeMillis()}")
             }
             throw throwable
@@ -143,7 +145,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
                 driver.findElements(locator).isEmpty()
             }
         } catch (throwable: Throwable) {
-            runCatching {
+            captureFailure(ArtifactCollectionError::CollectionFailed) {
                 saveDebugSnapshot("assert-not-visible-failed-${System.currentTimeMillis()}")
             }
             throw throwable
@@ -159,7 +161,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
             }
             driver.findElement(locator).click()
         } catch (throwable: Throwable) {
-            runCatching {
+            captureFailure(ArtifactCollectionError::CollectionFailed) {
                 saveDebugSnapshot("click-failed-${System.currentTimeMillis()}")
             }
             throw throwable
@@ -181,7 +183,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
                 driver.findElements(locator).last().sendKeys(input)
             }
         } catch (throwable: Throwable) {
-            runCatching {
+            captureFailure(ArtifactCollectionError::CollectionFailed) {
                 saveDebugSnapshot("input-failed-${System.currentTimeMillis()}")
             }
             throw throwable

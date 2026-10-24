@@ -51,6 +51,7 @@ import com.storyteller_f.a.app.LocalUserInfo
 import com.storyteller_f.a.app.common.OnUserUpdated
 import com.storyteller_f.a.app.components.SettingOptionResettableView
 import com.storyteller_f.a.app.components.SettingOptionView
+import com.storyteller_f.a.app.error.AvatarUpdateError
 import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.topic.FilePicker
 import com.storyteller_f.a.app.pages.topic.uploadPath
@@ -72,6 +73,12 @@ import com.storyteller_f.a.client.core.generateRecoveryCodes
 import com.storyteller_f.a.client.core.getTwoFactorSettings
 import com.storyteller_f.a.client.core.setupTotp
 import com.storyteller_f.a.client.core.updateUserInfo
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TotpSetupInfo
@@ -82,8 +89,6 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
 import io.github.alexzhirkevich.qrose.rememberQrCodePainter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -282,20 +287,20 @@ private suspend fun AppGlobalDialogController.cropImage(
     info: FileInfo,
     imageCropper: ImageCropper,
     mediaTarget: ObjectTuple,
-): Result<FileInfo?> {
+): CustomResult<FileInfo?, AvatarUpdateError> {
     val image =
         useResult {
             getRemoteImageBitmap(this.context.sessionManager, context, info)
-                ?: Result.failure(Exception("download"))
+                ?: CustomResult.Failure(AvatarUpdateError.from(Exception("download")))
         }
-    return image.mapResult {
+    return image.andThen(AvatarUpdateError::fromError) {
         when (val result = imageCropper.crop(ImageBitmapSrc(it))) {
             CropResult.Cancelled -> {
-                Result.success(null)
+                CustomResult.success(null)
             }
 
             is CropError -> {
-                Result.failure(Exception(result.name))
+                CustomResult.Failure(AvatarUpdateError.from(Exception(result.name)))
             }
 
             is CropResult.Success -> {
@@ -313,9 +318,9 @@ private suspend fun AppGlobalDialogController.cropImage(
                 }
             }
         }
-    }.mapIfNotNull {
+    }.mapPresent {
         uploadPath(it, mediaTarget).getOrThrow()?.first()
-    }
+    }.mapError(AvatarUpdateError::fromError)
 }
 
 @Composable

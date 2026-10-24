@@ -8,6 +8,13 @@ import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.SignInBody
 import com.storyteller_f.a.api.SignInResponse
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
@@ -17,7 +24,6 @@ import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.checkTsIsValid
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import io.ktor.client.HttpClient
@@ -186,7 +192,7 @@ suspend fun UserSessionManager.login() {
     userHandler.request({
         userHandler.done(it)
     }) {
-        cancellableRunCatching {
+        captureFailure(RequestError::from) {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
@@ -207,7 +213,7 @@ suspend fun PanelSessionManager.login() {
     userHandler.request({
         userHandler.done(it)
     }) {
-        cancellableRunCatching {
+        captureFailure(RequestError::from) {
             val data = getData().getOrThrow()
             val address = userPass.address().getOrThrow()
             val signature = userPass.signature(finalData(data)).getOrThrow()
@@ -229,16 +235,16 @@ data class PendingTotpSignIn(val authKey: AuthKey, val data: String, val signatu
 
 suspend fun prepareSignInFromPrivateKey(
     authKey: AuthKey,
-    getData: suspend () -> Result<String>,
-): Result<PreparedSignInParam> =
-    getAlgo(authKey.algo).cancellableRunCatching {
+    getData: suspend () -> CustomResult<String, RequestError>,
+): CustomResult<PreparedSignInParam, RequestError> =
+    getAlgo(authKey.algo).captureFailure(RequestError::from) {
     val data = getData().getOrThrow()
     val f = finalData(data)
 
     val signature = signature(authKey.derPrivateKey, f).getOrThrow()
     val address = calcAddress(authKey.derPublicKey).getOrThrow()
     PreparedSignInParam(signature, address, authKey, data)
-}
+}.mapError(RequestError::fromError)
 
 data class SignResult<U>(
     val userInfo: U,
@@ -334,7 +340,7 @@ suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: UserSess
                             }
                         TopicContent.Plain(it, mediaInfos)
                     }, onFailure = {
-                        TopicContent.DecryptFailed(it.message?.toString().orEmpty())
+                        TopicContent.DecryptFailed(it.cause.message?.toString().orEmpty())
                     })
                 topicInfo.copy(content = topicContent)
             } else {

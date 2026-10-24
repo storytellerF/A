@@ -19,6 +19,9 @@ import com.storyteller_f.a.api.UpdateWorkerTaskBody
 import com.storyteller_f.a.api.WorkerTaskListResponse
 import com.storyteller_f.a.api.WorkerTaskPath
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.model.WorkerTask
@@ -193,34 +196,34 @@ suspend fun PanelSessionManager.getTaskRecords(
 }
 
 /** Retrieves aggregate task execution counts. */
-suspend fun PanelSessionManager.getTaskRecordSummaries(): Result<TaskRecordSummaryListResponse> {
+suspend fun PanelSessionManager.getTaskRecordSummaries(): CustomResult<TaskRecordSummaryListResponse, RequestError> {
     val result =
         serviceCatching {
             AdminApi.TaskRecords.summary()
         }
-    return result
+    return result.mapError(RequestError::fromError)
 }
 
 /** Marks a failed task execution for retry. */
-suspend fun PanelSessionManager.markTaskRecordForRetry(id: PrimaryKey): Result<Unit> {
+suspend fun PanelSessionManager.markTaskRecordForRetry(id: PrimaryKey): CustomResult<Unit, RequestError> {
     val result =
         serviceCatching {
             AdminApi.TaskRecords.Id.Retry.update(CommonPath(id), Unit)
         }
-    return result
+    return result.mapError(RequestError::fromError)
 }
 
 /** Retrieves all persisted worker task configurations. */
-suspend fun PanelSessionManager.getWorkerTasks(): Result<WorkerTaskListResponse> {
+suspend fun PanelSessionManager.getWorkerTasks(): CustomResult<WorkerTaskListResponse, RequestError> {
     val result =
         serviceCatching {
             AdminApi.WorkerTasks.get()
         }
-    return result
+    return result.mapError(RequestError::fromError)
 }
 
 /** Creates or replaces one worker task configuration. */
-suspend fun PanelSessionManager.updateWorkerTask(config: WorkerTask): Result<WorkerTask> {
+suspend fun PanelSessionManager.updateWorkerTask(config: WorkerTask): CustomResult<WorkerTask, RequestError> {
     val result =
         serviceCatching {
             AdminApi.WorkerTasks.Type.update(
@@ -234,7 +237,7 @@ suspend fun PanelSessionManager.updateWorkerTask(config: WorkerTask): Result<Wor
                 contentType(ContentType.Application.Json)
             }
         }
-    return result
+    return result.mapError(RequestError::fromError)
 }
 
 suspend fun PanelSessionManager.getUserUploadRecords(uid: PrimaryKey, query: PaginationQuery) =

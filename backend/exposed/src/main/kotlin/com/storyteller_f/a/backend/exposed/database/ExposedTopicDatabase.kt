@@ -10,6 +10,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.TopicDatabase
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.EncryptedKey
 import com.storyteller_f.a.backend.core.types.FileRef
@@ -26,6 +27,10 @@ import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.Titles
 import com.storyteller_f.a.backend.exposed.tables.Topics
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -34,7 +39,6 @@ import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -65,20 +69,20 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         }
     }
 
-    override suspend fun getTopic(fetch: ObjectFetch): Result<Topic?> =
+    override suspend fun getTopic(fetch: ObjectFetch): CustomResult<Topic?, DatabaseError> =
         getTopicByPredicate(Topic::wrapRow) {
-        where {
-            when (fetch) {
-                is ObjectFetch.IdFetch -> Topics.id eq fetch.id
-                is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+            where {
+                when (fetch) {
+                    is ObjectFetch.IdFetch -> Topics.id eq fetch.id
+                    is ObjectFetch.AidFetch -> Aids.value eq fetch.aid
+                }
             }
         }
-    }
 
     private suspend fun <T> getTopicByPredicate(
         block: (ResultRow) -> T,
         extraQuery: Query.() -> Query = { this },
-    ): Result<T?> =
+    ): CustomResult<T?, DatabaseError> =
         databaseSession.dbSearch {
         search {
             Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
@@ -87,15 +91,17 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         first(block)
     }
 
-    private suspend fun getTopicListByPredicate(queryBuilder: Query.() -> Query = { this }): Result<List<Topic>> =
+    private suspend fun getTopicListByPredicate(
+        queryBuilder: Query.() -> Query = { this },
+    ): CustomResult<List<Topic>, DatabaseError> =
         databaseSession.dbSearch {
-            search {
-                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                    .select(Topics.fields + Aids.value)
-                    .queryBuilder()
-            }
-            map(Topic::wrapRow)
+        search {
+            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                .select(Topics.fields + Aids.value)
+                .queryBuilder()
         }
+        map(Topic::wrapRow)
+    }
 
     suspend fun getTopicCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
@@ -105,17 +111,17 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         count()
     }
 
-    override suspend fun getTopicListByIds(ids: List<PrimaryKey>): Result<List<Topic>> =
+    override suspend fun getTopicListByIds(ids: List<PrimaryKey>): CustomResult<List<Topic>, DatabaseError> =
         getTopicListByPredicate {
-        where {
-            Topics.id inList ids
+            where {
+                Topics.id inList ids
+            }
         }
-    }
 
     private suspend fun getTopicPaginationByPredicate(
         primaryKeyFetch: PrimaryKeyFetch,
         extraQuery: Query.() -> Query = { this },
-    ): Result<PaginationResult<Topic>> =
+    ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         paginationFromResults(
         getTopicListByPredicate {
             extraQuery().bindPaginationQuery(
@@ -133,7 +139,7 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?,
-    ): Result<PaginationResult<Topic>> =
+    ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         getTopicPaginationByPredicate(primaryKeyFetch) {
         where {
             Topics.parentId eq parentId
@@ -171,13 +177,13 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
             if (fetch.cursor is Cursor.AscCursor) page.copy(list = page.list.reversed()) else page
         }
 
-    override suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>> =
+    override suspend fun getLatestTopic(parentId: PrimaryKey): CustomResult<List<Topic>, DatabaseError> =
         getTopicListByPredicate {
-        where {
-            Topics.parentId eq parentId
-        }.orderBy(Topics.pinned to SortOrder.DESC)
-            .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
-    }
+            where {
+                Topics.parentId eq parentId
+            }.orderBy(Topics.pinned to SortOrder.DESC)
+                .bindPaginationQuery(Topics, PrimaryKeyFetch(null, 2))
+        }
 
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted) =
@@ -220,8 +226,10 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         bindPaginationQuery(Topics, primaryKeyFetch)
     }
 
-    override suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>> {
-        if (topicIdList.isEmpty()) return Result.success(emptyList())
+    override suspend fun getTopicCommentCount(
+        topicIdList: List<PrimaryKey>,
+    ): CustomResult<List<Pair<Long, Long>>, DatabaseError> {
+        if (topicIdList.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             val countColumn = Topics.id.countDistinct()
             search {
@@ -235,8 +243,11 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         }
     }
 
-    override suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>> {
-        if (topicId.isEmpty()) return Result.success(emptyList())
+    override suspend fun isUserCommented(
+        uid: PrimaryKey,
+        topicId: List<PrimaryKey>,
+    ): CustomResult<List<Long>, DatabaseError> {
+        if (topicId.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             search {
                 Topics.select(Topics.parentId).where {
@@ -252,29 +263,29 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
     override suspend fun getUserCommentedTopicsPaginationResult(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<Topic>> =
+    ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         getTopicPaginationByPredicate(primaryKeyFetch) {
         where {
             Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
         }
     }
 
-    override suspend fun getUserCommentCount(uid: PrimaryKey): Result<Long> =
+    override suspend fun getUserCommentCount(uid: PrimaryKey): CustomResult<Long, DatabaseError> =
         getTopicCountByPredicate {
-        where {
-            Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+            where {
+                Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+            }
         }
-    }
 
     override suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,
-    ): Result<Map<PrimaryKey, TopicContent>> {
+    ): CustomResult<Map<PrimaryKey, TopicContent>, DatabaseError> {
         val encryptedTopic =
             topics.filter {
                 it.isEncrypted
             }
-        return cancellableRunCatching {
+        return captureFailure(DatabaseError::from) {
             val encryptedTopicList =
                 if (encryptedTopic.isNotEmpty() && uid != null) {
                     getEncryptedTopicContents(encryptedTopic, uid).getOrThrow()
@@ -296,7 +307,7 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
     suspend fun getEncryptedTopicContents(
         data: List<Topic>,
         uid: PrimaryKey,
-    ): Result<List<Pair<PrimaryKey, TopicContent>>> {
+    ): CustomResult<List<Pair<PrimaryKey, TopicContent>>, DatabaseError> {
         val topicId =
             data.map {
                 it.id
@@ -348,8 +359,9 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
 
     override suspend fun getTopicCount() = getTopicCountByPredicate()
 
-    override suspend fun getAllTopicPagination(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>> =
-        getTopicPaginationByPredicate(primaryKeyFetch)
+    override suspend fun getAllTopicPagination(
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<Topic>, DatabaseError> = getTopicPaginationByPredicate(primaryKeyFetch)
 }
 
 private suspend fun Topic.Companion.new(info: Topic) =

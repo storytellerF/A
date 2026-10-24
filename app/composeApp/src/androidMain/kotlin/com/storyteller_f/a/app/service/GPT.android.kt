@@ -7,8 +7,11 @@ package com.storyteller_f.a.app.service
 import com.google.ai.edge.litertlm.Backend.GPU
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
+import com.storyteller_f.a.app.error.ModelGenerationError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.getAppContextRefValue
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,13 +32,17 @@ actual fun getGPTModelDirectory(): Path {
 class AndroidEdgeGPT : GPT {
     override val supportList: List<String> = listOf("litertlm")
 
-    override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> {
+    override suspend fun generate(path: String, prompt: String): CustomResult<Flow<GPTOutput>, ModelGenerationError> {
         val application =
             getAppContextRefValue()
-                ?: return Result.failure(UnsupportedOperationException())
+                ?: return CustomResult.Failure(
+                    ModelGenerationError.from(UnsupportedOperationException()),
+                ).mapError(ModelGenerationError::fromError)
         val file = File(path)
         if (!file.exists()) {
-            return Result.failure(Exception("modal not exists"))
+            return CustomResult.Failure(
+                ModelGenerationError.from(Exception("modal not exists")),
+            ).mapError(ModelGenerationError::fromError)
         }
         val engineConfig =
             EngineConfig(
@@ -44,7 +51,7 @@ class AndroidEdgeGPT : GPT {
                 cacheDir = application.cacheDir.path,
             )
         val engine = Engine(engineConfig)
-        return cancellableRunCatching {
+        return captureFailure(ModelGenerationError::from) {
             withContext(Dispatchers.IO) {
                 engine.initialize()
             }
@@ -63,7 +70,7 @@ class AndroidEdgeGPT : GPT {
                     "engine closed"
                 }
             }
-        }
+        }.mapError(ModelGenerationError::fromError)
     }
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> =

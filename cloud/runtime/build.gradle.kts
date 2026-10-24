@@ -23,6 +23,7 @@ dependencies {
     implementation(projects.shared)
     implementation(projects.backend.core)
     implementation(projects.cloud.service)
+    implementation(libs.endpoint4k.common)
     implementation(libs.endpoint4k.ktor.server)
     implementation(libs.bundles.ktor.server)
     implementation(libs.geoip2)

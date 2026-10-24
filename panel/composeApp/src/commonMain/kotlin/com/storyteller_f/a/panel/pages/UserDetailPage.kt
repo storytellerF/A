@@ -75,6 +75,7 @@ import com.storyteller_f.a.panel.user_detail_title
 import com.storyteller_f.a.panel.user_detail_title_with_info
 import com.storyteller_f.a.panel.user_info
 import com.storyteller_f.a.panel.user_logs
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey

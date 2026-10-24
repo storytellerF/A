@@ -13,25 +13,30 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.ReactionFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
 import com.storyteller_f.a.backend.core.types.ReactionRecord
+import com.storyteller_f.a.cloud.core.service.error.ReactionError
+import com.storyteller_f.result.ConstraintFailure
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.recover
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
-import com.storyteller_f.shared.utils.recoverIfDup
 import com.storyteller_f.shared.utils.safeFirstEmoji
 import io.github.aakira.napier.Napier
 
 suspend fun Backend.addReaction(userId: PrimaryKey, topicId: PrimaryKey, emojiText: String) =
-    checkObjectWritable(ObjectType.TOPIC, topicId).mapResultIfNotNull {
+    checkObjectWritable(ObjectType.TOPIC, topicId).andThenPresent(ReactionError::fromError) {
         checkTopicWritePermission(topicId, userId)
-    }.mapResultIfNotNull {
+    }.andThenPresent(ReactionError::fromError) {
         database.reaction.getReactionInfo(userId, topicId, emojiText)
-            .mapResult { oldReaction ->
+            .andThen(ReactionError::fromError) { oldReaction ->
                 if (oldReaction != null && oldReaction.hasReacted) {
-                    Result.success(oldReaction)
+                    CustomResult.success(oldReaction)
                 } else {
                     val newId = SnowflakeFactory.nextId()
                     val reactionRecord = ReactionRecord(userId, topicId, ObjectType.TOPIC, emojiText, newId, now())
@@ -49,13 +54,17 @@ suspend fun Backend.addReaction(userId: PrimaryKey, topicId: PrimaryKey, emojiTe
                             reactionRecord.emoji,
                             reactionRecord.objectType,
                         ).onFailure { throwable ->
-                            Napier.e(throwable = throwable) {
+                            Napier.e(throwable = throwable.cause) {
                                 "addReaction"
                             }
                         }
                         reactionInfo
-                    }.recoverIfDup(database::isDup) {
-                        Result.success(reactionInfo)
+                    }.recover(ReactionError::fromError) { failure ->
+                        if (failure is ConstraintFailure) {
+                            CustomResult.success(reactionInfo)
+                        } else {
+                            CustomResult.Failure(failure)
+                        }
                     }
                 }
             }
@@ -66,43 +75,58 @@ suspend fun Backend.reactionList(
     uid: PrimaryKey?,
     fillHasReacted: Boolean?,
     reactionFetch: ReactionFetch,
-): Result<PaginationResult<ReactionInfo>> {
-    if (fillHasReacted == true && uid == null) return Result.failure(UnauthorizedException())
-    return database.reaction.getReactionInfoPaginationResult(listOf(objectId), uid, reactionFetch)
+): CustomResult<PaginationResult<ReactionInfo>, ReactionError> {
+    if (fillHasReacted == true && uid == null) {
+        return CustomResult.Failure(
+            ReactionError.from(UnauthorizedException()),
+        ).mapError(ReactionError::fromError)
+    }
+    return database.reaction.getReactionInfoPaginationResult(
+        listOf(objectId),
+        uid,
+        reactionFetch,
+    ).mapError(ReactionError::fromError)
 }
 
-suspend fun addReaction(emoji: String, backend: Backend, uid: PrimaryKey, p: CommonPath): Result<ReactionInfo?> =
+suspend fun addReaction(
+    emoji: String,
+    backend: Backend,
+    uid: PrimaryKey,
+    p: CommonPath,
+): CustomResult<ReactionInfo?, ReactionError> =
+    (
     if (isEmoji(emoji)) {
         backend.addReaction(uid, p.id, emoji)
     } else {
-        Result.failure(CustomBadRequestException("invalid emoji"))
+        CustomResult.Failure(ReactionError.from(CustomBadRequestException("invalid emoji")))
     }
+    ).mapError(ReactionError::fromError)
 
 suspend fun deleteReaction(
     deleteReaction: DeleteReaction,
     backend: Backend,
     uid: PrimaryKey,
     p: CommonPath,
-): Result<ReactionInfo?> {
+): CustomResult<ReactionInfo?, ReactionError> {
     val emoji = deleteReaction.emoji
     return if (isEmoji(emoji)) {
-        backend.checkObjectWritable(ObjectType.TOPIC, p.id).mapResultIfNotNull {
-            backend.database.reaction.deleteReaction(uid, emoji, p.id).mapResult {
+        backend.checkObjectWritable(ObjectType.TOPIC, p.id).andThenPresent(ReactionError::fromError) {
+            backend.database.reaction.deleteReaction(uid, emoji, p.id).andThen(ReactionError::fromError) {
                 if (it) {
                     backend.database.reaction.statsReactionRecord(p.id, emoji, ObjectType.TOPIC)
                 } else {
-                    UNIT_RESULT
+                    CustomResult.Success(Unit)
                 }
             }
         }
     } else {
-        Result.failure(CustomBadRequestException("invalid emoji"))
-    }.mapResult {
+        CustomResult.Failure(ReactionError.from(CustomBadRequestException("invalid emoji")))
+    }.andThen(ReactionError::fromError) {
         backend.database.reaction.getReactionInfo(uid, p.id, emoji)
             .map { reactionInfo ->
                 reactionInfo ?: ReactionInfo(emoji, p.id, 0, false, 0)
             }
-    }
+    }.mapError(ReactionError::fromError)
 }
 
 private fun isEmoji(emoji: String): Boolean = safeFirstEmoji(emoji)?.length == emoji.length

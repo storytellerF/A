@@ -4,6 +4,8 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
 import io.github.aakira.napier.Napier
@@ -19,7 +21,7 @@ interface WebSocketClient {
     val connectionHandler: LoadingHandler<DefaultClientWebSocketSession>
     val localState: StateFlow<LoadingState?>
     val frameFlow: SharedFlow<RoomFrame>
-    suspend fun <T> useWebSocket(block: suspend DefaultClientWebSocketSession.() -> T): Result<T>
+    suspend fun <T> useWebSocket(block: suspend DefaultClientWebSocketSession.() -> T): CustomResult<T, RequestError>
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -107,26 +109,30 @@ class WebSocketClientImpl(
         }
     }
 
-    override suspend fun <T> useWebSocket(block: suspend DefaultClientWebSocketSession.() -> T): Result<T> {
+    override suspend fun <T> useWebSocket(
+        block: suspend DefaultClientWebSocketSession.() -> T,
+    ): CustomResult<T, RequestError> {
         val old = connectionHandler.data.value
-        return if (old != null && old.isActive) {
-            localState.value = LoadingState.Loading
-            try {
-                val r = old.block()
-                localState.value = LoadingState.Done
-                Result.success(r)
-            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-                throw cancellation
-            } catch (e: Exception) {
-                localState.value = LoadingState.Error(e)
-                Result.failure(e)
+        return (
+            if (old != null && old.isActive) {
+                localState.value = LoadingState.Loading
+                try {
+                    val r = old.block()
+                    localState.value = LoadingState.Done
+                    CustomResult.success(r)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                    throw cancellation
+                } catch (e: Exception) {
+                    localState.value = LoadingState.Error(e)
+                    CustomResult.Failure(RequestError.from(e))
+                }
+            } else {
+                Napier.i {
+                    "useWebSocket failed"
+                }
+                CustomResult.Failure(RequestError.from(Exception("WebSocket not connected")))
             }
-        } else {
-            Napier.i {
-                "useWebSocket failed"
-            }
-            Result.failure(Exception("WebSocket not connected"))
-        }
+            ).mapError(RequestError::fromError)
     }
 
     private suspend fun connectWebSocketIfNeed(userInfo: UserInfo) {
