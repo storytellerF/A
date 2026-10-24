@@ -36,6 +36,7 @@ import com.storyteller_f.a.backend.core.types.toUserInfo
 import com.storyteller_f.a.cloud.core.service.addUserLog
 import com.storyteller_f.a.cloud.core.service.getFileInfoList
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.encryptDataByAES
@@ -759,7 +760,14 @@ class AddPreset : Subcommand("add", "add entry") {
             objectType.name,
             when (level) {
                 0 -> topicTuple.rootId
-                else -> tuples[index - checkNotNull(topicTuple.topic.parent) { "Nested topic parent is missing" }].id
+
+                else ->
+                    tuples[
+                        index -
+                            checkNotNull(
+                                topicTuple.topic.parent,
+                            ) { "Nested topic parent is missing" },
+                    ].id
             },
             when (level) {
                 0 -> objectType
@@ -1213,9 +1221,9 @@ internal fun isDownloadConfigPath(path: String): Boolean =
 
 internal fun parseDownloadConfig(path: File): DownloadConfig? {
     val text = path.readText()
-    return runCatching {
+    return try {
         yamlMapper.readValue(text, DownloadConfig::class.java)
-    }.getOrElse {
+    } catch (expected: Exception) {
         val lines = text.lineSequence().map { it.trim() }.filter { it.isNotEmpty() }.toList()
         if (lines.size >= 3) {
             DownloadConfig(name = lines[0], link = lines[1], hash = lines[2])

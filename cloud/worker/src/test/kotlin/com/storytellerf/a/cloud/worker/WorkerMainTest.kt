@@ -6,6 +6,7 @@ package com.storytellerf.a.cloud.worker
 import com.storyteller_f.a.cloud.worker.TopicSafetyReviewerProvider
 import com.storyteller_f.a.cloud.worker.WORKER_TASK_POLL_MILLIS
 import com.storyteller_f.a.cloud.worker.executeConfiguredTaskIteration
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.WorkerTask
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
@@ -23,7 +24,7 @@ internal class WorkerMainTest {
             val provider =
                 TopicSafetyReviewerProvider {
                     attempts += 1
-                    Result.success(if (attempts == 1) null else TopicSafetyReviewer { false })
+                    CustomResult.success(if (attempts == 1) null else TopicSafetyReviewer { false })
                 }
 
             assertEquals(null, provider.get())
@@ -41,7 +42,7 @@ internal class WorkerMainTest {
 
             executeConfiguredTaskIteration(
                 name = "intro",
-                configResult = Result.success(null),
+                configResult = CustomResult.success(null),
                 task = { isExecuted = true },
                 wait = { waited = it },
             )
@@ -66,7 +67,7 @@ internal class WorkerMainTest {
 
             executeConfiguredTaskIteration(
                 name = "intro",
-                configResult = Result.success(config),
+                configResult = CustomResult.success(config),
                 task = { isExecuted = true },
                 wait = { waited = it },
             )
@@ -91,7 +92,7 @@ internal class WorkerMainTest {
 
             executeConfiguredTaskIteration(
                 name = "intro",
-                configResult = Result.success(config),
+                configResult = CustomResult.success(config),
                 task = { executedConfig = it },
                 wait = { waited = it },
             )

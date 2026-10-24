@@ -7,6 +7,7 @@ package com.storyteller_f.a.app.common
 import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.serviceCatching
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now

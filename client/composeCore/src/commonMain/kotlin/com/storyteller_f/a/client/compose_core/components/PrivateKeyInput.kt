@@ -44,6 +44,7 @@ import com.storyteller_f.a.client.compose_core.edit_private_key
 import com.storyteller_f.a.client.compose_core.generate
 import com.storyteller_f.a.client.compose_core.private_key
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.replaceCrlf

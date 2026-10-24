@@ -4,6 +4,8 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.UserInfo
 import io.ktor.client.HttpClient
@@ -121,27 +123,38 @@ private class CountingUserPass(private val initialResponsesReleased: Completable
     var signatureCount = 0
         private set
 
-    override suspend fun signature(data: String): Result<String> {
+    override suspend fun signature(data: String): CustomResult<String, CredentialError> {
         signatureCount += 1
         initialResponsesReleased.await()
-        return Result.success("signature-$signatureCount")
+        return CustomResult.success("signature-$signatureCount")
     }
 
-    override suspend fun verify(signature: String, data: String): Result<Boolean> = Result.success(true)
+    override suspend fun verify(signature: String, data: String): CustomResult<Boolean, CredentialError> =
+        CustomResult.success(
+            true,
+        )
 
-    override suspend fun decrypt(encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> = Result.success("")
+    override suspend fun decrypt(
+        encrypted: ByteArray,
+        encryptedAesKey: ByteArray,
+    ): CustomResult<String, CredentialError> =
+        CustomResult.success(
+        "",
+    )
 
-    override suspend fun address(): Result<String> = Result.success("address")
+    override suspend fun address(): CustomResult<String, CredentialError> = CustomResult.success("address")
 
     override suspend fun decryptChildAccount(
         encryptedPrivateKey: String,
         encryptedAesKey: String,
         childAlgoType: AlgoType,
         encryptedEncryptionPrivateKey: String?,
-    ): Result<Pair<String, String?>> = Result.success("" to null)
+    ): CustomResult<Pair<String, String?>, CredentialError> = CustomResult.success("" to null)
 
     override suspend fun encryptChildAccount(
         childAlgoType: AlgoType,
-    ): Result<com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest> =
-        Result.failure(UnsupportedOperationException())
+    ): CustomResult<com.storyteller_f.a.api.CustomApi.Accounts.ChildAccounts.AddChildAccountRequest, CredentialError> =
+        CustomResult.Failure(
+            CredentialError.from(UnsupportedOperationException()),
+        ).mapError(CredentialError::fromError)
 }

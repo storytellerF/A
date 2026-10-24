@@ -7,10 +7,14 @@ import com.perraco.utils.SnowflakeFactory
 import com.storyteller_f.a.backend.core.Backend
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.types.TaskRecord
+import com.storyteller_f.a.cloud.error.WorkerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 
 internal suspend fun Backend.executeTaskObject(
@@ -19,7 +23,7 @@ internal suspend fun Backend.executeTaskObject(
     retryRecordId: PrimaryKey? = null,
     failureType: (Throwable) -> String,
     executeAndSaveSuccess: suspend (TaskRecord) -> Unit,
-): Result<Unit> {
+): CustomResult<Unit, WorkerError> {
     val successRecord =
         TaskRecord(
             id = SnowflakeFactory.nextId(),
@@ -28,9 +32,8 @@ internal suspend fun Backend.executeTaskObject(
             objectId = objectId,
         )
     val result =
-        UNIT_RESULT.mapResult {
+        captureFailure(WorkerError::from) {
             executeAndSaveSuccess(successRecord)
-            UNIT_RESULT
         }
     result.exceptionOrNull()?.let { failure ->
         database.admin.createTaskRecord(
@@ -45,7 +48,7 @@ internal suspend fun Backend.executeTaskObject(
         ).getOrThrow()
     }
     retryRecordId?.let { database.user.updateTaskRecordRetryRequested(it, false).getOrThrow() }
-    return result
+    return result.mapError(WorkerError::fromError)
 }
 
 internal suspend fun Backend.getSystemUserId(): PrimaryKey {

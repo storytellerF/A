@@ -5,6 +5,7 @@
 package com.storyteller_f.a.panel.pages
 
 import com.storyteller_f.a.client.core.getAuthKey
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType

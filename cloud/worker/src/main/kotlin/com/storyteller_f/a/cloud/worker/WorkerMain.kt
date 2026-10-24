@@ -28,15 +28,21 @@ import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.backend.exposed.buildExposedDatabase
+import com.storyteller_f.a.cloud.error.WorkerError
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.LlmConfig
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.setupKmpLogger
-import com.storyteller_f.shared.utils.mapCatchingNotNull
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.moderation.KoogTopicSafetyReviewer
 import com.storytellerf.a.cloud.worker.moderation.TopicSafetyReviewer
@@ -81,8 +87,9 @@ fun main() {
     }
 }
 
-internal class TopicSafetyReviewerProvider(private val factory: suspend () -> Result<TopicSafetyReviewer?>) :
-    AutoCloseable {
+internal class TopicSafetyReviewerProvider(
+    private val factory: suspend () -> CustomResult<TopicSafetyReviewer?, WorkerError>,
+) : AutoCloseable {
     private val initializationMutex = Mutex()
     private var reviewer: TopicSafetyReviewer? = null
 
@@ -110,14 +117,24 @@ internal class TopicSafetyReviewerProvider(private val factory: suspend () -> Re
     }
 }
 
-internal suspend fun createTopicSafetyReviewer(backend: Backend): Result<TopicSafetyReviewer?> =
+internal suspend fun createTopicSafetyReviewer(backend: Backend): CustomResult<TopicSafetyReviewer?, WorkerError> =
     backend.database.getBackendConfig(LlmConfig.CONFIG_KEY)
-        .mapCatchingNotNull { value -> commonJson.decodeFromString<LlmConfig>(value) }
-        .mapResultIfNotNull { config ->
+        .andThen(
+            WorkerError::fromError,
+        ) { value ->
+            if (value == null) {
+                CustomResult.success(
+                    null,
+                )
+            } else {
+                captureFailure(WorkerError::from) { commonJson.decodeFromString<LlmConfig>(value) }
+            }
+        }
+        .andThenPresent(WorkerError::fromError) { config ->
             Napier.i(tag = MODERATION_LOG_TAG) {
                 "using LLM provider: ${config.provider}"
             }
-            Result.success(
+            CustomResult.success(
                 KoogTopicSafetyReviewer.create(config),
             )
         }
@@ -127,7 +144,7 @@ internal suspend fun createTopicSafetyReviewer(backend: Backend): Result<TopicSa
                     "LLM configuration not found; topic moderation will retry after configuration is added"
                 }
             }
-        }
+        }.mapError(WorkerError::fromError)
 
 private fun CoroutineScope.startWorkerTasks(
     backend: Backend,
@@ -166,7 +183,7 @@ private fun CoroutineScope.launchWorkerTask(
         launch {
             while (isActive) {
                 val configResult = backend.database.workerTask.getWorkerTask(type)
-                executeConfiguredTaskIteration(name, configResult, task)
+                executeConfiguredTaskIteration(name, configResult.mapError(WorkerError::fromError), task)
             }
         }
     return job
@@ -174,7 +191,7 @@ private fun CoroutineScope.launchWorkerTask(
 
 internal suspend fun executeConfiguredTaskIteration(
     name: String,
-    configResult: Result<WorkerTask?>,
+    configResult: CustomResult<WorkerTask?, WorkerError>,
     task: suspend (WorkerTask) -> Unit,
     wait: suspend (Long) -> Unit = { delay(it) },
 ) {

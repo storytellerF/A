@@ -33,6 +33,7 @@ import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.a.client.core.uploadChunk
 import com.storyteller_f.a.cloud.core.service.getCoverExtensionFromMimeType
 import com.storyteller_f.a.cloud.core.utils.readFlacAlbumFromAudioStream
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob

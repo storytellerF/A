@@ -50,6 +50,7 @@ import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.audio_recorder
 import com.storyteller_f.a.app.common.OnMediaUploaded
 import com.storyteller_f.a.app.common.createMediaListViewModel
+import com.storyteller_f.a.app.error.UploadError
 import com.storyteller_f.a.app.files
 import com.storyteller_f.a.app.pages.file.FileCell
 import com.storyteller_f.a.app.provide_permission
@@ -73,13 +74,17 @@ import com.storyteller_f.a.client.compose_core.components.topPrepend
 import com.storyteller_f.a.client.compose_core.utils.getUploadDataFromPath
 import com.storyteller_f.a.client.core.UploadData
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.generateImageMarkdownContent
 import com.storyteller_f.shared.utils.generateObjectMarkdownContent
-import com.storyteller_f.shared.utils.mapIfNotNull
 import com.storyteller_f.shared.utils.sha256
 import io.github.aakira.napier.Napier
 import io.github.vinceglb.filekit.FileKit
@@ -199,13 +204,13 @@ private fun BoxScope.RecorderButton(
                             }
                             if (path != null) {
                                 globalDialogController.uploadPath(path, mediaTarget)
-                                    .mapIfNotNull {
+                                    .mapPresent {
                                         uploadSuccess(it)
                                     }
                             }
                         } else {
                             globalDialogController.useResult {
-                                cancellableRunCatching {
+                                captureFailure(UploadError::from) {
                                     Recorder.startRecord()
                                 }
                             }
@@ -283,7 +288,7 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
                 it as List<FileInfo>?
             }
         } else {
-            Result.success(null)
+            CustomResult.success(null)
         }
     }.getOrNull()?.let {
         uploadSuccess(it)
@@ -327,8 +332,11 @@ private class ByteArrayRawSource(private val bytes: ByteArray) : RawSource {
     override fun close() = Unit
 }
 
-suspend fun AppGlobalDialogController.uploadPath(path: Path, mediaTarget: ObjectTuple): Result<List<FileInfo>?> {
-    val meta = SystemFileSystem.metadataOrNull(path) ?: return Result.success(null)
+suspend fun AppGlobalDialogController.uploadPath(
+    path: Path,
+    mediaTarget: ObjectTuple,
+): CustomResult<List<FileInfo>?, UploadError> {
+    val meta = SystemFileSystem.metadataOrNull(path) ?: return CustomResult.success(null)
     val fileSha256 =
         SystemFileSystem.source(path).buffered().use {
             sha256(it)
@@ -342,23 +350,25 @@ suspend fun AppGlobalDialogController.uploadPath(path: Path, mediaTarget: Object
                 GlobalDialogState.Loading(progress = GlobalDialogStateProgress(p, t))
             }
         }
-    }
+    }.mapError(UploadError::fromError)
 }
 
 suspend fun AppGlobalDialogController.upload(
     mediaTarget: ObjectTuple,
     uploadData: UploadData,
     onUpload: suspend (Long, Long?) -> Unit = { _, _ -> },
-): Result<List<FileInfo>> {
+): CustomResult<List<FileInfo>, UploadError> {
     if (uploadData.size > 100 * 1024 * 1024) {
-        return Result.failure(Exception("file size is too large"))
+        return CustomResult.Failure(
+            UploadError.from(Exception("file size is too large")),
+        ).mapError(UploadError::fromError)
     }
 
     return request { this.upload(mediaTarget, uploadData, onUpload) }.map {
         it.data
     }.onSuccess {
         emitEvent(OnMediaUploaded(it))
-    }
+    }.mapError(UploadError::fromError)
 }
 
 fun insertContent(it: FileInfo, input: String, updateInput: (String) -> Unit) {

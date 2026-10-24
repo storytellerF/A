@@ -4,6 +4,10 @@
 
 package com.storyteller_f.a.cloud.filesystem
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.services.filesystem.api.CopyPack
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
 import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
@@ -49,49 +53,52 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
             .info("Filesystem object storage initialized")
     }
 
-    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>> =
+    suspend fun upload(
+        bucketName: String,
+        uploadPacks: List<UploadPack>,
+    ): CustomResult<List<ObjectStorageWriteRecord>, FilesystemError> =
         useFileSystem {
-            val bucketPath = resolveBucket(bucketName)
-            uploadPacks.map { uploadPack ->
-                val target = resolveObject(bucketPath, uploadPack.fullName).createParentDirectories()
-                Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
-                ObjectStorageWriteRecord(uploadPack.fullName)
-            }
-        }
-
-    @OptIn(ExperimentalTime::class)
-    suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>> =
-        useFileSystem {
-        names.mapNotNull { name ->
-            val mediaPath = resolveObject(bucketName, name)
-            if (mediaPath.isRegularFile()) {
-                val newUrl =
-                    UrlBuilder.fromString(url)
-                        .withPath("objects/$bucketName/$name")
-                        .toString()
-                ObjectStorageRecord(
-                    newUrl,
-                    mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
-                        .toLocalDateTime(TimeZone.UTC),
-                    name,
-                )
-            } else {
-                null
-            }
+        val bucketPath = resolveBucket(bucketName)
+        uploadPacks.map { uploadPack ->
+            val target = resolveObject(bucketPath, uploadPack.fullName).createParentDirectories()
+            Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
+            ObjectStorageWriteRecord(uploadPack.fullName)
         }
     }
 
+    @OptIn(ExperimentalTime::class)
+    suspend fun get(bucketName: String, names: List<String>): CustomResult<List<ObjectStorageRecord>, FilesystemError> =
+        useFileSystem {
+            names.mapNotNull { name ->
+                val mediaPath = resolveObject(bucketName, name)
+                if (mediaPath.isRegularFile()) {
+                    val newUrl =
+                        UrlBuilder.fromString(url)
+                            .withPath("objects/$bucketName/$name")
+                            .toString()
+                    ObjectStorageRecord(
+                        newUrl,
+                        mediaPath.getLastModifiedTime().toInstant().toKotlinInstant()
+                            .toLocalDateTime(TimeZone.UTC),
+                        name,
+                    )
+                } else {
+                    null
+                }
+            }
+        }
+
     @OptIn(ExperimentalPathApi::class)
-    suspend fun clean(bucketName: String): Result<Unit> =
+    suspend fun clean(bucketName: String): CustomResult<Unit, FilesystemError> =
         useFileSystem {
         val bucketPath = resolveBucket(bucketName)
         bucketPath.deleteRecursively()
     }
 
-    suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>> {
+    suspend fun list(bucketName: String, prefix: String): CustomResult<List<ObjectStorageRecord>, FilesystemError> {
         val p = if (prefix.isBlank()) resolveBucket(bucketName) else resolveObject(bucketName, prefix)
         if (p.notExists()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         return useFileSystem {
             buildList<String?> {
@@ -102,10 +109,13 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
                     }
                 }
             }.filterNotNull()
-        }.fold(onSuccess = { get(bucketName, it) }, onFailure = { Result.failure(it) })
+        }.fold(onSuccess = { get(bucketName, it) }, onFailure = { CustomResult.Failure(FilesystemError.fromError(it)) })
     }
 
-    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>> =
+    suspend fun copy(
+        bucketName: String,
+        copyPacks: List<CopyPack>,
+    ): CustomResult<List<ObjectStorageRecord>, FilesystemError> =
         useFileSystem {
         val bucketPath = resolveBucket(bucketName)
         copyPacks.map {
@@ -117,24 +127,24 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
             p.copyTo(targetFile, true)
             it.newFullName
         }
-    }.fold(onSuccess = { get(bucketName, it) }, onFailure = { Result.failure(it) })
+    }.fold(onSuccess = { get(bucketName, it) }, onFailure = { CustomResult.Failure(FilesystemError.fromError(it)) })
 
-    suspend fun getInputStream(bucketName: String, name: String): Result<BufferedInputStream> =
+    suspend fun getInputStream(bucketName: String, name: String): CustomResult<BufferedInputStream, FilesystemError> =
         useFileSystem {
-        val mediaPath = resolveObject(bucketName, name)
-        if (mediaPath.isRegularFile()) {
-            Files.newInputStream(mediaPath).buffered()
-        } else {
-            error("file $name not exists")
+            val mediaPath = resolveObject(bucketName, name)
+            if (mediaPath.isRegularFile()) {
+                Files.newInputStream(mediaPath).buffered()
+            } else {
+                error("file $name not exists")
+            }
         }
-    }
 
     suspend fun compose(
         bucketName: String,
         targetFullName: String,
         sourceFullNames: List<String>,
         expectedSha256: String,
-    ): Result<ObjectStorageWriteRecord> =
+    ): CustomResult<ObjectStorageWriteRecord, FilesystemError> =
         useFileSystem {
         val bucketPath = resolveBucket(bucketName)
         val target = resolveObject(bucketPath, targetFullName).createParentDirectories()
@@ -164,7 +174,7 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         }
     }
 
-    suspend fun delete(bucketName: String, names: List<String>): Result<Unit> =
+    suspend fun delete(bucketName: String, names: List<String>): CustomResult<Unit, FilesystemError> =
         useFileSystem {
         val bucketPath = resolveBucket(bucketName)
         names.forEach { name ->
@@ -175,16 +185,16 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         }
     }
 
-    suspend fun <T> useFileSystem(block: suspend () -> T): Result<T> =
+    suspend fun <T> useFileSystem(block: suspend () -> T): CustomResult<T, FilesystemError> =
         withContext(Dispatchers.IO) {
-        try {
-            Result.success(block())
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (exception: Exception) {
-            Result.failure(exception)
+            try {
+                CustomResult.success(block())
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: Exception) {
+                CustomResult.Failure(FilesystemError.from(exception))
+            }
         }
-    }
 
     suspend fun getPathResponse(it: List<String>): Path? =
         useFileSystem {

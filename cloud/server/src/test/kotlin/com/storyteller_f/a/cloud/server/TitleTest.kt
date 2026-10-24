@@ -18,6 +18,7 @@ import com.storyteller_f.a.client.core.getSubscriptions
 import com.storyteller_f.a.client.core.removeFavorite
 import com.storyteller_f.a.client.core.removeSubscription
 import com.storyteller_f.a.client.core.userTitles
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus

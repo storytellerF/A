@@ -13,6 +13,15 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.types.PanelAccount
 import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.toUserInfo
+import com.storyteller_f.a.cloud.core.service.error.AccountError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.requireTrue
+import com.storyteller_f.result.requireValue
 import com.storyteller_f.shared.Algo
 import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
@@ -24,21 +33,17 @@ import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.errorIfFalse
-import com.storyteller_f.shared.utils.filterNotNull
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 
-suspend fun Backend.signUp(data: String, pack: SignUpBody): Result<UserInfo> {
+suspend fun Backend.signUp(data: String, pack: SignUpBody): CustomResult<UserInfo, AccountError> {
     val f = finalData(data)
     // Simple heuristic: Dilithium keys are much larger than P256 keys.
     // P256 PEM is ~200-300 chars. Dilithium PEM is > 2000 chars.
     val algoType = if (pack.publicKey.length > 1000) AlgoType.DILITHIUM else AlgoType.P256
     val algo = getAlgo(algoType)
-    return cancellableRunCatching {
+    return captureFailure(AccountError::from) {
         signUpInternal(algo, pack, f, algoType).toUserInfo()
-    }
+    }.mapError(AccountError::fromError)
 }
 
 private suspend fun Backend.signUpInternal(algo: Algo, pack: SignUpBody, f: String, algoType: AlgoType): User {
@@ -79,24 +84,28 @@ private suspend fun Backend.signUpInternal(algo: Algo, pack: SignUpBody, f: Stri
     return database.user.createUser(user).getOrThrow()
 }
 
-suspend fun Backend.signIn(data: String, pack: SignInBody): Result<SignInServiceResponse> {
+suspend fun Backend.signIn(data: String, pack: SignInBody): CustomResult<SignInServiceResponse, AccountError> {
     val f = finalData(data)
     return database.user.getRawUserAndPublicKeyByAddress(pack.address)
-        .filterNotNull {
-            CustomBadRequestException("user not found")
-        }.mapResult { (rawUser, publicKey) ->
-            getAlgo(rawUser.user.algoType).verify(publicKey, pack.signature, f).mapResult { isVerified ->
+        .requireValue(AccountError::fromError) {
+            AccountError.from(
+                CustomBadRequestException("user not found"),
+            )
+        }.andThen(AccountError::fromError) { (rawUser, publicKey) ->
+            getAlgo(
+                rawUser.user.algoType,
+            ).verify(publicKey, pack.signature, f).andThen(AccountError::fromError) { isVerified ->
                 if (isVerified) {
-                    Result.success(rawUser)
+                    CustomResult.success(rawUser)
                 } else {
-                    Result.failure(CustomBadRequestException("Verify failed"))
+                    CustomResult.Failure(AccountError.from(CustomBadRequestException("Verify failed")))
                 }
             }
-        }.mapResult { rawUser ->
+        }.andThen(AccountError::fromError) { rawUser ->
             val id = rawUser.user.id
-            isTwoFactorEnabled(id).mapResult { enabled ->
+            isTwoFactorEnabled(id).andThen(AccountError::fromError) { enabled ->
                 if (enabled) {
-                    Result.success(SignInServiceResponse.RequiresTotp(id))
+                    CustomResult.success(SignInServiceResponse.RequiresTotp(id))
                 } else {
                     addUserLog(id, UserLogType.SIGN_IN, id ob ObjectType.USER)
                     processRawUserToUserInfo(listOf(rawUser)).map {
@@ -104,7 +113,7 @@ suspend fun Backend.signIn(data: String, pack: SignInBody): Result<SignInService
                     }
                 }
             }
-        }
+        }.mapError(AccountError::fromError)
 }
 
 sealed interface SignInServiceResponse {
@@ -121,37 +130,47 @@ sealed interface SignInServiceResponse {
     }
 }
 
-suspend fun Backend.adminSignIn(data: String, pack: SignInBody): Result<PanelAccountInfo> {
+suspend fun Backend.adminSignIn(data: String, pack: SignInBody): CustomResult<PanelAccountInfo, AccountError> {
     val f = finalData(data)
     return database.panelAccount.getRawUserAndPublicKeyByAddress(pack.address)
-        .filterNotNull {
-            CustomBadRequestException("user not found")
-        }.mapResult { (rawPanelAccount, publicKey) ->
-            getAlgo(rawPanelAccount.algoType).verify(publicKey, pack.signature, f).mapResult { isVerified ->
+        .requireValue(AccountError::fromError) {
+            AccountError.from(
+                CustomBadRequestException("user not found"),
+            )
+        }.andThen(AccountError::fromError) { (rawPanelAccount, publicKey) ->
+            getAlgo(
+                rawPanelAccount.algoType,
+            ).verify(publicKey, pack.signature, f).andThen(AccountError::fromError) { isVerified ->
                 if (isVerified) {
-                    Result.success(rawPanelAccount)
+                    CustomResult.success(rawPanelAccount)
                 } else {
-                    Result.failure(CustomBadRequestException("Verify failed"))
+                    CustomResult.Failure(AccountError.from(CustomBadRequestException("Verify failed")))
                 }
             }
         }.map { rawPanelAccount ->
             val id = rawPanelAccount.id
             PanelAccountInfo(id, rawPanelAccount.name)
-        }
+        }.mapError(AccountError::fromError)
 }
 
-suspend fun Backend.adminSignUp(data: String, pack: SignUpBody): Result<PanelAccountInfo> {
+suspend fun Backend.adminSignUp(data: String, pack: SignUpBody): CustomResult<PanelAccountInfo, AccountError> {
     val f = finalData(data)
     return getAlgo(AlgoType.P256).run {
-        verify(pack.publicKey, pack.signature, f).errorIfFalse {
-            CustomBadRequestException("Verify failed")
-        }.mapResult {
-            database.panelAccount.isUserNotExistsByPublicKey(pack.publicKey).errorIfFalse {
-                CustomBadRequestException("User exists")
+        verify(pack.publicKey, pack.signature, f).requireTrue(AccountError::fromError) {
+            AccountError.from(
+                CustomBadRequestException("Verify failed"),
+            )
+        }.andThen(AccountError::fromError) {
+            database.panelAccount.isUserNotExistsByPublicKey(
+                pack.publicKey,
+            ).requireTrue(AccountError::fromError) {
+                AccountError.from(
+                    CustomBadRequestException("User exists"),
+                )
             }
-        }.mapResult {
+        }.andThen(AccountError::fromError) {
             calcAddress(pack.publicKey)
-        }.mapResult { ad ->
+        }.andThen(AccountError::fromError) { ad ->
             val newId = SnowflakeFactory.nextId()
             val name = nameService.parse(newId)
             val user = PanelAccount(newId, name, PassType.RAW, AlgoType.P256, pack.publicKey, ad)
@@ -159,5 +178,5 @@ suspend fun Backend.adminSignUp(data: String, pack: SignUpBody): Result<PanelAcc
                 PanelAccountInfo(newId, name)
             }
         }
-    }
+    }.mapError(AccountError::fromError)
 }

@@ -80,6 +80,7 @@ import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.exitCommunity
 import com.storyteller_f.a.client.core.joinCommunity
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType

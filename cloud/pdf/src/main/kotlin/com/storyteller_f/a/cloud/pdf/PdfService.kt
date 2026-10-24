@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.pdf
 
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.datetime.LocalDateTime
 import org.intellij.markdown.MarkdownTokenTypes
@@ -36,7 +37,7 @@ interface PdfService {
         map: Map<String, File>,
         snapshotGeneration: SnapshotGeneration,
         pdfGenerationSpec: PdfGenerationSpec,
-    ): Result<Unit>
+    ): CustomResult<Unit, PdfError>
 }
 
 const val BASE_FONT_FAMILY = "Noto Serif"

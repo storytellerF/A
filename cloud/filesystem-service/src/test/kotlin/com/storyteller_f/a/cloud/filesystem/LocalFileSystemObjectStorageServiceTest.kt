@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.filesystem
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.services.filesystem.api.CopyPack
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
@@ -96,7 +97,11 @@ class LocalFileSystemObjectStorageServiceTest {
     @Test
     fun `storage operations propagate cancellation`() =
         runBlocking<Unit> {
-        val service = LocalFileSystemObjectStorageService("https://example.invalid", createTempDirectory("filesystem-"))
+        val service =
+            LocalFileSystemObjectStorageService(
+                "https://example.invalid",
+                createTempDirectory("filesystem-"),
+            )
         assertFailsWith<CancellationException> {
             service.useFileSystem<Unit> { throw CancellationException("cancelled") }
         }

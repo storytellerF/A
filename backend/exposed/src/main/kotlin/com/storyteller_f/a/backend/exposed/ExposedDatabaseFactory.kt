@@ -6,6 +6,7 @@ package com.storyteller_f.a.backend.exposed
 
 import com.storyteller_f.a.backend.core.DatabaseConnection
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.AssetTransactions
 import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
@@ -34,10 +35,13 @@ import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.UserTwoFactors
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.WorkerTasks
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.obj.ExplainResult
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.transformThrowable
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.Dispatchers
@@ -123,25 +127,26 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         return anchor
     }
 
-    suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): Result<T> {
+    suspend fun <T> dbQuery(block: suspend R2dbcTransaction.() -> T): CustomResult<T, DatabaseError> {
         val anchor = Exception("dbQuery failed")
-        return cancellableRunCatching {
+        return captureFailure(DatabaseError::from) {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
                     maxAttempts = 1
                     block()
                 }
             }
-        }.transformThrowable {
-            handleDatabaseException(it, anchor)
+        }.mapError { error ->
+            val cause = handleDatabaseException(error.cause, anchor)
+            if (cause.isDup()) DatabaseError.ConstraintViolation(cause) else DatabaseError.from(cause)
         }
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun <R> dbSearch(block: DatabaseSearchConfig<R, Query>.() -> Unit): Result<R> {
+    suspend fun <R> dbSearch(block: DatabaseSearchConfig<R, Query>.() -> Unit): CustomResult<R, DatabaseError> {
         val anchor = Exception("dbSearch failed")
         port?.let { explainQuery(it, block) }
-        return cancellableRunCatching {
+        return captureFailure(DatabaseError::from) {
             withContext(Dispatchers.IO) {
                 suspendTransaction(db = database) {
                     maxAttempts = 1
@@ -151,8 +156,9 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
                     }
                 }
             }
-        }.transformThrowable {
-            handleDatabaseException(it, anchor)
+        }.mapError { error ->
+            val cause = handleDatabaseException(error.cause, anchor)
+            if (cause.isDup()) DatabaseError.ConstraintViolation(cause) else DatabaseError.from(cause)
         }
     }
 
@@ -186,7 +192,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
     }
 
     private fun sendExplainResult(result: ExplainResult, continuation: CancellableContinuation<Unit>, port: Int) {
-        runCatching {
+        captureFailure(DatabaseError::from) {
             Socket("localhost", port).use { socket ->
                 socket.getOutputStream().use {
                     PrintWriter(it, true).use { writer ->
@@ -197,7 +203,7 @@ class ExposedDatabaseSession(val database: R2dbcDatabase, val port: Int?) {
         }.onSuccess {
             continuation.resume(Unit)
         }.onFailure {
-            continuation.resumeWithException(it)
+            continuation.resumeWithException(it.cause)
         }
     }
 

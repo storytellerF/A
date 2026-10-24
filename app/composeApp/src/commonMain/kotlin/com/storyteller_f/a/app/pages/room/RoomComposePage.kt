@@ -20,6 +20,7 @@ import com.storyteller_f.a.app.pages.title.CommonComposePage
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.createRoom
+import com.storyteller_f.result.onSuccess
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 

@@ -8,12 +8,13 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
 import com.storyteller_f.a.backend.core.service.CommunitySearchServiceFactory
-import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 
 class ElasticCommunitySearchService(connection: ElasticConnection) :
@@ -23,23 +24,23 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
         private const val INDEX_NAME = "topics"
     }
 
-    override suspend fun saveDocument(documents: List<CommunityDocument>): Result<Unit> {
-        if (documents.isEmpty()) return UNIT_RESULT
+    override suspend fun saveDocument(documents: List<CommunityDocument>): CustomResult<Unit, SearchError> {
+        if (documents.isEmpty()) return CustomResult.Success(Unit)
         return useElasticClient {
             saveDocumentList(connection, documents, INDEX_NAME)
         }
     }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         communityDocumentSearch: CommunityDocumentSearch,
-    ): Result<PaginationResult<CommunityDocument>> {
+    ): CustomResult<PaginationResult<CommunityDocument>, SearchError> {
         if (communityDocumentSearch is CommunityDocumentSearch.Keyword && communityDocumentSearch.keyword.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(communityDocumentSearch)
         Napier.i {

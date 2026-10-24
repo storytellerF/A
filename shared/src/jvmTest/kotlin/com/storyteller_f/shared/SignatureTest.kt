@@ -4,6 +4,7 @@
 
 package com.storyteller_f.shared
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.AlgoType
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test

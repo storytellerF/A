@@ -9,6 +9,7 @@ import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.client.core.getAllFiles
 import com.storyteller_f.a.client.core.searchFiles
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import kotlin.test.Test

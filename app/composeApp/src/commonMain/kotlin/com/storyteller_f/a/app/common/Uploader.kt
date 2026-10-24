@@ -6,6 +6,7 @@ package com.storyteller_f.a.app.common
 
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.app.error.UploadError
 import com.storyteller_f.a.app.pages.file.getUploadDataFromClipFile
 import com.storyteller_f.a.app.utils.ClientFile
 import com.storyteller_f.a.app.utils.getClientFile
@@ -15,13 +16,19 @@ import com.storyteller_f.a.client.core.getChunkStatus
 import com.storyteller_f.a.client.core.initChunkUpload
 import com.storyteller_f.a.client.core.upload
 import com.storyteller_f.a.client.core.uploadChunk
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.calculateFileChecksums
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.md5
 import com.storyteller_f.shared.utils.now
 import com.storyteller_f.shared.utils.safeMessage
@@ -214,7 +221,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
         }.onFailure { throwable ->
             updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(status = UploadStatus.FAILED, message = throwable.safeMessage())
+                it.copy(status = UploadStatus.FAILED, message = throwable.cause.safeMessage())
             }
         }
     }
@@ -229,11 +236,18 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
     ) {
         val collection = UploadCollection.fromInfo(uploadInfo)
         val pathHash = uploadInfo.pathHash
-        getUploadId(modelStorage, userSession, objectTuple, clipFile, uploadInfo, fileSha256).mapResult {
+        getUploadId(
+            modelStorage,
+            userSession,
+            objectTuple,
+            clipFile,
+            uploadInfo,
+            fileSha256,
+        ).andThen(UploadError::fromError) {
             userSession.getChunkStatus(it)
-        }.mapResult {
+        }.andThen(UploadError::fromError) {
             uploadChunkedFiles(userSession, it.id, clipFile, modelStorage, uploadInfo, it)
-        }.mapResult {
+        }.andThen(UploadError::fromError) {
             userSession.completeChunkUpload(it)
         }.onSuccess {
             updateUploadInfo(modelStorage, collection, pathHash) {
@@ -241,7 +255,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
         }.onFailure { throwable ->
             updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(status = UploadStatus.FAILED, message = throwable.safeMessage())
+                it.copy(status = UploadStatus.FAILED, message = throwable.cause.safeMessage())
             }
         }
     }
@@ -253,15 +267,15 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         clipFile: ClientFile,
         uploadInfo: UploadInfo,
         fileSha256: String,
-    ): Result<PrimaryKey> {
+    ): CustomResult<PrimaryKey, UploadError> {
         val collection = UploadCollection.fromInfo(uploadInfo)
         val pathHash = uploadInfo.pathHash
         val existingRecordId = modelStorage.upload.getDocument(collection, pathHash)?.recordId
-        return Result.success(existingRecordId).mapResult {
+        return CustomResult.success(existingRecordId).andThen(UploadError::fromError) {
             if (it == null) {
                 getUploadRecordId(userSession, objectTuple, clipFile, modelStorage, uploadInfo, fileSha256)
             } else {
-                Result.success(it)
+                CustomResult.success(it)
             }
         }
     }
@@ -273,8 +287,8 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         modelStorage: ModelStorage,
         uploadInfo: UploadInfo,
         status: CustomApi.Files.Chunks.StatusResponse,
-    ): Result<PrimaryKey> =
-        cancellableRunCatching {
+    ): CustomResult<PrimaryKey, UploadError> =
+        captureFailure(UploadError::from) {
         val collection = UploadCollection.fromInfo(uploadInfo)
         val pathHash = uploadInfo.pathHash
         val chunkSize = uploadInfo.chunkSize
@@ -325,7 +339,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
         }
         uploadRecordId
-    }
+    }.mapError(UploadError::fromError)
 
     private suspend fun getUploadRecordId(
         userSession: SimpleUserSessionManager,
@@ -334,7 +348,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         modelStorage: ModelStorage,
         uploadInfo: UploadInfo,
         fileSha256: String,
-    ): Result<PrimaryKey> {
+    ): CustomResult<PrimaryKey, UploadError> {
         val chunkSize = uploadInfo.chunkSize
         val pathHash = uploadInfo.pathHash
         val collection = UploadCollection.fromInfo(uploadInfo)
@@ -352,7 +366,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
         }.map {
             it.recordId
-        }
+        }.mapError(UploadError::fromError)
     }
 
     suspend fun updateUploadInfo(

@@ -5,7 +5,8 @@
 package com.storyteller_f.a.client.compose_core.components
 
 import androidx.media3.session.MediaController
-import com.storyteller_f.shared.utils.UNIT_RESULT
+import com.storyteller_f.a.client.compose_core.error.MediaError
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -89,13 +90,13 @@ suspend fun MediaPlayerService.startPlay(
     remoteMediaItem: RemoteMediaItem,
     localMediaPlaySession: LocalMediaPlaySession,
     playList: List<ConstPlayItem>,
-): Result<Unit> {
+): CustomResult<Unit, MediaError> {
     if (playList.isEmpty()) {
-        return Result.failure(Exception("can't play"))
+        return CustomResult.Failure(MediaError.from(Exception("can't play")))
     }
     val newSession = MediaPlaySession(remoteMediaItem, playList, listOf(localMediaPlaySession.uuid), null)
     get(newSession) { player, session ->
         player.playNewMedia(session.playList)
     }
-    return UNIT_RESULT
+    return CustomResult.Success(Unit)
 }

@@ -11,6 +11,8 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import com.storyteller_f.a.api.RoomInfoListResponse
+import com.storyteller_f.a.client.compose_core.error.UiOperationError
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.storage.RemoteKeyStorage
@@ -91,7 +93,7 @@ internal class PagingRefreshTest {
                 requests.add(key)
                 val page = tokens.dropLast(1).indexOf(key)
                 assertEquals(20, size)
-                Result.success(
+                CustomResult.success(
                     RoomInfoListResponse(
                         rooms.drop(page * 20).take(size).toImmutableList(),
                         Pagination(tokens[page + 1], null, 80),
@@ -119,14 +121,14 @@ internal class PagingRefreshTest {
         val source =
             RegularPagingSource<RoomInfo> { key, _ ->
                 if (key == null) {
-                    Result.success(
+                    CustomResult.success(
                         RoomInfoListResponse(
                             List(20) { RoomInfo.EMPTY }.toImmutableList(),
                             Pagination("opaque-next", null, 60),
                         ),
                     )
                 } else {
-                    Result.failure(IllegalStateException("Synthetic page failure"))
+                    CustomResult.Failure(UiOperationError.from(IllegalStateException("Synthetic page failure")))
                 }
             }
         val mediator = CustomRemoteMediator(keys.wrap("rooms"), source) { _, _ -> commits++ }
@@ -146,7 +148,7 @@ internal class PagingRefreshTest {
         val source =
             RegularPagingSource<RoomInfo> { key, _ ->
                 if (key == null) {
-                    Result.success(
+                    CustomResult.success(
                         RoomInfoListResponse(
                             List(20) { RoomInfo.EMPTY }.toImmutableList(),
                             Pagination("opaque-next", null, 60),

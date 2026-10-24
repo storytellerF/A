@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
 import org.openqa.selenium.By
 import org.openqa.selenium.Dimension
 import org.openqa.selenium.JavascriptExecutor
@@ -80,7 +83,7 @@ class WasmAppiumHelper(
     }
 
     private fun awaitStartup(browser: WebDriver, server: WasmDistributionServer) {
-        runCatching {
+        captureFailure(ArtifactCollectionError::CollectionFailed) {
             WebDriverWait(browser, Duration.ofSeconds(30)).until(
                 ExpectedConditions.presenceOfElementLocated(startupLocator),
             )
@@ -89,7 +92,7 @@ class WasmAppiumHelper(
             val errors = (browser as JavascriptExecutor).executeScript("return window.appiumErrors || [];")
             throw AssertionError(
                 "Wasm Appium semantics did not mount; requested=${server.requestedPaths}; body=${body ?: "<none>"}; errors=${errors ?: "<none>"}",
-                cause,
+                cause.cause,
             )
         }
     }

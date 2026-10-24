@@ -7,6 +7,7 @@ package com.storyteller_f.a.cloud.server
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.searchCommunityRooms
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.type.JoinStatusSearch
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -7,7 +7,9 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.type.PrimaryKey
 
@@ -23,11 +25,13 @@ sealed interface UserDocumentSearch {
 }
 
 interface UserSearchService {
-    suspend fun saveDocument(documents: List<UserDocument>): Result<Unit>
+    suspend fun saveDocument(documents: List<UserDocument>): CustomResult<Unit, SearchError>
 
-    suspend fun clean(): Result<Unit>
+    suspend fun clean(): CustomResult<Unit, SearchError>
 
-    suspend fun searchDocument(userDocumentSearch: UserDocumentSearch): Result<PaginationResult<UserDocument>>
+    suspend fun searchDocument(
+        userDocumentSearch: UserDocumentSearch,
+    ): CustomResult<PaginationResult<UserDocument>, SearchError>
 }
 
 interface UserSearchServiceFactory {

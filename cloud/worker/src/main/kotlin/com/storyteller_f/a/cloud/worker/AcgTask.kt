@@ -13,12 +13,18 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.cloud.error.WorkerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
@@ -34,30 +40,33 @@ suspend fun Backend.doAcgTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = ACG_LOG_TAG, throwable = failure) {
+            Napier.e(tag = ACG_LOG_TAG, throwable = failure.cause) {
                 "acg task failed"
             }
         },
     )
 }
 
-private suspend fun Backend.executeAcgTask(fetchSize: Int): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.TOPIC_ACG, fetchSize).mapResult { retryRecords ->
+private suspend fun Backend.executeAcgTask(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getTaskRecordsToRetry(
+        TaskRecordType.TOPIC_ACG,
+        fetchSize,
+    ).andThen(WorkerError::fromError) { retryRecords ->
         if (retryRecords.isEmpty()) {
             processNextAcgTopics(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processAcgRetry(retryRecord)
             }
-            Result.success(Unit)
+            CustomResult.success(Unit)
         }
-    }
+    }.mapError(WorkerError::fromError)
 
-private suspend fun Backend.processNextAcgTopics(fetchSize: Int): Result<Unit> =
-    database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).mapResult { taskRecord ->
+private suspend fun Backend.processNextAcgTopics(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getLatestTaskRecord(TaskRecordType.TOPIC_ACG).andThen(WorkerError::fromError) { taskRecord ->
         val cursor = AscCursor(taskRecord?.objectId ?: 0)
         database.topic.getTopicList(PrimaryKeyFetch(cursor = cursor, size = fetchSize))
-    }.mapResult { topics ->
+    }.andThen(WorkerError::fromError) { topics ->
         if (topics.isEmpty()) {
             Napier.i(tag = ACG_LOG_TAG) {
                 "no more topic"
@@ -70,8 +79,8 @@ private suspend fun Backend.processNextAcgTopics(fetchSize: Int): Result<Unit> =
                 processAcgTopic(topic, retryRecordId = null)
             }
         }
-        Result.success(Unit)
-    }
+        CustomResult.success(Unit)
+    }.mapError(WorkerError::fromError)
 
 private suspend fun Backend.processAcgRetry(record: TaskRecord) {
     executeTaskObject(
@@ -119,7 +128,7 @@ private suspend fun Backend.addAcgForTopic(topic: Topic, successRecord: TaskReco
 }
 
 private suspend fun Backend.notifyAcgAuthor(topic: Topic) {
-    UNIT_RESULT.mapResult {
+    CustomResult.Success(Unit).andThen(WorkerError::fromError) {
         val systemUserId = getSystemUserId()
         if (shouldNotifyAcgAuthor(topic.author, systemUserId)) {
             val rawUser =
@@ -131,9 +140,9 @@ private suspend fun Backend.notifyAcgAuthor(topic: Topic) {
                 buildAcgNotificationContent(topic.id),
             ).getOrThrow()
         }
-        UNIT_RESULT
+        CustomResult.Success(Unit)
     }.onFailure { failure ->
-        Napier.e(tag = ACG_LOG_TAG, throwable = failure) {
+        Napier.e(tag = ACG_LOG_TAG, throwable = failure.cause) {
             "failed to notify topic author ${topic.author} about ACG award for ${topic.id}"
         }
     }
@@ -143,7 +152,7 @@ private fun shouldNotifyAcgAuthor(authorId: PrimaryKey, systemUserId: PrimaryKey
 
 private fun buildAcgNotificationContent(topicId: PrimaryKey): String = "Your topic $topicId earned 1 ACG."
 
-private fun Result<Unit>.logAcgResult(objectId: PrimaryKey) {
+private fun CustomResult<Unit, WorkerError>.logAcgResult(objectId: PrimaryKey) {
     fold(
         onSuccess = {
             Napier.i(tag = ACG_LOG_TAG) {
@@ -151,7 +160,7 @@ private fun Result<Unit>.logAcgResult(objectId: PrimaryKey) {
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = ACG_LOG_TAG, throwable = failure) {
+            Napier.e(tag = ACG_LOG_TAG, throwable = failure.cause) {
                 "failed to process topic $objectId"
             }
         },

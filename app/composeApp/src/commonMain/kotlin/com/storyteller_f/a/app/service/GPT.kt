@@ -4,7 +4,11 @@
 
 package com.storyteller_f.a.app.service
 
+import com.storyteller_f.a.app.error.ModelGenerationError
 import com.storyteller_f.a.client.compose_core.utils.safeSink
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.mapError
 import io.github.irgaly.kfswatch.KfsDirectoryWatcher
 import io.github.irgaly.kfswatch.KfsDirectoryWatcherEvent
 import io.github.irgaly.kfswatch.KfsEvent
@@ -34,32 +38,34 @@ data class GPTModel(val key: String, val value: String)
 interface GPT {
     val supportList: List<String>
 
-    suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>>
+    suspend fun generate(path: String, prompt: String): CustomResult<Flow<GPTOutput>, ModelGenerationError>
 
     fun models(scope: CoroutineScope): Flow<List<GPTModel>>
 
-    suspend fun importModel(file: PlatformFile): Result<GPTModel> =
-        runCatching {
-        val name = file.name
-        require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
-            "unsupported model file: $name"
-        }
-        require(file.size() <= MAX_IMPORT_SIZE) {
-            "model file too large: ${file.size()} bytes"
-        }
-        val target = Path(getGPTModelDirectory(), name)
-        target.safeSink().buffered().use { it.write(file.readBytes()) }
-        GPTModel(target.name, target.toString())
-    }
+    suspend fun importModel(file: PlatformFile): CustomResult<GPTModel, ModelGenerationError> =
+        captureFailure(ModelGenerationError::from) {
+            val name = file.name
+            require(supportList.any { name.endsWith(it, ignoreCase = true) }) {
+                "unsupported model file: $name"
+            }
+            require(file.size() <= MAX_IMPORT_SIZE) {
+                "model file too large: ${file.size()} bytes"
+            }
+            val target = Path(getGPTModelDirectory(), name)
+            target.safeSink().buffered().use { it.write(file.readBytes()) }
+            GPTModel(target.name, target.toString())
+        }.mapError(ModelGenerationError::fromError)
 }
 
 class NoOpGPT : GPT {
     override val supportList: List<String> = emptyList()
 
-    override suspend fun generate(path: String, prompt: String): Result<Flow<GPTOutput>> =
-        Result.failure(
-        Exception("unsupported"),
-    )
+    override suspend fun generate(path: String, prompt: String): CustomResult<Flow<GPTOutput>, ModelGenerationError> =
+        CustomResult.Failure(
+            ModelGenerationError.from(
+                Exception("unsupported"),
+            ),
+        ).mapError(ModelGenerationError::fromError)
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> = emptyFlow()
 }

@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.backend.core
 
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
 import com.storyteller_f.a.backend.core.service.CommunitySearchServiceFactory
 import com.storyteller_f.a.backend.core.service.FileSearchService
@@ -20,9 +21,11 @@ import com.storyteller_f.a.backend.core.service.TopicSearchService
 import com.storyteller_f.a.backend.core.service.TopicSearchServiceFactory
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
+import com.storyteller_f.result.ConstraintFailure
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.recover
 import com.storyteller_f.shared.model.Dimension
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.recoverIfDup
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -225,13 +228,20 @@ fun getSvgDimension(viewBox: String?, pair: Pair<String?, String?>): Dimension? 
     return null
 }
 
-suspend fun <T> Backend.addIfNotExists(get: suspend () -> Result<T?>, add: suspend () -> Result<T>): Result<T?> =
-    get().mapResult {
-        if (it != null) {
-            Result.success(it)
-        } else {
-            add().recoverIfDup(database::isDup) {
+suspend fun <T> Backend.addIfNotExists(
+    get: suspend () -> CustomResult<T?, DatabaseError>,
+    add: suspend () -> CustomResult<T, DatabaseError>,
+): CustomResult<T?, DatabaseError> =
+    get().andThen(DatabaseError::fromError) {
+    if (it != null) {
+        CustomResult.success(it)
+    } else {
+        add().recover(DatabaseError::fromError) { failure ->
+            if (failure is ConstraintFailure) {
                 get()
+            } else {
+                CustomResult.Failure(failure)
             }
         }
     }
+}

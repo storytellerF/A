@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.types.RawUser
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.cloud.worker.sendTopicToNotificationRoom
+import com.storyteller_f.result.getOrElse
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.type.UserStatus
 import com.storytellerf.a.cloud.worker.getSystemUserId
@@ -26,13 +27,13 @@ internal suspend fun Backend.moderateTopic(topic: Topic, reviewer: TopicSafetyRe
 
 private suspend fun Backend.getTopicAuthor(topic: Topic): RawUser =
     database.user.getRawUser(ObjectFetch.IdFetch(topic.author)).getOrElse { failure ->
-        throw TopicModerationDataAccessException("Failed to load topic author ${topic.author}", failure)
+        throw TopicModerationDataAccessException("Failed to load topic author ${topic.author}", failure.cause)
     } ?: throw TopicModerationDataAccessException("Topic author ${topic.author} not found")
 
 private suspend fun Backend.updateTopicAuthorStatus(topic: Topic) {
     val isUpdated =
         database.user.updateUserStatus(topic.author, UserStatus.READ_ONLY).getOrElse { failure ->
-            throw TopicModerationDataAccessException("Failed to update topic author ${topic.author}", failure)
+            throw TopicModerationDataAccessException("Failed to update topic author ${topic.author}", failure.cause)
         }
     if (!isUpdated) {
         throw TopicModerationDataAccessException("Topic author ${topic.author} not found")
@@ -45,7 +46,7 @@ private suspend fun Backend.notifyTopicAuthor(topic: Topic, rawUser: RawUser) {
         rawUser.user,
         buildModerationNotificationContent(topic.id),
     ).getOrElse { failure ->
-        throw TopicModerationDataAccessException("Failed to notify topic author ${topic.author}", failure)
+        throw TopicModerationDataAccessException("Failed to notify topic author ${topic.author}", failure.cause)
     }
 }
 

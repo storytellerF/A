@@ -7,6 +7,8 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.ObjectType
@@ -58,13 +60,15 @@ sealed interface MemberDocumentSearch {
 }
 
 interface MemberSearchService {
-    suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit>
+    suspend fun saveDocument(documents: List<MemberDocument>): CustomResult<Unit, SearchError>
 
-    suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit>
+    suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): CustomResult<Unit, SearchError>
 
-    suspend fun clean(): Result<Unit>
+    suspend fun clean(): CustomResult<Unit, SearchError>
 
-    suspend fun searchDocument(memberDocumentSearch: MemberDocumentSearch): Result<PaginationResult<MemberDocument>>
+    suspend fun searchDocument(
+        memberDocumentSearch: MemberDocumentSearch,
+    ): CustomResult<PaginationResult<MemberDocument>, SearchError>
 }
 
 interface MemberSearchServiceFactory {

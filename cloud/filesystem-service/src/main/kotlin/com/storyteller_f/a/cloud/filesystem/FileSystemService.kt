@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.filesystem
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.services.filesystem.api.CopyPack
 import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord

@@ -19,14 +19,16 @@ actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassIn
         Napier.d { "Injected session file does not exist" }
         return null
     }
-    return runCatching {
+    return try {
         val injected = Json.decodeFromString(ConvertedRawUserPassInfo.serializer(), file.readText())
         Napier.d { "Injected desktop session loaded" }
         injected
-    }.getOrElse { throwable ->
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
+    } catch (expected: Exception) {
         throw IllegalStateException(
             "Injected session file exists but cannot be loaded: $sessionFilePath",
-            throwable,
+            expected,
         )
     }
 }

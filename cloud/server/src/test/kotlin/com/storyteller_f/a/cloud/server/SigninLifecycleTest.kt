@@ -6,6 +6,7 @@ package com.storyteller_f.a.cloud.server
 
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.signOutAll
+import com.storyteller_f.result.getOrThrow
 import io.ktor.websocket.CloseReason
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first

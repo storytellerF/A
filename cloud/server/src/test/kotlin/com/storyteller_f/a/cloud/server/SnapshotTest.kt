@@ -9,6 +9,8 @@ import com.storyteller_f.a.backend.core.setLogPath
 import com.storyteller_f.a.cloud.openpdf.OpenPdf
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.model.UserInfo
 import de.redsix.pdfcompare.PdfComparator

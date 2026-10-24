@@ -20,6 +20,7 @@ import com.storyteller_f.a.client.compose_core.components.LocalMediaPlaySession
 import com.storyteller_f.a.client.compose_core.components.MediaPlayerService
 import com.storyteller_f.a.client.compose_core.components.RemoteMediaItem
 import com.storyteller_f.a.client.compose_core.components.startPlay
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 
 class PlaybackService : MediaSessionService() {
@@ -95,6 +96,6 @@ suspend fun <C> CustomGlobalDialogController<C>.startPlayMedia(
 ) {
     useResult {
         mediaPlayerService.startPlay(remoteMediaItem, localMediaPlaySession, playList)
-        Result.success(Unit)
+        CustomResult.success(Unit)
     }
 }

@@ -91,6 +91,7 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            api(projects.result)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.cryptography.core)

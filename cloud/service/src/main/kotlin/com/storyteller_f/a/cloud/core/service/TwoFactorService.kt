@@ -9,12 +9,17 @@ import com.storyteller_f.a.backend.core.CustomBadRequestException
 import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.types.UserTwoFactor
 import com.storyteller_f.a.backend.core.types.toTwoFactorSettingsInfo
+import com.storyteller_f.a.cloud.core.service.error.ContainerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.RecoveryCodesResponse
 import com.storyteller_f.shared.model.TotpSetupInfo
 import com.storyteller_f.shared.model.TwoFactorSettingsInfo
 import com.storyteller_f.shared.model.TwoFactorType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.now
 import java.net.URLEncoder
 import java.nio.ByteBuffer
@@ -37,74 +42,74 @@ private const val BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
 
 private val secureRandom = SecureRandom()
 
-suspend fun Backend.getTwoFactorSettings(uid: PrimaryKey): Result<TwoFactorSettingsInfo> =
+suspend fun Backend.getTwoFactorSettings(uid: PrimaryKey): CustomResult<TwoFactorSettingsInfo, ContainerError> =
     database.user.getUserTwoFactor(
         uid,
     ).map {
         it.toTwoFactorSettingsInfo()
-    }
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.setupTotp(uid: PrimaryKey): Result<TotpSetupInfo> =
-    cancellableRunCatching {
-    val secret = generateBase32Secret()
-    val recoveryCodes = generateRecoveryCodes()
-    val rawUser =
-        database.user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow()
-            ?: throw CustomBadRequestException("user not found")
-    val label = rawUser.user.aid ?: rawUser.user.nickname.ifBlank { rawUser.user.address }
-    val otpauthUri = buildOtpAuthUri(label, secret)
-    database.user.upsertUserTwoFactor(
-        UserTwoFactor(
-            uid,
-            enabled = false,
-            type = TwoFactorType.TOTP,
-            totpSecret = secret,
-            recoveryCodeHashes = recoveryCodes.map(::hashRecoveryCode),
-            updatedAt = now(),
-        ),
-    ).getOrThrow()
-    TotpSetupInfo(secret, otpauthUri, recoveryCodes)
-}
+suspend fun Backend.setupTotp(uid: PrimaryKey): CustomResult<TotpSetupInfo, ContainerError> =
+    captureFailure(ContainerError::from) {
+        val secret = generateBase32Secret()
+        val recoveryCodes = generateRecoveryCodes()
+        val rawUser =
+            database.user.getRawUser(ObjectFetch.IdFetch(uid), uid).getOrThrow()
+                ?: throw CustomBadRequestException("user not found")
+        val label = rawUser.user.aid ?: rawUser.user.nickname.ifBlank { rawUser.user.address }
+        val otpauthUri = buildOtpAuthUri(label, secret)
+        database.user.upsertUserTwoFactor(
+            UserTwoFactor(
+                uid,
+                enabled = false,
+                type = TwoFactorType.TOTP,
+                totpSecret = secret,
+                recoveryCodeHashes = recoveryCodes.map(::hashRecoveryCode),
+                updatedAt = now(),
+            ),
+        ).getOrThrow()
+        TotpSetupInfo(secret, otpauthUri, recoveryCodes)
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.enableTotp(uid: PrimaryKey, code: String): Result<TwoFactorSettingsInfo> =
-    cancellableRunCatching {
-    val current =
-        database.user.getUserTwoFactor(uid).getOrThrow()
-            ?: throw CustomBadRequestException("totp setup required")
-    if (!verifyTotpCode(current.totpSecret, code)) {
-        throw CustomBadRequestException("invalid totp code")
-    }
-    database.user.upsertUserTwoFactor(current.copy(enabled = true, updatedAt = now())).getOrThrow()
-    TwoFactorSettingsInfo(enabled = true, type = TwoFactorType.TOTP)
-}
+suspend fun Backend.enableTotp(uid: PrimaryKey, code: String): CustomResult<TwoFactorSettingsInfo, ContainerError> =
+    captureFailure(ContainerError::from) {
+        val current =
+            database.user.getUserTwoFactor(uid).getOrThrow()
+                ?: throw CustomBadRequestException("totp setup required")
+        if (!verifyTotpCode(current.totpSecret, code)) {
+            throw CustomBadRequestException("invalid totp code")
+        }
+        database.user.upsertUserTwoFactor(current.copy(enabled = true, updatedAt = now())).getOrThrow()
+        TwoFactorSettingsInfo(enabled = true, type = TwoFactorType.TOTP)
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.disableTwoFactor(uid: PrimaryKey): Result<TwoFactorSettingsInfo> =
+suspend fun Backend.disableTwoFactor(uid: PrimaryKey): CustomResult<TwoFactorSettingsInfo, ContainerError> =
     database.user.disableUserTwoFactor(
         uid,
     ).map {
         TwoFactorSettingsInfo(enabled = false)
-    }
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.generateRecoveryCodes(uid: PrimaryKey): Result<RecoveryCodesResponse> =
-    cancellableRunCatching {
-    database.user.getUserTwoFactor(uid).getOrThrow()
-        ?: throw CustomBadRequestException("two factor not configured")
-    val recoveryCodes = generateRecoveryCodes()
-    database.user.updateRecoveryCodeHashes(uid, recoveryCodes.map(::hashRecoveryCode)).getOrThrow()
-    RecoveryCodesResponse(recoveryCodes)
-}
+suspend fun Backend.generateRecoveryCodes(uid: PrimaryKey): CustomResult<RecoveryCodesResponse, ContainerError> =
+    captureFailure(ContainerError::from) {
+        database.user.getUserTwoFactor(uid).getOrThrow()
+            ?: throw CustomBadRequestException("two factor not configured")
+        val recoveryCodes = generateRecoveryCodes()
+        database.user.updateRecoveryCodeHashes(uid, recoveryCodes.map(::hashRecoveryCode)).getOrThrow()
+        RecoveryCodesResponse(recoveryCodes)
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.isTwoFactorEnabled(uid: PrimaryKey): Result<Boolean> =
+suspend fun Backend.isTwoFactorEnabled(uid: PrimaryKey): CustomResult<Boolean, ContainerError> =
     database.user.getUserTwoFactor(uid).map {
-    it?.enabled == true
-}
+        it?.enabled == true
+    }.mapError(ContainerError::fromError)
 
-suspend fun Backend.verifyUserTotp(uid: PrimaryKey, code: String): Result<Boolean> =
+suspend fun Backend.verifyUserTotp(uid: PrimaryKey, code: String): CustomResult<Boolean, ContainerError> =
     database.user.getUserTwoFactor(
-    uid,
-).map { twoFactor ->
-    twoFactor?.enabled == true && verifyTotpCode(twoFactor.totpSecret, code)
-}
+        uid,
+    ).map { twoFactor ->
+        twoFactor?.enabled == true && verifyTotpCode(twoFactor.totpSecret, code)
+    }.mapError(ContainerError::fromError)
 
 private fun generateBase32Secret(): String {
     val bytes =

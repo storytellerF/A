@@ -7,7 +7,9 @@ package com.storyteller_f.a.backend.core.service
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.type.PrimaryKey
@@ -49,13 +51,15 @@ sealed interface TopicDocumentSearch {
 }
 
 interface TopicSearchService {
-    suspend fun saveDocument(documents: List<TopicDocument>): Result<Unit>
+    suspend fun saveDocument(documents: List<TopicDocument>): CustomResult<Unit, SearchError>
 
-    suspend fun getDocuments(idList: List<PrimaryKey>): Result<List<TopicDocument?>>
+    suspend fun getDocuments(idList: List<PrimaryKey>): CustomResult<List<TopicDocument?>, SearchError>
 
-    suspend fun clean(): Result<Unit>
+    suspend fun clean(): CustomResult<Unit, SearchError>
 
-    suspend fun searchDocument(topicDocumentSearch: TopicDocumentSearch): Result<PaginationResult<TopicDocument>>
+    suspend fun searchDocument(
+        topicDocumentSearch: TopicDocumentSearch,
+    ): CustomResult<PaginationResult<TopicDocument>, SearchError>
 }
 
 interface TopicSearchServiceFactory {

@@ -5,10 +5,12 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.error.LockError
+import com.storyteller_f.result.CustomResult
 
 interface LockService {
     /** Runs [block] while holding the lock identified by [key]. */
-    suspend fun <T> withLock(key: String, block: suspend () -> Result<T>): Result<T>
+    suspend fun <T> withLock(key: String, block: suspend () -> CustomResult<T, LockError>): CustomResult<T, LockError>
 }
 
 interface LockServiceFactory {

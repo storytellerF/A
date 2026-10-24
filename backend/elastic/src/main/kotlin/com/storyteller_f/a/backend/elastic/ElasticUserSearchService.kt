@@ -8,11 +8,13 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 
 class ElasticUserSearchService(connection: ElasticConnection) :
@@ -21,21 +23,21 @@ class ElasticUserSearchService(connection: ElasticConnection) :
     companion object {
         const val INDEX_NAME = "users"
     }
-    override suspend fun saveDocument(documents: List<UserDocument>): Result<Unit> =
+    override suspend fun saveDocument(documents: List<UserDocument>): CustomResult<Unit, SearchError> =
         useElasticClient {
-        saveDocumentList(connection, documents, INDEX_NAME)
-    }
+            saveDocumentList(connection, documents, INDEX_NAME)
+        }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         userDocumentSearch: UserDocumentSearch,
-    ): Result<PaginationResult<UserDocument>> {
+    ): CustomResult<PaginationResult<UserDocument>, SearchError> {
         if (userDocumentSearch is UserDocumentSearch.Keyword && userDocumentSearch.word.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(userDocumentSearch)
         Napier.i {

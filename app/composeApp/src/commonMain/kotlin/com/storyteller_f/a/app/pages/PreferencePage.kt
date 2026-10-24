@@ -22,6 +22,7 @@ import com.storyteller_f.a.app.LocalGlobalDialog
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.components.StringListPreference
 import com.storyteller_f.a.app.current_selected
+import com.storyteller_f.a.app.error.PreferenceError
 import com.storyteller_f.a.app.home_start_destination
 import com.storyteller_f.a.app.home_start_destination_communities
 import com.storyteller_f.a.app.home_start_destination_rooms
@@ -35,6 +36,8 @@ import com.storyteller_f.a.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.a.client.compose_core.components.CustomIcon
 import com.storyteller_f.a.client.compose_core.components.IconRes
 import com.storyteller_f.a.client.compose_core.components.LocalToaster
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import io.github.vinceglb.filekit.FileKit
@@ -115,8 +118,8 @@ private fun TranslateModelPreferenceItem() {
                             FileKit.openFilePicker()?.let { file ->
                                 gpt.importModel(file).getOrThrow()
                                 toast.showMessage("${file.name} imported")
-                                Result.success(Unit)
-                            } ?: Result.failure(Exception("No file selected"))
+                                CustomResult.success(Unit)
+                            } ?: CustomResult.Failure(PreferenceError.from(Exception("No file selected")))
                         }
                     }
                 }) {
@@ -138,14 +141,14 @@ private fun TranslateModelPreferenceItem() {
             content =
             TopicContent.Plain(
                 """Jonas, a 12-year-old boy, lives in
-            |a community isolated from all except a few similar towns, 
-            |where everyone has an assigned role. 
-            |With the annual Ceremony of Twelve upcoming, 
-            |he is nervous, for there he will be assigned his life's work. 
-            |He seeks reassurance from his father, 
-            |a Nurturer (who cares for the infants in the Community) and his mother, 
-            |a high-ranking official in the Department of Justice. 
-            |He is told by his parents that the Elders, 
+            |a community isolated from all except a few similar towns,
+            |where everyone has an assigned role.
+            |With the annual Ceremony of Twelve upcoming,
+            |he is nervous, for there he will be assigned his life's work.
+            |He seeks reassurance from his father,
+            |a Nurturer (who cares for the infants in the Community) and his mother,
+            |a high-ranking official in the Department of Justice.
+            |He is told by his parents that the Elders,
             |who assign the children their careers, are always right.
                 """.trimMargin(),
             ),

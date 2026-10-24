@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.cloud.cli
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.Type2Algo
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed

@@ -11,6 +11,7 @@ import com.storyteller_f.a.backend.core.ObjectFetch
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Community
@@ -25,15 +26,17 @@ import com.storyteller_f.a.backend.exposed.tables.Aids
 import com.storyteller_f.a.backend.exposed.tables.Communities
 import com.storyteller_f.a.backend.exposed.tables.Members
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapPresent
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.SortOrder
@@ -56,9 +59,9 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean?,
         uid: PrimaryKey?,
-    ): Result<RawCommunity?> {
+    ): CustomResult<RawCommunity?, DatabaseError> {
         if (uid == null && fillJoinInfo == true) {
-            return Result.failure(UnauthorizedException())
+            return CustomResult.Failure(DatabaseError.from(UnauthorizedException()))
         }
 
         return getCommunityByPredicate {
@@ -68,9 +71,9 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
                     is ObjectFetch.IdFetch -> Communities.id eq objectFetch.id
                 }
             }
-        }.mapResultIfNotNull { community ->
+        }.andThenPresent(DatabaseError::fromError) { community ->
             processCommunityToRawCommunity(uid, listOf(community))
-        }.mapIfNotNull {
+        }.mapPresent {
             it.first()
         }
     }
@@ -100,7 +103,7 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
         getCommunityCountByPredicate {
             buildCommunitySearchQuery(joinSearch, hasPosterSearch)
         },
-    ).mapPagingResultNotNull { list ->
+    ).mapPagingResultNotNull(DatabaseError::fromError) { list ->
         processCommunityToRawCommunity(
             when (joinSearch) {
                 is JoinSearch.Joined -> joinSearch.uid
@@ -126,64 +129,69 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
             }
         }
 
-    override suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>> =
+    override suspend fun createCommunity(
+        community: Community,
+        memberId: PrimaryKey,
+    ): CustomResult<Pair<Community, Member>, DatabaseError> =
         databaseSession.dbQuery {
-            check(
-                Communities.insert {
-                    it[Communities.id] = community.id
-                    it[Communities.name] = community.name
-                    it[Communities.owner] = community.owner
-                    it[Communities.createdTime] = community.createdTime
-                    it[Communities.memberPolicy] = community.memberPolicy
-                    community.fontSettings?.let { fs ->
-                        it[Communities.fontSettings] = json.encodeToString(fs)
-                    }
-                }.insertedCount > 0,
-            ) {
-                "insert community failed"
-            }
-            check(
-                Aids.insert {
-                    it[value] = community.aid
-                    it[objectId] = community.id
-                    it[objectType] = ObjectType.COMMUNITY
-                }.insertedCount > 0,
-            ) {
-                "insert aid failed"
-            }
-            val member =
-                Member(
-                    memberId,
-                    community.owner,
-                    community.id,
-                    ObjectType.COMMUNITY,
-                    community.createdTime,
-                    MemberStatus.JOINED,
-                    community.createdTime,
-                )
-            check(
-                Members.insert {
-                    it[id] = member.id
-                    it[createdTime] = member.createdTime
-                    it[joinedTime] = member.joinedTime
-                    it[invitedTime] = member.invitedTime
-                    it[uid] = member.uid
-                    it[objectId] = member.objectId
-                    it[objectType] = member.objectType
-                    it[status] = member.status
-                }.insertedCount > 0,
-            ) {
-                "join failed"
-            }
-            community to member
+        check(
+            Communities.insert {
+                it[Communities.id] = community.id
+                it[Communities.name] = community.name
+                it[Communities.owner] = community.owner
+                it[Communities.createdTime] = community.createdTime
+                it[Communities.memberPolicy] = community.memberPolicy
+                community.fontSettings?.let { fs ->
+                    it[Communities.fontSettings] = json.encodeToString(fs)
+                }
+            }.insertedCount > 0,
+        ) {
+            "insert community failed"
         }
+        check(
+            Aids.insert {
+                it[value] = community.aid
+                it[objectId] = community.id
+                it[objectType] = ObjectType.COMMUNITY
+            }.insertedCount > 0,
+        ) {
+            "insert aid failed"
+        }
+        val member =
+            Member(
+                memberId,
+                community.owner,
+                community.id,
+                ObjectType.COMMUNITY,
+                community.createdTime,
+                MemberStatus.JOINED,
+                community.createdTime,
+            )
+        check(
+            Members.insert {
+                it[id] = member.id
+                it[createdTime] = member.createdTime
+                it[joinedTime] = member.joinedTime
+                it[invitedTime] = member.invitedTime
+                it[uid] = member.uid
+                it[objectId] = member.objectId
+                it[objectType] = member.objectType
+                it[status] = member.status
+            }.insertedCount > 0,
+        ) {
+            "join failed"
+        }
+        community to member
+    }
 
-    override suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>> {
+    override suspend fun getRawCommunities(
+        objectListFetch: ObjectListFetch,
+    ): CustomResult<List<RawCommunity>, DatabaseError> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         return getCommunityListByPredicate {
             where {
@@ -192,7 +200,7 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
                     is ObjectListFetch.IdListFetch -> Communities.id inList objectListFetch.idList
                 }
             }
-        }.mapResult {
+        }.andThen(DatabaseError::fromError) {
             processCommunityToRawCommunity(null, it)
         }
     }

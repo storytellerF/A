@@ -9,10 +9,18 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.endpoint4k.ktor.client.invoke
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.mapError
 import kotlinx.collections.immutable.toImmutableList
 
-suspend fun UserSessionManager.getUnreadRoomActivities(query: PaginationQuery): Result<RoomActivityListResponse> =
-    serviceCatching { this@getUnreadRoomActivities.decryptRoomActivities(CustomApi.Users.Unread.activities(query)) }
+suspend fun UserSessionManager.getUnreadRoomActivities(
+    query: PaginationQuery,
+): CustomResult<RoomActivityListResponse, RequestError> =
+    serviceCatching {
+    this@getUnreadRoomActivities.decryptRoomActivities(
+        CustomApi.Users.Unread.activities(query),
+    )
+}.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.getJoinedPinnedTopics(query: PaginationQuery) =
     serviceCatching { CustomApi.Users.PinnedTopics.get(query) }

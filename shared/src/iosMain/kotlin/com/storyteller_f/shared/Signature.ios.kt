@@ -4,14 +4,16 @@
 
 package com.storyteller_f.shared
 
-import com.storyteller_f.shared.utils.cancellableRunCatching
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.shared.model.CryptoError
+import com.storyteller_f.shared.model.captureCrypto
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.algorithms.EC
 import dev.whyoleg.cryptography.algorithms.ECDSA
 import dev.whyoleg.cryptography.algorithms.RIPEMD160
 
-actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
-    cancellableRunCatching {
+actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
+    captureCrypto {
         CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
             .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKeyStr.encodeToByteArray())
             .publicKey
@@ -19,8 +21,8 @@ actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): 
             .toHexString()
     }
 
-actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
-    cancellableRunCatching {
+actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
+    captureCrypto {
     CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
         .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKeyStr.encodeToByteArray())
         .encodeToByteArray(EC.PrivateKey.Format.DER)

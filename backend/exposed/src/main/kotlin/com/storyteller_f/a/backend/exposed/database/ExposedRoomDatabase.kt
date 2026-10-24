@@ -11,6 +11,7 @@ import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.RoomDatabase
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Member
@@ -28,15 +29,17 @@ import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.findRoomById
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapPresent
 import com.storyteller_f.shared.model.UserPubKeyInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
@@ -77,7 +80,7 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
         getRoomCountByPredicate {
             buildRoomSearchWhereQuery(joinSearch, community)
         },
-    ).mapPagingResultNotNull {
+    ).mapPagingResultNotNull(DatabaseError::fromError) {
         processRoomListToRawRoom(uid, it)
     }
 
@@ -124,8 +127,12 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean?,
         uid: PrimaryKey?,
-    ): Result<RawRoom?> {
-        if (uid == null && fillJoinInfo == true) return Result.failure(UnauthorizedException())
+    ): CustomResult<RawRoom?, DatabaseError> {
+        if (uid == null && fillJoinInfo == true) {
+            return CustomResult.Failure(
+                DatabaseError.from(UnauthorizedException()),
+            )
+        }
 
         return getRoomByPredicate {
             where {
@@ -134,67 +141,73 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
                     is ObjectFetch.IdFetch -> Rooms.id eq objectFetch.id
                 }
             }
-        }.mapResultIfNotNull { room ->
+        }.andThenPresent(DatabaseError::fromError) { room ->
             processRoomListToRawRoom(uid, listOf(room))
-        }.mapIfNotNull {
+        }.mapPresent {
             it.first()
         }
     }
 
-    suspend fun processRoomListToRawRoom(uid: PrimaryKey?, rooms: List<Room>): Result<List<RawRoom>> =
+    suspend fun processRoomListToRawRoom(
+        uid: PrimaryKey?,
+        rooms: List<Room>,
+    ): CustomResult<List<RawRoom>, DatabaseError> =
         containerDatabase.getContainerInfo(
-            rooms.map {
-                it.id
-            },
-            uid,
-        ).map { map ->
-            rooms.map { room ->
-                val containerInfo = map[room.id]
-                RawRoom(
-                    room,
-                    containerInfo?.member?.takeIf { it.status == MemberStatus.JOINED }?.joinedTime,
-                    containerInfo?.userTopicRead?.topicId,
-                    containerInfo?.memberCount,
-                    containerInfo?.latestTopicId,
-                    containerInfo?.favoriteId,
-                    containerInfo?.subscriptionId,
-                )
-            }
+        rooms.map {
+            it.id
+        },
+        uid,
+    ).map { map ->
+        rooms.map { room ->
+            val containerInfo = map[room.id]
+            RawRoom(
+                room,
+                containerInfo?.member?.takeIf { it.status == MemberStatus.JOINED }?.joinedTime,
+                containerInfo?.userTopicRead?.topicId,
+                containerInfo?.memberCount,
+                containerInfo?.latestTopicId,
+                containerInfo?.favoriteId,
+                containerInfo?.subscriptionId,
+            )
         }
-
-    override suspend fun createRoom(room: Room, members: List<Member>): Result<Room> =
-        databaseSession.dbQuery {
-        check(
-            Rooms.insert { statement ->
-                statement[Rooms.id] = room.id
-                statement[Rooms.createdTime] = room.createdTime
-                statement[Rooms.name] = room.name
-                statement[Rooms.icon] = room.icon
-                statement[Rooms.creator] = room.creator
-                statement[Rooms.communityId] = room.communityId
-            }.insertedCount > 0,
-        ) {
-            "create room failed"
-        }
-        check(
-            Aids.insert {
-                it[value] = room.aid
-                it[objectId] = room.id
-                it[objectType] = ObjectType.ROOM
-            }.insertedCount > 0,
-        ) {
-            "create aid failed"
-        }
-        batchAddMembers(members)
-        room
     }
 
-    override suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawRoom>> {
+    override suspend fun createRoom(room: Room, members: List<Member>): CustomResult<Room, DatabaseError> =
+        databaseSession.dbQuery {
+            check(
+                Rooms.insert { statement ->
+                    statement[Rooms.id] = room.id
+                    statement[Rooms.createdTime] = room.createdTime
+                    statement[Rooms.name] = room.name
+                    statement[Rooms.icon] = room.icon
+                    statement[Rooms.creator] = room.creator
+                    statement[Rooms.communityId] = room.communityId
+                }.insertedCount > 0,
+            ) {
+                "create room failed"
+            }
+            check(
+                Aids.insert {
+                    it[value] = room.aid
+                    it[objectId] = room.id
+                    it[objectType] = ObjectType.ROOM
+                }.insertedCount > 0,
+            ) {
+                "create aid failed"
+            }
+            batchAddMembers(members)
+            room
+        }
+
+    override suspend fun getRawRooms(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey?,
+    ): CustomResult<List<RawRoom>, DatabaseError> {
         if (objectListFetch is ObjectListFetch.AidListFetch && objectListFetch.aidList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         if (objectListFetch is ObjectListFetch.IdListFetch && objectListFetch.idList.isEmpty()) {
-            return Result.success(emptyList())
+            return CustomResult.success(emptyList())
         }
         return getRoomListByPredicate {
             where {
@@ -203,7 +216,7 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
                     is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
                 }
             }
-        }.mapResult {
+        }.andThen(DatabaseError::fromError) {
             processRoomListToRawRoom(uid, it)
         }
     }
@@ -294,7 +307,7 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
                         }
                     }
             },
-        ).mapPagingResultNotNull {
+        ).mapPagingResultNotNull(DatabaseError::fromError) {
             processRoomListToRawRoom(null, it)
         }
 

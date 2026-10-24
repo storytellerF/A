@@ -8,11 +8,13 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.RoomDocument
 import com.storyteller_f.a.backend.core.service.RoomDocumentSearch
 import com.storyteller_f.a.backend.core.service.RoomSearchService
 import com.storyteller_f.a.backend.core.service.RoomSearchServiceFactory
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 
 class ElasticRoomSearchService(connection: ElasticConnection) :
@@ -22,21 +24,21 @@ class ElasticRoomSearchService(connection: ElasticConnection) :
         const val INDEX_NAME = "rooms"
     }
 
-    override suspend fun saveDocument(documents: List<RoomDocument>): Result<Unit> =
+    override suspend fun saveDocument(documents: List<RoomDocument>): CustomResult<Unit, SearchError> =
         useElasticClient {
-        saveDocumentList(connection, documents, INDEX_NAME)
-    }
+            saveDocumentList(connection, documents, INDEX_NAME)
+        }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         roomDocumentSearch: RoomDocumentSearch,
-    ): Result<PaginationResult<RoomDocument>> {
+    ): CustomResult<PaginationResult<RoomDocument>, SearchError> {
         if (roomDocumentSearch is RoomDocumentSearch.Keyword && roomDocumentSearch.words.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(roomDocumentSearch)
         Napier.i {

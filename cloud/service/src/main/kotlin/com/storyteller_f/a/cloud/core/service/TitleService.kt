@@ -19,6 +19,17 @@ import com.storyteller_f.a.backend.core.types.Title
 import com.storyteller_f.a.backend.core.types.Topic
 import com.storyteller_f.a.backend.core.types.isExpired
 import com.storyteller_f.a.backend.core.types.toTitleInfo
+import com.storyteller_f.a.cloud.core.service.error.TitleError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleInfo
@@ -32,10 +43,6 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.now
 import io.github.aakira.napier.Napier
 
@@ -53,11 +60,14 @@ suspend fun Backend.getUserTitles(
     type,
     scopeId,
     titleStatus,
-).mapPagingResultIfNotNullNullable { list ->
+).mapPagingResultIfNotNullNullable(TitleError::fromError) { list ->
     processTitleList(list, uid)
 }
 
-private suspend fun Backend.processTitleList(list: List<RawTitle>, uid: PrimaryKey?): Result<List<TitleInfo>?> {
+private suspend fun Backend.processTitleList(
+    list: List<RawTitle>,
+    uid: PrimaryKey?,
+): CustomResult<List<TitleInfo>?, TitleError> {
     val titleIds = list.map { it.title.id }
     val favoriteMap =
         if (uid != null && titleIds.isNotEmpty()) {
@@ -84,7 +94,7 @@ private suspend fun Backend.processTitleList(list: List<RawTitle>, uid: PrimaryK
     val communityIdList = getCommunityIdList(list)
     val roomIdList = getRoomIdList(list)
 
-    return getRelatedObject(uidList, communityIdList, roomIdList).mapResult {
+    return getRelatedObject(uidList, communityIdList, roomIdList).andThen(TitleError::fromError) {
         val topicIdList =
             list.flatMap {
                 val title = it.title
@@ -97,10 +107,16 @@ private suspend fun Backend.processTitleList(list: List<RawTitle>, uid: PrimaryK
                     }
                 }
             }.distinct()
-        getTopicByIds(topicIdList, uid).mapIfNotNull { topicList ->
-            processTitleList(it.first.orEmpty(), it.third.orEmpty(), it.second.orEmpty(), listWithFavAndSub, topicList)
+        getTopicByIds(topicIdList, uid).mapPresent { topicList ->
+            processTitleList(
+                it.first.orEmpty(),
+                it.third.orEmpty(),
+                it.second.orEmpty(),
+                listWithFavAndSub,
+                topicList,
+            )
         }
-    }
+    }.mapError(TitleError::fromError)
 }
 
 private fun getUidList(list: List<RawTitle>): List<PrimaryKey> =
@@ -138,18 +154,18 @@ private suspend fun Backend.getRelatedObject(
     uidList: List<PrimaryKey>,
     communityIdList: List<PrimaryKey>,
     roomIdList: List<PrimaryKey>,
-): Result<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>> =
-    cancellableRunCatching {
-    val r1 = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow()
-    val r2 = getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList)).getOrThrow()
-    val r3 =
-        database.community.getRawCommunities(
-            ObjectListFetch.IdListFetch(communityIdList),
-        ).mapResult {
-            processRawCommunityToCommunityInfo(it)
-        }.getOrThrow()
-    Triple(r1, r2, r3)
-}
+): CustomResult<Triple<List<UserInfo>?, List<RoomInfo>?, List<CommunityInfo>?>, TitleError> =
+    captureFailure(TitleError::from) {
+        val r1 = getUserInfoList(ObjectListFetch.IdListFetch(uidList)).getOrThrow()
+        val r2 = getRoomInfoList(ObjectListFetch.IdListFetch(roomIdList)).getOrThrow()
+        val r3 =
+            database.community.getRawCommunities(
+                ObjectListFetch.IdListFetch(communityIdList),
+            ).andThen(TitleError::fromError) {
+                processRawCommunityToCommunityInfo(it)
+            }.getOrThrow()
+        Triple(r1, r2, r3)
+    }.mapError(TitleError::fromError)
 
 private fun processTitleList(
     userList: List<UserInfo>,
@@ -191,18 +207,20 @@ private fun processTitleList(
     }
 }
 
-suspend fun Backend.getAllTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<TitleInfo>> =
-    database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull { list ->
+suspend fun Backend.getAllTitles(
+    primaryKeyFetch: PrimaryKeyFetch,
+): CustomResult<PaginationResult<TitleInfo>, TitleError> =
+    database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull(TitleError::fromError) { list ->
         processTitleList(list, null).map { it.orEmpty() }
-    }
+    }.mapError(TitleError::fromError)
 
-suspend fun Backend.getTitleInfo(id: PrimaryKey): Result<TitleInfo?> =
-    database.title.getTitle(id).mapResultIfNotNull { raw ->
+suspend fun Backend.getTitleInfo(id: PrimaryKey): CustomResult<TitleInfo?, TitleError> =
+    database.title.getTitle(id).andThenPresent(TitleError::fromError) { raw ->
         processTitleList(listOf(raw), null).map { it?.firstOrNull() }
-    }
+    }.mapError(TitleError::fromError)
 
 suspend fun Backend.createTitle(newTitle: NewTitle, uid: PrimaryKey) =
-    checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).mapResultIfNotNull {
+    checkRootAdminPermission(newTitle.scopeType, newTitle.scopeId, uid).andThenPresent(TitleError::fromError) {
         val title = toTitle(newTitle, uid)
         val topic =
             Topic(
@@ -222,9 +240,9 @@ suspend fun Backend.createTitle(newTitle: NewTitle, uid: PrimaryKey) =
         database.topic.createTitle(title, topic).onSuccess {
             // 如果发送的title 类型是JOIN，插入一条Member 记录
             inviteMemberIfNeed(title)
-        }.mapResult {
+        }.andThen(TitleError::fromError) {
             addUserLog(uid, UserLogType.CREATE, ObjectTuple(title.id, ObjectType.TITLE))
-            processTitleList(listOf(RawTitle(title)), uid).mapIfNotNull {
+            processTitleList(listOf(RawTitle(title)), uid).mapPresent {
                 it.first()
             }
         }
@@ -246,7 +264,7 @@ private suspend fun Backend.inviteMemberIfNeed(title: Title) {
                 invitedTime,
             ),
         ).onFailure {
-            Napier.e(it) {
+            Napier.e(it.cause) {
                 "create join title member failed $it"
             }
         }
@@ -280,10 +298,12 @@ val titleMap: MutableMap<ObjectType, List<TitleType>> =
         ObjectType.TOPIC to listOf(TitleType.REGULAR),
     )
 
-suspend fun createTitle(title: NewTitle, backend: Backend, uid: PrimaryKey): Result<TitleInfo?> {
-    val supportType = titleMap[title.scopeType] ?: return Result.success(null)
+suspend fun createTitle(title: NewTitle, backend: Backend, uid: PrimaryKey): CustomResult<TitleInfo?, TitleError> {
+    val supportType = titleMap[title.scopeType] ?: return CustomResult.success(null)
     if (!supportType.contains(title.type)) {
-        return Result.failure(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}"))
+        return CustomResult.Failure(
+            TitleError.from(ForbiddenException("unsupported title type ${title.type} in ${title.scopeType}")),
+        ).mapError(TitleError::fromError)
     }
-    return backend.createTitle(title, uid)
+    return backend.createTitle(title, uid).mapError(TitleError::fromError)
 }

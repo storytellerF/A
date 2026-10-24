@@ -22,13 +22,15 @@ actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassIn
         return null
     }
 
-    return runCatching {
+    return try {
         val content = BufferedInputStream(injectedFile.inputStream()).use { it.readBytes().decodeToString() }
         injectedSessionJson.decodeFromString(ConvertedRawUserPassInfo.serializer(), content)
-    }.getOrElse { throwable ->
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
+    } catch (expected: Exception) {
         throw IllegalStateException(
             "Injected session file exists but cannot be loaded: ${injectedFile.absolutePath}",
-            throwable,
+            expected,
         )
     }
 }

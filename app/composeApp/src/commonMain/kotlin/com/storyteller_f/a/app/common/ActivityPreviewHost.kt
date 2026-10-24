@@ -8,12 +8,18 @@ import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.app.error.ActivityPreviewError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.formatTime
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -54,8 +60,8 @@ internal class ActivityPreviewHost(
     parentScope: CoroutineScope,
     coordination: CoroutineDispatcher,
     private val worker: CoroutineDispatcher,
-    private val fetchUnread: suspend (PaginationQuery) -> Result<RoomActivityListResponse>,
-    private val fetchPinned: suspend (PaginationQuery) -> Result<TopicInfoListResponse>,
+    private val fetchUnread: suspend (PaginationQuery) -> CustomResult<RoomActivityListResponse, FailureDetails>,
+    private val fetchPinned: suspend (PaginationQuery) -> CustomResult<TopicInfoListResponse, FailureDetails>,
 ) {
     private val scope =
         CoroutineScope(
@@ -117,10 +123,10 @@ internal class ActivityPreviewHost(
 
     private fun <T> load(
         state: MutableStateFlow<PreviewState<T>>,
-        source: suspend () -> Result<PreviewState.Ready<T>>,
+        source: suspend () -> CustomResult<PreviewState.Ready<T>, FailureDetails>,
     ) = scope.launch {
         state.value = PreviewState.Loading
-        val result = withContext(worker) { cancellableRunCatching { source().getOrThrow() } }
+        val result = withContext(worker) { captureFailure(ActivityPreviewError::from) { source().getOrThrow() } }
         ensureActive()
         state.value = result.getOrElse { PreviewState.Failed }
     }

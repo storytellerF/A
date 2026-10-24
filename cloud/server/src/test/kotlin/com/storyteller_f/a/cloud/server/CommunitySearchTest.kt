@@ -11,6 +11,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunity
 import com.storyteller_f.a.client.core.updateCommunityInfo
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.obj.UpdateCommunityBody
 import com.storyteller_f.shared.obj.ob

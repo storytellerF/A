@@ -7,6 +7,7 @@ package com.storyteller_f.a.client.compose_core.components
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.storyteller_f.a.client.core.LoadingState
+import com.storyteller_f.result.CustomResult
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -95,7 +96,7 @@ class NestedGlobalTask<C>(val controller: CustomGlobalTask<C>, val state: Mutabl
     val context: C get() = controller.context
 
     /** Runs [block] after marking this task as loading. */
-    suspend inline fun <T> use(block: suspend () -> Result<T>): Result<T> {
+    suspend inline fun <T, E> use(block: suspend () -> CustomResult<T, E>): CustomResult<T, E> {
         state.value = LoadingState.Loading
         return block()
     }
@@ -106,15 +107,15 @@ class GlobalTaskContext<C>(val events: MutableSharedFlow<Any>, val sessionManage
         events.emit(any)
     }
 
-    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> = block(sessionManager)
+    suspend fun <T, E> request(block: suspend C.() -> CustomResult<T, E>): CustomResult<T, E> = block(sessionManager)
 }
 
 /**
  * Executes a request against the session manager in this task context.
  */
-suspend inline fun <T, R> NestedGlobalTask<GlobalTaskContext<T>>.request(
-    noinline block: suspend T.() -> Result<R>,
-): Result<R> = context.request(block)
+suspend inline fun <T, R, E> NestedGlobalTask<GlobalTaskContext<T>>.request(
+    noinline block: suspend T.() -> CustomResult<R, E>,
+): CustomResult<R, E> = context.request(block)
 
 /** Emits [event] from this task context. */
 suspend inline fun <T> NestedGlobalTask<GlobalTaskContext<T>>.emitEvent(event: Any) {

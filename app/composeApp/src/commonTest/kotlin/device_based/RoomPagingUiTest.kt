@@ -32,6 +32,7 @@ import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.room.RemoteKeyRoomStorage
 import com.storyteller_f.a.client.room.RoomRoomInfoStorage
 import com.storyteller_f.a.client.room.getRoomDatabase
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.storage.RemoteKeyStorageWrapper
@@ -116,7 +117,7 @@ private class RoomPagingFixture {
                         ordered.drop(
                             page * 20,
                         ).take(size).map { it.copy(name = "${it.name} revision ${revision.value}") }
-                    Result.success(
+                    CustomResult.success(
                         RoomInfoListResponse(data.toImmutableList(), Pagination(tokens[page + 1], null, 100)),
                     )
                 }.flow

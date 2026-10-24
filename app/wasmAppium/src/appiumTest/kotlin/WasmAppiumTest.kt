@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrElse
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.openqa.selenium.By
@@ -72,13 +75,16 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
         WasmDistributionServer(resolveWasmDistribution()).use { server ->
             browserType.withBrowser { driver ->
                 driver.get("${server.url}?appium=true")
-                runCatching {
+                captureFailure(ArtifactCollectionError::CollectionFailed) {
                     WebDriverWait(driver, Duration.ofSeconds(30)).until(
                         ExpectedConditions.presenceOfElementLocated(By.cssSelector("[aria-label='avatar']")),
                     )
                 }.getOrElse { cause ->
                     val body = driver.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
-                    val console = runCatching { driver.manage().logs().get("browser").all }.getOrNull().orEmpty()
+                    val console =
+                        captureFailure(
+                            ArtifactCollectionError::CollectionFailed,
+                        ) { driver.manage().logs().get("browser").all }.getOrNull().orEmpty()
                     val errors =
                         (driver as org.openqa.selenium.JavascriptExecutor)
                             .executeScript("return window.appiumErrors || []")
@@ -86,7 +92,7 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
                     throw AssertionError(
                         "Wasm semantics did not mount; requested=${server.requestedPaths}; body=$body; " +
                             "console=$console; errors=$errors",
-                        cause,
+                        cause.cause,
                     )
                 }
             }

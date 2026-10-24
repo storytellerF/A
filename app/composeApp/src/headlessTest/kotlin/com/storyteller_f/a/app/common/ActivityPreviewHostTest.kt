@@ -8,6 +8,7 @@ import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -75,10 +76,14 @@ class ActivityPreviewHostTest {
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
                 if (failUnread) error("Synthetic failure")
-                Result.success(RoomActivityListResponse(persistentListOf(activity(1)), Pagination(null, null, 9)))
+                CustomResult.success(
+                    RoomActivityListResponse(persistentListOf(activity(1)), Pagination(null, null, 9)),
+                )
             }, {
-                Result.success(
-                    TopicInfoListResponse(persistentListOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin")))),
+                CustomResult.success(
+                    TopicInfoListResponse(
+                        persistentListOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin"))),
+                    ),
                 )
             })
         host.refreshUnread()
@@ -104,9 +109,9 @@ class ActivityPreviewHostTest {
         val pending = CompletableDeferred<RoomActivityListResponse>()
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
-                Result.success(pending.await())
+                CustomResult.success(pending.await())
             }, {
-                Result.success(TopicInfoListResponse(persistentListOf()))
+                CustomResult.success(TopicInfoListResponse(persistentListOf()))
             })
         host.refreshUnread()
         runCurrent()
@@ -128,10 +133,10 @@ class ActivityPreviewHostTest {
         val host =
             ActivityPreviewHost(this, dispatcher, dispatcher, {
                 unreadLoads++
-                Result.success(RoomActivityListResponse(persistentListOf()))
+                CustomResult.success(RoomActivityListResponse(persistentListOf()))
             }, {
                 pinLoads++
-                Result.success(TopicInfoListResponse(persistentListOf()))
+                CustomResult.success(TopicInfoListResponse(persistentListOf()))
             })
         host.onEvent(OnRoomRead(1), true)
         runCurrent()

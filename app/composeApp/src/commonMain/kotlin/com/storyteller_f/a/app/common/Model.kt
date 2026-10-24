@@ -17,6 +17,7 @@ import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.SearchQuery
 import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.app.error.FormError
 import com.storyteller_f.a.client.compose_core.common.CachedLoadingHandler
 import com.storyteller_f.a.client.compose_core.common.CompatPagingSource
 import com.storyteller_f.a.client.compose_core.common.IntKeyConverter
@@ -69,6 +70,12 @@ import com.storyteller_f.a.client.core.searchRoomMembers
 import com.storyteller_f.a.client.core.searchRoomTopics
 import com.storyteller_f.a.client.core.searchUserTopics
 import com.storyteller_f.a.client.core.userTitles
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
@@ -96,7 +103,6 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 import com.storyteller_f.shared.utils.extractMarkdownMediaLink
 import com.storyteller_f.storage.ChildAccountStorage
@@ -553,8 +559,8 @@ class RoomKeysViewModel(sessionManager: UserSessionManager, private val id: Prim
     SimpleViewModel<List<UserPubKeyInfo>>() {
     override val handler: LoadingHandler<List<UserPubKeyInfo>> =
         SimpleLoadingHandler(viewModelScope) {
-            cancellableRunCatching {
-                if (!private) return@cancellableRunCatching emptyList()
+            captureFailure(FormError::from) {
+                if (!private) return@captureFailure emptyList()
                 val result = mutableListOf<UserPubKeyInfo>()
                 var last: String? = null
                 while (true) {
@@ -675,7 +681,7 @@ class MarkdownMediasViewModel(val sessionManager: UserSessionManager, content: S
     SimpleViewModel<List<FileInfo>>() {
     override val handler: LoadingHandler<List<FileInfo>> =
         SimpleLoadingHandler(viewModelScope) {
-            cancellableRunCatching {
+            captureFailure(FormError::from) {
                 extractMarkdownMediaLink(content).map {
                     sessionManager.getMediaByName(it, objectTuple.objectId, objectTuple.objectType)
                         .getOrThrow()
@@ -701,7 +707,7 @@ class SessionHistoryViewModel(uIViewModel: UIViewModel) : SimpleViewModel<SavedS
 
     override val handler: LoadingHandler<SavedSession> =
         SimpleLoadingHandler(viewModelScope) {
-            cancellableRunCatching {
+            captureFailure(FormError::from) {
                 manager.getSavedSession()
             }
         }
@@ -808,7 +814,7 @@ class UserOverviewViewModel(sessionManager: UserSessionManager, modelStorage: Mo
             if (sessionManager.currentIsAlreadySignUp) {
                 sessionManager.getUserOverview()
             } else {
-                Result.failure(IllegalStateException("not logged in"))
+                CustomResult.Failure(FormError.from(IllegalStateException("not logged in")))
             }
         }
 }
@@ -916,32 +922,30 @@ class TitleComposeViewModel(
     fun openScopeSheet() = setShowSheetType(TitleComposeSheetType.SCOPE)
     fun openReceiverSheet() = setShowSheetType(TitleComposeSheetType.RECEIVER)
 
-    fun buildNewTitle(): Result<NewTitle> {
+    fun buildNewTitle(): CustomResult<NewTitle, FormError> {
         val t = titleType.value
         val r = receiver.value
         val s = titleScope.value
         val expiresAt = expiresAtText.value.trim()
         val parsedExpiresAt =
             if (expiresAt.isEmpty()) {
-                Result.success(null)
+                CustomResult.success(null)
             } else {
-                runCatching {
+                captureFailure(FormError::from) {
                     LocalDateTime.parse(expiresAt)
                 }.mapError {
-                    IllegalArgumentException("Invalid expiresAt format, use yyyy-MM-ddTHH:mm:ss")
+                    FormError.InvalidInput(
+                        IllegalArgumentException("Invalid expiresAt format, use yyyy-MM-ddTHH:mm:ss"),
+                    )
                 }
             }
-        return parsedExpiresAt.mapCatching { expiresAtValue ->
-            check(r != null && s != null) {
-                "titleType/receiver/titleScope must not be null"
+        return parsedExpiresAt.andThen(FormError::fromError) { expiresAtValue ->
+            captureFailure(FormError::from) {
+                check(r != null && s != null) {
+                    "titleType/receiver/titleScope must not be null"
+                }
+                NewTitle(name.value, t, r, s.objectId, s.objectType, content.value, expiresAtValue)
             }
-            NewTitle(name.value, t, r, s.objectId, s.objectType, content.value, expiresAtValue)
-        }
+        }.mapError(FormError::fromError)
     }
 }
-
-private inline fun <T> Result<T>.mapError(transform: (Throwable) -> Throwable): Result<T> =
-    fold(
-    onSuccess = { Result.success(it) },
-    onFailure = { Result.failure(transform(it)) },
-)

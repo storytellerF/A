@@ -32,6 +32,7 @@ import com.storyteller_f.a.client.compose_core.components.LocalToaster
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.updateRoomInfo
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.PrimaryKey

@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.backend.core
 
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.types.AssetTransaction
 import com.storyteller_f.a.backend.core.types.ChildAccount
 import com.storyteller_f.a.backend.core.types.Community
@@ -33,6 +34,13 @@ import com.storyteller_f.a.backend.core.types.UserLog
 import com.storyteller_f.a.backend.core.types.UserSubscription
 import com.storyteller_f.a.backend.core.types.UserTopicRead
 import com.storyteller_f.a.backend.core.types.UserTwoFactor
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.mapPresent
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.NestedMemberInfo
@@ -60,70 +68,63 @@ import com.storyteller_f.shared.obj.UpdateUserBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapIfNotNull
-import com.storyteller_f.shared.utils.mapResult
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import kotlinx.datetime.LocalDateTime
 
 data class PaginationResult<T>(val list: List<T>, val total: Long)
 
-suspend fun <T> Result<List<T>?>.paging(total: Long) =
-    mapIfNotNull {
-    PaginationResult(it, total)
+fun <T, E> CustomResult<List<T>?, E>.paging(total: Long) = mapPresent { PaginationResult(it, total) }
+
+fun <T, E> CustomResult<List<T>, E>.pagingNotNull(total: Long) = map { PaginationResult(it, total) }
+
+inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>, E>.mapPagingResultNotNull(
+    mapError: (FailureDetails) -> F,
+    block: (List<T>) -> CustomResult<List<R>, FailureDetails>,
+): CustomResult<PaginationResult<R>, F> =
+    andThen(mapError) { page ->
+    block(page.list).map { PaginationResult(it, page.total) }
 }
 
-fun <T> Result<List<T>>.pagingNotNull(total: Long) =
-    map {
-    PaginationResult(it, total)
+inline fun <T, E, R> CustomResult<PaginationResult<T>, E>.mapPagingNotNull(
+    block: (List<T>) -> List<R>,
+): CustomResult<PaginationResult<R>, E> = map { PaginationResult(block(it.list), it.total) }
+
+inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>?, E>.mapPagingIfNotNull(
+    mapError: (FailureDetails) -> F,
+    block: (List<T>) -> CustomResult<List<R>, FailureDetails>,
+): CustomResult<PaginationResult<R>?, F> =
+    andThenPresent(mapError) { page ->
+    block(page.list).map { PaginationResult(it, page.total) }
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNotNull(block: suspend (List<T>) -> Result<List<R>>) =
-    mapResult { paging ->
-        block(paging.list).map {
-            PaginationResult(it, paging.total)
-        }
-    }
-
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingNotNull(block: suspend (List<T>) -> List<R>) =
-    map { paging ->
-    PaginationResult(block(paging.list), paging.total)
+inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>?, E>.mapPagingResultIfNotNullNullable(
+    mapError: (FailureDetails) -> F,
+    block: (List<T>) -> CustomResult<List<R>?, FailureDetails>,
+): CustomResult<PaginationResult<R>?, F> =
+    andThenPresent(mapError) { page ->
+    block(page.list).mapPresent { PaginationResult(it, page.total) }
 }
 
-suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingIfNotNull(block: suspend (List<T>) -> Result<List<R>>) =
-    mapResultIfNotNull { paging ->
-        block(paging.list).map {
-            PaginationResult(it, paging.total)
-        }
-    }
-
-suspend fun <T, R> Result<PaginationResult<T>?>.mapPagingResultIfNotNullNullable(
-    block: suspend (List<T>) -> Result<List<R>?>,
-) = mapResultIfNotNull { paging ->
-    block(paging.list).mapIfNotNull {
-        PaginationResult(it, paging.total)
-    }
+inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>, E>.mapPagingResultNullable(
+    mapError: (FailureDetails) -> F,
+    block: (List<T>) -> CustomResult<List<R>?, FailureDetails>,
+): CustomResult<PaginationResult<R>?, F> =
+    andThen(mapError) { page ->
+    block(page.list).mapPresent { PaginationResult(it, page.total) }
 }
 
-suspend fun <T, R> Result<PaginationResult<T>>.mapPagingResultNullable(block: suspend (List<T>) -> Result<List<R>?>) =
-    mapResult { paging ->
-        block(paging.list).mapIfNotNull {
-            PaginationResult(it, paging.total)
-        }
-    }
-
-suspend fun <T> paginationFromResults(
-    listResult: Result<List<T>>,
-    totalResult: Result<Long>,
-): Result<PaginationResult<T>> =
-    listResult.mapResult { list ->
+fun <T> paginationFromResults(
+    listResult: CustomResult<List<T>, DatabaseError>,
+    totalResult: CustomResult<Long, DatabaseError>,
+): CustomResult<PaginationResult<T>, DatabaseError> =
+    listResult.andThen(DatabaseError::fromError) { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
-suspend fun <T> paginationNullableFromResults(
-    listResult: Result<List<T>?>,
-    totalResult: Result<Long>,
-): Result<PaginationResult<T>?> =
-    listResult.mapResultIfNotNull { list ->
+fun <T> paginationNullableFromResults(
+    listResult: CustomResult<List<T>?, DatabaseError>,
+    totalResult: CustomResult<Long, DatabaseError>,
+): CustomResult<PaginationResult<T>?, DatabaseError> =
+    listResult.andThenPresent(DatabaseError::fromError) { list ->
     totalResult.map { total -> PaginationResult(list, total) }
 }
 
@@ -178,13 +179,13 @@ data class InsertRoomTuple(
 /** Database access for persisted worker task configurations. */
 interface WorkerTaskDatabase {
     /** Returns the persisted configuration for one worker task, or null when it has not been configured. */
-    suspend fun getWorkerTask(type: TaskRecordType): Result<WorkerTask?>
+    suspend fun getWorkerTask(type: TaskRecordType): CustomResult<WorkerTask?, DatabaseError>
 
     /** Returns all persisted worker task configurations. */
-    suspend fun getWorkerTasks(): Result<List<WorkerTask>>
+    suspend fun getWorkerTasks(): CustomResult<List<WorkerTask>, DatabaseError>
 
     /** Creates or replaces worker task configurations by task type. */
-    suspend fun upsertWorkerTasks(configs: List<WorkerTask>): Result<Unit>
+    suspend fun upsertWorkerTasks(configs: List<WorkerTask>): CustomResult<Unit, DatabaseError>
 }
 
 interface CombinedDatabase {
@@ -211,58 +212,68 @@ interface CombinedDatabase {
     suspend fun clean()
 
     /** Returns a persisted backend configuration value, or null if the key is not configured. */
-    suspend fun getBackendConfig(key: String): Result<String?>
+    suspend fun getBackendConfig(key: String): CustomResult<String?, DatabaseError>
 
     /** Creates or replaces a persisted backend configuration value. */
-    suspend fun upsertBackendConfig(key: String, value: String): Result<Unit>
+    suspend fun upsertBackendConfig(key: String, value: String): CustomResult<Unit, DatabaseError>
 
     suspend fun migration()
-
-    fun isDup(throwable: Throwable): Boolean
 }
 
 interface UserDatabase {
-    suspend fun getUserAid(id: PrimaryKey): Result<String?>
-    suspend fun getRawUser(objectFetch: ObjectFetch, uid: PrimaryKey? = null): Result<RawUser?>
-    suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawUser, String>?>
-    suspend fun createUser(user: User): Result<User>
-    suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
-    suspend fun updateUserStatus(id: PrimaryKey, status: com.storyteller_f.shared.type.UserStatus): Result<Boolean>
+    suspend fun getUserAid(id: PrimaryKey): CustomResult<String?, DatabaseError>
+    suspend fun getRawUser(objectFetch: ObjectFetch, uid: PrimaryKey? = null): CustomResult<RawUser?, DatabaseError>
+    suspend fun getRawUserAndPublicKeyByAddress(ad: String): CustomResult<Pair<RawUser, String>?, DatabaseError>
+    suspend fun createUser(user: User): CustomResult<User, DatabaseError>
+    suspend fun isUserNotExistsByPublicKey(pk: String): CustomResult<Boolean, DatabaseError>
+    suspend fun updateUserStatus(
+        id: PrimaryKey,
+        status: com.storyteller_f.shared.type.UserStatus,
+    ): CustomResult<Boolean, DatabaseError>
 
     /**
      * nickname 为null 或者空字符串时不更新，avatar 为null 时不更新,aid 为null 或者空字符串时不更新.
      */
-    suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): Result<Boolean>
-    suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
-    suspend fun getUserAuthDataByAid(aid: String): Result<UserAuthData?>
-    suspend fun getUserAuthDataByAddress(address: String): Result<UserAuthData?>
-    suspend fun getRawUsers(objectListFetch: ObjectListFetch, uid: PrimaryKey? = null): Result<List<RawUser>>
-    suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): Result<List<Pair<Long, Long>>>
-    suspend fun addReadLog(userTopicRead: UserTopicRead): Result<Unit>
-    suspend fun insertUserLog(log: UserLog): Result<Unit>
-    suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): Result<Unit>
-    suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): Result<Int>
-    suspend fun getUserDevices(uid: List<PrimaryKey>): Result<List<UserDevice>>
-    suspend fun addAcgForUser(record: TaskRecord, assetTransaction: AssetTransaction?): Result<Unit>
+    suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody): CustomResult<Boolean, DatabaseError>
+    suspend fun getUserAuthDataById(id: PrimaryKey): CustomResult<UserAuthData?, DatabaseError>
+    suspend fun getUserAuthDataByAid(aid: String): CustomResult<UserAuthData?, DatabaseError>
+    suspend fun getUserAuthDataByAddress(address: String): CustomResult<UserAuthData?, DatabaseError>
+    suspend fun getRawUsers(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey? = null,
+    ): CustomResult<List<RawUser>, DatabaseError>
+    suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch): CustomResult<List<Pair<Long, Long>>, DatabaseError>
+    suspend fun addReadLog(userTopicRead: UserTopicRead): CustomResult<Unit, DatabaseError>
+    suspend fun insertUserLog(log: UserLog): CustomResult<Unit, DatabaseError>
+    suspend fun addDevice(uid: PrimaryKey, endpointUrl: String): CustomResult<Unit, DatabaseError>
+    suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String): CustomResult<Int, DatabaseError>
+    suspend fun getUserDevices(uid: List<PrimaryKey>): CustomResult<List<UserDevice>, DatabaseError>
+    suspend fun addAcgForUser(
+        record: TaskRecord,
+        assetTransaction: AssetTransaction?,
+    ): CustomResult<Unit, DatabaseError>
 
-    suspend fun getLatestTaskRecord(type: TaskRecordType): Result<TaskRecord?>
+    suspend fun getLatestTaskRecord(type: TaskRecordType): CustomResult<TaskRecord?, DatabaseError>
 
     /** Returns task-type summary rows for panel display. */
-    suspend fun getTaskRecordSummaries(): Result<List<TaskRecordSummary>>
+    suspend fun getTaskRecordSummaries(): CustomResult<List<TaskRecordSummary>, DatabaseError>
 
     /** Returns failed task executions selected for retry. */
-    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): Result<List<TaskRecord>>
+    suspend fun getTaskRecordsToRetry(type: TaskRecordType, limit: Int): CustomResult<List<TaskRecord>, DatabaseError>
 
     /** Updates whether a task execution should be retried. */
-    suspend fun updateTaskRecordRetryRequested(id: PrimaryKey, isRequested: Boolean): Result<Boolean>
+    suspend fun updateTaskRecordRetryRequested(
+        id: PrimaryKey,
+        isRequested: Boolean,
+    ): CustomResult<Boolean, DatabaseError>
 
     suspend fun getRawChildAccountPaginationListByHost(
         hostId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RawChildAccount>>
+    ): CustomResult<PaginationResult<RawChildAccount>, DatabaseError>
 
-    suspend fun getRawChildAccount(uid: PrimaryKey): Result<ChildAccount?>
-    suspend fun getChildAccountIds(hostId: PrimaryKey): Result<List<PrimaryKey>>
+    suspend fun getRawChildAccount(uid: PrimaryKey): CustomResult<ChildAccount?, DatabaseError>
+    suspend fun getChildAccountIds(hostId: PrimaryKey): CustomResult<List<PrimaryKey>, DatabaseError>
 
     suspend fun createChildAccount(
         hostId: PrimaryKey,
@@ -270,130 +281,174 @@ interface UserDatabase {
         encryptedAesKey: String,
         user: User,
         encryptedEncryptionPrivateKey: String? = null,
-    ): Result<Unit>
+    ): CustomResult<Unit, DatabaseError>
 
-    suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawUser>>
-    suspend fun getUserCount(): Result<Long>
+    suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch): CustomResult<PaginationResult<RawUser>, DatabaseError>
+    suspend fun getUserCount(): CustomResult<Long, DatabaseError>
 
-    suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<UserLog>>
+    suspend fun getUserLogs(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<UserLog>, DatabaseError>
 
-    suspend fun getChildAccountCount(hostId: PrimaryKey): Result<Long>
+    suspend fun getChildAccountCount(hostId: PrimaryKey): CustomResult<Long, DatabaseError>
 
-    suspend fun getUserTwoFactor(uid: PrimaryKey): Result<UserTwoFactor?>
-    suspend fun upsertUserTwoFactor(twoFactor: UserTwoFactor): Result<Unit>
-    suspend fun disableUserTwoFactor(uid: PrimaryKey): Result<Unit>
-    suspend fun updateRecoveryCodeHashes(uid: PrimaryKey, hashes: List<String>): Result<Unit>
+    suspend fun getUserTwoFactor(uid: PrimaryKey): CustomResult<UserTwoFactor?, DatabaseError>
+    suspend fun upsertUserTwoFactor(twoFactor: UserTwoFactor): CustomResult<Unit, DatabaseError>
+    suspend fun disableUserTwoFactor(uid: PrimaryKey): CustomResult<Unit, DatabaseError>
+    suspend fun updateRecoveryCodeHashes(uid: PrimaryKey, hashes: List<String>): CustomResult<Unit, DatabaseError>
 }
 
 interface TopicDatabase {
-    suspend fun getTopicRootTuple(parentId: PrimaryKey): Result<ObjectTuple?>
+    suspend fun getTopicRootTuple(parentId: PrimaryKey): CustomResult<ObjectTuple?, DatabaseError>
 
-    suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): Result<Unit>
-    suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain, fileRefs: List<FileRef>): Result<Unit>
+    suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted): CustomResult<Unit, DatabaseError>
+    suspend fun savePlainTopic(
+        topic: Topic,
+        content: TopicContent.Plain,
+        fileRefs: List<FileRef>,
+    ): CustomResult<Unit, DatabaseError>
 
-    suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean): Result<Boolean>
-    suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus): Result<Boolean>
-    suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): Result<List<Topic>>
-    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
+    suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean): CustomResult<Boolean, DatabaseError>
+    suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus): CustomResult<Boolean, DatabaseError>
+    suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch): CustomResult<List<Topic>, DatabaseError>
+    suspend fun getTopicCommentCount(topicIdList: List<PrimaryKey>): CustomResult<List<Pair<Long, Long>>, DatabaseError>
 
-    suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): Result<List<Long>>
+    suspend fun isUserCommented(uid: PrimaryKey, topicId: List<PrimaryKey>): CustomResult<List<Long>, DatabaseError>
 
     suspend fun getUserCommentedTopicsPaginationResult(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<Topic>>
+    ): CustomResult<PaginationResult<Topic>, DatabaseError>
 
-    suspend fun getUserCommentCount(uid: PrimaryKey): Result<Long>
+    suspend fun getUserCommentCount(uid: PrimaryKey): CustomResult<Long, DatabaseError>
 
     suspend fun getTopicContentFromByteArray(
         topics: List<Topic>,
         uid: PrimaryKey?,
-    ): Result<Map<PrimaryKey, TopicContent>>
+    ): CustomResult<Map<PrimaryKey, TopicContent>, DatabaseError>
 
-    suspend fun createTitle(title: Title, topic: Topic): Result<Unit>
-    suspend fun getTopicCount(): Result<Long>
-    suspend fun getTopic(fetch: ObjectFetch): Result<Topic?>
-    suspend fun getAllTopicPagination(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
-    suspend fun getTopicListByIds(ids: List<PrimaryKey>): Result<List<Topic>>
+    suspend fun createTitle(title: Title, topic: Topic): CustomResult<Unit, DatabaseError>
+    suspend fun getTopicCount(): CustomResult<Long, DatabaseError>
+    suspend fun getTopic(fetch: ObjectFetch): CustomResult<Topic?, DatabaseError>
+    suspend fun getAllTopicPagination(
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<Topic>, DatabaseError>
+    suspend fun getTopicListByIds(ids: List<PrimaryKey>): CustomResult<List<Topic>, DatabaseError>
     suspend fun getTopicByParentId(
         uid: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         parentId: PrimaryKey,
         pinType: TopicPinSearch?,
-    ): Result<PaginationResult<Topic>>
+    ): CustomResult<PaginationResult<Topic>, DatabaseError>
 
-    suspend fun getJoinedCommunityPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<Topic>>
+    suspend fun getJoinedCommunityPinnedTopics(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<Topic>, DatabaseError>
 
-    suspend fun getLatestTopic(parentId: PrimaryKey): Result<List<Topic>>
+    suspend fun getLatestTopic(parentId: PrimaryKey): CustomResult<List<Topic>, DatabaseError>
 }
 
 interface FavoriteDatabase {
-    suspend fun getUserFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch): Result<PaginationResult<UserFavorite>>
+    suspend fun getUserFavorites(
+        uid: PrimaryKey,
+        fetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<UserFavorite>, DatabaseError>
 
-    suspend fun addFavorite(userFavorite: UserFavorite): Result<UserFavorite>
-    suspend fun removeFavorite(id: PrimaryKey): Result<Unit>
-    suspend fun getFavorite(id: PrimaryKey): Result<UserFavorite?>
-    suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): Result<UserFavorite?>
-    suspend fun getHasFavorite(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserFavorite>>
+    suspend fun addFavorite(userFavorite: UserFavorite): CustomResult<UserFavorite, DatabaseError>
+    suspend fun removeFavorite(id: PrimaryKey): CustomResult<Unit, DatabaseError>
+    suspend fun getFavorite(id: PrimaryKey): CustomResult<UserFavorite?, DatabaseError>
+    suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey): CustomResult<UserFavorite?, DatabaseError>
+    suspend fun getHasFavorite(
+        idList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey,
+    ): CustomResult<List<UserFavorite>, DatabaseError>
 
-    suspend fun getUserFavoriteCount(): Result<Long>
+    suspend fun getUserFavoriteCount(): CustomResult<Long, DatabaseError>
 }
 
 interface SubscriptionDatabase {
     suspend fun getUserSubscriptions(
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserSubscription>>
+    ): CustomResult<PaginationResult<UserSubscription>, DatabaseError>
 
-    suspend fun addSubscription(userSubscription: UserSubscription): Result<UserSubscription>
-    suspend fun removeSubscription(id: PrimaryKey): Result<Unit>
-    suspend fun getSubscription(id: PrimaryKey): Result<UserSubscription?>
-    suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): Result<UserSubscription?>
+    suspend fun addSubscription(userSubscription: UserSubscription): CustomResult<UserSubscription, DatabaseError>
+    suspend fun removeSubscription(id: PrimaryKey): CustomResult<Unit, DatabaseError>
+    suspend fun getSubscription(id: PrimaryKey): CustomResult<UserSubscription?, DatabaseError>
+    suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey): CustomResult<UserSubscription?, DatabaseError>
     suspend fun getSubscriptionsByObjectId(
         objectId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<List<UserSubscription>>
+    ): CustomResult<List<UserSubscription>, DatabaseError>
 
-    suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): Result<SubscriptionSentLog>
-    suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): Result<SubscriptionSentLog?>
-    suspend fun getHasSubscription(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey): Result<List<UserSubscription>>
+    suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog): CustomResult<SubscriptionSentLog, DatabaseError>
+    suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey): CustomResult<SubscriptionSentLog?, DatabaseError>
+    suspend fun getHasSubscription(
+        idList: ObjectListFetch.IdListFetch,
+        uid: PrimaryKey,
+    ): CustomResult<List<UserSubscription>, DatabaseError>
 
-    suspend fun getUserSubscriptionCount(uid: PrimaryKey): Result<Long>
+    suspend fun getUserSubscriptionCount(uid: PrimaryKey): CustomResult<Long, DatabaseError>
 }
 
 interface ReactionDatabase {
-    suspend fun statsReactionRecord(objectId: PrimaryKey, emoji: String, objectType: ObjectType): Result<Unit>
+    suspend fun statsReactionRecord(
+        objectId: PrimaryKey,
+        emoji: String,
+        objectType: ObjectType,
+    ): CustomResult<Unit, DatabaseError>
 
     suspend fun getReactionInfoPaginationResult(
         objectId: List<PrimaryKey>,
         uid: PrimaryKey?,
         reactionFetch: ReactionFetch,
-    ): Result<PaginationResult<ReactionInfo>>
+    ): CustomResult<PaginationResult<ReactionInfo>, DatabaseError>
 
-    suspend fun hasReactedEmoji(objectIdList: List<PrimaryKey>, uid: PrimaryKey): Result<List<Pair<Long, String>>>
+    suspend fun hasReactedEmoji(
+        objectIdList: List<PrimaryKey>,
+        uid: PrimaryKey,
+    ): CustomResult<List<Pair<Long, String>>, DatabaseError>
 
-    suspend fun getReactionInfo(uid: PrimaryKey, objectId: PrimaryKey, emojiText: String): Result<ReactionInfo?>
+    suspend fun getReactionInfo(
+        uid: PrimaryKey,
+        objectId: PrimaryKey,
+        emojiText: String,
+    ): CustomResult<ReactionInfo?, DatabaseError>
 
-    suspend fun hasReactedForEmoji(objectId: PrimaryKey, uid: PrimaryKey, emoji: String): Result<Boolean>
+    suspend fun hasReactedForEmoji(
+        objectId: PrimaryKey,
+        uid: PrimaryKey,
+        emoji: String,
+    ): CustomResult<Boolean, DatabaseError>
 
-    suspend fun deleteReaction(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<Boolean>
+    suspend fun deleteReaction(
+        uid: PrimaryKey,
+        emoji: String,
+        objectId: PrimaryKey,
+    ): CustomResult<Boolean, DatabaseError>
 
-    suspend fun getReactionRecordInfo(uid: PrimaryKey, emoji: String, objectId: PrimaryKey): Result<ReactionRecordInfo?>
+    suspend fun getReactionRecordInfo(
+        uid: PrimaryKey,
+        emoji: String,
+        objectId: PrimaryKey,
+    ): CustomResult<ReactionRecordInfo?, DatabaseError>
 
-    suspend fun deleteReaction(reactionId: PrimaryKey): Result<Boolean>
-    suspend fun insertReaction(reactionRecord: ReactionRecord): Result<Unit>
-    suspend fun getReactionCount(objectIdList: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
+    suspend fun deleteReaction(reactionId: PrimaryKey): CustomResult<Boolean, DatabaseError>
+    suspend fun insertReaction(reactionRecord: ReactionRecord): CustomResult<Unit, DatabaseError>
+    suspend fun getReactionCount(objectIdList: List<PrimaryKey>): CustomResult<List<Pair<Long, Long>>, DatabaseError>
     suspend fun getReactionCountForEmoji(
         objectId: List<PrimaryKey>,
         emoji: String,
-    ): Result<List<Triple<Long, Long, PrimaryKey?>>>
+    ): CustomResult<List<Triple<Long, Long, PrimaryKey?>>, DatabaseError>
 
     suspend fun getUserReactionRecordsPaginationResult(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<ReactionRecord>>
+    ): CustomResult<PaginationResult<ReactionRecord>, DatabaseError>
 
-    suspend fun getUserReactionRecordCount(uid: PrimaryKey): Result<Long>
+    suspend fun getUserReactionRecordCount(uid: PrimaryKey): CustomResult<Long, DatabaseError>
 }
 
 interface TitleDatabase {
@@ -404,12 +459,14 @@ interface TitleDatabase {
         type: TitleType? = null,
         scopeId: PrimaryKey? = null,
         titleStatus: TitleWorkStatus? = null,
-    ): Result<PaginationResult<RawTitle>>
+    ): CustomResult<PaginationResult<RawTitle>, DatabaseError>
 
-    suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<RawTitle>>
-    suspend fun getTitleCount(): Result<Long>
-    suspend fun getTitle(id: PrimaryKey): Result<RawTitle?>
-    suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
+    suspend fun getAllRawTitles(
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<RawTitle>, DatabaseError>
+    suspend fun getTitleCount(): CustomResult<Long, DatabaseError>
+    suspend fun getTitle(id: PrimaryKey): CustomResult<RawTitle?, DatabaseError>
+    suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus): CustomResult<Boolean, DatabaseError>
 }
 
 interface CommunityDatabase {
@@ -417,92 +474,100 @@ interface CommunityDatabase {
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
-    ): Result<RawCommunity?>
+    ): CustomResult<RawCommunity?, DatabaseError>
 
-    suspend fun getJoinedCommunityIds(uid: PrimaryKey): Result<List<Long>>
+    suspend fun getJoinedCommunityIds(uid: PrimaryKey): CustomResult<List<Long>, DatabaseError>
     suspend fun getCommunityPaginationResult(
         hasPosterSearch: PosterSearch?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<RawCommunity>?>
+    ): CustomResult<PaginationResult<RawCommunity>?, DatabaseError>
 
-    suspend fun createCommunity(community: Community, memberId: PrimaryKey): Result<Pair<Community, Member>>
+    suspend fun createCommunity(
+        community: Community,
+        memberId: PrimaryKey,
+    ): CustomResult<Pair<Community, Member>, DatabaseError>
 
-    suspend fun getRawCommunities(objectListFetch: ObjectListFetch): Result<List<RawCommunity>>
+    suspend fun getRawCommunities(objectListFetch: ObjectListFetch): CustomResult<List<RawCommunity>, DatabaseError>
 
     /**
      * name 为null 或者空字符串时不更新，icon，poster 为null时不更新.
      */
-    suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): Result<Boolean>
-    suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
-    suspend fun getCommunityCount(): Result<Long>
+    suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody): CustomResult<Boolean, DatabaseError>
+    suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus): CustomResult<Boolean, DatabaseError>
+    suspend fun getCommunityCount(): CustomResult<Long, DatabaseError>
 }
 
 interface RoomDatabase {
-    suspend fun checkRoomIsPrivate(roomId: PrimaryKey): Result<Boolean?>
+    suspend fun checkRoomIsPrivate(roomId: PrimaryKey): CustomResult<Boolean?, DatabaseError>
     suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
         community: PrimaryKey?,
         primaryKeyFetch: PrimaryKeyFetch,
         joinSearch: JoinSearch,
-    ): Result<PaginationResult<RawRoom>>
+    ): CustomResult<PaginationResult<RawRoom>, DatabaseError>
 
-    suspend fun getRoomCommunityId(parentId: PrimaryKey): Result<PrimaryKey?>
+    suspend fun getRoomCommunityId(parentId: PrimaryKey): CustomResult<PrimaryKey?, DatabaseError>
     suspend fun getRoomPubKeyPaginationResult(
         roomId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UserPubKeyInfo>>
+    ): CustomResult<PaginationResult<UserPubKeyInfo>, DatabaseError>
 
     suspend fun getRawRoom(
         objectFetch: ObjectFetch,
         fillJoinInfo: Boolean? = null,
         uid: PrimaryKey? = null,
-    ): Result<RawRoom?>
+    ): CustomResult<RawRoom?, DatabaseError>
 
-    suspend fun createRoom(room: Room, members: List<Member>): Result<Room>
-    suspend fun getRawRooms(objectListFetch: ObjectListFetch, uid: PrimaryKey?): Result<List<RawRoom>>
+    suspend fun createRoom(room: Room, members: List<Member>): CustomResult<Room, DatabaseError>
+    suspend fun getRawRooms(
+        objectListFetch: ObjectListFetch,
+        uid: PrimaryKey?,
+    ): CustomResult<List<RawRoom>, DatabaseError>
 
-    suspend fun getRoomList(objectListFetch: ObjectListFetch): Result<List<Room>>
-    suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): Result<Boolean>
-    suspend fun updateRoomStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
-    suspend fun getPrivateRoomCount(): Result<Long>
-    suspend fun getPublicRoomCount(): Result<Long>
+    suspend fun getRoomList(objectListFetch: ObjectListFetch): CustomResult<List<Room>, DatabaseError>
+    suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody): CustomResult<Boolean, DatabaseError>
+    suspend fun updateRoomStatus(id: PrimaryKey, status: ObjectStatus): CustomResult<Boolean, DatabaseError>
+    suspend fun getPrivateRoomCount(): CustomResult<Long, DatabaseError>
+    suspend fun getPublicRoomCount(): CustomResult<Long, DatabaseError>
     suspend fun getPrivateRoomPaginationResult(
         primaryKeyFetch: PrimaryKeyFetch,
         word: String? = null,
-    ): Result<PaginationResult<RawRoom>>
+    ): CustomResult<PaginationResult<RawRoom>, DatabaseError>
 }
 
 interface FileDatabase {
-    suspend fun getFileRecord(owner: PrimaryKey, name: String): Result<FileRecord?>
-    suspend fun getFileRecordByIds(ids: List<PrimaryKey>): Result<List<FileRecord>>
-    suspend fun getFileRecordListByOwner(owner: PrimaryKey): Result<List<FileRecord>>
-    suspend fun getFileRecordByNames(names: List<String>): Result<List<FileRecord>>
-    suspend fun getUploadRecord(id: PrimaryKey): Result<UploadRecord?>
-    suspend fun insertFileRefs(fileRefs: List<FileRef>): Result<Unit>
+    suspend fun getFileRecord(owner: PrimaryKey, name: String): CustomResult<FileRecord?, DatabaseError>
+    suspend fun getFileRecordByIds(ids: List<PrimaryKey>): CustomResult<List<FileRecord>, DatabaseError>
+    suspend fun getFileRecordListByOwner(owner: PrimaryKey): CustomResult<List<FileRecord>, DatabaseError>
+    suspend fun getFileRecordByNames(names: List<String>): CustomResult<List<FileRecord>, DatabaseError>
+    suspend fun getUploadRecord(id: PrimaryKey): CustomResult<UploadRecord?, DatabaseError>
+    suspend fun insertFileRefs(fileRefs: List<FileRef>): CustomResult<Unit, DatabaseError>
 
     suspend fun getFileRecordPaginationList(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<FileRecord>>
+    ): CustomResult<PaginationResult<FileRecord>, DatabaseError>
 
-    suspend fun getAllFileRecordPaginationList(primaryKeyFetch: PrimaryKeyFetch): Result<PaginationResult<FileRecord>>
+    suspend fun getAllFileRecordPaginationList(
+        primaryKeyFetch: PrimaryKeyFetch,
+    ): CustomResult<PaginationResult<FileRecord>, DatabaseError>
 
     suspend fun insertFileRecord(
         fileRecordList: List<FileRecord>,
         ownerId: PrimaryKey,
         ownerType: ObjectType,
-    ): Result<Unit>
+    ): CustomResult<Unit, DatabaseError>
 
-    suspend fun insertUploadRecord(record: UploadRecord): Result<UploadRecord>
+    suspend fun insertUploadRecord(record: UploadRecord): CustomResult<UploadRecord, DatabaseError>
 
-    suspend fun lockFileQuota(quotaInfo: QuotaInfo, operationId: PrimaryKey): Result<Unit>
+    suspend fun lockFileQuota(quotaInfo: QuotaInfo, operationId: PrimaryKey): CustomResult<Unit, DatabaseError>
 
     suspend fun finishFileQuota(
         quotaInfo: QuotaInfo,
         operationId: PrimaryKey,
         fileRecords: List<FileRecord>,
-    ): Result<List<FileRecord>>
+    ): CustomResult<List<FileRecord>, DatabaseError>
 
     /**
      * 只有在插入文件记录成功后才更新上传记录状态，避免文件上传了但是配额没有更新的情况.
@@ -511,75 +576,89 @@ interface FileDatabase {
         quotaInfo: QuotaInfo,
         record: UploadRecord,
         fileRecordList: List<FileRecord>,
-    ): Result<List<FileRecord>>
+    ): CustomResult<List<FileRecord>, DatabaseError>
 
-    suspend fun getFileCount(): Result<Long>
-    suspend fun getFileVolume(): Result<Long>
-    suspend fun updateFileStatus(id: PrimaryKey, status: ObjectStatus): Result<Boolean>
+    suspend fun getFileCount(): CustomResult<Long, DatabaseError>
+    suspend fun getFileVolume(): CustomResult<Long, DatabaseError>
+    suspend fun updateFileStatus(id: PrimaryKey, status: ObjectStatus): CustomResult<Boolean, DatabaseError>
 
     suspend fun getUploadRecordPaginationList(
         uid: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<UploadRecord>>
+    ): CustomResult<PaginationResult<UploadRecord>, DatabaseError>
 
     suspend fun getFileRefsByFileId(
         fileId: PrimaryKey,
         primaryKeyFetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<FileRef>>
+    ): CustomResult<PaginationResult<FileRef>, DatabaseError>
 }
 
 interface ContainerDatabase {
-    suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean>
-    suspend fun addMember(member: Member): Result<Member>
+    suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): CustomResult<Boolean, DatabaseError>
+    suspend fun addMember(member: Member): CustomResult<Member, DatabaseError>
 
-    suspend fun updateMemberStatus(member: Member): Result<Member>
+    suspend fun updateMemberStatus(member: Member): CustomResult<Member, DatabaseError>
 
-    suspend fun deleteMember(containerId: PrimaryKey, id: PrimaryKey): Result<Unit>
-    suspend fun getJoinedUserList(roomId: PrimaryKey): Result<List<Member>>
-    suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<Member>>
+    suspend fun deleteMember(containerId: PrimaryKey, id: PrimaryKey): CustomResult<Unit, DatabaseError>
+    suspend fun getJoinedUserList(roomId: PrimaryKey): CustomResult<List<Member>, DatabaseError>
+    suspend fun getUserJoinedTime(
+        parentIds: List<PrimaryKey>,
+        uid: PrimaryKey,
+    ): CustomResult<List<Member>, DatabaseError>
 
-    suspend fun getMemberCount(parentIds: List<PrimaryKey>): Result<List<Pair<Long, Long>>>
-    suspend fun getContainerInfo(parentIds: List<PrimaryKey>, uid: PrimaryKey?): Result<Map<PrimaryKey, ContainerInfo>>
+    suspend fun getMemberCount(parentIds: List<PrimaryKey>): CustomResult<List<Pair<Long, Long>>, DatabaseError>
+    suspend fun getContainerInfo(
+        parentIds: List<PrimaryKey>,
+        uid: PrimaryKey?,
+    ): CustomResult<Map<PrimaryKey, ContainerInfo>, DatabaseError>
 
-    suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey): Result<List<UserTopicRead>>
-    suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>>
-    suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int>
-    suspend fun getUserUnreadMessageCount(uid: PrimaryKey): Result<Long>
-    suspend fun getRoomActivityRecords(uid: PrimaryKey, roomIds: List<PrimaryKey>): Result<List<RoomActivityRecord>>
+    suspend fun getTopicReadList(
+        parentIds: List<PrimaryKey>,
+        uid: PrimaryKey,
+    ): CustomResult<List<UserTopicRead>, DatabaseError>
+    suspend fun getUsersHasUnreadRoomMap(
+        uidList: List<PrimaryKey>,
+    ): CustomResult<Map<PrimaryKey, Boolean>, DatabaseError>
+    suspend fun getUserUnreadRoomCount(uid: PrimaryKey): CustomResult<Int, DatabaseError>
+    suspend fun getUserUnreadMessageCount(uid: PrimaryKey): CustomResult<Long, DatabaseError>
+    suspend fun getRoomActivityRecords(
+        uid: PrimaryKey,
+        roomIds: List<PrimaryKey>,
+    ): CustomResult<List<RoomActivityRecord>, DatabaseError>
     suspend fun getUnreadRoomActivityRecords(
         uid: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RoomActivityRecord>>
+    ): CustomResult<PaginationResult<RoomActivityRecord>, DatabaseError>
 
     suspend fun getMemberPaginationResult(
         objectId: PrimaryKey?,
         word: String?,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<RawUser>>
+    ): CustomResult<PaginationResult<RawUser>, DatabaseError>
 
     suspend fun getMemberWithUserPaginationResult(
         objectId: PrimaryKey,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<Pair<Member, RawUser>>>
+    ): CustomResult<PaginationResult<Pair<Member, RawUser>>, DatabaseError>
 
     suspend fun getMemberWithUserByUids(
         objectId: PrimaryKey,
         uidList: List<PrimaryKey>,
-    ): Result<List<Pair<Member, RawUser>>>
+    ): CustomResult<List<Pair<Member, RawUser>>, DatabaseError>
 
-    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): Result<Quota?>
-    suspend fun insertQuota(quota: Quota): Result<Unit>
+    suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType): CustomResult<Quota?, DatabaseError>
+    suspend fun insertQuota(quota: Quota): CustomResult<Unit, DatabaseError>
 
     suspend fun getLatestTopicInContainer(
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?,
-    ): Result<Map<PrimaryKey, PrimaryKey?>>
+    ): CustomResult<Map<PrimaryKey, PrimaryKey?>, DatabaseError>
 
-    suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): Result<Member?>
+    suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey): CustomResult<Member?, DatabaseError>
     suspend fun getMemberByIds(
         uid: PrimaryKey,
         objectIds: List<PrimaryKey>,
-    ): Result<List<Pair<Long, NestedMemberInfo?>>>
+    ): CustomResult<List<Pair<Long, NestedMemberInfo?>>, DatabaseError>
 }
 
 interface AdminDatabase {
@@ -588,40 +667,42 @@ interface AdminDatabase {
 
     suspend fun batchAddRooms(roomList: List<Room>, membersList: List<Member>)
 
-    suspend fun getAllMembers(distinct: List<String>): Result<List<MemberAuthData>>
-    suspend fun batchAddEncryptTopicKeys(encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>): Result<Unit>
+    suspend fun getAllMembers(distinct: List<String>): CustomResult<List<MemberAuthData>, DatabaseError>
+    suspend fun batchAddEncryptTopicKeys(
+        encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>,
+    ): CustomResult<Unit, DatabaseError>
 
     suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
         userMap: Map<String, User>,
         objectType: ObjectType,
-    ): Result<Unit>
+    ): CustomResult<Unit, DatabaseError>
 
-    suspend fun createTaskRecord(record: TaskRecord): Result<TaskRecord>
+    suspend fun createTaskRecord(record: TaskRecord): CustomResult<TaskRecord, DatabaseError>
 
     suspend fun getTaskRecords(
         type: TaskRecordType?,
         isSuccess: Boolean?,
         failureType: String?,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<TaskRecord>>
+    ): CustomResult<PaginationResult<TaskRecord>, DatabaseError>
 
-    suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit>
-    suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit>
+    suspend fun batchAddSubscription(list: List<UserSubscription>): CustomResult<Unit, DatabaseError>
+    suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): CustomResult<Unit, DatabaseError>
     suspend fun getPanelLogs(
         targetId: PrimaryKey,
         objectType: com.storyteller_f.shared.type.ObjectType,
         fetch: PrimaryKeyFetch,
-    ): Result<PaginationResult<com.storyteller_f.a.backend.core.types.PanelLog>>
+    ): CustomResult<PaginationResult<com.storyteller_f.a.backend.core.types.PanelLog>, DatabaseError>
 }
 
 interface PanelAccountDatabase {
-    suspend fun getPanelAccount(id: PrimaryKey): Result<PanelAccount?>
-    suspend fun addPanelAccount(panelAccount: PanelAccount): Result<Unit>
-    suspend fun getUserAuthDataById(id: PrimaryKey): Result<UserAuthData?>
-    suspend fun getUserAuthDataByAddress(address: String): Result<UserAuthData?>
-    suspend fun getRawUserAndPublicKeyByAddress(ad: String): Result<Pair<RawPanelAccount, String>?>
-    suspend fun isUserNotExistsByPublicKey(pk: String): Result<Boolean>
+    suspend fun getPanelAccount(id: PrimaryKey): CustomResult<PanelAccount?, DatabaseError>
+    suspend fun addPanelAccount(panelAccount: PanelAccount): CustomResult<Unit, DatabaseError>
+    suspend fun getUserAuthDataById(id: PrimaryKey): CustomResult<UserAuthData?, DatabaseError>
+    suspend fun getUserAuthDataByAddress(address: String): CustomResult<UserAuthData?, DatabaseError>
+    suspend fun getRawUserAndPublicKeyByAddress(ad: String): CustomResult<Pair<RawPanelAccount, String>?, DatabaseError>
+    suspend fun isUserNotExistsByPublicKey(pk: String): CustomResult<Boolean, DatabaseError>
 }
 
 const val PUBLIC_KEY_LENGTH = 4096

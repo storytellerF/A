@@ -34,6 +34,7 @@ import com.storyteller_f.a.client.core.searchCurrentUserRooms
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
@@ -167,7 +168,10 @@ class RoomActivityTest {
                 getUnreadRoomActivities(
                     PaginationQuery(second.pagination?.nextPageToken, size = 1),
                 ).getOrThrow()
-            val last = getUnreadRoomActivities(PaginationQuery(third.pagination?.nextPageToken, size = 1)).getOrThrow()
+            val last =
+                getUnreadRoomActivities(
+                    PaginationQuery(third.pagination?.nextPageToken, size = 1),
+                ).getOrThrow()
             val pages = listOf(first, second, third)
             assertEquals(rooms.reversed().map { it.id }, pages.map { it.data.single().room.id })
             pages.forEach {
@@ -205,7 +209,10 @@ class RoomActivityTest {
                 val room = createRoom(NewRoom("private", "Private")).getOrThrow()
                 val keys = getRoomMembersPublicKeys(room.id, PaginationQuery()).getOrThrow().data
                 createTopicInRoomAndWait(frames) { sendMessage(room.tuple(), true, "Private message", keys) }
-                val listWire = client.get("/users/joined-rooms").body<com.storyteller_f.a.api.RoomInfoListResponse>()
+                val listWire =
+                    client.get(
+                        "/users/joined-rooms",
+                    ).body<com.storyteller_f.a.api.RoomInfoListResponse>()
                 assertIs<TopicContent.Encrypted>(listWire.activities.single().latestMessage?.content)
                 val listPage = getUserRooms(PaginationQuery()).getOrThrow()
                 assertIs<TopicContent.Plain>(listPage.activities.single().latestMessage?.content)
@@ -219,7 +226,9 @@ class RoomActivityTest {
             }
         val lateMember =
             attachSession {
-                assertTrue(getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == owner.custom })
+                assertTrue(
+                    getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == owner.custom },
+                )
             }
         loginSession(owner) {
             createTitle(
@@ -261,7 +270,10 @@ class RoomActivityTest {
                         .getOrThrow().data.single().id,
                 )
                 unpinTopic(recent.id).getOrThrow()
-                assertEquals(listOf(old.id), getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.map { it.id })
+                assertEquals(
+                    listOf(old.id),
+                    getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.map { it.id },
+                )
                 community.id
             }
         attachSession { assertTrue(getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.isEmpty()) }

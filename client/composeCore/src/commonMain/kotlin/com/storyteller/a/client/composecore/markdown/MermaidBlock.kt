@@ -16,6 +16,12 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.SubcomposeAsyncImage
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.storyteller_f.a.client.compose_core.components.HighlightCodeBlock
+import com.storyteller_f.a.client.compose_core.error.UiOperationError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.utils.readCodeFence
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CancellationException
@@ -37,7 +43,7 @@ internal fun MermaidBlock(modal: MarkdownComponentModel) {
     val renderState by produceState<MermaidRenderState>(MermaidRenderState.Loading, source) {
         val rendering =
             renderScope.async {
-                runCatching { renderMermaidSvg(source) }
+                captureFailure(UiOperationError::from) { renderMermaidSvg(source) }
             }
         val result =
             try {
@@ -53,7 +59,7 @@ internal fun MermaidBlock(modal: MarkdownComponentModel) {
             result.fold(
                 onSuccess = MermaidRenderState::Success,
                 onFailure = { renderError ->
-                    Napier.e(renderError) { "Failed to render Mermaid code fence" }
+                    Napier.e(renderError.cause) { "Failed to render Mermaid code fence" }
                     MermaidRenderState.Error
                 },
             )

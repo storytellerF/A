@@ -102,6 +102,8 @@ import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.getUserInfoByAid
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.signOut
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.type.UserStatus

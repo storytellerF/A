@@ -12,6 +12,12 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.storage.CollectionListStorage
@@ -119,8 +125,9 @@ class SectionPagingSource<DATUM : Any>(private val services: List<RegularPagingS
     override fun getRefreshKey(state: PagingState<SectionLoadParams, DATUM>) = null
 }
 
-class RegularPagingSource<DATUM : Any>(val service: suspend (String?, Int) -> Result<ListResponse<DATUM>>) :
-    PagingSource<String, DATUM>() {
+class RegularPagingSource<DATUM : Any>(
+    val service: suspend (String?, Int) -> CustomResult<ListResponse<DATUM>, FailureDetails>,
+) : PagingSource<String, DATUM>() {
     override suspend fun load(params: LoadParams<String>): LoadResult<String, DATUM> =
         service(
         params.key,
@@ -134,22 +141,19 @@ class RegularPagingSource<DATUM : Any>(val service: suspend (String?, Int) -> Re
     }.fold(onSuccess = { (data, pagination) ->
         LoadResult.Page(data = data, prevKey = null, nextKey = pagination?.nextPageToken)
     }, onFailure = {
-        LoadResult.Error(it)
+        LoadResult.Error(it.cause)
     })
 
     override fun getRefreshKey(state: PagingState<String, DATUM>): String? = null
 }
 
-/**
- * Result 的范型为out，说明这是一个生产者，只有在传入端需要明确指定类型.
- */
 @OptIn(ExperimentalPagingApi::class)
 fun <C : Any, T : Any> buildPager(
     collection: C,
     wrapper: RemoteKeyStorageWrapper,
     storage: CollectionListStorage<C, T>,
     onUpdated: suspend () -> Unit = {},
-    service: suspend (String?, Int) -> Result<ListResponse<T>>,
+    service: suspend (String?, Int) -> CustomResult<ListResponse<T>, FailureDetails>,
 ): Pager<String, T> =
     buildCollectionPager(
     collection,
@@ -207,7 +211,7 @@ fun <C : Any, T : Any> buildPager(
 fun <T : Any> buildPager(
     wrapper: RemoteKeyStorageWrapper,
     storage: GlobalListStorage<T>,
-    service: suspend (String?, Int) -> Result<ListResponse<T>>,
+    service: suspend (String?, Int) -> CustomResult<ListResponse<T>, FailureDetails>,
 ): Pager<String, T> =
     buildPager(wrapper, storage, RegularPagingSource(service)) {
     CompatPagingSource(storage.observeData(), IntKeyConverter)

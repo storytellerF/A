@@ -13,6 +13,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.searchCommunityRooms
 import com.storyteller_f.a.client.core.searchCurrentUserRooms
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlin.test.Test

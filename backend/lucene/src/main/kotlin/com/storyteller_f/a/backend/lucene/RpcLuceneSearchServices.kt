@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.OffsetFetch
 import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.RpcServiceProvider
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.service.CommunityDocument
 import com.storyteller_f.a.backend.core.service.CommunityDocumentSearch
 import com.storyteller_f.a.backend.core.service.CommunitySearchService
@@ -32,6 +33,8 @@ import com.storyteller_f.a.backend.core.service.UserDocument
 import com.storyteller_f.a.backend.core.service.UserDocumentSearch
 import com.storyteller_f.a.backend.core.service.UserSearchService
 import com.storyteller_f.a.backend.core.service.UserSearchServiceFactory
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
 import com.storyteller_f.services.lucene.api.LuceneRpc
 import com.storyteller_f.services.lucene.api.RpcLuceneQuery
 import com.storyteller_f.services.lucene.api.RpcLuceneResult
@@ -41,11 +44,14 @@ import com.storyteller_f.services.lucene.api.RpcLuceneStoredDocument
 import com.storyteller_f.services.lucene.api.RpcLuceneTextQuery
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import kotlinx.rpc.withService
 import java.util.concurrent.ConcurrentHashMap
 
-private inline fun <T> rpcResult(block: () -> T): Result<T> = cancellableRunCatching(block)
+private inline fun <T> rpcResult(block: () -> T): CustomResult<T, SearchError> =
+    captureFailure(
+    SearchError::from,
+    block,
+)
 private fun OffsetFetch.query() = RpcLuceneQuery(offset = cursor?.value ?: 0, size = size)
 private fun RpcLuceneQuery.withText(word: String, vararg fields: String) =
     copy(

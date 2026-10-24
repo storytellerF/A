@@ -15,8 +15,9 @@ import com.storyteller_f.a.cloud.core.service.deleteFavoriteByObject
 import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
-import com.storyteller_f.endpoint4k.ktor.server.invoke
+import com.storyteller_f.a.cloud.server.common.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.type.ObjectType
 import io.ktor.server.routing.Route
 

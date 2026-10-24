@@ -9,6 +9,7 @@ import com.storyteller_f.a.backend.core.ContainerDatabase
 import com.storyteller_f.a.backend.core.ContainerInfo
 import com.storyteller_f.a.backend.core.ObjectListFetch
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Member
 import com.storyteller_f.a.backend.core.types.Quota
@@ -27,13 +28,16 @@ import com.storyteller_f.a.backend.exposed.tables.UserTopicReads
 import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.mapUserInfo
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.NestedMemberInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.associateByPair
-import com.storyteller_f.shared.utils.cancellableRunCatching
 import org.jetbrains.exposed.v1.core.JoinType
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.countDistinct
@@ -55,9 +59,9 @@ import org.jetbrains.exposed.v1.r2dbc.update
 
 class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val combinedDatabase: CombinedDatabase) :
     ContainerDatabase {
-    override suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): Result<Boolean> {
+    override suspend fun isMemberJoined(objectId: PrimaryKey, uid: PrimaryKey?): CustomResult<Boolean, DatabaseError> {
         if (uid == null) {
-            return Result.success(false)
+            return CustomResult.success(false)
         }
         return databaseSession.dbSearch {
             search {
@@ -151,9 +155,9 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
     override suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
         uid: PrimaryKey?,
-    ): Result<Map<PrimaryKey, ContainerInfo>> {
-        if (parentIds.isEmpty()) return Result.success(emptyMap())
-        return cancellableRunCatching {
+    ): CustomResult<Map<PrimaryKey, ContainerInfo>, DatabaseError> {
+        if (parentIds.isEmpty()) return CustomResult.success(emptyMap())
+        return captureFailure(DatabaseError::from) {
             val joinMap =
                 if (uid != null && parentIds.isNotEmpty()) {
                     getUserJoinedTime(parentIds, uid).map {
@@ -162,7 +166,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
                         }
                     }
                 } else {
-                    Result.success(emptyMap())
+                    CustomResult.success(emptyMap())
                 }.getOrThrow()
             val readMap =
                 if (uid != null && parentIds.isNotEmpty()) {
@@ -172,7 +176,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
                         }
                     }
                 } else {
-                    Result.success(emptyMap())
+                    CustomResult.success(emptyMap())
                 }.getOrThrow()
             val memberCountMap =
                 if (parentIds.isNotEmpty()) {
@@ -180,7 +184,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
                         it.associateByPair()
                     }
                 } else {
-                    Result.success(emptyMap())
+                    CustomResult.success(emptyMap())
                 }.getOrThrow()
             val latestMap = getLatestTopicInContainer(parentIds, uid).getOrThrow()
 
@@ -223,9 +227,11 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
         map(UserTopicRead::wrapRow)
     }
 
-    override suspend fun getUsersHasUnreadRoomMap(uidList: List<PrimaryKey>): Result<Map<PrimaryKey, Boolean>> {
+    override suspend fun getUsersHasUnreadRoomMap(
+        uidList: List<PrimaryKey>,
+    ): CustomResult<Map<PrimaryKey, Boolean>, DatabaseError> {
         if (uidList.isEmpty()) {
-            return Result.success(emptyMap())
+            return CustomResult.success(emptyMap())
         }
         return databaseSession.dbSearch {
             search {
@@ -264,7 +270,7 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun getUserUnreadMessageCount(uid: PrimaryKey) = countUnreadRoomMessages(uid)
 
-    override suspend fun getUserUnreadRoomCount(uid: PrimaryKey): Result<Int> =
+    override suspend fun getUserUnreadRoomCount(uid: PrimaryKey): CustomResult<Int, DatabaseError> =
         countUnreadRoomActivities(uid).map { Math.toIntExact(it) }
 
     override suspend fun getMemberPaginationResult(objectId: PrimaryKey?, word: String?, fetch: PrimaryKeyFetch) =
@@ -379,8 +385,8 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
     override suspend fun getMemberByIds(
         uid: PrimaryKey,
         objectIds: List<PrimaryKey>,
-    ): Result<List<Pair<Long, NestedMemberInfo?>>> {
-        if (objectIds.isEmpty()) return Result.success(emptyList())
+    ): CustomResult<List<Pair<Long, NestedMemberInfo?>>, DatabaseError> {
+        if (objectIds.isEmpty()) return CustomResult.success(emptyList())
         return databaseSession.dbSearch {
             search {
                 Members.selectAll().where {

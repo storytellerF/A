@@ -8,6 +8,8 @@ import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.a.client.core.addChildAccount
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.signOutAll
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
 import io.ktor.http.HttpStatusCode
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

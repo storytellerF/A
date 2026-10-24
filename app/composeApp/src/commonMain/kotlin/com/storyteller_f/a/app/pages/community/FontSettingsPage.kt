@@ -38,6 +38,7 @@ import com.storyteller_f.a.app.pages.user.SettingOption
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.core.updateCommunityInfo
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FontSettings

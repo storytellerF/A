@@ -10,6 +10,8 @@ import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getUserOverview
 import com.storyteller_f.a.client.core.updateUserStatus
 import com.storyteller_f.a.cloud.core.service.checkRootWritePermission
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.obj.UpdateUserStatusBody
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.UserStatus

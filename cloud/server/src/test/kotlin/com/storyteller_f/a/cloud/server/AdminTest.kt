@@ -50,6 +50,7 @@ import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.upload
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.TitleSearchType
@@ -320,7 +321,10 @@ class AdminTest {
                 createCommunity(NewCommunity("c1", "c1")).getOrThrow()
             }.uid
         loginPanelSession(outer) {
-            assertListSize(1, getUserJoinedCommunities(uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery()))
+            assertListSize(
+                1,
+                getUserJoinedCommunities(uid, CustomApi.Users.JoinedCommunities.UserCommunitiesQuery()),
+            )
         }
     }
 
@@ -361,7 +365,10 @@ class AdminTest {
         loginPanelSession(outer) {
             assertListSize(
                 1,
-                getUserReceivedTitles(uid, CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER)),
+                getUserReceivedTitles(
+                    uid,
+                    CustomApi.Users.Id.Titles.TitleQuery(searchType = TitleSearchType.RECEIVER),
+                ),
             )
         }
     }
@@ -469,7 +476,10 @@ class AdminTest {
         loginPanelSession(outer) {
             val records = getUserUploadRecords(uid, PaginationQuery()).getOrThrow().data
             assertEquals(1, records.size)
-            assertEquals("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", records.single().sha256)
+            assertEquals(
+                "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+                records.single().sha256,
+            )
             assertEquals("mnG7TA==", records.single().crc32c)
         }
     }
@@ -709,7 +719,10 @@ internal class AdminUserActivityTest {
             attachSession { session ->
                 // Upload a file to user
                 val fileInfo =
-                    upload(session.uid ob ObjectType.USER, getUploadDataFromText("test file")).getOrThrow().data.first()
+                    upload(
+                        session.uid ob ObjectType.USER,
+                        getUploadDataFromText("test file"),
+                    ).getOrThrow().data.first()
 
                 // Create a topic that references the file
                 val topic =

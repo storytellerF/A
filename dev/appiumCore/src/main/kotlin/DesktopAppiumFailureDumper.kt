@@ -4,6 +4,9 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.ArtifactCollectionError
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.onFailure
 import io.appium.java_client.AppiumDriver
 import java.io.File
 
@@ -29,13 +32,13 @@ object DesktopAppiumFailureDumper {
 
     private fun dumpPageSource(driver: AppiumDriver?, outputDir: File) {
         if (driver == null) return
-        runCatching {
+        captureFailure(ArtifactCollectionError::CollectionFailed) {
             File(
                 outputDir,
                 "appium-page-source.xml",
             ).writeText(checkNotNull(driver.pageSource) { "Appium returned no page source" })
         }.onFailure {
-            File(outputDir, "appium-page-source.error.txt").writeText(it.stackTraceToString())
+            File(outputDir, "appium-page-source.error.txt").writeText(it.cause.stackTraceToString())
         }
     }
 

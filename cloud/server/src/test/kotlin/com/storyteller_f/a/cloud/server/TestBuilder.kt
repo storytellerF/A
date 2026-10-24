@@ -11,6 +11,7 @@ import com.storyteller_f.a.backend.core.readEnv
 import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.ConstPassHolder
 import com.storyteller_f.a.client.core.PanelSessionManager
+import com.storyteller_f.a.client.core.RequestError
 import com.storyteller_f.a.client.core.SimplePassHolder
 import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.UserSessionModel
@@ -31,6 +32,9 @@ import com.storyteller_f.a.test.createTestArtifactDirectory
 import com.storyteller_f.a.test.recordTestArtifacts
 import com.storyteller_f.a.test.testArtifactRoot
 import com.storyteller_f.a.test.useBaseServiceFixture
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -335,11 +339,11 @@ suspend fun <R2> TestMate.noneSession(block: suspend UserSessionManager.() -> R2
     }
 }
 
-fun <T> assertListSize(count: Int, result: Result<ListResponse<T>>) {
+fun <T, E : FailureDetails> assertListSize(count: Int, result: CustomResult<ListResponse<T>, E>) {
     assertEquals(count, result.getOrThrow().data.size)
 }
 
-fun <T> assertListTotalSize(count: Int, result: Result<ListResponse<T>>) {
+fun <T, E : FailureDetails> assertListTotalSize(count: Int, result: CustomResult<ListResponse<T>, E>) {
     assertEquals(count.toLong(), result.getOrThrow().pagination?.total)
 }
 
@@ -349,7 +353,9 @@ fun extractTableNames(query: String): List<String> {
         .flatMap { it.groupValues.drop(1).filter { name -> name.isNotEmpty() } }.toList()
 }
 
-suspend fun <T> UserSessionManager.waitAndSend(block: suspend DefaultClientWebSocketSession.() -> T): Result<T> {
+suspend fun <T> UserSessionManager.waitAndSend(
+    block: suspend DefaultClientWebSocketSession.() -> T,
+): CustomResult<T, RequestError> {
     while (true) {
         if (webSocketClient.connectionHandler.data.value != null) {
             break

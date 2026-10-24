@@ -4,6 +4,9 @@
 
 package com.storyteller_f.shared.utils
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.shared.model.ContentValidationError
+
 /**
  * L: any kind of letter from any language.
  * Z: any kind of whitespace or invisible separator.
@@ -11,7 +14,7 @@ package com.storyteller_f.shared.utils
  * N: any kind of numeric character in any script.
  * S: math symbols, currency signs, dingbats, box-drawing characters, etc.
  */
-expect fun checkContent(text: String): Result<Unit>
+expect fun checkContent(text: String): CustomResult<Unit, ContentValidationError>
 
 expect fun safeFirstUnicode(text: String): String?
 

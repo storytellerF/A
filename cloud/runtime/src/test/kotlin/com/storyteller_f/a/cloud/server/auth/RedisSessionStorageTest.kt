@@ -6,6 +6,7 @@ package com.storyteller_f.a.cloud.server.auth
 
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.service.buildSigninSessionService
+import com.storyteller_f.result.getOrThrow
 import io.github.crackthecodeabhi.kreds.connection.Endpoint
 import io.github.crackthecodeabhi.kreds.connection.newClient
 import io.ktor.client.plugins.cookies.HttpCookies

@@ -4,6 +4,10 @@
 
 package com.storyteller_f.a.client.core
 
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,7 +20,10 @@ sealed interface LoadingState {
     data object Done : LoadingState
 }
 
-suspend fun <T> LoadingHandler<T>.request(onSave: suspend (T) -> Unit, service: suspend () -> Result<T>) {
+suspend fun <T> LoadingHandler<T>.request(
+    onSave: suspend (T) -> Unit,
+    service: suspend () -> CustomResult<T, FailureDetails>,
+) {
     if (state.value is LoadingState.Loading) return
     state.markLoading()
     service().onSuccess { res ->
@@ -27,7 +34,7 @@ suspend fun <T> LoadingHandler<T>.request(onSave: suspend (T) -> Unit, service: 
             state.markError("content not found")
         }
     }.onFailure {
-        state.markError(it)
+        state.markError(it.cause)
     }
 }
 
@@ -49,7 +56,8 @@ class FixedLoadingHandler<T> : LoadingHandler<T> {
     override fun refresh() = Unit
 }
 
-class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> Result<T>) : LoadingHandler<T> {
+class SimpleLoadingHandler<T>(val scope: CoroutineScope, val loader: suspend () -> CustomResult<T, FailureDetails>) :
+    LoadingHandler<T> {
     override val state: MutableStateFlow<LoadingState?> = MutableStateFlow(null)
     override val data: MutableStateFlow<T?> = MutableStateFlow(null)
 

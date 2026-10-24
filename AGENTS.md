@@ -25,6 +25,7 @@
 - **client/asciidoc-parser**: AsciiDoc preview HTML generation used by markdown rendering.
 - **client/model-storage**: Abstract storage interfaces and collection identifiers.
 - **client/room**: Room-based storage implementation and aggregation entry points.
+- **result**: Business-independent KMP result container and error diagnostic contracts.
 - **shared**: Cross-platform business models and utilities.
 - **app/composeApp**: Shared user-facing Compose UI, actual implementations, and services.
 - **app/androidApp** / **app/desktopApp** / **app/cliApp**: User-facing platform entry points.
@@ -35,7 +36,7 @@
 - **bot/***: Bot modules.
 
 ## Code Style And Practices
-- **Kotlin**: Do not expose mutable collections in public APIs. Prefer `data class`, `sealed interface`/`sealed class`, and `suspend` + `Result<T>`. Use verb-object naming for functions.
+- **Kotlin**: Do not expose mutable collections in public APIs. Prefer `data class`, `sealed interface`/`sealed class`, and `suspend` + `CustomResult<T, ScenarioError>`. Use verb-object naming for functions.
 - **Compose**: Name `@Composable` functions in PascalCase. The general lowercase function-naming checks exclude `composeApp` source trees because Compose uses a different naming convention.
 - **Architecture**: UI -> `SessionManager` request extensions -> API endpoint. Add local storage and paging when appropriate.
 - **GlobalDialog vs GlobalTask**: Use `GlobalDialog` for user-initiated actions where success or failure is important to the user (e.g., sign-in, publishing content, profile updates). Use `GlobalTask` for user-initiated actions where failure can be tolerated but the operation must not be cancelled by scrolling or page switching (e.g., adding reactions, toggling favorites). When implementing client UI handlers, consider adding `GlobalDialog` or `GlobalTask` as fields in the handler/controller class.
@@ -349,3 +350,12 @@
 - Windows and Linux desktop E2E share the quoted JVM argument-file launch contract. Keep Linux Appium arguments as an array and honor its working directory. Remote environment runners translate paths and provide prebuilt target JDK/native dependencies; keep Gradle tests and backend fixtures on the host and provider connections outside the project.
 
 - Declare desktop runtime dependencies and optional project setup hooks in dev/test-environments/desktop-requirements.json. Keep VM hardware, credentials and provider launch commands outside the project. Host preparation may build; guest initialization hooks remain limited to runtime configuration and prebuilt dependency installation.
+
+- Return `CustomResult<T, ScenarioError>` with a scenario-owned sealed error interface. Convert errors explicitly
+  when crossing scenarios; `FailureDetails` is only a diagnostic/terminal-consumer contract, never a business return type.
+  Capture exceptions at explicit boundaries, propagate cancellation, and do not restore the removed Kotlin Result helpers.
+- Endpoint server bindings are owned by cloud/runtime's `EndpointResultRouting.kt`; use its `invoke` extension
+  so typed failures stay intact without passing through endpoint4k's Kotlin Result-based invocation overloads.
+
+- Preserve typed failure categories through `fromError` conversions; do not infer authentication or permission
+  failures solely from the diagnostic exception class. Host PDF tests need JVM-visible Noto Serif and Noto Sans Mono Regular.

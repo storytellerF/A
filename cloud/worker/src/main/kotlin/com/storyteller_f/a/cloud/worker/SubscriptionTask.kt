@@ -12,13 +12,18 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.Topic
+import com.storyteller_f.a.cloud.error.WorkerError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
 import com.storyteller_f.shared.utils.generateModelMarkdownContent
-import com.storyteller_f.shared.utils.mapResult
 import com.storyteller_f.shared.utils.now
 import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.getSystemUserId
@@ -26,25 +31,25 @@ import io.github.aakira.napier.Napier
 
 suspend fun Backend.doSubscriptionTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE) {
     val result =
-        database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).mapResult { taskRecord ->
+        database.user.getLatestTaskRecord(TaskRecordType.SUBSCRIPTION).andThen(WorkerError::fromError) { taskRecord ->
             val cursor = Cursor.AscCursor(taskRecord?.objectId ?: 0)
             database.topic.getTopicList(PrimaryKeyFetch(cursor, fetchSize))
-        }.mapResult { topics ->
+        }.andThen(WorkerError::fromError) { topics ->
             if (topics.isEmpty()) {
                 Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
                     "no topic to send"
                 }
-                UNIT_RESULT
+                CustomResult.Success(Unit)
             } else {
                 Napier.i(tag = SUBSCRIPTION_LOG_TAG) {
                     "process ${topics.size} topics"
                 }
-                UNIT_RESULT.mapResult {
+                CustomResult.Success(Unit).andThen(WorkerError::fromError) {
                     topics.forEach { topic ->
                         Napier.i(tag = SUBSCRIPTION_LOG_TAG) { "send topic ${topic.id}" }
                         processTopicSubscription(topic, fetchSize)
                     }
-                    UNIT_RESULT
+                    CustomResult.Success(Unit)
                 }
             }
         }
@@ -55,7 +60,7 @@ suspend fun Backend.doSubscriptionTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETC
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = SUBSCRIPTION_LOG_TAG, throwable = failure) {
+            Napier.e(tag = SUBSCRIPTION_LOG_TAG, throwable = failure.cause) {
                 "subscription task failed"
             }
         },

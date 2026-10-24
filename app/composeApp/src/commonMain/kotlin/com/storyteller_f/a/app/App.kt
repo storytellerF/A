@@ -104,6 +104,7 @@ import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo

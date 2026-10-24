@@ -5,6 +5,8 @@
 package com.storyteller_f.a.backend.core.service
 
 import com.storyteller_f.a.backend.core.MergedEnv
+import com.storyteller_f.a.backend.core.error.ObjectStorageError
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.Dimension
 import kotlinx.datetime.LocalDateTime
 import java.io.File
@@ -23,29 +25,38 @@ data class ProcessedUploadPack(val pack: UploadPack, val contentType: String, va
 data class CopyPack(val originFullName: String, val newFullName: String)
 
 interface ObjectStorageService {
-    suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>): Result<List<ObjectStorageWriteRecord>>
+    suspend fun upload(
+        bucketName: String,
+        uploadPacks: List<UploadPack>,
+    ): CustomResult<List<ObjectStorageWriteRecord>, ObjectStorageError>
 
     /**
      * @param bucketName 存储桶名称
      * @param names 完整的name
      * @return 与名称对应的对象存储记录
      */
-    suspend fun get(bucketName: String, names: List<String>): Result<List<ObjectStorageRecord>>
+    suspend fun get(
+        bucketName: String,
+        names: List<String>,
+    ): CustomResult<List<ObjectStorageRecord>, ObjectStorageError>
 
     suspend fun getWithPresignContext(
         bucketName: String,
         names: List<String>,
         presignContext: PresignContext?,
         responseContentTypes: Map<String, String> = emptyMap(),
-    ): Result<List<ObjectStorageRecord>> = get(bucketName, names)
+    ): CustomResult<List<ObjectStorageRecord>, ObjectStorageError> = get(bucketName, names)
 
-    suspend fun clean(bucketName: String): Result<Unit>
+    suspend fun clean(bucketName: String): CustomResult<Unit, ObjectStorageError>
 
-    suspend fun list(bucketName: String, prefix: String): Result<List<ObjectStorageRecord>>
+    suspend fun list(bucketName: String, prefix: String): CustomResult<List<ObjectStorageRecord>, ObjectStorageError>
 
-    suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): Result<List<ObjectStorageRecord>>
+    suspend fun copy(
+        bucketName: String,
+        copyPacks: List<CopyPack>,
+    ): CustomResult<List<ObjectStorageRecord>, ObjectStorageError>
 
-    suspend fun getInputStream(bucketName: String, name: String): Result<InputStream>
+    suspend fun getInputStream(bucketName: String, name: String): CustomResult<InputStream, ObjectStorageError>
 
     /**
      * 使用对象存储的 compose/concat 能力，将同一 bucket 下的多个源对象顺序合并为一个目标对象。.
@@ -61,12 +72,12 @@ interface ObjectStorageService {
         sourceFullNames: List<String>,
         expectedSha256: String,
         expectedCrc32c: String,
-    ): Result<ObjectStorageWriteRecord>
+    ): CustomResult<ObjectStorageWriteRecord, ObjectStorageError>
 
     /**
      * 删除 bucket 下的多个对象。.
      */
-    suspend fun delete(bucketName: String, names: List<String>): Result<Unit>
+    suspend fun delete(bucketName: String, names: List<String>): CustomResult<Unit, ObjectStorageError>
 }
 
 interface ObjectStorageServiceFactory {

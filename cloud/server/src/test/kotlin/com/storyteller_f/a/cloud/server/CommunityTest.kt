@@ -24,6 +24,7 @@ import com.storyteller_f.a.client.core.getUserJoinedCommunities
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.updateCommunityInfo
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FontSettings
 import com.storyteller_f.shared.model.MemberPolicy

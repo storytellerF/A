@@ -10,7 +10,9 @@ import coil3.SingletonImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.ImageRequest
+import com.storyteller_f.a.client.compose_core.error.ImageError
 import com.storyteller_f.a.client.core.UserSessionManager
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.FileInfo
 import io.ktor.client.HttpClient
 
@@ -21,7 +23,7 @@ suspend fun getRemoteImageBitmap(
     sessionManager: UserSessionManager,
     context: PlatformContext,
     info: FileInfo,
-): Result<ImageBitmap>? {
+): CustomResult<ImageBitmap, ImageError>? {
     val imageRequest =
         imageRequest(context, sessionManager.client, info)
             .androidAllowHardware(false)

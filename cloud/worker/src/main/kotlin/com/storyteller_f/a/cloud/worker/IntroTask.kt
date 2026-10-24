@@ -15,14 +15,22 @@ import com.storyteller_f.a.backend.core.types.User
 import com.storyteller_f.a.backend.core.types.buildMemberForNotificationRoom
 import com.storyteller_f.a.backend.core.types.buildUserNotificationRoom
 import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
+import com.storyteller_f.a.cloud.error.WorkerError
 import com.storyteller_f.a.cloud.ws.api.GlobalWsEventPublisher
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.mapError
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.mapResult
 import com.storytellerf.a.cloud.worker.DEFAULT_TASK_OBJECT_FETCH_SIZE
 import com.storytellerf.a.cloud.worker.executeTaskObject
 import com.storytellerf.a.cloud.worker.getSystemUserId
@@ -37,34 +45,37 @@ suspend fun Backend.doIntroTask(fetchSize: Int = DEFAULT_TASK_OBJECT_FETCH_SIZE)
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = INTRO_LOG_TAG, throwable = failure) {
+            Napier.e(tag = INTRO_LOG_TAG, throwable = failure.cause) {
                 "intro task failed"
             }
         },
     )
 }
 
-private suspend fun Backend.executeIntroTask(fetchSize: Int): Result<Unit> =
-    database.user.getTaskRecordsToRetry(TaskRecordType.INTRO, fetchSize).mapResult { retryRecords ->
+private suspend fun Backend.executeIntroTask(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getTaskRecordsToRetry(
+        TaskRecordType.INTRO,
+        fetchSize,
+    ).andThen(WorkerError::fromError) { retryRecords ->
         if (retryRecords.isEmpty()) {
             processNextIntroUsers(fetchSize)
         } else {
             retryRecords.forEach { retryRecord ->
                 processIntroRetry(retryRecord)
             }
-            Result.success(Unit)
+            CustomResult.success(Unit)
         }
-    }
+    }.mapError(WorkerError::fromError)
 
-private suspend fun Backend.processNextIntroUsers(fetchSize: Int): Result<Unit> =
-    database.user.getLatestTaskRecord(TaskRecordType.INTRO).mapResult { taskRecord ->
+private suspend fun Backend.processNextIntroUsers(fetchSize: Int): CustomResult<Unit, WorkerError> =
+    database.user.getLatestTaskRecord(TaskRecordType.INTRO).andThen(WorkerError::fromError) { taskRecord ->
         val fetch =
             PrimaryKeyFetch(
                 Cursor.AscCursor(taskRecord?.objectId ?: INTRO_START_OBJECT_ID),
                 fetchSize,
             )
         database.user.getAllUsers(fetch)
-    }.mapResult { paginationResult ->
+    }.andThen(WorkerError::fromError) { paginationResult ->
         if (paginationResult.list.isEmpty()) {
             Napier.i(tag = INTRO_LOG_TAG) {
                 "no more user, total user count is ${paginationResult.total}"
@@ -77,8 +88,8 @@ private suspend fun Backend.processNextIntroUsers(fetchSize: Int): Result<Unit> 
                 processIntroUser(rawUser, retryRecordId = null)
             }
         }
-        Result.success(Unit)
-    }
+        CustomResult.success(Unit)
+    }.mapError(WorkerError::fromError)
 
 private suspend fun Backend.processIntroRetry(record: TaskRecord) {
     executeTaskObject(
@@ -115,7 +126,7 @@ private suspend fun Backend.sendHelloTopic(rawUser: RawUser, successRecord: Task
     database.admin.createTaskRecord(successRecord).getOrThrow()
 }
 
-private fun Result<Unit>.logIntroResult(objectId: PrimaryKey) {
+private fun CustomResult<Unit, WorkerError>.logIntroResult(objectId: PrimaryKey) {
     fold(
         onSuccess = {
             Napier.i(tag = INTRO_LOG_TAG) {
@@ -123,43 +134,56 @@ private fun Result<Unit>.logIntroResult(objectId: PrimaryKey) {
             }
         },
         onFailure = { failure ->
-            Napier.e(tag = INTRO_LOG_TAG, throwable = failure) {
+            Napier.e(tag = INTRO_LOG_TAG, throwable = failure.cause) {
                 "failed to send hello topic to user $objectId"
             }
         },
     )
 }
 
-internal suspend fun Backend.sendTopicToNotificationRoom(uid: PrimaryKey, user: User, content: String): Result<Unit> =
-    getNotificationRoom(user).mapResult { room ->
-        (room?.let { Result.success(it) } ?: createNotificationRoom(user, uid))
-            .mapResult { notificationRoom ->
-                sedTopicAtRoom(uid, notificationRoom.id, content)
-            }
-    }
+internal suspend fun Backend.sendTopicToNotificationRoom(
+    uid: PrimaryKey,
+    user: User,
+    content: String,
+): CustomResult<Unit, WorkerError> =
+    getNotificationRoom(user).andThen(WorkerError::fromError) { room ->
+    (room?.let { CustomResult.success(it) } ?: createNotificationRoom(user, uid))
+        .andThen(WorkerError::fromError) { notificationRoom ->
+            sedTopicAtRoom(uid, notificationRoom.id, content)
+        }
+}.mapError(WorkerError::fromError)
 
-private suspend fun Backend.getNotificationRoom(user: User): Result<Room?> =
-    database.room.getRawRoom(ObjectFetch.IdFetch(user.notificationId)).map { rawRoom -> rawRoom?.room }
+private suspend fun Backend.getNotificationRoom(user: User): CustomResult<Room?, WorkerError> =
+    database.room.getRawRoom(
+        ObjectFetch.IdFetch(user.notificationId),
+    ).map { rawRoom -> rawRoom?.room }.mapError(WorkerError::fromError)
 
-private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): Result<Room> =
+private suspend fun Backend.createNotificationRoom(user: User, uid: PrimaryKey): CustomResult<Room, WorkerError> =
     database.room.createRoom(
         buildUserNotificationRoom(user, uid),
         buildMemberForNotificationRoom(user, uid),
-    )
+    ).mapError(WorkerError::fromError)
 
-internal suspend fun Backend.sedTopicAtRoom(uid: PrimaryKey, roomId: PrimaryKey, content: String): Result<Unit> =
+internal suspend fun Backend.sedTopicAtRoom(
+    uid: PrimaryKey,
+    roomId: PrimaryKey,
+    content: String,
+): CustomResult<Unit, WorkerError> =
     database.room.getRoomPubKeyPaginationResult(
-        roomId,
-        PrimaryKeyFetch(null, 10),
-    ).mapResult { paginationResult ->
-        val encrypted = buildEncryptedTopicContent(content, paginationResult.list)
-        createTopicAtRoom(NewRoomTopic(ObjectType.ROOM, roomId, encrypted), uid).mapResult { topic ->
-            topic?.let {
-                GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
-            }
-            Result.success(Unit)
+    roomId,
+    PrimaryKeyFetch(null, 10),
+).andThen(WorkerError::fromError) { paginationResult ->
+    val encrypted = buildEncryptedTopicContent(content, paginationResult.list)
+    createTopicAtRoom(
+        NewRoomTopic(ObjectType.ROOM, roomId, encrypted),
+        uid,
+    ).andThen(WorkerError::fromError) { topic ->
+        topic?.let {
+            GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
         }
+        CustomResult.success(Unit)
     }
+}.mapError(WorkerError::fromError)
 
 private const val INTRO_START_OBJECT_ID = 1000L
 private const val INTRO_LOG_TAG = "intro"

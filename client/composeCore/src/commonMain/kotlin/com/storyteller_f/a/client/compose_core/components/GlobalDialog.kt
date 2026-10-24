@@ -29,6 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.client.compose_core.Res
 import com.storyteller_f.a.client.compose_core.close
+import com.storyteller_f.a.client.compose_core.error.DialogError
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.FailureDetails
+import com.storyteller_f.result.mapError
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -62,7 +66,7 @@ class GlobalDialogContext<C>(val events: MutableSharedFlow<Any>, val sessionMana
         events.emit(any)
     }
 
-    suspend fun <T> request(block: suspend C.() -> Result<T>): Result<T> = block(sessionManager)
+    suspend fun <T, E> request(block: suspend C.() -> CustomResult<T, E>): CustomResult<T, E> = block(sessionManager)
 }
 
 /**
@@ -90,30 +94,46 @@ class CustomGlobalDialogController<C>(
 
     /** Runs [block] while presenting its loading, custom-content, or error state. */
     @OptIn(ExperimentalUuidApi::class)
-    suspend fun <T> useResult(block: suspend CustomGlobalDialogController<C>.() -> Result<T>): Result<T> =
+    suspend fun <T, E : FailureDetails> useResult(
+        block: suspend CustomGlobalDialogController<C>.() -> CustomResult<T, E>,
+    ): CustomResult<T, DialogError> =
         mutex.withLock {
-            val dialogState = state.value
-            if (!dialogState.isEmpty()) {
-                Result.failure(Exception("dialog show failed"))
-            } else {
-                try {
-                    state.value = persistentListOf(GlobalDialogState.Loading())
-                    val result = this.block().getOrThrow()
-                    if (result is CustomGlobalDialogContent) {
-                        state.value = persistentListOf(GlobalDialogState.Custom(result))
-                    } else {
-                        state.value = persistentListOf()
+        val dialogState = state.value
+        if (!dialogState.isEmpty()) {
+            CustomResult.Failure(DialogError.Busy())
+        } else {
+            try {
+                state.value = persistentListOf(GlobalDialogState.Loading())
+                val result =
+                    when (val operation = this.block()) {
+                        is CustomResult.Success -> operation.value
+
+                        is CustomResult.Failure -> {
+                            val error = DialogError.fromError(operation.error)
+                            state.value = persistentListOf(GlobalDialogState.Error(error.cause))
+                            return@withLock CustomResult.Failure(error)
+                        }
                     }
-                    Result.success(result)
-                } catch (e: Exception) {
-                    Napier.e(e) {
-                        "global dialog"
-                    }
-                    state.value = persistentListOf(GlobalDialogState.Error(e))
-                    Result.failure(e)
+                if (result is CustomGlobalDialogContent) {
+                    state.value = persistentListOf(GlobalDialogState.Custom(result))
+                } else {
+                    state.value = persistentListOf()
                 }
+                CustomResult.success(result)
+            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+                state.value = persistentListOf()
+                throw cancellation
+            } catch (e: Exception) {
+                Napier.e(e) {
+                    "global dialog"
+                }
+                state.value = persistentListOf(GlobalDialogState.Error(e))
+                CustomResult.Failure(DialogError.from(e))
+            } finally {
+                if (state.value.lastOrNull() is GlobalDialogState.Loading) state.value = persistentListOf()
             }
         }
+    }
 
     /** Updates the active loading dialog with progress produced by [block]. */
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {
@@ -139,11 +159,13 @@ class NestedGlobalDialogController<C>(val controller: CustomGlobalDialogControll
         get() = controller.context
 
     /** Runs [block] with a nested loading state and removes it when complete. */
-    suspend fun <T> useResult(block: suspend NestedGlobalDialogController<C>.() -> Result<T>): Result<T> {
+    suspend fun <T, E : FailureDetails> useResult(
+        block: suspend NestedGlobalDialogController<C>.() -> CustomResult<T, E>,
+    ): CustomResult<T, DialogError> {
         val currentState = state.value
         state.value = currentState.adding(GlobalDialogState.Loading())
         try {
-            return block()
+            return block().mapError(DialogError::fromError)
         } finally {
             state.value = state.value.removingAt(state.value.lastIndex)
         }
@@ -251,9 +273,9 @@ private fun LoadingGlobalDialogContent(loading: GlobalDialogState.Loading) {
 }
 
 /** Executes [block] against the session manager in this nested dialog context. */
-suspend inline fun <T, R> NestedGlobalDialogController<GlobalDialogContext<T>>.request(
-    noinline block: suspend T.() -> Result<R>,
-): Result<R> = context.request(block)
+suspend inline fun <T, R, E> NestedGlobalDialogController<GlobalDialogContext<T>>.request(
+    noinline block: suspend T.() -> CustomResult<R, E>,
+): CustomResult<R, E> = context.request(block)
 
 /** Emits [event] from this nested dialog context. */
 suspend inline fun <T> NestedGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {
@@ -261,9 +283,9 @@ suspend inline fun <T> NestedGlobalDialogController<GlobalDialogContext<T>>.emit
 }
 
 /** Executes [block] against the session manager in this dialog context. */
-suspend inline fun <T, R> CustomGlobalDialogController<GlobalDialogContext<T>>.request(
-    noinline block: suspend T.() -> Result<R>,
-): Result<R> = context.request(block)
+suspend inline fun <T, R, E> CustomGlobalDialogController<GlobalDialogContext<T>>.request(
+    noinline block: suspend T.() -> CustomResult<R, E>,
+): CustomResult<R, E> = context.request(block)
 
 /** Emits [event] from this dialog context. */
 suspend inline fun <T> CustomGlobalDialogController<GlobalDialogContext<T>>.emitEvent(event: Any) {

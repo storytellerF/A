@@ -21,6 +21,9 @@ import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.getTopicList
 import com.storyteller_f.a.client.core.getUserCommunities
 import com.storyteller_f.a.client.core.userSignIn
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -381,7 +384,7 @@ private suspend fun createNewsTopic(
             "create new topic success $date $content"
         }
     }.onFailure {
-        Napier.e(it) {
+        Napier.e(it.cause) {
             "create new topic failed $date $content"
         }
     }

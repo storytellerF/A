@@ -24,11 +24,13 @@ import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.PrivateKeyInput
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
+import com.storyteller_f.a.client.core.CredentialError
 import com.storyteller_f.a.client.core.RawUserPassInfo
 import com.storyteller_f.a.client.core.getPanelUserSignInPass
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelUiViewModel
-import com.storyteller_f.shared.utils.cancellableRunCatching
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.onSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -59,7 +61,7 @@ fun PanelInputPage(back: () -> Unit) {
             scope.launch {
                 dialogController.useResult {
                     request {
-                        cancellableRunCatching {
+                        captureFailure(CredentialError::from) {
                             val signResult =
                                 getPanelUserSignInPass(
                                     host.createAuthKey(),

@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 

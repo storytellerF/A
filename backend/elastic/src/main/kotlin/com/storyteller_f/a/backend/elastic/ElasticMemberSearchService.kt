@@ -9,11 +9,13 @@ import co.elastic.clients.elasticsearch.core.SearchRequest
 import com.storyteller_f.a.backend.core.ElasticConnection
 import com.storyteller_f.a.backend.core.MergedEnv
 import com.storyteller_f.a.backend.core.PaginationResult
+import com.storyteller_f.a.backend.core.error.SearchError
 import com.storyteller_f.a.backend.core.preprocessUserInputKeyword
 import com.storyteller_f.a.backend.core.service.MemberDocument
 import com.storyteller_f.a.backend.core.service.MemberDocumentSearch
 import com.storyteller_f.a.backend.core.service.MemberSearchService
 import com.storyteller_f.a.backend.core.service.MemberSearchServiceFactory
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.github.aakira.napier.Napier
@@ -26,54 +28,54 @@ class ElasticMemberSearchService(connection: ElasticConnection) :
         const val INDEX_NAME = "members"
     }
 
-    override suspend fun saveDocument(documents: List<MemberDocument>): Result<Unit> =
+    override suspend fun saveDocument(documents: List<MemberDocument>): CustomResult<Unit, SearchError> =
         useElasticClient {
-        saveDocumentList(connection, documents, INDEX_NAME)
-    }
+            saveDocumentList(connection, documents, INDEX_NAME)
+        }
 
-    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): Result<Unit> =
+    override suspend fun deleteDocument(uid: PrimaryKey, objectId: PrimaryKey): CustomResult<Unit, SearchError> =
         useElasticClient {
-        val query =
-            QueryBuilders.bool { b ->
-                b.must { m ->
-                    m.term { t ->
-                        t.field("uid").value(uid.toString())
-                    }
-                }.must { m ->
-                    m.term { t ->
-                        t.field("objectId").value(objectId.toString())
+            val query =
+                QueryBuilders.bool { b ->
+                    b.must { m ->
+                        m.term { t ->
+                            t.field("uid").value(uid.toString())
+                        }
+                    }.must { m ->
+                        m.term { t ->
+                            t.field("objectId").value(objectId.toString())
+                        }
                     }
                 }
+
+            val response =
+                deleteByQuery { d ->
+                    d.index(INDEX_NAME).query(query).refresh(connection.refresh)
+                }.await()
+
+            Napier.d {
+                "elastic delete member document: query=$query, deleted=${response.deleted() ?: "<none>"}"
             }
-
-        val response =
-            deleteByQuery { d ->
-                d.index(INDEX_NAME).query(query).refresh(connection.refresh)
-            }.await()
-
-        Napier.d {
-            "elastic delete member document: query=$query, deleted=${response.deleted() ?: "<none>"}"
         }
-    }
 
-    override suspend fun clean(): Result<Unit> =
+    override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
         cleanAll(INDEX_NAME)
     }
 
     override suspend fun searchDocument(
         memberDocumentSearch: MemberDocumentSearch,
-    ): Result<PaginationResult<MemberDocument>> {
+    ): CustomResult<PaginationResult<MemberDocument>, SearchError> {
         if (memberDocumentSearch is MemberDocumentSearch.Keyword && memberDocumentSearch.nickname.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         if (memberDocumentSearch is MemberDocumentSearch.RoomMembers && memberDocumentSearch.objectName.isEmpty()) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         if (memberDocumentSearch is MemberDocumentSearch.CommunityMembers &&
             memberDocumentSearch.objectName.isEmpty()
         ) {
-            return Result.success(PaginationResult(emptyList(), 0))
+            return CustomResult.success(PaginationResult(emptyList(), 0))
         }
         val request = buildSearchRequest(memberDocumentSearch)
         Napier.i {

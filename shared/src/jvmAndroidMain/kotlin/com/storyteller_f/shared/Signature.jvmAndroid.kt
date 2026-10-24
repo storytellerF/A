@@ -4,7 +4,11 @@
 
 package com.storyteller_f.shared
 
-import com.storyteller_f.shared.utils.mapResult
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.flatMap
+import com.storyteller_f.result.map
+import com.storyteller_f.shared.model.CryptoError
+import com.storyteller_f.shared.model.captureCrypto
 import dev.whyoleg.cryptography.CryptographyProvider
 import dev.whyoleg.cryptography.DelicateCryptographyApi
 import dev.whyoleg.cryptography.algorithms.RIPEMD160
@@ -65,16 +69,16 @@ private infix fun ByteArray.xor(other: ByteArray): ByteArray {
  * @return hex 的der 格式的密钥
  */
 @OptIn(ExperimentalStdlibApi::class)
-actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
+actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
     CryptoJvm.readPrivateKeyFromPEMString(
         pemPrivateKeyStr,
-    ).mapResult {
+    ).flatMap {
         CryptoJvm.getPublicKeyFromPrivateKey(it).map { pubKey ->
             pubKey.encoded.toHexString()
         }
     }
 
-actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): Result<String> =
+actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
     CryptoJvm.readPrivateKeyFromPEMString(
         pemPrivateKeyStr,
     ).map { privateKey ->
@@ -87,8 +91,8 @@ actual suspend fun ripemd160Platform(data: ByteArray): ByteArray =
 
 object CryptoJvm {
     @Throws(IOException::class)
-    fun readPrivateKeyFromPEMString(pemString: String): Result<PrivateKey> =
-        runCatching {
+    fun readPrivateKeyFromPEMString(pemString: String): CustomResult<PrivateKey, CryptoError> =
+        captureCrypto {
         val stringReader = StringReader(pemString)
         val pemParser = PEMParser(stringReader)
         val converter = JcaPEMKeyConverter().setProvider("BC")
@@ -104,8 +108,8 @@ object CryptoJvm {
 
     // 从私钥中生成公钥
     @Throws(Exception::class)
-    fun getPublicKeyFromPrivateKey(privateKey: PrivateKey): Result<PublicKey> =
-        runCatching {
+    fun getPublicKeyFromPrivateKey(privateKey: PrivateKey): CustomResult<PublicKey, CryptoError> =
+        captureCrypto {
         val keyFactory = KeyFactory.getInstance("ECDSA", "BC")
         val ecSpec = (keyFactory.getKeySpec(privateKey, ECPrivateKeySpec::class.java) as ECPrivateKeySpec).params
 
@@ -115,45 +119,47 @@ object CryptoJvm {
         keyFactory.generatePublic(publicKeySpec)
     }
 
-    suspend fun generateCert(pemPrivateKeyStr: String): Result<X509Certificate> =
+    fun generateCert(pemPrivateKeyStr: String): CustomResult<X509Certificate, CryptoError> =
         readPrivateKeyFromPEMString(
-        pemPrivateKeyStr,
-    ).mapResult { privateKey ->
-        getPublicKeyFromPrivateKey(privateKey).map { publicKey ->
-            // 2️⃣ 证书信息
-            val issuer = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书颁发者
-            val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名）
-            val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号
-            val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间
-            val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
+            pemPrivateKeyStr,
+        ).flatMap { privateKey ->
+            getPublicKeyFromPrivateKey(privateKey).flatMap { publicKey ->
+                captureCrypto {
+                    // 2️⃣ 证书信息
+                    val issuer = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书颁发者
+                    val subject = X500Name("CN=MyCertificate, O=MyCompany, C=US") // 证书主体（自签名）
+                    val serialNumber = BigInteger.valueOf(System.currentTimeMillis()) // 唯一序列号
+                    val notBefore = Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24) // 生效时间
+                    val notAfter = Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 365 * 10) // 过期时间 (10 年)
 
-            // 3️⃣ 创建 X509v3 证书
-            val certBuilder: X509v3CertificateBuilder =
-                JcaX509v3CertificateBuilder(
-                    issuer,
-                    serialNumber,
-                    notBefore,
-                    notAfter,
-                    subject,
-                    publicKey,
-                )
+                    // 3️⃣ 创建 X509v3 证书
+                    val certBuilder: X509v3CertificateBuilder =
+                        JcaX509v3CertificateBuilder(
+                            issuer,
+                            serialNumber,
+                            notBefore,
+                            notAfter,
+                            subject,
+                            publicKey,
+                        )
 
-            // 4️⃣ 使用 ECDSA-SHA256 签名
-            val signer: ContentSigner =
-                JcaContentSignerBuilder("SHA256withECDSA")
-                    .setProvider("BC")
-                    .build(privateKey)
+                    // 4️⃣ 使用 ECDSA-SHA256 签名
+                    val signer: ContentSigner =
+                        JcaContentSignerBuilder("SHA256withECDSA")
+                            .setProvider("BC")
+                            .build(privateKey)
 
-            // 5️⃣ 生成 X.509 证书
-            val certHolder = certBuilder.build(signer)
+                    // 5️⃣ 生成 X.509 证书
+                    val certHolder = certBuilder.build(signer)
 
-            JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder)
+                    JcaX509CertificateConverter().setProvider("BC").getCertificate(certHolder)
+                }
+            }
         }
-    }
 
     @Suppress("DeprecatedProvider")
-    fun encrypt(data: String): Result<Pair<ByteArray, ByteArray>> =
-        runCatching {
+    fun encrypt(data: String): CustomResult<Pair<ByteArray, ByteArray>, CryptoError> =
+        captureCrypto {
         // 生成AES密钥
         val keyGen = KeyGenerator.getInstance("AES", "BC")
         keyGen.init(256) // 使用256位密钥
@@ -179,31 +185,35 @@ object CryptoJvm {
      */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
-    fun decrypt(derPrivateKeyStr: String, encrypted: ByteArray, encryptedAesKey: ByteArray): Result<String> =
-        runCatching {
-            val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
+    fun decrypt(
+        derPrivateKeyStr: String,
+        encrypted: ByteArray,
+        encryptedAesKey: ByteArray,
+    ): CustomResult<String, CryptoError> =
+        captureCrypto {
+        val privateKeyBytes = derPrivateKeyStr.hexToByteArray()
 
-            // 将字节数组转换为私钥对象
-            val privateKeySpec = PKCS8EncodedKeySpec(privateKeyBytes)
-            val keyFactory = KeyFactory.getInstance("EC", "BC")
-            val privateKey = keyFactory.generatePrivate(privateKeySpec)
+        // 将字节数组转换为私钥对象
+        val privateKeySpec = PKCS8EncodedKeySpec(privateKeyBytes)
+        val keyFactory = KeyFactory.getInstance("EC", "BC")
+        val privateKey = keyFactory.generatePrivate(privateKeySpec)
 
-            val rsaCipher = Cipher.getInstance("ECIES", "BC")
-            rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
-            val aesKeyBytes = rsaCipher.doFinal(encryptedAesKey)
+        val rsaCipher = Cipher.getInstance("ECIES", "BC")
+        rsaCipher.init(Cipher.DECRYPT_MODE, privateKey)
+        val aesKeyBytes = rsaCipher.doFinal(encryptedAesKey)
 
-            // 将解密后的AES密钥转换为SecretKey对象
-            val aesKey = SecretKeySpec(aesKeyBytes, "AES")
+        // 将解密后的AES密钥转换为SecretKey对象
+        val aesKey = SecretKeySpec(aesKeyBytes, "AES")
 
-            // 初始化Cipher进行AES解密
-            val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC")
-            val iv = ByteArray(aesCipher.blockSize)
-            val ivSpec = IvParameterSpec(iv)
-            aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec)
+        // 初始化Cipher进行AES解密
+        val aesCipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "BC")
+        val iv = ByteArray(aesCipher.blockSize)
+        val ivSpec = IvParameterSpec(iv)
+        aesCipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec)
 
-            // 使用AES密钥解密数据
-            String(aesCipher.doFinal(encrypted))
-        }
+        // 使用AES密钥解密数据
+        String(aesCipher.doFinal(encrypted))
+    }
 
     /**
      * @param derPublicKeyStr hex 的der 格式的密钥
@@ -211,18 +221,18 @@ object CryptoJvm {
      */
     @Suppress("DeprecatedProvider")
     @OptIn(ExperimentalStdlibApi::class)
-    fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): Result<ByteArray> =
-        runCatching {
-        val publicKeyBytes = derPublicKeyStr.hexToByteArray()
+    fun encryptAesKey(derPublicKeyStr: String, aesKey: ByteArray): CustomResult<ByteArray, CryptoError> =
+        captureCrypto {
+            val publicKeyBytes = derPublicKeyStr.hexToByteArray()
 
-        val keySpec = X509EncodedKeySpec(publicKeyBytes)
-        val keyFactory = KeyFactory.getInstance("EC", "BC")
-        val publicKey = keyFactory.generatePublic(keySpec)
+            val keySpec = X509EncodedKeySpec(publicKeyBytes)
+            val keyFactory = KeyFactory.getInstance("EC", "BC")
+            val publicKey = keyFactory.generatePublic(keySpec)
 
-        val rsaCipher = Cipher.getInstance("ECIES", "BC")
-        rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
-        rsaCipher.doFinal(aesKey)
-    }
+            val rsaCipher = Cipher.getInstance("ECIES", "BC")
+            rsaCipher.init(Cipher.ENCRYPT_MODE, publicKey)
+            rsaCipher.doFinal(aesKey)
+        }
 
     fun createKeystore(keystorePassword: CharArray, path: String) {
         val file = File(path)
@@ -290,59 +300,63 @@ actual val AlgoDilithium: Algo =
     object : Algo {
         override val encryptionAlgo: EncryptionAlgo = createEncryptionAlgo()
 
-        override suspend fun verify(derPublicKey: String, derSignature: String, data: String): Result<Boolean> =
-            runCatching {
-                val publicKey =
-                    KeyFactory.getInstance("ML-DSA", "BC").generatePublic(
-                        MLDSAPublicKeySpec(MLDSAParameterSpec.ml_dsa_65, derPublicKey.hexToByteArray()),
-                    )
-                Signature.getInstance("ML-DSA", "BC").apply {
-                    initVerify(publicKey)
-                    update(data.encodeToByteArray())
-                }.verify(derSignature.hexToByteArray())
-            }
-
-        override suspend fun signature(derPrivateKey: String, data: String): Result<String> =
-            runCatching {
+        override suspend fun verify(
+            derPublicKey: String,
+            derSignature: String,
+            data: String,
+        ): CustomResult<Boolean, CryptoError> =
+            captureCrypto {
+            val publicKey =
+                KeyFactory.getInstance("ML-DSA", "BC").generatePublic(
+                    MLDSAPublicKeySpec(MLDSAParameterSpec.ml_dsa_65, derPublicKey.hexToByteArray()),
+                )
             Signature.getInstance("ML-DSA", "BC").apply {
-                initSign(readSigningPrivateKey(derPrivateKey.hexToByteArray()), SecureRandom())
+                initVerify(publicKey)
                 update(data.encodeToByteArray())
-            }.sign().toHexString()
+            }.verify(derSignature.hexToByteArray())
         }
 
-        override suspend fun getDerPrivateKey(pemPrivateKey: String): Result<String> =
-            runCatching {
-            val base64 =
-                pemPrivateKey
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
-                    .trim()
-            val der = Base64.decode(base64)
-            der.toHexString()
-        }
-
-        @OptIn(ExperimentalEncodingApi::class)
-        override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): Result<String> =
-            runCatching {
-            val der = derPrivateKey.hexToByteArray()
-            val base64 = Base64.encode(der).chunked(64).joinToString("\n")
-            buildString {
-                appendLine("-----BEGIN PRIVATE KEY-----")
-                appendLine(base64)
-                appendLine("-----END PRIVATE KEY-----")
+        override suspend fun signature(derPrivateKey: String, data: String): CustomResult<String, CryptoError> =
+            captureCrypto {
+                Signature.getInstance("ML-DSA", "BC").apply {
+                    initSign(readSigningPrivateKey(derPrivateKey.hexToByteArray()), SecureRandom())
+                    update(data.encodeToByteArray())
+                }.sign().toHexString()
             }
-        }
 
-        override suspend fun calcAddress(derPublicKeyStr: String): Result<String> =
-            calcAddressSHA256AndRipemd160(
-            derPublicKeyStr,
-        )
+        override suspend fun getDerPrivateKey(pemPrivateKey: String): CustomResult<String, CryptoError> =
+            captureCrypto {
+                val base64 =
+                    pemPrivateKey
+                        .replace("-----BEGIN PRIVATE KEY-----", "")
+                        .replace("-----END PRIVATE KEY-----", "")
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .trim()
+                val der = Base64.decode(base64)
+                der.toHexString()
+            }
 
         @OptIn(ExperimentalEncodingApi::class)
-        override suspend fun generatePemKeyPair(): Result<Pair<String, String>> =
-            runCatching {
+        override suspend fun getPemPrivateKeyFromDer(derPrivateKey: String): CustomResult<String, CryptoError> =
+            captureCrypto {
+                val der = derPrivateKey.hexToByteArray()
+                val base64 = Base64.encode(der).chunked(64).joinToString("\n")
+                buildString {
+                    appendLine("-----BEGIN PRIVATE KEY-----")
+                    appendLine(base64)
+                    appendLine("-----END PRIVATE KEY-----")
+                }
+            }
+
+        override suspend fun calcAddress(derPublicKeyStr: String): CustomResult<String, CryptoError> =
+            calcAddressSHA256AndRipemd160(
+                derPublicKeyStr,
+            )
+
+        @OptIn(ExperimentalEncodingApi::class)
+        override suspend fun generatePemKeyPair(): CustomResult<Pair<String, String>, CryptoError> =
+            captureCrypto {
             val kpg = KeyPairGenerator.getInstance("ML-DSA", "BC")
             kpg.initialize(MLDSAParameterSpec.ml_dsa_65, SecureRandom())
             val kp = kpg.generateKeyPair()
@@ -366,32 +380,34 @@ actual val AlgoDilithium: Algo =
         }
 
         @OptIn(ExperimentalEncodingApi::class)
-        override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): Result<String> =
-            runCatching {
-            val base64 =
-                pemPublicKeyStr
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replace("\r", "")
-                    .replace("\n", "")
-                    .trim()
-            val der = Base64.decode(base64)
-            der.toHexString()
-        }
-
-        override suspend fun getPemPublicKeyFromDer(derPublicKey: String): Result<String> =
-            runCatching {
-            val der = derPublicKey.hexToByteArray()
-            val base64 = Base64.encode(der).chunked(64).joinToString("\n")
-            buildString {
-                appendLine("-----BEGIN PUBLIC KEY-----")
-                appendLine(base64)
-                appendLine("-----END PUBLIC KEY-----")
+        override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): CustomResult<String, CryptoError> =
+            captureCrypto {
+                val base64 =
+                    pemPublicKeyStr
+                        .replace("-----BEGIN PUBLIC KEY-----", "")
+                        .replace("-----END PUBLIC KEY-----", "")
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .trim()
+                val der = Base64.decode(base64)
+                der.toHexString()
             }
-        }
 
-        override suspend fun getDerPublicKeyFromPrivateKey(pemPrivateKeyStr: String): Result<String> =
-            runCatching {
+        override suspend fun getPemPublicKeyFromDer(derPublicKey: String): CustomResult<String, CryptoError> =
+            captureCrypto {
+                val der = derPublicKey.hexToByteArray()
+                val base64 = Base64.encode(der).chunked(64).joinToString("\n")
+                buildString {
+                    appendLine("-----BEGIN PUBLIC KEY-----")
+                    appendLine(base64)
+                    appendLine("-----END PUBLIC KEY-----")
+                }
+            }
+
+        override suspend fun getDerPublicKeyFromPrivateKey(
+            pemPrivateKeyStr: String,
+        ): CustomResult<String, CryptoError> =
+            captureCrypto {
             val base64 =
                 pemPrivateKeyStr
                     .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -405,68 +421,76 @@ actual val AlgoDilithium: Algo =
 
         private fun createEncryptionAlgo(): EncryptionAlgo =
             object : Type2Algo {
-            override suspend fun kemEncrypt(derPublicKeyStr: String, aesKeyBytes: ByteArray): Result<ByteArray> =
-                runCatching {
-                    val publicKey =
-                        KeyFactory.getInstance("ML-KEM", "BC").generatePublic(
-                            MLKEMPublicKeySpec(MLKEMParameterSpec.ml_kem_768, derPublicKeyStr.hexToByteArray()),
-                        )
-                    val (encapsulation, secret) = encapsulateKem(publicKey)
-                    encapsulation + (aesKeyBytes xor secret)
-                }
-
-            override suspend fun kemDecrypt(derPrivateKeyStr: String, encrypted: ByteArray): Result<ByteArray> =
-                runCatching {
-                    require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
-                    val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
-                    val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
-                    val privateKey = readEncryptionPrivateKey(derPrivateKeyStr.hexToByteArray())
-                    encryptedAesKey xor decapsulateKem(privateKey, cipherText)
-                }
-
-            @OptIn(ExperimentalEncodingApi::class)
-            override suspend fun generateEncryptionPemKeyPair(): Result<Pair<String, String>> =
-                runCatching {
-                val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC")
-                kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom())
-                val kp = kpg.generateKeyPair()
-                val privDer = (kp.private as MLKEMPrivateKey).privateData
-                val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
-                val privatePem =
-                    buildString {
-                        appendLine("-----BEGIN PRIVATE KEY-----")
-                        appendLine(privB64)
-                        appendLine("-----END PRIVATE KEY-----")
-                    }
-                val pubDer = (kp.public as MLKEMPublicKey).publicData
-                val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
-                val publicPem =
-                    buildString {
-                        appendLine("-----BEGIN PUBLIC KEY-----")
-                        appendLine(pubB64)
-                        appendLine("-----END PUBLIC KEY-----")
-                    }
-                privatePem to publicPem
+            override suspend fun kemEncrypt(
+                derPublicKeyStr: String,
+                aesKeyBytes: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                val publicKey =
+                    KeyFactory.getInstance("ML-KEM", "BC").generatePublic(
+                        MLKEMPublicKeySpec(MLKEMParameterSpec.ml_kem_768, derPublicKeyStr.hexToByteArray()),
+                    )
+                val (encapsulation, secret) = encapsulateKem(publicKey)
+                encapsulation + (aesKeyBytes xor secret)
             }
 
-            override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(pemPrivateKeyStr: String): Result<String> =
-                runCatching {
-                    val base64 =
-                        pemPrivateKeyStr
-                            .replace("-----BEGIN PRIVATE KEY-----", "")
-                            .replace("-----END PRIVATE KEY-----", "")
-                            .replace("\r", "")
-                            .replace("\n", "")
-                            .trim()
-                    val privateKeyBytes = Base64.decode(base64)
-                    readEncryptionPrivateKey(privateKeyBytes).publicKey.publicData.toHexString()
+            override suspend fun kemDecrypt(
+                derPrivateKeyStr: String,
+                encrypted: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                require(encrypted.size > 32) { "invalid ML-KEM ciphertext" }
+                val cipherText = encrypted.copyOfRange(0, encrypted.size - 32)
+                val encryptedAesKey = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
+                val privateKey = readEncryptionPrivateKey(derPrivateKeyStr.hexToByteArray())
+                encryptedAesKey xor decapsulateKem(privateKey, cipherText)
+            }
+
+            @OptIn(ExperimentalEncodingApi::class)
+            override suspend fun generateEncryptionPemKeyPair(): CustomResult<Pair<String, String>, CryptoError> =
+                captureCrypto {
+                    val kpg = KeyPairGenerator.getInstance("ML-KEM", "BC")
+                    kpg.initialize(MLKEMParameterSpec.ml_kem_768, SecureRandom())
+                    val kp = kpg.generateKeyPair()
+                    val privDer = (kp.private as MLKEMPrivateKey).privateData
+                    val privB64 = Base64.encode(privDer).chunked(64).joinToString("\n")
+                    val privatePem =
+                        buildString {
+                            appendLine("-----BEGIN PRIVATE KEY-----")
+                            appendLine(privB64)
+                            appendLine("-----END PRIVATE KEY-----")
+                        }
+                    val pubDer = (kp.public as MLKEMPublicKey).publicData
+                    val pubB64 = Base64.encode(pubDer).chunked(64).joinToString("\n")
+                    val publicPem =
+                        buildString {
+                            appendLine("-----BEGIN PUBLIC KEY-----")
+                            appendLine(pubB64)
+                            appendLine("-----END PUBLIC KEY-----")
+                        }
+                    privatePem to publicPem
                 }
+
+            override suspend fun getDerEncryptionPublicKeyFromPemPrivateKey(
+                pemPrivateKeyStr: String,
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
+                val base64 =
+                    pemPrivateKeyStr
+                        .replace("-----BEGIN PRIVATE KEY-----", "")
+                        .replace("-----END PRIVATE KEY-----", "")
+                        .replace("\r", "")
+                        .replace("\n", "")
+                        .trim()
+                val privateKeyBytes = Base64.decode(base64)
+                readEncryptionPrivateKey(privateKeyBytes).publicKey.publicData.toHexString()
+            }
 
             @OptIn(ExperimentalEncodingApi::class)
             override suspend fun getDerEncryptionPrivateKeyFromPemPrivateKey(
                 pemPrivateKeyStr: String,
-            ): Result<String> =
-                runCatching {
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
                 val base64 =
                     pemPrivateKeyStr
                         .replace("-----BEGIN PRIVATE KEY-----", "")
@@ -481,8 +505,8 @@ actual val AlgoDilithium: Algo =
             @OptIn(ExperimentalEncodingApi::class)
             override suspend fun getPemEncryptionPrivateKeyFromDerPrivateKey(
                 derPrivateKeyStr: String,
-            ): Result<String> =
-                runCatching {
+            ): CustomResult<String, CryptoError> =
+                captureCrypto {
                 val der = derPrivateKeyStr.hexToByteArray()
                 val base64 = Base64.encode(der).chunked(64).joinToString("\n")
                 buildString {

@@ -33,6 +33,10 @@ import com.storyteller_f.a.client.core.getAllUsers
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.client.core.panelSignIn
 import com.storyteller_f.a.client.core.panelSignUp
+import com.storyteller_f.result.fold
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
@@ -109,7 +113,7 @@ suspend fun handleInput(
                     sysLog("Fetching Users...")
                     sessionManager.getAllUsers(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.UserList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -117,7 +121,7 @@ suspend fun handleInput(
                     sysLog("Fetching Communities...")
                     sessionManager.getAllCommunities(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.CommunityList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -125,7 +129,7 @@ suspend fun handleInput(
                     sysLog("Fetching Rooms...")
                     sessionManager.getAllPublicRooms(PaginationQuery(size = 10)).fold(
                         onSuccess = { setScreen(Screen.RoomList(it.data)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 
@@ -133,7 +137,7 @@ suspend fun handleInput(
                     sysLog("Fetching Overview...")
                     sessionManager.overview().fold(
                         onSuccess = { setScreen(Screen.Overview(it)) },
-                        onFailure = { sysLogError("Failed", it) },
+                        onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
 

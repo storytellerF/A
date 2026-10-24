@@ -8,6 +8,7 @@ import com.storyteller_f.a.backend.core.AdminDatabase
 import com.storyteller_f.a.backend.core.InsertTopicTuple
 import com.storyteller_f.a.backend.core.MemberAuthData
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.core.paginationFromResults
 import com.storyteller_f.a.backend.core.types.Community
 import com.storyteller_f.a.backend.core.types.Member
@@ -33,6 +34,8 @@ import com.storyteller_f.a.backend.exposed.tables.Users
 import com.storyteller_f.a.backend.exposed.tables.addTaskRecord
 import com.storyteller_f.a.backend.exposed.tables.batchAddMembers
 import com.storyteller_f.a.backend.exposed.tables.wrapRow
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -142,7 +145,7 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
 
     override suspend fun batchAddEncryptTopicKeys(
         encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>,
-    ): Result<Unit> =
+    ): CustomResult<Unit, DatabaseError> =
         databaseSession.dbQuery {
         EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
             this[EncryptedKeys.topicId] = topicId
@@ -193,32 +196,34 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
         return this
     }
 
-    override suspend fun batchAddSubscription(list: List<UserSubscription>): Result<Unit> =
+    override suspend fun batchAddSubscription(list: List<UserSubscription>): CustomResult<Unit, DatabaseError> =
         databaseSession.dbQuery {
-        UserSubscriptions.batchInsert(list) {
-            this[UserSubscriptions.id] = it.id
-            this[UserSubscriptions.createdTime] = it.createdTime
-            this[UserSubscriptions.uid] = it.uid
-            this[UserSubscriptions.objectId] = it.objectId
-            this[UserSubscriptions.objectType] = it.objectType
-        }
-    }
-
-    override suspend fun insertPanelLog(log: com.storyteller_f.a.backend.core.types.PanelLog): Result<Unit> =
-        databaseSession.dbQuery {
-            check(
-                PanelLogs.insert {
-                    it[id] = log.id
-                    it[adminId] = log.adminId
-                    it[targetId] = log.targetId
-                    it[objectType] = log.objectType
-                    it[action] = log.action
-                    it[createdTime] = log.createdTime
-                }.insertedCount > 0,
-            ) {
-                "insert panel log failed"
+            UserSubscriptions.batchInsert(list) {
+                this[UserSubscriptions.id] = it.id
+                this[UserSubscriptions.createdTime] = it.createdTime
+                this[UserSubscriptions.uid] = it.uid
+                this[UserSubscriptions.objectId] = it.objectId
+                this[UserSubscriptions.objectType] = it.objectType
             }
         }
+
+    override suspend fun insertPanelLog(
+        log: com.storyteller_f.a.backend.core.types.PanelLog,
+    ): CustomResult<Unit, DatabaseError> =
+        databaseSession.dbQuery {
+        check(
+            PanelLogs.insert {
+                it[id] = log.id
+                it[adminId] = log.adminId
+                it[targetId] = log.targetId
+                it[objectType] = log.objectType
+                it[action] = log.action
+                it[createdTime] = log.createdTime
+            }.insertedCount > 0,
+        ) {
+            "insert panel log failed"
+        }
+    }
 
     override suspend fun getPanelLogs(targetId: PrimaryKey, objectType: ObjectType, fetch: PrimaryKeyFetch) =
         paginationFromResults(

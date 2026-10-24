@@ -32,24 +32,28 @@ import com.storyteller_f.a.cloud.core.service.searchFiles
 import com.storyteller_f.a.cloud.core.service.tryCopyFile
 import com.storyteller_f.a.cloud.core.service.tryUploadFiles
 import com.storyteller_f.a.cloud.core.service.uncheckedGetFileRefsByFileId
+import com.storyteller_f.a.cloud.error.ServerError
 import com.storyteller_f.a.cloud.server.auth.handleResult
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.GeneralOffsetPagingGenerator
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
 import com.storyteller_f.a.cloud.server.common.clientIp
+import com.storyteller_f.a.cloud.server.common.invoke
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThenPresent
+import com.storyteller_f.result.captureFailure
+import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
+import com.storyteller_f.result.toUnit
 import com.storyteller_f.shared.model.A_FILE_DEFAULT_BUCKET
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.cancellableRunCatching
-import com.storyteller_f.shared.utils.mapResultIfNotNull
 import com.storyteller_f.shared.utils.sha256
-import com.storyteller_f.shared.utils.unit
 import io.github.aakira.napier.Napier
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
@@ -271,15 +275,15 @@ suspend fun RoutingContext.uploadMedia(
     id: PrimaryKey,
     root: File,
     query: CustomApi.Files.UploadQuery,
-): Result<FileInfoListResponse?> {
+): CustomResult<FileInfoListResponse?, ServerError> {
     val ip = call.clientIp()
     val objectTuple = ObjectTuple(query.objectId, query.objectType)
     if (objectTuple.objectType == ObjectType.TOPIC) {
-        return Result.failure(CustomBadRequestException("can't upload to topic"))
+        return CustomResult.Failure(ServerError.from(CustomBadRequestException("can't upload to topic")))
     }
     val parentType = objectTuple.objectType
     val parentId = objectTuple.objectId
-    return backend.checkRootWritePermission(parentType, parentId, id).mapResultIfNotNull {
+    return backend.checkRootWritePermission(parentType, parentId, id).andThenPresent(ServerError::fromError) {
         processFormData { part ->
             val fileInfos =
                 when (part) {
@@ -308,11 +312,11 @@ private suspend fun RoutingContext.processFormData(block: suspend (PartData) -> 
             result.addAll(block(part))
         }
     }
-    Result.success(FileInfoListResponse(result.toImmutableList()))
+    CustomResult.success(FileInfoListResponse(result.toImmutableList()))
 } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
     throw cancellation
 } catch (e: Exception) {
-    Result.failure(e)
+    CustomResult.Failure(ServerError.from(e))
 }
 
 private suspend fun Backend.uploadFilesFromChannel(
@@ -356,7 +360,7 @@ suspend fun uploadChunkFromChannel(
     path: CustomApi.Files.Chunks.UploadPath,
     query: CustomApi.Files.Chunks.UploadQuery,
     provider: suspend () -> ByteReadChannel,
-) = cancellableRunCatching {
+) = captureFailure(ServerError::from) {
     // 写入本地临时文件以校验哈希并上传到对象存储临时桶
     val chunkTmp = File.createTempFile("upload-chunk-", ".tmp", root)
     try {
@@ -385,4 +389,4 @@ suspend fun uploadChunkFromChannel(
     } finally {
         chunkTmp.delete()
     }
-}.unit()
+}.toUnit()

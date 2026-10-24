@@ -19,6 +19,7 @@ import com.storyteller_f.a.cloud.core.service.getUserInfo
 import com.storyteller_f.a.cloud.core.service.signIn
 import com.storyteller_f.a.cloud.core.service.signUp
 import com.storyteller_f.a.cloud.core.service.verifyUserTotp
+import com.storyteller_f.a.cloud.error.ServerError
 import com.storyteller_f.a.cloud.server.auth.UserSession
 import com.storyteller_f.a.cloud.server.auth.beginSigninChallenge
 import com.storyteller_f.a.cloud.server.auth.clearAllSigninSessions
@@ -32,15 +33,17 @@ import com.storyteller_f.a.cloud.server.auth.saveSuccessSession
 import com.storyteller_f.a.cloud.server.auth.saveTwoFactorPendingSession
 import com.storyteller_f.a.cloud.server.auth.usePrincipal
 import com.storyteller_f.a.cloud.server.common.IdentifiablePagingGenerator
+import com.storyteller_f.a.cloud.server.common.invoke
 import com.storyteller_f.a.cloud.server.common.pagination
-import com.storyteller_f.endpoint4k.ktor.server.invoke
 import com.storyteller_f.endpoint4k.ktor.server.receiveBody
+import com.storyteller_f.result.CustomResult
+import com.storyteller_f.result.andThen
+import com.storyteller_f.result.map
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
-import com.storyteller_f.shared.utils.UNIT_RESULT
-import com.storyteller_f.shared.utils.mapResult
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingContext
 
@@ -50,12 +53,12 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
     }
     CustomApi.Accounts.signUp(handleResult(backend)) { api ->
         if (!backend.customConfig.enableSignUp) {
-            Result.failure(Exception("not support"))
+            CustomResult.Failure(ServerError.from(Exception("not support")))
         } else {
             call.consumeSigninChallenge()
             val data = call.getData()
-            val mapResult = backend.signUp(data, api.receiveBody())
-            mapResult.onSuccess {
+            val result = backend.signUp(data, api.receiveBody())
+            result.onSuccess {
                 val newId = it.id
                 backend.addUserLog(newId, UserLogType.SIGN_UP, newId ob ObjectType.USER)
                 saveSuccessSessionOnFirst(newId)
@@ -82,18 +85,18 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
         val body: TotpCodeBody = api.receiveBody()
         when (val session = call.getSession()) {
             is UserSession.TwoFactorPending -> {
-                backend.verifyUserTotp(session.id, body.code).mapResult { verified ->
+                backend.verifyUserTotp(session.id, body.code).andThen(ServerError::fromError) { verified ->
                     if (verified) {
                         backend.addUserLog(session.id, UserLogType.SIGN_IN, session.id ob ObjectType.USER)
                         call.saveSuccessSession(session)
                         backend.getUserInfo(ObjectFetch.IdFetch(session.id))
                     } else {
-                        Result.failure(CustomBadRequestException("invalid totp code"))
+                        CustomResult.Failure(ServerError.from(CustomBadRequestException("invalid totp code")))
                     }
                 }
             }
 
-            else -> Result.failure(ForbiddenException())
+            else -> CustomResult.Failure(ServerError.from(ForbiddenException()))
         }
     }
 }
@@ -101,7 +104,7 @@ fun Route.bindUnprotectedAccountRoute(backend: Backend) {
 fun Route.bindAccountRoute(backend: Backend) {
     CustomApi.Accounts.signOut(handleResult(backend)) {
         call.clearSigninSession()
-        UNIT_RESULT
+        CustomResult.Success(Unit)
     }
 }
 
@@ -111,15 +114,15 @@ fun Route.bindProtectedAccountRoute(backend: Backend) {
                 active = true,
             )
         ) {
-            UNIT_RESULT
+            CustomResult.Success(Unit)
         } else {
-            Result.failure(com.storyteller_f.a.backend.core.UnauthorizedException())
+            CustomResult.Failure(ServerError.from(com.storyteller_f.a.backend.core.UnauthorizedException()))
         }
     }
 
     CustomApi.Accounts.signOutAll(handleResult(backend)) {
         call.clearAllSigninSessions()
-        UNIT_RESULT
+        CustomResult.Success(Unit)
     }
 
     CustomApi.Accounts.session(handleResult(backend)) {

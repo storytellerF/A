@@ -7,6 +7,7 @@ package com.storyteller_f.a.backend.filesystem
 import com.storyteller_f.a.backend.core.ManagedRpcService
 import com.storyteller_f.a.backend.core.RestartableRpcServer
 import com.storyteller_f.a.backend.core.service.UploadPack
+import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.services.filesystem.api.CopyPack
 import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord

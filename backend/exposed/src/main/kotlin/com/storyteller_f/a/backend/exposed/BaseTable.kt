@@ -19,6 +19,7 @@ import com.storyteller_f.a.backend.core.TitleDatabase
 import com.storyteller_f.a.backend.core.TopicDatabase
 import com.storyteller_f.a.backend.core.UserDatabase
 import com.storyteller_f.a.backend.core.WorkerTaskDatabase
+import com.storyteller_f.a.backend.core.error.DatabaseError
 import com.storyteller_f.a.backend.exposed.database.ExposedAdminDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedCommunityDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedContainerDatabase
@@ -33,6 +34,7 @@ import com.storyteller_f.a.backend.exposed.database.ExposedTopicDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedUserDatabase
 import com.storyteller_f.a.backend.exposed.database.ExposedWorkerTaskDatabase
 import com.storyteller_f.a.backend.exposed.tables.BackendConfigs
+import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.AssetType
 import com.storyteller_f.shared.model.MemberPolicy
@@ -134,7 +136,7 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         ExposedDatabaseFactory.clean(databaseSession.database)
     }
 
-    override suspend fun getBackendConfig(key: String): Result<String?> {
+    override suspend fun getBackendConfig(key: String): CustomResult<String?, DatabaseError> {
         val configResult =
             databaseSession.dbSearch {
                 search {
@@ -145,8 +147,8 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
         return configResult
     }
 
-    override suspend fun upsertBackendConfig(key: String, value: String): Result<Unit> {
-        val upsertResult: Result<Unit> =
+    override suspend fun upsertBackendConfig(key: String, value: String): CustomResult<Unit, DatabaseError> {
+        val upsertResult: CustomResult<Unit, DatabaseError> =
             databaseSession.dbQuery {
                 BackendConfigs.upsert(BackendConfigs.key) { statement ->
                     statement[BackendConfigs.key] = key
@@ -159,8 +161,6 @@ class ExposedDatabase(val databaseSession: ExposedDatabaseSession) : CombinedDat
     override suspend fun migration() {
         ExposedDatabaseFactory.migration(databaseSession.database)
     }
-
-    override fun isDup(throwable: Throwable): Boolean = throwable.cause?.isDup() == true
 }
 
 fun buildExposedDatabase(databaseConnection: DatabaseConnection): ExposedDatabase {

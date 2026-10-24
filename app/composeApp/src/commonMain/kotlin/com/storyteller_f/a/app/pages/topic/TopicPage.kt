@@ -79,6 +79,9 @@ import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.SimpleUserSessionManager
 import com.storyteller_f.a.client.core.createTopic
+import com.storyteller_f.result.exceptionOrNull
+import com.storyteller_f.result.onFailure
+import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
@@ -367,7 +370,7 @@ private fun sendTopicInTopicPage(input: String, topic: TopicInfo, context: SendT
             }
         }.onFailure {
             context.snackBarHostState
-                .showSnackbar(it.message?.toString().orEmpty())
+                .showSnackbar(it.cause.message?.toString().orEmpty())
         }
     }
 }
