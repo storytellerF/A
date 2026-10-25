@@ -34,7 +34,7 @@ FROM ${BUILDER_STAGE} AS builder
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS server
 
-RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk font-dejavu 'harfbuzz-subset>=13.0.0'
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -90,7 +90,7 @@ ENTRYPOINT ["sh", "./bin/worker"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS ws
 
-RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk font-dejavu 'harfbuzz-subset>=13.0.0'
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -107,7 +107,7 @@ ENTRYPOINT ["sh", "./bin/ws"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS cli
 
-RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk font-dejavu 'harfbuzz-subset>=13.0.0' netcat-openbsd
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0' netcat-openbsd
 
 ARG APP_UID=1000
 ARG APP_GID=1000
