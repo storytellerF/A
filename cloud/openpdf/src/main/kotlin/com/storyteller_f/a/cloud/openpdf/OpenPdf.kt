@@ -121,7 +121,7 @@ private fun signPdfWithKeyStore(
                 val signatureInfo =
                     com.storyteller_f.a.cloud.pdf.SignatureInfo(
                         signee = (chain[0] as java.security.cert.X509Certificate).subjectX500Principal.name,
-                        timestamp = pdfGenerationSpec.created.toString(),
+                        timestamp = SnapshotLayout.formatTimestamp(pdfGenerationSpec.created),
                         hint = "Digitally Signed by OpenPDF",
                     )
                 buildSignatureTable(layer2, signatureInfo, appearance.rect, fontBundle)

@@ -989,9 +989,16 @@ and a footer identifying each content page. Top-panel timestamps separate date a
 (for example `2026-01-02 12:30:45 UTC+00:00`), omitting fractional seconds and explicitly labelling UTC.
 `PdfGenerationSpec` receives UTC calendar values from the topic creation time and `shared.utils.now()`;
 the host default timezone never changes the displayed clock values.
-The signature flow still inserts a separate signature page;
+The signature page uses the same readable UTC formatter for its publication timestamp, preserving
+the original time meaning rather than substituting the signing clock. The signature flow still inserts a separate signature page;
 footer numbers refer to content pages, not physical positions after signing. `SnapshotLayoutTest`
 checks provenance, multi-page content retention, embedded fonts, page numbering and exact code text.
+`SignedSnapshotTest` automatically checks complete-file ByteRange coverage and cryptographic signature
+verification with generated test keys. Its negative case changes signed metadata bytes in memory, keeps
+the PDF parseable with complete ByteRange coverage, and requires verification to fail. This verifies
+integrity, not certificate trust chains or TSA trust. The layout test reads the actual signature widget
+appearance (using a separately owned in-memory copy) to assert the UTC display, then renders the
+original PDF. Shared fixtures always delete generated PKCS#12 files in finally.
 Rendered reading samples are generated under `cloud/openpdf/build/test-output/layout`.
 The provenance regression checks both UTC labels and exact clock values. Run the PDF module tests
 with `-Duser.timezone=Pacific/Honolulu` in `JAVA_TOOL_OPTIONS` (alongside native/font options) to verify

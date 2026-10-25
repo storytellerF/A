@@ -37,7 +37,8 @@ Install Noto Serif SC/CJK SC for Chinese text and a supported monospace family f
 faces take priority; a TrueType or CFF2 variable font supplies missing weights. Generated PDFs embed the selected
 fonts, so readers do not need them installed.
 Snapshots use an A4 reading layout with a provenance panel, spaced headings and paragraphs, and numbered
-content pages. Signed snapshots retain their separate signature page. Export currently accepts plain topics;
+content pages. Signed snapshots retain their separate signature page. Publication/capture times and
+the signature page publication timestamp explicitly show `UTC+00:00` in a readable date/time format. Export currently accepts plain topics;
 images, inline formulas and HTML are not preserved, while diagram/formula code blocks remain source text.
 Lists, tables and reference links have formatting limitations; see
 [PDF content coverage](DEVELOPMENT.md#pdf-snapshot-layout-and-content-coverage) before relying on a snapshot as a complete archive.

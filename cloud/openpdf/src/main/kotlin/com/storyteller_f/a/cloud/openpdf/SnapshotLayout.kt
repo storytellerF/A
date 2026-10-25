@@ -67,7 +67,7 @@ internal object SnapshotLayout {
         document.add(metadata)
     }
 
-    private fun formatTimestamp(value: LocalDateTime): String {
+    fun formatTimestamp(value: LocalDateTime): String {
         val time = listOf(value.hour, value.minute, value.second).joinToString(":") { it.toString().padStart(2, '0') }
         return "${value.date} $time UTC+00:00"
     }

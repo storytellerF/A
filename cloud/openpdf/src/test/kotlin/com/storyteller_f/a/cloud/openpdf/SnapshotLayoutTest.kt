@@ -7,14 +7,12 @@ package com.storyteller_f.a.cloud.openpdf
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.a.cloud.pdf.SnapshotGeneration
 import com.storyteller_f.result.getOrThrow
-import com.storyteller_f.shared.CryptoJvm
 import com.storyteller_f.shared.model.UserInfo
 import kotlinx.datetime.LocalDateTime
 import org.apache.pdfbox.Loader
 import org.apache.pdfbox.rendering.PDFRenderer
 import org.apache.pdfbox.text.PDFTextStripper
 import java.io.File
-import java.util.Base64
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -108,36 +106,18 @@ class SnapshotLayoutTest {
 
     @Test
     fun `signature page preserves content page numbering`() {
-        val directory = File("build/test-output/layout").apply { mkdirs() }
-        val keyStore = File.createTempFile("snapshot-", ".p12", directory)
-        val signed = File(directory, "reading-signed.pdf")
-        val password = "synthetic-test-password"
-        try {
-            CryptoJvm.createKeystore(password.toCharArray(), keyStore.path)
-            OpenPdf().generateSignedSnapshot(
-                UserInfo.EMPTY,
-                UserInfo.EMPTY,
-                "# Signed topic\n\nSigned content remains readable.",
-                emptyMap(),
-                SnapshotGeneration.KeyStoreGeneration(
-                    Base64.getEncoder().encodeToString(keyStore.readBytes()),
-                    password,
-                    File(directory, "reading-before-signing.pdf"),
-                    signed,
-                ),
-                generationSpec(),
-            ).getOrThrow()
-            Loader.loadPDF(signed).use { pdf ->
-                assertEquals(2, pdf.numberOfPages)
-                assertEquals(1, pdf.signatureDictionaries.size)
-                assertTrue(pdf.signatureDictionaries.single().contents.isNotEmpty())
-                val text = PDFTextStripper().apply { startPage = 2 }.getText(pdf)
-                assertTrue(text.contains("Signed content remains readable."), text)
-                assertTrue(text.contains("Content page 1"), text)
-                render(pdf, signed)
-            }
-        } finally {
-            keyStore.delete()
+        val signed = generateSignedSnapshot("reading-signed", generationSpec())
+        Loader.loadPDF(signed).use { pdf ->
+            assertEquals(2, pdf.numberOfPages)
+            assertEquals(1, pdf.signatureDictionaries.size)
+            val signatureText = readSignatureAppearance(pdf)
+            assertTrue(signatureText.contains("2026-01-01 10:00:00 UTC+00:00"), signatureText)
+            assertFalse(signatureText.contains("2026-01-01T"), signatureText)
+            assertFalse(signatureText.contains(".987654321"), signatureText)
+            val text = PDFTextStripper().apply { startPage = 2 }.getText(pdf)
+            assertTrue(text.contains("Signed content remains readable."), text)
+            assertTrue(text.contains("Content page 1"), text)
+            render(pdf, signed)
         }
     }
 
@@ -156,9 +136,9 @@ class SnapshotLayoutTest {
 
     private fun generationSpec(): PdfGenerationSpec =
         PdfGenerationSpec(
-        LocalDateTime.parse("2026-01-01T10:00:00"),
-        LocalDateTime.parse("2026-01-02T12:30:45.123456789"),
-    )
+            LocalDateTime.parse("2026-01-01T10:00:00.987654321"),
+            LocalDateTime.parse("2026-01-02T12:30:45.123456789"),
+        )
 
     private fun render(pdf: org.apache.pdfbox.pdmodel.PDDocument, file: File) {
         val renderer = PDFRenderer(pdf)
