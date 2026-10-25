@@ -902,9 +902,12 @@ monospace glyph runs through the explicitly proportional body fallback. Unknown 
 than disappearing. Bold uses real outlines and italic uses PDF obliquing. Missing required faces fail with
 an installation error instead of using implicit PDF fonts. Collection face indices are preserved.
 
-For Linux installations, use system packages such as `font-noto-cjk` and `font-dejavu` (Alpine), or
+For Linux installations, use system packages such as `font-noto-all` and `font-noto-cjk` (Alpine), or
 `fonts-noto-cjk` and `fonts-dejavu-core` (Ubuntu/Debian). The Docker runtime installs system font packages;
-it does not copy fonts from application resources. Windows/macOS operators can install Noto Serif SC
+it does not copy fonts from application resources. Alpine's `font-noto-all` includes static Noto Sans Mono
+Regular/Bold through `font-noto`; `font-noto-cjk` is separate. The pinned Temurin Alpine base already
+includes DejaVu through its `ttf-dejavu` requirement, so the runtime stages do not redundantly request
+`font-dejavu`. Font discovery still prefers Noto Sans Mono. Windows/macOS operators can install Noto Serif SC
 through the OS font manager and use installed Consolas/Menlo for code.
 
 The optional JVM property `pdf.font.directory`, set before the first PDF request, replaces discovery for
@@ -977,3 +980,37 @@ cancellation, reverse cleanup, concurrent cache publication, rendering, bilingua
 mono advances, CFF2 downgrade/version gating and per-document ownership. Diagnostic PDFs/PNGs live in `cloud/openpdf/build/test-output/fonts`.
 Review intended visual differences before explicitly updating existing server snapshot references;
 never auto-accept comparisons.
+
+## PDF snapshot layout and content coverage
+
+OpenPDF snapshots use A4 pages with 48-point side margins, a bilingual snapshot title, a provenance
+panel (publisher/publication time and capturer/capture time), spaced body paragraphs and heading levels,
+and a footer identifying each content page. The signature flow still inserts a separate signature page;
+footer numbers refer to content pages, not physical positions after signing. `SnapshotLayoutTest`
+checks provenance, multi-page content retention, embedded fonts, page numbering and exact code text.
+Rendered reading samples are generated under `cloud/openpdf/build/test-output/layout`.
+
+The service exports only `TopicContent.Plain`. `Encrypted`, `DecryptFailed`, `Extracted` and `Nil`
+are rejected by the snapshot boundary; it does not decrypt or convert them. The PDF receives one topic's
+Markdown, author/capturer and timestamps. Replies, reactions, topic identifiers and other topic metadata
+are not included. Downloading `fileInfos` does not automatically embed attachments or media previews.
+
+The current OpenPDF visitor has the following limitations (checked with synthetic export samples):
+
+| Content | Current result |
+| --- | --- |
+| Body text, basic emphasis, inline code, headings | Rendered; nested styling can leave Markdown markers, and headings retain inline markers. |
+| Fenced/indented code | Source text; overlapping highlights no longer duplicate characters, and unhighlighted trailing text is retained. |
+| Markdown images, including standalone images | Common paragraph-contained images are ignored, even when an attachment map contains the image; alt text also disappears. |
+| Inline math | Omitted. |
+| Mermaid, AsciiDoc and fenced math | Source text only, without diagram/document/formula rendering. |
+| HTML blocks | Omitted. |
+| Tables | Body cells render, but the header can disappear; inline formatting and alignment are not interpreted. |
+| Lists/tasks | Source markers can be duplicated; original ordered starts, nested structure and checked state are not faithfully rendered. |
+| Links | Inline links create PDF annotations; reference links remain raw Markdown and angle-bracket autolinks can disappear. |
+| Hard line breaks/entities | Breaks can collapse and entities can remain encoded. |
+| Emoji and other uncovered body glyphs | Can disappear; installing a font package alone does not add body fallback or color-emoji shaping. Code glyphs outside the explicit fonts fail instead. |
+
+These are renderer limitations, independent of static/variable font conversion. Inspect the exported
+PDF when preserving rich content matters. Do not treat successful generation as proof of content parity
+with the topic UI, and do not update assertions to accept silently missing content.

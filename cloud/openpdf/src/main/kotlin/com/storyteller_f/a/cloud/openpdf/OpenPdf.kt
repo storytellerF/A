@@ -16,7 +16,6 @@ import com.storyteller_f.shared.utils.astNode
 import com.storyteller_f.shared.utils.extractImageUrl
 import com.storyteller_f.shared.utils.readCodeFence
 import dev.snipme.highlights.Highlights
-import dev.snipme.highlights.model.CodeHighlight
 import dev.snipme.highlights.model.ColorHighlight
 import dev.snipme.highlights.model.SyntaxThemes
 import org.intellij.markdown.MarkdownElementTypes
@@ -61,18 +60,13 @@ class OpenPdf : PdfService {
         val saveToFile = snapshotGeneration.path
         return captureFailure(PdfError::from) {
             saveToFile.outputStream().buffered().use {
-                Document().apply {
-                    PdfWriter.getInstance(this, it)
-                    open()
-                    val creatorId = if (creatorInfo.aid == null) creatorInfo.address else creatorInfo.aid
-                    val authorId = if (authorInfo.aid == null) authorInfo.address else authorInfo.aid
-                    add(Paragraph("pub by ${authorId ?: "<none>"}", fontBundle.plainFont()))
-                    add(Paragraph("pub at ${pdfGenerationSpec.created}", fontBundle.plainFont()))
-                    add(Paragraph("capture by ${creatorId ?: "<none>"}", fontBundle.plainFont()))
-                    add(Paragraph("capture at ${pdfGenerationSpec.captured}", fontBundle.plainFont()))
+                SnapshotLayout.createDocument().use { document ->
+                    val writer = PdfWriter.getInstance(document, it)
+                    writer.pageEvent = SnapshotPageEvent(fontBundle)
+                    document.open()
+                    SnapshotLayout.addSummary(document, fontBundle, creatorInfo, authorInfo, pdfGenerationSpec)
                     val parsedTree = astNode(content)
-                    parsedTree.accept(OpenPdfVisitor(this, fontBundle, content, map))
-                    close()
+                    parsedTree.accept(OpenPdfVisitor(document, fontBundle, content, map))
                 }
             }
             when (snapshotGeneration) {
@@ -156,7 +150,11 @@ class OpenPdfVisitor(
     override fun visitNode(node: ASTNode) {
         when (node.type) {
             MarkdownElementTypes.PARAGRAPH -> {
-                val paragraph = Paragraph("", fontBundle.plainFont())
+                val paragraph =
+                    Paragraph("", fontBundle.plainFont()).apply {
+                        setLeading(0f, 1.65f)
+                        spacingAfter = 10f
+                    }
                 node.acceptChildren(ParagraphVisitor(paragraph, content, fontBundle))
                 document.add(paragraph)
             }
@@ -224,7 +222,11 @@ class OpenPdfVisitor(
             }
 
             MarkdownTokenTypes.HORIZONTAL_RULE -> {
-                val p = Paragraph()
+                val p =
+                    Paragraph(" ", fontBundle.plainFont()).apply {
+                        spacingBefore = 6f
+                        spacingAfter = 10f
+                    }
                 val line = LineSeparator()
                 line.lineWidth = 1f
                 line.lineColor = Color.GRAY
@@ -247,16 +249,22 @@ class OpenPdfVisitor(
                 .code(codeFence).build().getHighlights().sortedBy {
                     it.location.start
                 }
-        if (codeHighlights.isEmpty()) {
-            fontBundle.codeChunks(codeFence).forEach { paragraph.add(it) }
-            return paragraph
+        var cursor = 0
+        for (highlight in codeHighlights) {
+            val start = highlight.location.start.coerceIn(cursor, codeFence.length)
+            val end = highlight.location.end.coerceIn(start, codeFence.length)
+            if (end == start) continue
+            fontBundle.codeChunks(codeFence.substring(cursor, start)).forEach { paragraph.add(it) }
+            val font =
+                if (highlight is ColorHighlight) {
+                    fontBundle.monoFontWithColor(Color(highlight.rgb))
+                } else {
+                    fontBundle.monoBoldFont()
+                }
+            fontBundle.codeChunks(codeFence.substring(start, end), font).forEach { paragraph.add(it) }
+            cursor = end
         }
-        if (codeHighlights.first().location.start > 0) {
-            fontBundle.codeChunks(codeFence.take(codeHighlights.first().location.start)).forEach { paragraph.add(it) }
-        }
-        codeHighlights.forEachIndexed { i, codeHighlight ->
-            addHighlightCodeFence(codeHighlight, paragraph, codeFence, i, codeHighlights)
-        }
+        fontBundle.codeChunks(codeFence.substring(cursor)).forEach { paragraph.add(it) }
         return paragraph
     }
 
@@ -265,33 +273,6 @@ class OpenPdfVisitor(
         val paragraph = Paragraph()
         fontBundle.codeChunks(raw.trimIndent()).forEach { paragraph.add(it) }
         return buildRoundedCodeBlockTable(paragraph)
-    }
-
-    private fun addHighlightCodeFence(
-        it: CodeHighlight,
-        paragraph: Paragraph,
-        codeFence: String,
-        i: Int,
-        codeHighlights: List<CodeHighlight>,
-    ) {
-        val highlightFont =
-            if (it is ColorHighlight) {
-                fontBundle.monoFontWithColor(Color(it.rgb))
-            } else {
-                fontBundle.monoBoldFont()
-            }
-        val endIndex = it.location.end
-        fontBundle.codeChunks(codeFence.substring(it.location.start, endIndex), highlightFont).forEach {
-            paragraph.add(it)
-        }
-        if (i != codeHighlights.lastIndex) {
-            val nextStartIndex = codeHighlights[i + 1].location.start
-            if (nextStartIndex > endIndex) {
-                fontBundle.codeChunks(codeFence.substring(endIndex, nextStartIndex), highlightFont).forEach {
-                    paragraph.add(it)
-                }
-            }
-        }
     }
 
     private fun buildRoundedCodeBlockTable(paragraph: Paragraph): PdfPTable {
@@ -392,14 +373,20 @@ class OpenPdfVisitor(
             }
         val sizeBoost =
             when (level) {
-                1 -> 18f
-                2 -> 16f
-                3 -> 14f
-                4 -> 12f
-                5 -> 11f
+                1 -> 12f
+                2 -> 8f
+                3 -> 5f
+                4 -> 3f
+                5 -> 1f
                 else -> 0f
             }
-        document.add(Paragraph(text, fontBundle.boldFont(sizeBoost)))
+        document.add(
+            Paragraph(text, fontBundle.boldFont(sizeBoost)).apply {
+                spacingBefore = 16f
+                spacingAfter = 8f
+                setLeading(0f, 1.3f)
+            },
+        )
     }
 
     private fun addListItem(node: ASTNode) {

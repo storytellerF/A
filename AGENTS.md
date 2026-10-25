@@ -371,3 +371,5 @@
 - Native cancellation tests must synchronize from inside the real C call, keep callbacks reachable until face destruction, release gates in finally, and join cleanup on a real dispatcher. Distinguish a thrown cancellation from caller Job cancellation of an uninterruptible synchronous conversion.
 
 - Multi-axis font regressions must hold other axes fixed and verify each requested axis through independent observable output; compare real outlines/metrics or reliable weight metadata, not only outputs from the same converter.
+
+- PDF syntax highlights may overlap and leave an unhighlighted suffix; emit each source character once and retain the tail. Check rendered pages as well as extracted text after layout changes.
