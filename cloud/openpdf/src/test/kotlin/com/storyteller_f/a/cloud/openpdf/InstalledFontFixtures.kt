@@ -53,13 +53,22 @@ internal object InstalledFontFixtures {
     fun read(name: String): ByteArray =
         when (name) {
         "variable.ttf" -> variable.copyOf()
+
         "cff2-variable.otf" -> cff2.copyOf()
+
         "cff2-multiaxis.otf" -> multiAxis.copyOf()
+
         "cff2-collection.otf" -> collectionFace.copyOf()
+
         "mono-regular.ttf" -> mono.getInstance(repository, 400).getOrThrow().copyBytes()
+
         "mono-bold.ttf" -> mono.getInstance(repository, 700).getOrThrow().copyBytes()
-        "serif-regular.ttf" -> repository.getInstance(variable, axes = mapOf("wght" to 400f)).getOrThrow().copyBytes()
+
+            "serif-regular.ttf" ->
+                repository.getInstance(variable, axes = mapOf("wght" to 400f)).getOrThrow().copyBytes()
+
         "serif-bold.ttf" -> repository.getInstance(variable, axes = mapOf("wght" to 700f)).getOrThrow().copyBytes()
+
         else -> error("Unknown installed font fixture $name")
     }
 }

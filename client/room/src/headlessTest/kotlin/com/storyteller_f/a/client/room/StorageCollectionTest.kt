@@ -28,9 +28,14 @@ class StorageCollectionTest {
         try {
             val collection = RoomCollection.SearchRoom("", null, JoinStatusSearch.JOINED)
             val other = RoomCollection.CommunityRooms(2)
-            assertCollectionCleanup(database, RoomCollection.Rooms.getName(), collection.getName(), other.getName()) {
-                RoomRoomInfoStorage(database).clean(collection)
-            }
+                assertCollectionCleanup(
+                    database,
+                    RoomCollection.Rooms.getName(),
+                    collection.getName(),
+                    other.getName(),
+                ) {
+                    RoomRoomInfoStorage(database).clean(collection)
+                }
         } finally {
             database.close()
         }

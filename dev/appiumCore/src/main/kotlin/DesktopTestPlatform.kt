@@ -41,7 +41,10 @@ internal enum class DesktopTestPlatform {
                 setCapability("platformName", "Mac")
                 setCapability("appium:automationName", "Mac2")
                 setCapability("appium:appPath", launchFile.canonicalPath)
-                setCapability("appium:bundleId", "com.storyteller_f.a.desktoptest.${launchFile.nameWithoutExtension}")
+                    setCapability(
+                        "appium:bundleId",
+                        "com.storyteller_f.a.desktoptest.${launchFile.nameWithoutExtension}",
+                    )
             }
 
             Windows -> {

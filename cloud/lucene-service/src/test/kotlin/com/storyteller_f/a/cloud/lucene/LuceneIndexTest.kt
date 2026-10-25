@@ -140,7 +140,10 @@ class LuceneIndexTest {
             )
         service.save("products", listOf(document))
         assertEquals(listOf(document.stored()), service.search("products", RpcLuceneQuery()).documents)
-        assertEquals(1L, service.search("products", RpcLuceneQuery(mustKeyword = mapOf("code" to "PRODUCT-1"))).total)
+            assertEquals(
+                1L,
+                service.search("products", RpcLuceneQuery(mustKeyword = mapOf("code" to "PRODUCT-1"))).total,
+            )
         assertEquals(0L, service.search("products", RpcLuceneQuery(mustKeyword = mapOf("code" to "PRODUCT"))).total)
         assertEquals(1L, service.search("products", textQuery("hidden", "privateIndex")).total)
         assertEquals(0L, service.search("products", textQuery("display", "description")).total)

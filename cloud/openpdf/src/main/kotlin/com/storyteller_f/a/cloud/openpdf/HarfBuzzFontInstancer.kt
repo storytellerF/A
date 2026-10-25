@@ -53,9 +53,13 @@ internal class HarfBuzzFontInstancer(private val native: HarfBuzzCalls = HarfBuz
                         face.pointer,
                         input.pointer,
                     ).use { output ->
-                        native.createHandle("hb_face_reference_blob", "hb_blob_destroy", output.pointer).use { result ->
-                            native.readBlob(result.pointer).also { validateInstance(it, cff2) }
-                        }
+                            native.createHandle(
+                                "hb_face_reference_blob",
+                                "hb_blob_destroy",
+                                output.pointer,
+                            ).use { result ->
+                                native.readBlob(result.pointer).also { validateInstance(it, cff2) }
+                            }
                     }
                 }
             }
