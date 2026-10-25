@@ -985,7 +985,9 @@ never auto-accept comparisons.
 
 OpenPDF snapshots use A4 pages with 48-point side margins, a bilingual snapshot title, a provenance
 panel (publisher/publication time and capturer/capture time), spaced body paragraphs and heading levels,
-and a footer identifying each content page. The signature flow still inserts a separate signature page;
+and a footer identifying each content page. Top-panel timestamps separate date and time with a space
+(for example `2026-01-02 12:30:45`), omitting fractional seconds without changing source values or time zones.
+The signature flow still inserts a separate signature page;
 footer numbers refer to content pages, not physical positions after signing. `SnapshotLayoutTest`
 checks provenance, multi-page content retention, embedded fonts, page numbering and exact code text.
 Rendered reading samples are generated under `cloud/openpdf/build/test-output/layout`.

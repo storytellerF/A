@@ -6,6 +6,7 @@ package com.storyteller_f.a.cloud.openpdf
 
 import com.storyteller_f.a.cloud.pdf.PdfGenerationSpec
 import com.storyteller_f.shared.model.UserInfo
+import kotlinx.datetime.LocalDateTime
 import org.openpdf.text.Document
 import org.openpdf.text.Element
 import org.openpdf.text.PageSize
@@ -56,14 +57,19 @@ internal object SnapshotLayout {
             }
         listOf(
             "Published by" to identity(author),
-            "Published at" to spec.created.toString(),
+            "Published at" to formatTimestamp(spec.created),
             "Captured by" to identity(creator),
-            "Captured at" to spec.captured.toString(),
+            "Captured at" to formatTimestamp(spec.captured),
         ).forEach { (label, value) ->
             metadata.addCell(summaryCell(label, fonts, label = true))
             metadata.addCell(summaryCell(value, fonts, label = false))
         }
         document.add(metadata)
+    }
+
+    private fun formatTimestamp(value: LocalDateTime): String {
+        val time = listOf(value.hour, value.minute, value.second).joinToString(":") { it.toString().padStart(2, '0') }
+        return "${value.date} $time"
     }
 
     private fun identity(user: UserInfo): String =

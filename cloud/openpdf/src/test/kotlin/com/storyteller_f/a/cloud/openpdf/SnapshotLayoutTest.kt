@@ -51,10 +51,11 @@ class SnapshotLayoutTest {
             val text = PDFTextStripper().getText(pdf)
             for (expected in listOf(
                 "主题快照", "Published by", "author-example", "Captured by", "reader-example",
-                "2026-01-01T10:00", "2026-01-02T12:30", "一份可以长期阅读的主题", "Archive complete.",
+                "2026-01-01 10:00:00", "2026-01-02 12:30:45", "一份可以长期阅读的主题", "Archive complete.",
             )) {
                 assertTrue(text.contains(expected), text)
             }
+            assertFalse(text.contains(".123456789"), text)
             assertEquals("Topic snapshot", pdf.documentInformation.title)
             assertEquals(1, pdf.numberOfPages)
             render(pdf, file)
@@ -156,7 +157,7 @@ class SnapshotLayoutTest {
     private fun generationSpec(): PdfGenerationSpec =
         PdfGenerationSpec(
         LocalDateTime.parse("2026-01-01T10:00:00"),
-        LocalDateTime.parse("2026-01-02T12:30:00"),
+        LocalDateTime.parse("2026-01-02T12:30:45.123456789"),
     )
 
     private fun render(pdf: org.apache.pdfbox.pdmodel.PDDocument, file: File) {
