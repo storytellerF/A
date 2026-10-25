@@ -375,3 +375,7 @@
 - PDF syntax highlights may overlap and leave an unhighlighted suffix; emit each source character once and retain the tail. Check rendered pages as well as extracted text after layout changes.
 
 - Keep snapshot timestamp rendering independent of the host default timezone; PdfGenerationSpec carries UTC calendar values. Label the displayed UTC offset explicitly.
+
+- For read-only Detekt, override autoCorrect=false on every analysis task (including typed/source-set tasks), since the root build enables correction by default. Verify repository source hashes are unchanged.
+
+- Keep FunctionSignature.functionBodyExpressionWrapping=multiline while MultilineExpressionWrapping is active, so the two rules agree on multiline function bodies.
