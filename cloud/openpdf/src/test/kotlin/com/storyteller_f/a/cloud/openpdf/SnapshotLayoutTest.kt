@@ -51,7 +51,7 @@ class SnapshotLayoutTest {
             val text = PDFTextStripper().getText(pdf)
             for (expected in listOf(
                 "主题快照", "Published by", "author-example", "Captured by", "reader-example",
-                "2026-01-01 10:00:00", "2026-01-02 12:30:45", "一份可以长期阅读的主题", "Archive complete.",
+                "2026-01-01 10:00:00 UTC+00:00", "2026-01-02 12:30:45 UTC+00:00", "一份可以长期阅读的主题", "Archive complete.",
             )) {
                 assertTrue(text.contains(expected), text)
             }

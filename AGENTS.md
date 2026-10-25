@@ -373,3 +373,5 @@
 - Multi-axis font regressions must hold other axes fixed and verify each requested axis through independent observable output; compare real outlines/metrics or reliable weight metadata, not only outputs from the same converter.
 
 - PDF syntax highlights may overlap and leave an unhighlighted suffix; emit each source character once and retain the tail. Check rendered pages as well as extracted text after layout changes.
+
+- Keep snapshot timestamp rendering independent of the host default timezone; PdfGenerationSpec carries UTC calendar values. Label the displayed UTC offset explicitly.

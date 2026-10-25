@@ -986,11 +986,16 @@ never auto-accept comparisons.
 OpenPDF snapshots use A4 pages with 48-point side margins, a bilingual snapshot title, a provenance
 panel (publisher/publication time and capturer/capture time), spaced body paragraphs and heading levels,
 and a footer identifying each content page. Top-panel timestamps separate date and time with a space
-(for example `2026-01-02 12:30:45`), omitting fractional seconds without changing source values or time zones.
+(for example `2026-01-02 12:30:45 UTC+00:00`), omitting fractional seconds and explicitly labelling UTC.
+`PdfGenerationSpec` receives UTC calendar values from the topic creation time and `shared.utils.now()`;
+the host default timezone never changes the displayed clock values.
 The signature flow still inserts a separate signature page;
 footer numbers refer to content pages, not physical positions after signing. `SnapshotLayoutTest`
 checks provenance, multi-page content retention, embedded fonts, page numbering and exact code text.
 Rendered reading samples are generated under `cloud/openpdf/build/test-output/layout`.
+The provenance regression checks both UTC labels and exact clock values. Run the PDF module tests
+with `-Duser.timezone=Pacific/Honolulu` in `JAVA_TOOL_OPTIONS` (alongside native/font options) to verify
+that a non-UTC JVM default cannot alter the displayed UTC timestamps.
 
 The service exports only `TopicContent.Plain`. `Encrypted`, `DecryptFailed`, `Extracted` and `Nil`
 are rejected by the snapshot boundary; it does not decrypt or convert them. The PDF receives one topic's

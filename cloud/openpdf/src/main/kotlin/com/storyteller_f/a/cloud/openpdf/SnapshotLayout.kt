@@ -69,7 +69,7 @@ internal object SnapshotLayout {
 
     private fun formatTimestamp(value: LocalDateTime): String {
         val time = listOf(value.hour, value.minute, value.second).joinToString(":") { it.toString().padStart(2, '0') }
-        return "${value.date} $time"
+        return "${value.date} $time UTC+00:00"
     }
 
     private fun identity(user: UserInfo): String =
