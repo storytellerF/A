@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -103,7 +104,8 @@ internal fun WasmMediaPlayer(item: RemoteMediaItem, modifier: Modifier, video: B
     val textureRenderer = remember(item.url, gpu) { if (gpu && video) WasmTextureRenderer() else null }
     var state by remember(item.url) { mutableStateOf<MediaSnapshot?>(null) }
     var pixels by remember(item.url) { mutableStateOf<PixelFrame?>(null) }
-    var bitmap by remember(item.url) { mutableStateOf<Bitmap?>(null) }
+    val bitmapOwner = remember(item.url) { WasmBitmapOwner() }
+    val bitmap = bitmapOwner.bitmap
     val host =
         remember(item.url) {
             createHost(item.url, { state = it }, { frame ->
@@ -117,20 +119,18 @@ internal fun WasmMediaPlayer(item: RemoteMediaItem, modifier: Modifier, video: B
             }, autoStart = false, path = if (textureRenderer != null) "gpu-texture" else "rgba-copy")
         }
     LaunchedEffect(pixels) {
-        host.updateBitmapFrame(pixels, profiling) { bitmap = it }
+        host.updateBitmapFrame(pixels, profiling, bitmapOwner::accept)
     }
     DisposableEffect(host) {
         textureRenderer?.setFailureHandler { host.failRendering() }
         host.start()
         onDispose {
             host.close()
+            bitmapOwner.close()
             textureRenderer?.close()
         }
     }
-    DisposableEffect(bitmap) {
-        val ownedBitmap = bitmap
-        onDispose { ownedBitmap?.close() }
-    }
+    SideEffect { bitmapOwner.retain(bitmap) }
     Column(if (fill) modifier else Modifier) {
         if (video) {
             val videoModifier = if (fill) Modifier.weight(1f).fillMaxWidth() else modifier

@@ -458,3 +458,5 @@
 - Keep Web Audio scheduling/starvation on render time and video/progress/end detection on output time. Output timestamp extrapolation must stop at suspended render progress and reset on seek; test reported queue latency without treating analyser onset as speaker output.
 
 - Route Wasm RGBA bitmap-import failures through Host cleanup. Rethrow cancellation and check coroutine activity before reporting errors from a superseded effect; verify preview/playback failures leave Compose responsive and release media resources.
+
+- Give published native media bitmaps a stable lifecycle owner; per-value DisposableEffect cleanup misses publications superseded before commit. Retain displayed/pending frames until commit, and verify explicit native cleanup with GC finalizers deferred during remove/source-replacement races.

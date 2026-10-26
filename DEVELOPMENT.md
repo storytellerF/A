@@ -1216,6 +1216,7 @@ node --test client/composeCore/wasm-media-host/*.test.mjs
 node client/composeCore/wasm-media-host/verify-browser.mjs
 node client/composeCore/wasm-media-host/verify-worker-regressions.mjs
 node client/composeCore/wasm-media-host/verify-rgba-failure.mjs
+node client/composeCore/wasm-media-host/verify-bitmap-ownership.mjs
 node client/composeCore/wasm-media-host/benchmark-browser.mjs
 node client/composeCore/wasm-media-host/verify-compose.mjs
 node client/composeCore/wasm-media-host/verify-av-sync.mjs
@@ -1447,3 +1448,13 @@ preview and active playback, observes error state and resource cleanup, then exe
 controls to unmount/remount and verifies that fresh playback recovers without an
 uncaught browser exception. Run it against the production fixture with
 `MEDIA_COMPOSE_BUILD=production`.
+
+RGBA frames transfer from the importing coroutine to a stable bitmap owner at publication.
+The owner retains both the committed frame and the latest pending frame, retires older
+frames after commit, and explicitly closes every remaining frame on disposal. Ownership
+does not depend on a per-bitmap DisposableEffect reaching commit. Late publications to
+a disposed owner close immediately; cancelled imports still release untransferred data.
+The bitmap-ownership browser check counts native installs/finalizers and defers GC cleanup
+callbacks so garbage collection cannot hide a missed close. It covers committed disposal,
+publication before commit followed by removal/source replacement, and active-playback
+replacement/disposal. Run against the production fixture with MEDIA_COMPOSE_BUILD=production.
