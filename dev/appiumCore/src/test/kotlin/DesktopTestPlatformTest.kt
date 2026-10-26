@@ -11,11 +11,16 @@ import kotlin.test.assertFailsWith
 
 class DesktopTestPlatformTest {
     @Test
-    fun `mac E2E is paused without blocking other desktops`() {
-        val failure = assertFailsWith<IllegalStateException> { DesktopTestPlatform.Mac.requireE2eAvailable() }
-        kotlin.test.assertTrue(failure.message.orEmpty().contains("Skiko fix or VM GPU acceleration"))
-        DesktopTestPlatform.Windows.requireE2eAvailable()
-        DesktopTestPlatform.Linux.requireE2eAvailable()
+    fun `remote mac launch uses portable arguments`() {
+        val arguments = File("build/test/mac arguments.args")
+        val caps = DesktopTestPlatform.Mac.createCapabilities(arguments, 60L)
+
+        assertEquals("Mac2", caps.getCapability("appium:automationName"))
+        assertEquals(listOf("@${arguments.canonicalPath}"), caps.getCapability("appium:appArguments"))
+        assertEquals(null, caps.getCapability("appium:appPath"))
+        assertEquals(true, usesDesktopArgumentFile(DesktopTestPlatform.Mac, hostIsMac = false))
+        assertEquals(false, usesDesktopArgumentFile(DesktopTestPlatform.Mac, hostIsMac = true))
+        assertEquals(true, usesDesktopArgumentFile(DesktopTestPlatform.Windows, hostIsMac = true))
     }
 
     @Test

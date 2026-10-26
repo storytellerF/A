@@ -95,13 +95,19 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                 driver.executeScript("windows: hover", mapOf("endElementId" to elementId, "durationMs" to 200))
                 driver.executeScript("windows: click", mapOf("elementId" to elementId, "durationMs" to 100))
             }
-        } else if (platform == DesktopTestPlatform.Mac && textTarget) {
+        } else if (platform == DesktopTestPlatform.Mac) {
+            // An element click can succeed without focusing a Compose editor. Use a native pointer click.
             // A text container's center can hit an embedded control instead of its own label.
             val point =
-                desktopTextClickPoint(
-                    element.rect,
-                    element.findElements(AppiumBy.iOSNsPredicateString("TRUEPREDICATE")).map { it.rect },
-                )
+                if (textTarget) {
+                    desktopTextClickPoint(
+                        element.rect,
+                        element.findElements(AppiumBy.iOSNsPredicateString("TRUEPREDICATE")).map { it.rect },
+                    )
+                } else {
+                    val bounds = element.rect
+                    org.openqa.selenium.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)
+                }
             driver.executeScript("macos: click", mapOf("x" to point.x, "y" to point.y))
         } else {
             element.click()
