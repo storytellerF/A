@@ -11,6 +11,8 @@ const { chromium } = await import(
 const site = await startSite();
 const results = [];
 const mediaPath = process.env.MEDIA_RENDER_PATH ?? "rgba-copy";
+const outputDelayMs = Number(process.env.MEDIA_SYNC_OUTPUT_DELAY_MS ?? 0);
+assert.ok(Number.isFinite(outputDelayMs) && outputDelayMs >= 0 && outputDelayMs <= 500);
 try {
   for (const [browserName, executablePath] of Object.entries(
     chromiumBinaries,
@@ -24,6 +26,17 @@ try {
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await installMediaDiagnostics(page);
+      if (outputDelayMs > 0)
+        await page.addInitScript((delay) => {
+          const timestamp = AudioContext.prototype.getOutputTimestamp;
+          AudioContext.prototype.getOutputTimestamp = function () {
+            const value = timestamp.call(this);
+            return {
+              contextTime: Math.max(0, value.contextTime - delay / 1000),
+              performanceTime: value.performanceTime,
+            };
+          };
+        }, outputDelayMs);
       await page.goto(
         site.origin + "/compose/?media=/sync.mp4&mediaPath=" + mediaPath,
       );
@@ -70,7 +83,17 @@ try {
             samples.reduce((s, x) => s + x * x, 0) / samples.length,
           );
           const next = rms > 0.02;
-          if (next && !sound) syncProbe.audio.push(performance.now());
+          if (next && !sound) {
+            const stamp = context.getOutputTimestamp();
+            if (!(stamp.performanceTime > 0 && stamp.contextTime > 0)) {
+              syncProbe.error = "No initialized audio output timestamp";
+            } else {
+              syncProbe.audio.push({
+                graphMs: performance.now(),
+                outputMs: stamp.performanceTime + (context.currentTime - stamp.contextTime) * 1000,
+              });
+            }
+          }
           sound = next;
         }, 4);
         syncProbe.task = (async () => {
@@ -99,7 +122,7 @@ try {
         })();
       });
       await page.waitForFunction(
-        () => syncProbe.audio.length >= 3 && syncProbe.video.length >= 3,
+        () => syncProbe.error || (syncProbe.audio.length >= 3 && syncProbe.video.length >= 3),
       );
       const before = await page.evaluate(() => ({
         audio: [...syncProbe.audio],
@@ -151,15 +174,18 @@ try {
         counts,
       );
       assert.equal(after.error, "");
-      const compare = (phase) =>
-        phase.video.slice(0, 3).map((v, i) => v - phase.audio[i]);
+      const compare = (phase, field) =>
+        phase.video.slice(0, 3).map((v, i) => v - phase.audio[i][field]);
       const result = {
         version: browser.version(),
         path: mediaPath,
-        beforeSeekMs: compare(before),
-        afterSeekMs: compare(after),
+        reportedExtraOutputDelayMs: outputDelayMs,
+        beforeSeekMs: compare(before, "outputMs"),
+        afterSeekMs: compare(after, "outputMs"),
+        graphBeforeSeekMs: compare(before, "graphMs"),
+        graphAfterSeekMs: compare(after, "graphMs"),
         measurement:
-          "Observed Compose canvas flash onset minus Web Audio analyser pulse onset; excludes physical speaker/display latency.",
+          "Observed Compose canvas flash onset minus analyser pulse mapped to the browser audio-output timestamp; not a physical speaker/display measurement. Injected delay changes reported timestamps only.",
       };
       for (const skew of [...result.beforeSeekMs, ...result.afterSeekMs])
         assert.ok(Math.abs(skew) < 80, `Observed A/V skew ${skew}ms`);
@@ -186,9 +212,7 @@ try {
   await writeFile(
     resolve(
       work,
-      mediaPath === "gpu-texture"
-        ? "gpu-av-sync-results.json"
-        : "av-sync-results.json",
+      `${mediaPath === "gpu-texture" ? "gpu-" : ""}av-sync-results${outputDelayMs ? `-delay-${outputDelayMs}` : ""}.json`,
     ),
     JSON.stringify(results, null, 2),
   );

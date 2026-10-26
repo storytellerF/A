@@ -1165,14 +1165,19 @@ GPU upload. These are byte-volume calculations, not measured hardware guarantees
 ### Playback ownership
 
 Media timestamps are seconds. Audio samples become scheduled `AudioBufferSourceNode`s
-through one gain node. AudioContext time is the master clock when a sound track exists;
-silent video uses a monotonic performance clock. Creation/resume of AudioContext starts
+through one gain node. AudioContext render time drives audio scheduling and starvation
+checks. Video, displayed progress and end detection follow `getOutputTimestamp()` mapped
+to the monotonic performance clock, capped by render progress and monotonic within a
+playback generation. Until a valid output timestamp is available, reported base/output
+latencies provide an estimate; missing latency values contribute zero. Silent video uses
+the monotonic performance clock directly. Creation/resume of AudioContext starts
 inside the user action so autoplay restrictions remain visible. Scheduling starts with
 80ms lead time. The Host limits scheduled sound to roughly 500ms ahead and at most 64
 nodes, and retains one pending video frame plus Mediabunny 1.62.1's four-sample decoder prefetch.
-Below 40ms of remaining sound it suspends the audio clock; it resumes after 300ms has
-been scheduled, the bounded node queue is full, or the audio iterator ends. Late video frames are discarded against this
-clock. Metrics describe Host dispatch timestamps and Worker readback, not speaker/display
+Below 40ms of remaining rendered sound it suspends the render clock; it resumes after
+300ms has been scheduled, the bounded node queue is full, or the audio iterator ends.
+Already-queued output and corresponding video may drain while buffering, capped by
+suspended render progress. Late video frames are discarded against the output clock. Metrics describe Host dispatch timestamps and Worker readback, not speaker/display
 latency or guaranteed hardware acceleration.
 
 Pause and seek stop/disconnect every scheduled audio node and replace the decoder Worker
@@ -1238,8 +1243,13 @@ instrumentation observes calls without replacing their results. Screenshots, JSO
 and benchmark results stay under `build/wasm-media-research`; do not track session reports.
 The native `<video>` benchmark is a test-only comparator and is not a production fallback.
 The sync fixture combines one white flash and one audio pulse each second. Its check
-compares captured Compose canvas flash onset with Web Audio analyser pulse onset before
-and after seek, using an 80ms bound. Canvas capture itself adds diagnostic readback cost;
+compares captured Compose canvas flash onset with Web Audio analyser pulses mapped to
+the browser's audio-output timestamps before and after seek, using an 80ms bound. The
+raw graph-onset differences remain separate diagnostics. Set
+`MEDIA_SYNC_OUTPUT_DELAY_MS=200` to simulate an extra output queue in the timestamp API;
+this must delay video without changing audio scheduling. Run both default and injected
+delay checks with `MEDIA_RENDER_PATH=rgba-copy` and `MEDIA_RENDER_PATH=gpu-texture`.
+The injection changes reported timing only, not the physical device. Canvas capture itself adds diagnostic readback cost;
 its observed unique frame rate is distinct from Host dispatch and native video callbacks.
 A nonzero analyser signal proves the graph carries sound, not that a physical speaker was
 heard. Timestamp and headless rendering checks do not establish acoustic/display sync;

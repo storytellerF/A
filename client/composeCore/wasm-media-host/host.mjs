@@ -97,12 +97,39 @@ export class MediaHost {
       }),
     );
   }
-  currentTime() {
+  // Audio scheduling and starvation checks stay on the context's render timeline.
+  renderTime() {
     if (!["playing", "buffering"].includes(this.status)) return this.position;
     const elapsed = this.context
       ? this.context.currentTime - this.clockStart
       : this.now() - this.clockStart;
     return Math.min(this.duration, this.position + Math.max(0, elapsed));
+  }
+  // Video, progress and end detection follow the audio reaching the output device.
+  currentTime() {
+    if (!this.context || !["playing", "buffering"].includes(this.status))
+      return this.renderTime();
+    const context = this.context;
+    const stamp = context.getOutputTimestamp?.();
+    const validStamp =
+      Number.isFinite(stamp?.contextTime) &&
+      stamp.contextTime >= 0 &&
+      Number.isFinite(stamp?.performanceTime) &&
+      stamp.performanceTime > 0;
+    const latency = (value) =>
+      Number.isFinite(value) && value > 0 ? value : 0;
+    const output = validStamp
+      ? stamp.contextTime + this.now() - stamp.performanceTime / 1000
+      : context.currentTime -
+        latency(context.baseLatency) - latency(context.outputLatency);
+    // A suspended render clock caps extrapolation while already-queued sound drains.
+    const outputTime = Math.max(0, Math.min(context.currentTime, output));
+    const position = Math.min(
+      this.duration, this.position + Math.max(0, outputTime - this.clockStart),
+    );
+    // Refined timestamps or a changing output latency may hold video, never rewind it.
+    this.outputPosition = Math.max(this.outputPosition ?? this.position, position);
+    return this.outputPosition;
   }
   rpc(op, values = {}) {
     const id = ++this.request;
@@ -138,6 +165,7 @@ export class MediaHost {
     this.cancelGeneration();
     const generation = this.generation;
     this.position = time;
+    this.outputPosition = time;
     this.status = "loading";
     this.errorMessage = "";
     this.publish();
@@ -268,7 +296,7 @@ export class MediaHost {
         !this.audioEnded
       ) {
         if (
-          this.audioEnd - this.currentTime() > 0.5 ||
+          this.audioEnd - this.renderTime() > 0.5 ||
           this.nodes.size >= MAX_AUDIO_NODES
         ) {
           await this.wait(10, generation);
@@ -290,7 +318,7 @@ export class MediaHost {
         sample.channels.forEach((channel, i) =>
           buffer.copyToChannel(channel, i),
         );
-        const offset = Math.max(0, this.currentTime() - sample.timestamp);
+        const offset = Math.max(0, this.renderTime() - sample.timestamp);
         this.audioEnd = sample.timestamp + sample.duration;
         const seekOffset = Math.max(0, this.position - sample.timestamp);
         if (offset > seekOffset + 0.002) this.metrics.lateAudioSamples++;
@@ -307,7 +335,7 @@ export class MediaHost {
           this.clockStart + sample.timestamp + offset - this.position;
         node.start(Math.max(this.context.currentTime, when), offset);
         if (
-          this.audioEnd - this.currentTime() >= 0.3 ||
+          this.audioEnd - this.renderTime() >= 0.3 ||
           this.nodes.size >= MAX_AUDIO_NODES
         )
           await this.resumeBuffer(generation);
@@ -409,19 +437,19 @@ export class MediaHost {
     )
       return;
     const time = this.currentTime();
+    const rendered = this.renderTime();
     if (
       this.status === "playing" &&
       this.context &&
       !this.audioEnded &&
       this.audioEnd > this.position + 0.1 &&
-      this.audioEnd - time < 0.04
+      this.audioEnd - rendered < 0.04
     ) {
       this.status = "buffering";
       this.bufferingTask = this.context.suspend();
       this.bufferingTask.catch((error) => this.fail(error, generation));
     }
     if (
-      this.status === "playing" &&
       this.frame &&
       this.frame.timestamp <= time
     ) {

@@ -454,3 +454,5 @@
 - Use captureStream() without an explicit request-rate timer for canvas frame-ID observation, and record the capture policy. A high timer rate is not a guarantee that every video update is sampled; never compare historical timer-gated datasets as if their observation policy were unchanged.
 
 - Verify media network-failure behavior against the pinned decoder API, not only a mocked Worker. Preserve skipped-sample counters through EOF responses without counting EOF as a frame; exercise both RGBA and GPU wire paths.
+
+- Keep Web Audio scheduling/starvation on render time and video/progress/end detection on output time. Output timestamp extrapolation must stop at suspended render progress and reset on seek; test reported queue latency without treating analyser onset as speaker output.
