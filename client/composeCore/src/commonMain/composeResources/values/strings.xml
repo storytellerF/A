@@ -50,4 +50,12 @@
     <string name="confirm">Confirm</string>
     <string name="unread_rooms">Unread rooms</string>
     <string name="unread_messages">Unread messages</string>
+    <string name="media_play">Play</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_mute">Mute</string>
+    <string name="media_unmute">Unmute</string>
+    <string name="media_volume">Volume</string>
+    <string name="media_position">Playback position</string>
+    <string name="media_loading">Loading media…</string>
+    <string name="media_failed">Media playback failed. Check HTTPS, CORS, container and browser codec support.</string>
 </resources>

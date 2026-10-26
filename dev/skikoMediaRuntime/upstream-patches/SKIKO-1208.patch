@@ -1,0 +1,11 @@
+diff --git a/skiko/src/webMain/kotlin/org/jetbrains/skiko/GLTexture.web.kt b/skiko/src/webMain/kotlin/org/jetbrains/skiko/GLTexture.web.kt
+--- a/skiko/src/webMain/kotlin/org/jetbrains/skiko/GLTexture.web.kt
++++ b/skiko/src/webMain/kotlin/org/jetbrains/skiko/GLTexture.web.kt
+@@ -7,6 +7,7 @@
+ @JsFun(
+     """(gl, texture) => {
+         const textureHandle = gl.getNewId(gl.textures);
++        texture.name = textureHandle;
+         gl.textures[textureHandle] = texture;
+         return textureHandle;
+     }"""

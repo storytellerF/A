@@ -1,0 +1,20 @@
+{
+  "name": "wasm-media-host",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "host.mjs",
+  "dependencies": {
+    "mediabunny": "1.62.1"
+  },
+  "files": [
+    "host.mjs",
+    "decode-worker.mjs",
+    "gpu-bridge.mjs",
+    "video-sample.mjs",
+    "NOTICE"
+  ],
+  "scripts": {
+    "test": "node --test *.test.mjs"
+  }
+}

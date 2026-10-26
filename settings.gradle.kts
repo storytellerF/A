@@ -45,6 +45,7 @@ include(":app:cliApp")
 include(":app:androidApp")
 include(":app:desktopApp")
 
+include(":dev:wasmMediaExperiment")
 include(":dev:testInfrastructure")
 include(":dev:e2eCore")
 
@@ -105,3 +106,10 @@ include(":panel:benchmark")
 include(":app:benchmark")
 
 includeBuild("bgscripts")
+
+// Wasm-only Skiko source patch; Android/JVM keep their published artifacts.
+includeBuild("dev/skikoMediaRuntime") {
+    dependencySubstitution {
+        substitute(module("org.jetbrains.skiko:skiko-wasm-js")).using(project(":"))
+    }
+}

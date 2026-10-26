@@ -46,4 +46,12 @@
     <string name="ad_label">ad: %1$s</string>
     <string name="unread_rooms">未读房间</string>
     <string name="unread_messages">未读消息</string>
+    <string name="media_play">播放</string>
+    <string name="media_pause">暂停</string>
+    <string name="media_mute">静音</string>
+    <string name="media_unmute">取消静音</string>
+    <string name="media_volume">音量</string>
+    <string name="media_position">播放位置</string>
+    <string name="media_loading">正在加载媒体…</string>
+    <string name="media_failed">媒体播放失败。请检查 HTTPS、跨域权限、容器格式和浏览器编解码器支持。</string>
 </resources>

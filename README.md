@@ -302,3 +302,15 @@ The iOS adapter and permissions are included; build and device acceptance requir
 Desktop end-to-end tests use platform-specific Appium drivers. Windows and Linux testing remain available; macOS desktop E2E is temporarily paused pending a verified Skiko fix or working VM GPU acceleration. See the [development guide](DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation) for findings and resumption requirements.
 
 Remote desktop E2E runs the application in the target environment while Gradle tests, backend fixtures and compilation stay on the host. Windows and Linux environment configurations share the same JVM artifact/service contract and project-owned desktop dependency requirements; connection details belong to the operator. Compilation inside a work VM requires an explicit user request; VM/Appium setup or a test request alone does not permit it.
+
+
+## Experimental Web media playback
+
+The Wasm experiment draws video inside Compose so captions, buttons and dialogs can
+appear over it, and plays sound through Web Audio. It requires HTTPS or localhost,
+browser support for the file's codecs, and CORS permission for cross-origin media.
+The default pixel-copy path can be expensive at high resolutions. An optional GPU
+texture experiment avoids explicit pixel readback, but does not guarantee zero-copy
+decoding. It supports finite,
+seekable files and pauses when the tab is hidden; unsupported media displays an error.
+See DEVELOPMENT.md for the isolated experiment and its limitations.

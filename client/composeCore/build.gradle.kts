@@ -166,6 +166,7 @@ kotlin {
                 implementation(libs.mermaid.ffi)
                 implementation(libs.kotlinx.browser)
                 implementation(npm("local-font-access", project.file("local-font-access")))
+                implementation(npm("wasm-media-host", project.file("wasm-media-host")))
                 implementation(npm("mermaid-ffi-wasm", libs.versions.mermaidFfi.get()))
             }
         }
