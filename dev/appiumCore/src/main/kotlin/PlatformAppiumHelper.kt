@@ -265,7 +265,6 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         setup: suspend (AppiumPorts) -> AppiumTestSetup<T>,
         block: suspend (AppiumTestScope, T) -> Unit,
     ) {
-        platform.requireE2eAvailable()
         val report = AppiumTestReport(target.suiteName, "desktop-${platform.name.lowercase()}", testName)
         report.run {
             val browserCapture =
@@ -413,11 +412,11 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
         val script =
             File.createTempFile(
                 config.scriptPrefix,
-                if (platform != DesktopTestPlatform.Mac) ".args" else ".sh",
+                if (usesDesktopArgumentFile(platform)) ".args" else ".sh",
                 scriptDir,
             )
         val arguments = buildLaunchArguments(context, launchClasspath, prefsDir, tmpDir)
-        if (platform != DesktopTestPlatform.Mac) {
+        if (usesDesktopArgumentFile(platform)) {
             script.writeText(buildJavaArgumentFile(arguments))
             return script
         }

@@ -299,7 +299,7 @@ permission. CLI clients do not provide audio/video calls.
 
 The iOS adapter and permissions are included; build and device acceptance require macOS/Xcode.
 
-Desktop end-to-end tests use platform-specific Appium drivers. Windows and Linux testing remain available; macOS desktop E2E is temporarily paused pending a verified Skiko fix or working VM GPU acceleration. See the [development guide](DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation) for findings and resumption requirements.
+Desktop end-to-end tests use platform-specific Appium drivers. macOS testing requires a qualified hardware renderer or a verified fix for the observed Skiko software-rendering stall. An accelerated Intel macOS 15.8.1 target has passed renderer qualification, allowing desktop E2E to resume. See the [development guide](DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation) for qualification evidence and current acceptance results.
 
 Remote desktop E2E runs the application in the target environment while Gradle tests, backend fixtures and compilation stay on the host. Windows and Linux environment configurations share the same JVM artifact/service contract and project-owned desktop dependency requirements; connection details belong to the operator. Compilation inside a work VM requires an explicit user request; VM/Appium setup or a test request alone does not permit it.
 

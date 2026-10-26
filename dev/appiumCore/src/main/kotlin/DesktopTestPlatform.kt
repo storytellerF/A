@@ -18,47 +18,47 @@ internal enum class DesktopTestPlatform {
     Windows,
     ;
 
-    fun requireE2eAvailable() {
-        check(this != Mac) {
-            "macOS desktop E2E is paused until a Skiko fix or VM GPU acceleration is verified. " +
-                "See DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation."
-        }
-    }
-
     fun createCapabilities(launchFile: File, timeoutSeconds: Long): DesiredCapabilities =
         DesiredCapabilities().apply {
-        setCapability("appium:newCommandTimeout", timeoutSeconds)
-        when (this@DesktopTestPlatform) {
-            Linux -> {
-                setCapability("platformName", "linux")
-                setCapability("appium:automationName", "linux")
-                setCapability("appium:app", resolveDesktopJava(this@DesktopTestPlatform))
-                setCapability("appium:appArguments", listOf("@${launchFile.canonicalPath}"))
-                setCapability("appium:appWorkingDir", File(".").canonicalPath)
-            }
+            setCapability("appium:newCommandTimeout", timeoutSeconds)
+            when (this@DesktopTestPlatform) {
+                Linux -> {
+                    setCapability("platformName", "linux")
+                    setCapability("appium:automationName", "linux")
+                    setCapability("appium:app", resolveDesktopJava(this@DesktopTestPlatform))
+                    setCapability("appium:appArguments", listOf("@${launchFile.canonicalPath}"))
+                    setCapability("appium:appWorkingDir", File(".").canonicalPath)
+                }
 
-            Mac -> {
-                setCapability("platformName", "Mac")
-                setCapability("appium:automationName", "Mac2")
-                setCapability("appium:appPath", launchFile.canonicalPath)
-                    setCapability(
-                        "appium:bundleId",
-                        "com.storyteller_f.a.desktoptest.${launchFile.nameWithoutExtension}",
-                    )
-            }
+                Mac -> {
+                    setCapability("platformName", "Mac")
+                    setCapability("appium:automationName", "Mac2")
+                    if (launchFile.extension == "args") {
+                        // A remote environment provider packages the prebuilt target launcher.
+                        setCapability("appium:app", resolveDesktopJava(this@DesktopTestPlatform))
+                        setCapability("appium:appArguments", listOf("@${launchFile.canonicalPath}"))
+                        setCapability("appium:appWorkingDir", File(".").canonicalPath)
+                    } else {
+                        setCapability("appium:appPath", launchFile.canonicalPath)
+                        setCapability(
+                            "appium:bundleId",
+                            "com.storyteller_f.a.desktoptest.${launchFile.nameWithoutExtension}",
+                        )
+                    }
+                }
 
-            Windows -> {
-                setCapability("platformName", "Windows")
-                setCapability("appium:automationName", "DesktopDriver")
-                setCapability("appium:app", resolveDesktopJava(this@DesktopTestPlatform))
-                setCapability("appium:appArguments", "\"@${launchFile.canonicalPath}\"")
-                setCapability("appium:appWorkingDir", File(".").canonicalPath)
-                setCapability("appium:javaSwing", false)
-                setCapability("appium:ms:forcequit", true)
-                setCapability("appium:ms:waitForAppLaunch", timeoutSeconds)
+                Windows -> {
+                    setCapability("platformName", "Windows")
+                    setCapability("appium:automationName", "DesktopDriver")
+                    setCapability("appium:app", resolveDesktopJava(this@DesktopTestPlatform))
+                    setCapability("appium:appArguments", "\"@${launchFile.canonicalPath}\"")
+                    setCapability("appium:appWorkingDir", File(".").canonicalPath)
+                    setCapability("appium:javaSwing", false)
+                    setCapability("appium:ms:forcequit", true)
+                    setCapability("appium:ms:waitForAppLaunch", timeoutSeconds)
+                }
             }
         }
-    }
 
     companion object {
         fun current(): DesktopTestPlatform {
@@ -72,6 +72,12 @@ internal enum class DesktopTestPlatform {
         }
     }
 }
+
+/** Remote macOS launches use the same portable argument file as other remote desktops. */
+internal fun usesDesktopArgumentFile(
+    platform: DesktopTestPlatform,
+    hostIsMac: Boolean = System.getProperty("os.name").startsWith("Mac", ignoreCase = true),
+): Boolean = platform != DesktopTestPlatform.Mac || !hostIsMac
 
 internal fun resolveDesktopJava(platform: DesktopTestPlatform): String =
     System.getenv("APP_DESKTOP_TEST_JAVA")
