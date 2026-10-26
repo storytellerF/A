@@ -206,8 +206,8 @@ private suspend fun PixelFrame.toSkiaBitmap(): Bitmap {
 
 private fun useGpuTextures(): Boolean =
     js(
-    "new URLSearchParams(globalThis.location.search).get('mediaPath') === 'gpu-texture'",
-)
+        "new URLSearchParams(globalThis.location.search).get('mediaPath') === 'gpu-texture'",
+    )
 
 private suspend fun BrowserMediaHost.updateBitmapFrame(
     frame: PixelFrame?,
