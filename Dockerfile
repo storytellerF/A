@@ -49,31 +49,18 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/server/ .
 ENTRYPOINT ["sh", "./bin/server"]
 
-# Jammy's distro HarfBuzz predates variable-font instancing. Build the public core/subset
-# libraries in a matching container, independently of the application distribution.
-FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS pdf-font-native
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl cmake ninja-build g++ xz-utils && \
-    rm -rf /var/lib/apt/lists/*
-WORKDIR /src
-RUN curl --fail --location --retry 3 --output harfbuzz.tar.xz \
-    https://github.com/harfbuzz/harfbuzz/releases/download/14.6.0/harfbuzz-14.6.0.tar.xz && \
-    echo "d07a007327277708a2a73ae437887cdbaf282937f6d03ca5467723e9099af586  harfbuzz.tar.xz" | sha256sum -c - && \
-    tar -xJf harfbuzz.tar.xz && \
-    cmake -S harfbuzz-14.6.0 -B native-build -G Ninja -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/opt/pdf-fonts -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON \
-    -DHB_BUILD_SUBSET=ON -DHB_BUILD_UTILS=OFF -DHB_BUILD_RASTER=OFF -DHB_BUILD_VECTOR=OFF -DHB_BUILD_GPU=OFF && \
-    cmake --build native-build --parallel 2 && cmake --install native-build && \
-    mkdir -p /opt/pdf-fonts/licenses && cp harfbuzz-14.6.0/COPYING /opt/pdf-fonts/licenses/HarfBuzz-COPYING
+FROM registry.fedoraproject.org/fedora:44@sha256:3988086adef2975a8a3a6c15634e21625efebc6ac043c83f02f619efff6c5d11 AS worker
 
-FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS worker
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libavif-dev libvulkan1 libstdc++6 fonts-noto-cjk fonts-dejavu-core && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-COPY --from=pdf-font-native /opt/pdf-fonts/lib/ /usr/local/lib/
-COPY --from=pdf-font-native /opt/pdf-fonts/licenses/ /usr/share/doc/pdf-harfbuzz/
-RUN ldconfig
+# Temurin comes from Adoptium; native libraries and fonts come from Fedora's signed repositories.
+RUN printf '%s\n' '[Adoptium]' 'name=Adoptium' \
+    'baseurl=https://packages.adoptium.net/artifactory/rpm/fedora/$releasever/$basearch' \
+    'enabled=1' 'gpgcheck=1' \
+    'gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public' \
+    > /etc/yum.repos.d/adoptium.repo && \
+    dnf install -y --setopt=install_weak_deps=False temurin-21-jre libavif vulkan-loader libstdc++ \
+    google-noto-serif-cjk-fonts google-noto-sans-mono-fonts harfbuzz shadow-utils && \
+    test "$(rpm -q --queryformat '%{VERSION}' harfbuzz | cut -d. -f1)" -ge 13 && \
+    dnf clean all
 
 ARG APP_UID=1000
 ARG APP_GID=1000

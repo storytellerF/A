@@ -440,7 +440,12 @@ Application backend environment overrides are generated only for enabled cli/ser
 
 Run scripts/test_scripts/compose-service-test.sh for generated configuration regressions. Validate real Compose combinations with non-secret fixture environment files before deployment. MinIO runtime images install curl and initialize /data for UID 1000 so a fresh named volume works. File search indexes both the original analyzed name and an unstored lowercase full-name field; queries search both fields, while responses preserve the original name. Filesystem RPC upload state belongs to one WebSocket connection, and session completion removes unfinished uploads after its calls stop. The disconnect regression closes one real RPC WebSocket and verifies its temporary files disappear without affecting another connection.
 
-Worker uses a Temurin 21 JRE on Ubuntu Jammy for the glibc-linked LiteRT JNI libraries. The shared Docker build stage remains JDK 21 Alpine; keep Worker runtime dependency installation and user creation specific to Ubuntu.
+Worker uses a digest-pinned Fedora 44 base with Temurin 21 JRE from the official
+[Adoptium RPM repository](https://adoptium.net/installation/linux/#centosrhelfedora-instructions)
+for the glibc-linked LiteRT JNI libraries. Fedora signed repositories provide libavif, the Vulkan loader,
+libstdc++, Noto CJK/mono fonts and HarfBuzz core/subset (required version 13.0.0 or newer).
+No native library source build is needed. The shared Docker build stage remains JDK 21 Alpine;
+keep worker package installation and user creation specific to Fedora.
 
 ### RPC adapter recovery
 
@@ -937,13 +942,14 @@ in reverse order after copying result bytes. Instantiated output must not retain
 - Windows: use the [official HarfBuzz release bundle](https://github.com/harfbuzz/harfbuzz/releases), with
   `libharfbuzz-0.dll`, `libharfbuzz-subset-0.dll` and their dependencies together. Put the directory on
   `PATH`; for Gradle tests set `JAVA_TOOL_OPTIONS=-Djna.library.path=C:/tools/harfbuzz`.
-- Linux: install matching `harfbuzz-subset` (Alpine) or `libharfbuzz-subset0` (Debian/Ubuntu), verifying the
-  version. Alpine runtime targets require `harfbuzz-subset>=13.0.0`. The Jammy worker's `pdf-font-native`
-  Docker stage builds HarfBuzz 14.6.0 from a SHA-256-pinned release because Jammy's package is too old.
+- Linux: install matching `harfbuzz-subset` (Alpine), `harfbuzz` (Fedora, includes core/subset),
+  or `libharfbuzz-subset0` (Debian/Ubuntu), verifying the version. Alpine runtime targets require
+  `harfbuzz-subset>=13.0.0`; the Fedora worker installs `harfbuzz` from its signed repositories
+  and checks that its major version is at least 13.
 - macOS: install matching HarfBuzz core/subset libraries and expose their directory to JNA.
   Absolute overrides `pdf.harfbuzz.core.library` and `pdf.harfbuzz.library` are available on all platforms.
 
-The native Docker stage carries HarfBuzz's [Old MIT license](https://github.com/harfbuzz/harfbuzz/blob/14.6.0/COPYING).
+The distribution packages carry HarfBuzz's [Old MIT license](https://github.com/harfbuzz/harfbuzz/blob/14.6.0/COPYING).
 Font installation and licensing remain the responsibility of the system package/font installation.
 Production instancing uses no Python, subprocesses, JDK/Skiko private libraries or font registration.
 
