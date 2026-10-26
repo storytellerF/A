@@ -379,3 +379,76 @@
 - For read-only Detekt, override autoCorrect=false on every analysis task (including typed/source-set tasks), since the root build enables correction by default. Verify repository source hashes are unchanged.
 
 - Keep FunctionSignature.functionBodyExpressionWrapping=multiline while MultilineExpressionWrapping is active, so the two rules agree on multiline function bodies.
+
+- Wasm media experiments must distinguish Host frame dispatch from actual Compose rendering
+  and physical sound/display output. Keep synthetic fixtures and session metrics under build;
+  do not infer a shared Skiko GPU context from snapshot API docs or replace the copy path
+  with a DOM media/canvas overlay. See DEVELOPMENT.md for ownership and verification.
+
+- Track local Wasm npm module implementation files as npm-install task inputs and refresh
+  Yarn's copied file dependencies when those inputs change; package.json alone is insufficient.
+  Verify the installed module and bundled Worker, not just Kotlin compilation.
+
+- If screenshot reference PNGs are Git LFS pointers in an isolated worktree, restore the
+  original LFS objects before validation. Never regenerate golden images to mask missing
+  reference content.
+
+- Match Skiko source/API investigation to the version actually resolved for Wasm (including
+  the imported npm runtime metadata), not an arbitrary version found first in the Gradle cache.
+
+- Wasm texture experiments use the source-built Skiko patch in dev/skikoMediaRuntime;
+  keep its Kotlin API and published native runtime at the same verified upstream version.
+  Never create a second DirectContext over Compose's WebGL context or transfer an adopted
+  texture back to JavaScript ownership. Verify same-canvas uploads, GL state restoration,
+  resize/context loss, and zero live frame/texture resources after disposal.
+
+- dev/skikoMediaRuntime/patches contains the active 0.150.2 source overlays;
+  upstream-patches contains unapplied forward-port candidates. Keep LICENSE/NOTICE
+  and source pins with the local build; removing a single upstream workaround does
+  not authorize dropping the renderer-context/lifecycle integration. See DEVELOPMENT.md.
+
+- Emscripten external-texture registration must update both GL.textures[id] and
+  texture.name; the latter is used by native glGet binding queries. Reset both on
+  unregister and verify positive native handles while the texture is alive.
+
+- When source-built Skiko invalidates several Wasm release links, diagnose compiler
+  heap/GC pressure before treating a long build as a media defect. Bound Gradle workers
+  for validation when concurrent links exhaust the shared Kotlin compiler heap; do not
+  stop shared daemons, skip checks, or infer a speedup from different task workloads.
+
+- Current KGP Wasm development and production graphs share the generated npm `kotlin`
+  directory. Run their distribution tasks in separate Gradle invocations and test the
+  copied immutable distribution, not the mutable package staging directory.
+
+- Diagnose media cadence with source frame IDs and separate decoded/delivered, imported,
+  submitted-draw and observed-canvas counts. A 30fps fixture cannot establish headroom;
+  validate the actual drawing bounds and keep observer readback/CPU overhead explicit.
+- Guarded uploads of fresh textures restore GL state exactly; do not add unconditional
+  flush/full-context reset per frame, or reuse this exception to mutate adopted textures.
+- Cull samples against the media clock before expensive raster conversion/readback and
+  retain the post-transfer lateness check. Close skipped samples; never relax the budget
+  or let repeated processing of expired frames build an unrecoverable live-playback debt.
+
+- Normalize nullish framebuffer arguments in WebGL diagnostics: Emscripten can pass
+  undefined for the default target. Verify tracked targets against actual bindings
+  before attributing media draws to offscreen layers or the final canvas.
+
+- Headed media cadence checks require foreground ownership and calibrated physical video bounds;
+  a large emulated viewport alone does not prove on-screen visibility. Keep desktop-readback
+  and tracing-off controls because observers can perturb captureStream.
+- Correlate source frame IDs with AnimationFrame presentation feedback and desktop observations.
+  Shared presentation timestamps and NO_UPDATE_DESIRED reporters are not independent video
+  presentations or dropped video frames. Preserve 64-bit trace IDs without numeric rounding.
+- Some Chromium builds return an empty Tracing.getCategories list. Select explicit traceConfig
+  categories and validate GPU/compositor events; an empty filter can enable unrelated tracing.
+  Namespace trace artifacts by the output dataset so probe runs cannot overwrite study evidence.
+
+- When frames disappear before texture upload, trace VideoFrame.close call sites with an
+  uploaded-frame WeakSet. Distinguish pending replacement from Host tick closures; do not
+  infer a late-frame drop solely from an outer tick entry in the stack.
+
+- Preserve GPU frame ownership under backpressure: a rejected offer remains Host-owned; only generation cancellation may supersede a pending renderer frame. Keep UI acceptance, canvas capture and desktop observation counters distinct; see DEVELOPMENT.md.
+
+- Distinguish GPU surface canvases from PictureRecorder/RenderNode canvases when evaluating Canvas.recordingContext; direct SkiaLayer success does not establish Compose interop. When inspecting Wasm imports, skip accessor properties: enumerating GOT getters can mark weak imports required and cause diagnostic-only linker failures.
+
+- Use captureStream() without an explicit request-rate timer for canvas frame-ID observation, and record the capture policy. A high timer rate is not a guarantee that every video update is sampled; never compare historical timer-gated datasets as if their observation policy were unchanged.

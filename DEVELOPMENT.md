@@ -1034,3 +1034,381 @@ The current OpenPDF visitor has the following limitations (checked with syntheti
 These are renderer limitations, independent of static/variable font conversion. Inspect the exported
 PDF when preserving rich content matters. Do not treat successful generation as proof of content parity
 with the topic UI, and do not update assertions to accept silently missing content.
+
+## Wasm media composition experiment
+
+The experimental Wasm media path uses the UI-independent `wasm-media-host` npm package
+in `client/composeCore`. Its dedicated Worker owns Mediabunny input, network reads,
+demuxing, decoder iterators and an offscreen canvas. The main-thread Host owns playback
+coordination, immutable snapshots, the Web Audio graph and the media clock. The Compose
+adapter only owns presentation state, Skia bitmaps and adopted texture Images. It creates a deferred Host and
+starts its Worker from DisposableEffect after composition commit. Its top-level
+`@JsModule` factory imports the npm default export; keep that export alongside the
+named JavaScript factory used by verification. Android and desktop actuals are
+unchanged by this experiment.
+
+Mediabunny is pinned to **1.62.1**, MPL-2.0, from its
+[official package](https://github.com/Vanilagy/mediabunny/blob/main/package.json).
+The unmodified package and exact source archive are identified in
+`client/composeCore/wasm-media-host/NOTICE`; preserve upstream notices and source
+availability when distributing bundles. The Wasm Yarn lock records the package integrity.
+Codec availability is checked against each actual input track with `canDecode()`;
+[container support does not guarantee browser codec support](https://mediabunny.dev/guide/supported-formats-and-codecs).
+This implementation requires HTTPS or localhost, a module Worker, WebCodecs for compressed
+tracks, Web Audio for sound, and CORS permission for cross-origin media reads.
+Use finite, seekable media; live streams and browser-native control parity are outside
+this experiment. No hardware-decoder selection is asserted.
+
+### GPU texture path and the local Skiko boundary
+
+The published Skiko 0.150.2 API does not expose the renderer context or texture table.
+Newer [0.156.0 texture registration](https://github.com/JetBrains/skiko/blob/v0.156.0/skiko/src/webMain/kotlin/org/jetbrains/skiko/GLTexture.web.kt)
+and `Canvas.recordingContext` APIs supply part of the boundary. However, the newer
+`RenderNodeContext(Boolean, Boolean)` constructor is incompatible with Compose 1.12.2's
+compiled `RenderNodeContext(Boolean)` call. Upgrading the Kotlin artifact alone also
+leaves Compose's native Wasm runtime at its old version. A successful compilation is
+therefore insufficient upgrade validation.
+
+`dev/skikoMediaRuntime` is a Wasm-only included build substituted for
+`org.jetbrains.skiko:skiko-wasm-js`. It recompiles the exact, SHA256-checked 0.150.2
+source archive and retains the published **0.150.2 native Skia/Emscripten runtime**.
+It does not substitute JVM/Android artifacts or rebuild native Skia. The upstream
+Apache-2.0 license, source provenance and the upstream Kotlin 2.4-compatible
+import-generator (with project headers) are preserved there. Configuration-time IO is avoided; source
+verification and extraction are task inputs/actions. The three files in `patches`
+are source overlays, not replacement classes loaded beside the published library:
+
+- `WebGLMediaInterop.kt` registers the renderer's existing context and exposes a scoped,
+  borrowed context token plus `pushTexture`/`unregisterTexture`. The token makes its
+  own context current and restores the previous one. Registration updates both the
+  Emscripten texture table and the texture object's `name`, so native GL binding
+  queries round-trip the numeric handle; unregister clears both. Never close the borrowed
+  `DirectContext`, create a second one, retain it beyond the callback, or suspend inside it.
+- `CanvasRenderer.kt` registers/disposes that token, stops queued redraws on disposal,
+  releases its surface/context, and resizes while retaining the same context.
+- `SkiaLayer.web.kt` reuses the renderer for the same canvas on resize and disposes it
+  on detach. This keeps an imported image associated with its original renderer.
+
+The included build is the repository-owned temporary integration. Maintain its
+`patches`, import-generator sources, `LICENSE` and `NOTICE` together; a fresh checkout
+builds it through the root Gradle wrapper without a separately published fork. Generated
+source extraction and compiled outputs remain under the ignored build directories.
+The effective texture-name fix is already in `patches/WebGLMediaInterop.kt`.
+
+[`upstream-patches/SKIKO-1208.patch`](dev/skikoMediaRuntime/upstream-patches/SKIKO-1208.patch)
+retains the minimal fix against upstream v0.156.1 for review or forward-porting. Its
+base-file SHA256 and provenance are in `NOTICE`. It is not applied by `prepareSources`:
+the current 0.150.2 runtime uses the active source overlays instead. Check this patch
+against a clean v0.156.1 checkout with `git apply --check` before applying it there.
+
+Remove the temporary included build only after a compatible Compose/Skiko Kotlin and
+native-runtime set has been verified in the actual Compose recording path, the
+texture-name mapping is fixed upstream, and local interop call sites have been
+migrated. Remove the substitution in `settings.gradle.kts` and the included-build
+sources together, then repeat texture ownership, GL state, resize/disposal and release
+browser checks. An upstream fix for SKIKO-1208 alone does not replace the remaining
+renderer-lifetime and context-access integration.
+
+Skiko 0.156.1 exposes `Canvas.recordingContext`, but its availability depends on the
+canvas: a GPU surface canvas has a borrowed context, whereas PictureRecorder and
+RenderNode recording canvases can return null. A synchronous SkiaLayer render callback
+can combine it with the same DOM canvas's existing `getContext("webgl2")`; that does
+not establish that a Compose drawing callback has the same access. Keep direct-layer
+interop validation separate from Compose recording and ABI compatibility.
+
+The 0.156.1 `GLTexture.web.kt` implementation ([SKIKO-1208](https://youtrack.jetbrains.com/issue/SKIKO-1208)) registers external textures in
+`GL.textures` without assigning Emscripten's `texture.name`. Native
+`glGetIntegerv(GL_TEXTURE_BINDING_2D)` can consequently return zero for that bound
+texture even though the JavaScript binding and table entry are correct. The local
+0.150.2 overlay already assigns the name. Preserve both directions of this mapping
+when evaluating an upgrade; successful image rendering alone does not test native
+GL state queries. A registration fix must also review repeated registration and
+unregistration ownership rather than treating a table entry as the complete contract.
+
+The default remains `rgba-copy`. Opt into `gpu-texture` through the experimental
+`mediaPath=gpu-texture` query parameter. The Worker uses `VideoSampleSink`, clones and
+transfers a decoder-backed `VideoFrame`, and closes its sample. The adapter imports
+that frame with `texImage2D(VideoFrame)` into the **current Compose renderer's** WebGL2
+context; `pushTexture` registers its handle and `Image.adoptTextureFrom` transfers
+ownership to Skia. `drawImageRect` records the Image directly in the Compose scene,
+without `Image.toComposeImageBitmap` or a DOM media/canvas overlay. Rotation and flip
+metadata are applied with Skia transforms. The browser may perform conversion or
+copies internally; this path claims removal of explicit RGBA readback and the
+JavaScript-to-Skiko pixel copy, **not** zero-copy decode or guaranteed hardware decoding.
+The experiment targets opaque 8-bit SDR media; alpha-video, HDR and broader color-management parity are not asserted.
+
+The guarded GPU import creates a fresh texture and restores every GL state it
+changes (unpack buffer, texture unit/binding and pixel-store values). Existing Skia
+state caches therefore remain valid. The default `gpuImport=restored` uses the
+already-current renderer token without redundant context activation, per-frame
+flush/submit, or full GL-cache invalidation. `gpuImport=legacy` retains those former
+operations in the same build for ablation. This optimization does not permit external
+writes to an adopted texture or remove synchronization from a reused-resource protocol. Every frame uses a new texture, avoiding overwriting a texture
+still referenced by a recorded picture. Skia owns successful imports; failed imports
+unregister/delete the external texture. Superseded, late, dropped and disposed
+`VideoFrame`s close at their owning boundary. Context loss is a terminal media failure:
+it cancels decoding/audio and closes pending frames rather than silently switching
+rendering paths. Automatic root renderer recovery is outside this experiment.
+
+The implemented path is explicitly 8-bit sRGB `rgba-copy`: decoded samples are drawn into a Worker
+`OffscreenCanvas`; `getImageData` reads RGBA pixels; a transferable buffer reaches the
+adapter; `installPixelsFromArrayBuffer` copies them into Skiko linear memory; an immutable
+bitmap is wrapped without conversion by `asComposeImageBitmap` and drawn by ordinary
+Compose `Image`. Replacement/disposal closes the old bitmap. Avoid
+`Image.toComposeImageBitmap`, which constructs another Bitmap. The short pixel handoff completes without cancellation because
+Skiko allocates before awaiting its runtime Promise; the adapter then checks its owner
+and immediately closes any bitmap produced after cancellation. The offscreen canvas is never inserted into the DOM. Captions,
+clipping, buttons and dialogs belong to the same Compose scene. At 30fps the raw pixel
+payload alone is 110.6 MB/s for 720p and 248.8 MB/s for 1080p, before the Skiko copy and
+GPU upload. These are byte-volume calculations, not measured hardware guarantees.
+
+### Playback ownership
+
+Media timestamps are seconds. Audio samples become scheduled `AudioBufferSourceNode`s
+through one gain node. AudioContext time is the master clock when a sound track exists;
+silent video uses a monotonic performance clock. Creation/resume of AudioContext starts
+inside the user action so autoplay restrictions remain visible. Scheduling starts with
+80ms lead time. The Host limits scheduled sound to roughly 500ms ahead and at most 64
+nodes, and retains one pending video frame plus Mediabunny 1.62.1's four-sample decoder prefetch.
+Below 40ms of remaining sound it suspends the audio clock; it resumes after 300ms has
+been scheduled, the bounded node queue is full, or the audio iterator ends. Late video frames are discarded against this
+clock. Metrics describe Host dispatch timestamps and Worker readback, not speaker/display
+latency or guaranteed hardware acceleration.
+
+Pause and seek stop/disconnect every scheduled audio node and replace the decoder Worker
+at the requested position. Generation checks reject late metadata, sample and resume
+completions. Playback intent survives superseded seeks but is cleared by pause, end,
+error and removal. Replacing the source creates a new Host; removal terminates its Worker,
+clears pending reads/timers and closes AudioContext. Worker termination owns cancellation
+of network reads and native decoder resources; samples copied inside the audio Worker
+are also closed explicitly. The adapter disposes Skia bitmaps on replacement/removal.
+Hiding the page pauses playback; returning to it requires an explicit Play action.
+The existing media-item contract has no loop option; ended playback can be replayed.
+
+### Reproduce the isolated experiment
+
+Use JDK 21, Node 22+ and FFmpeg with VP9, H.264, Opus and AAC support. No server, account,
+VM or deployment is required. From the repository root, build the fixture application:
+
+```bash
+./gradlew :dev:wasmMediaExperiment:wasmJsBrowserDevelopmentExecutableDistribution -Pserver.flavor=dev -Pserver.buildType=dev --console=plain
+```
+
+After changing npm dependencies, regenerate only the Wasm lock with
+`./gradlew kotlinWasmUpgradeYarnLock -Pserver.flavor=dev -Pserver.buildType=dev --console=plain`.
+The normal JS lock is independent. The root Wasm npm-install task tracks the local Host
+source files and supplies Yarn's `--force` when installation is required: Yarn's copied
+`file:` dependencies otherwise retain old implementation files despite a successful
+Kotlin compilation. An unchanged build still reuses that task and the configuration cache.
+
+Install disposable browser-verification tools under the ignored build directory, then
+create synthetic media and run the contract tests:
+
+```bash
+npm install --prefix build/wasm-media-research/browser --no-package-lock --ignore-scripts playwright@1.64.1 esbuild@0.28.2 selenium-webdriver@4.51.0 pngjs@7.0.0
+node client/composeCore/wasm-media-host/generate-fixtures.mjs
+node --test client/composeCore/wasm-media-host/*.test.mjs
+node client/composeCore/wasm-media-host/verify-browser.mjs
+node client/composeCore/wasm-media-host/benchmark-browser.mjs
+node client/composeCore/wasm-media-host/verify-compose.mjs
+node client/composeCore/wasm-media-host/verify-av-sync.mjs
+```
+
+The Chromium checks use the installed Windows Chrome and Edge binaries with isolated
+headless profiles. `MEDIA_CHROME_BINARY` and `MEDIA_EDGE_BINARY` can override their
+installation paths. Firefox uses the installed Firefox and an existing geckodriver;
+set `MEDIA_GECKODRIVER` to its executable and run
+`node client/composeCore/wasm-media-host/verify-firefox.mjs` and
+`node client/composeCore/wasm-media-host/verify-compose-firefox.mjs`. The latter loads
+the same compiled fixture after installing diagnostics on a static same-origin bootstrap.
+It checks changed/paused PNG pixels, native Skia uploads, the audio graph, menus, dialogs,
+source replacement and disposal; it does not substitute a DOM media player.
+No personal profile is reused.
+Do not run independent builds sharing the fixture output while Compose verification is
+running. `node client/composeCore/wasm-media-host/serve.mjs` prints a local fixture URL;
+append `?audio=true` for pure audio or `?media=/fixture-fhd.mp4` for the larger sample.
+
+Host checks cover video changes, the Web Audio signal path, timestamp skew, pause,
+seek/resume, mute, end, error and disposal. Compose verification additionally observes
+actual Skia texture upload dimensions, compares changed/paused scene pixels, exercises
+an overlaid Compose button and Escape-dismissed dialog, checks a clipped corner, replaces
+a playing source, and verifies that removal closes its Worker/audio graph. Its WebGL
+instrumentation observes calls without replacing their results. Screenshots, JSON metrics
+and benchmark results stay under `build/wasm-media-research`; do not track session reports.
+The native `<video>` benchmark is a test-only comparator and is not a production fallback.
+The sync fixture combines one white flash and one audio pulse each second. Its check
+compares captured Compose canvas flash onset with Web Audio analyser pulse onset before
+and after seek, using an 80ms bound. Canvas capture itself adds diagnostic readback cost;
+its observed unique frame rate is distinct from Host dispatch and native video callbacks.
+A nonzero analyser signal proves the graph carries sound, not that a physical speaker was
+heard. Timestamp and headless rendering checks do not establish acoustic/display sync;
+manual listening and physical-output latency measurements remain separate acceptance.
+
+For texture verification, set `MEDIA_RENDER_PATH=gpu-texture` before running
+`verify-compose.mjs`, `verify-compose-firefox.mjs` or `verify-av-sync.mjs`.
+`benchmark-compose.mjs` compares both paths inside the same compiled Compose fixture,
+using three interleaved rounds at 320x180, 1280x720 and 1920x1080 on Chrome and Edge.
+It records real canvas frame hashes, Worker readback/bytes, CPU time spent in texture
+upload calls, CDP main-thread task duration, renderer identity and resource release.
+Upload call time does not measure GPU completion; canvas capture and diagnostics add
+overhead to both paths. The PNG comparison checks the paused frame's color/orientation.
+`verify-gpu-lifecycle.mjs` covers resize, remount, rotated media and context-loss cleanup.
+Results and screenshots stay under `build/wasm-media-research`; do not turn one short
+machine-specific run into a sustained performance or physical latency guarantee.
+
+Source-built Skiko invalidates the Web release links. If concurrent links fill the
+shared Kotlin compiler heap, confirm GC pressure rather than treating the stall as a
+media failure. Run the complete checks sequentially with bounded workers; do not stop
+shared compiler daemons or change test budgets:
+
+```bash
+./gradlew assemble -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
+./gradlew detekt -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
+./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
+```
+
+Set `MEDIA_COMPOSE_BUILD=production` for the final release-path performance comparison;
+this serves the fixture's `productionExecutable` distribution. Leave it unset for fast
+development checks. Record the build type alongside timings, and do not combine samples
+from the two distributions in one comparison. Build the production distribution with
+`:dev:wasmMediaExperiment:wasmJsBrowserDistribution` before choosing it.
+
+Keep Wasm development and production distributions in separate Gradle invocations.
+Kotlin 2.4.21 stages both through the same npm package `kotlin` directory; requesting
+both graphs together can fail Gradle's implicit-dependency validation and makes the
+staging directory unsuitable as an immutable test target. Serve the copied distribution
+under `build/dist/wasmJs`, finish one build before the next, and never benchmark a
+staging directory that another task is rewriting.
+
+### Presentation profiling at an actual 1080p video size
+
+`generate-benchmark-fixtures.mjs` generates 14-second 720p/1080p H.264/AAC inputs at
+30 and 60fps, with an encoded 16-bit frame number and colored calibration edges.
+`benchmark-fullhd.mjs` serves the release fixture with `display=1080p`, asserts DPR 1
+and a 1952x1360 canvas, and checks all four video edges at the actual 1920x1080 bounds.
+It compares RGBA, legacy GPU synchronization and guarded GPU import in interleaved
+rounds. A dedicated Worker decodes IDs from a two-row capture strip, closes every
+capture frame and reports unique media frames, skipped IDs and presentation gaps.
+Canvas capture remains an observer of browser output, not a physical-display probe.
+Use `MEDIA_BENCH_NO_CAPTURE=1` for companion CPU-only samples; the Worker observer is
+not counted by CDP main-thread task duration. Do not interpret that duration as total
+process/decoder CPU. The 30fps input is a ceiling, so use 60fps inputs to test headroom.
+
+`MEDIA_BENCH_PROFILE=1` enables `media.gpu.*` timing entries and `media.rgba.*` handoff
+marks; keep it off for final timing samples. `MEDIA_BENCH_GPU_TRACE=1` additionally
+tracks real GL draws whose active shader samples the video texture. Those are submitted
+draw commands, which must not be equated with observed canvas frame IDs or display output.
+The diagnostic texture tracker follows actual bind calls instead of introducing an
+extra per-upload `getParameter` query. `profile-presentation.mjs` separately measures
+legacy full-area readback observer overhead and GL call counts.
+
+Both decode paths read `VideoSampleSink` samples. Video RPC requests carry a media-clock
+snapshot; samples already more than the existing 50ms lateness budget behind that
+snapshot close before expensive canvas conversion/readback or VideoFrame transfer.
+The Host retains its post-transfer check because the clock can advance while the request
+is in flight. `skippedBeforeConversion` distinguishes early culling from transported
+frames and Host-side late drops. This prevents an overloaded copy path from repeatedly
+spending its frame budget reading pixels that the Host will immediately discard.
+The raster adapter preserves the upstream opaque-canvas/Firefox alpha workaround and
+uses public sample drawing for rotation/flip. No native texture pooling or mutation
+of Skia-owned Images is introduced.
+
+Report both imported frames and observed unique media IDs, with the three-round range.
+The latter can be lower even when every imported texture is sampled by a real GL draw:
+canvas capture/readback is another pipeline and does not prove a physical presentation
+loss. The current draw tracer establishes video-texture sampling, not final screen
+presentation or complete offscreen-layer lineage. A small 30fps observation difference
+cannot establish import saturation. At 60fps, report main-thread time per second and per
+imported frame because paths may process different frame counts. Neither measure includes
+the complete Worker/decoder/GPU cost. Keep the original synchronization strategy available
+for ablation; removing flush/reset is not by itself evidence of a speedup.
+
+The draw tracer normalizes nullish framebuffer arguments: this runtime can map native
+handle zero to an undefined default framebuffer, which WebGL treats as null. With tracing
+enabled, the first six video draws also query the actual draw framebuffer to validate
+the tracker. These diagnostic queries are absent from final timing runs.
+
+### Headed Web presentation diagnosis on Windows
+
+The same release fixture supports `MEDIA_BENCH_HEADED=1` in `benchmark-fullhd.mjs`.
+Use installed Chrome/Edge with isolated profiles, DPR 1 and a normal test window on the
+primary display. The Windows `DesktopFrameProbe.cs` helper calibrates all four video
+edges at physical 1920x1080, verifies the browser process owns the foreground window,
+and reads only the encoded two-row barcode during measurement. It restores its thread
+DPI context and releases all native handles. It does not alter system display settings.
+The desktop observer measures DWM-visible content, not optical panel scanout.
+
+Set `MEDIA_BENCH_CASES=720-30`, `MEDIA_BENCH_CAPTURE=both`,
+`MEDIA_BENCH_GPU_TRACE=1`, `MEDIA_BENCH_OBSERVER_CONTROLS=1`, and
+`MEDIA_BENCH_OUTPUT=headed-study.json` for three interleaved rounds of RGBA, legacy GPU
+and restored-state GPU, with capture enabled/disabled. The first round additionally
+turns desktop sampling and graphics tracing off independently for the GPU path.
+These controls have one sample per condition and are diagnostic, not performance
+confidence estimates. The helper waits for manual activation before measuring and
+rejects foreground loss. Keep the test window foreground until its browser finishes.
+`MEDIA_BENCH_FOREGROUND_GATE=1` additionally pauses at the controller handshake in
+`build/wasm-media-research/headed-window.json`; acknowledge the matching token in
+`headed-foreground.json` only when the user is ready to activate that test window.
+No keyboard/input bypass or personal browser profile is used.
+
+Graphics capture uses an explicit CDP traceConfig, including cc/viz/gpu, benchmark,
+user timing and compositor frame events, with unrelated categories excluded. Category
+discovery can return an empty list; filtering the request through it silently enables
+broad default tracing. Check the saved trace contains the measured start/end markers,
+GPU events and PipelineReporter entries. Trace filenames include the output dataset
+name to keep prototype evidence separate from later studies.
+
+Run `analyze-headed-study.mjs headed-study.json headed-analysis.json` to correlate
+source video IDs with final-canvas draw markers, containing AnimationFrame intervals,
+AnimationFrame::Presentation feedback and desktop barcode observations. Preserve large
+trace identifiers as strings. A shared feedback timestamp can cover multiple updates;
+never count every callback as a separately visible video frame. NO_UPDATE_DESIRED is
+not a drop, and whole-window compositor drops do not establish lost video content.
+Only interior source IDs witnessed on the desktop, with matching non-coalesced
+presentation feedback but absent from capture, count as confirmed capture omissions.
+Unobserved desktop IDs remain uncertain rather than automatically becoming actual drops.
+
+For capture-consumer isolation, set `MEDIA_BENCH_QUEUE_STUDY=1` and select
+`MEDIA_BENCH_VARIANTS=gpu-restored,gpu-restored-buffer8`. This varies only the
+observer's MediaStreamTrackProcessor queue capacity (1/8), records native totalFrames
+and discardedFrames where supported, and times Worker copyTo calls. Do not confuse
+captured frames with unique source-video IDs: a capture stream can repeat some IDs
+and omit others without its consumer queue discarding frames. The supplementary
+headless study is separate from the headed presentation evidence. Production media
+queues and the default RGBA path are not changed by these observer controls.
+
+`MEDIA_BENCH_FRAME_STAGES=1` records call stacks only when a transferred decoder frame
+closes before any texture upload. Historical `GpuBridge.replace/releasePending` stacks
+identify the old pending-slot overwrite. Keep this optional instrumentation off for
+timing claims and separate intentional generation cancellation and clock-late discards
+from pending-frame loss.
+
+The GPU bridge now accepts frames through `offer`: false retains caller ownership,
+true transfers it. A full pending slot rejects another frame from the same playback
+generation. The Host retains that frame and stops requesting another until it is
+accepted or exceeds the existing 50ms lateness budget. Texture consumption schedules
+a producer wakeup after the Compose draw unwinds. Pause, seek and source replacement
+may supersede an older generation; stale consumption callbacks cannot restart it.
+Preview delivery waits cancellably and releases untransferred frames on failure or
+cancellation. The bridge and Host each hold at most one transferred video frame.
+
+Measurement schema 3 names canvas observations `canvasCaptureUniqueFps`,
+`canvasCaptureSkippedIds` and `canvasCaptureGapMsP95/Max`; independent desktop
+observations use `desktopObservedUniqueFps` (null without sampling). Host
+`acceptedFrames` counts ownership transfers to the UI, not screen presentation.
+`backpressureWaits` counts rejected delivery attempts, not lost source frames.
+Consumers of the old `presented`, `presentedFps`, `observedUniqueFps` or generic gap
+fields must use the appropriate explicit counter. The headed analyzer reads historical
+`observedUniqueFps` datasets solely for comparison. None of these changes makes
+captureStream lossless or changes the audio clock or lateness limit.
+
+Schema 3 uses `canvas.captureStream()` without an explicit request rate and labels
+benchmark rows `capturePolicy: "per-paint"` (`"disabled"` when capture is off). Earlier schema-2 full-HD datasets used
+`captureStream(120)`; other canvas observers used a 60fps request timer. An explicit
+rate selects a timer-gated listener rather than capturing every changed paint. Multiple
+canvas paints can occur between video updates, so a request rate above the video's
+frame rate does not establish complete observation of video IDs. Do not pool timing
+samples across these capture policies. Manual `captureStream(0)` plus `requestFrame()`
+after a final video draw is a separate diagnostic and has no completion acknowledgement.
+Per-paint capture still has real-time delivery, queue and GPU readback limits; retain
+independent desktop/presentation evidence instead of claiming lossless recording.

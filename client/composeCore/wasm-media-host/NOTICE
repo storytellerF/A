@@ -1,0 +1,7 @@
+Mediabunny 1.62.1 by Vanilagy
+License: Mozilla Public License 2.0 (MPL-2.0)
+Unmodified upstream source and license: https://github.com/Vanilagy/mediabunny
+Exact package source (including LICENSE): https://registry.npmjs.org/mediabunny/-/mediabunny-1.62.1.tgz
+The Wasm Yarn lock records the package integrity. The application does not modify
+Mediabunny source files. Preserve its license notices and source availability when
+redistributing bundled application artifacts.

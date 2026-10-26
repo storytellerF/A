@@ -1,5 +1,7 @@
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.report.ReportMergeTask
+import org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask
+import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpack
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin
 import org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension
 import org.jetbrains.kotlin.gradle.targets.wasm.yarn.WasmYarnPlugin
@@ -34,6 +36,31 @@ plugins.withType<WasmYarnPlugin> {
     extensions.configure<WasmYarnRootExtension> {
         lockFileDirectory = layout.projectDirectory.dir("kotlin-js-store/wasm").asFile
         lockFileName = "yarn.lock"
+    }
+}
+
+val wasmMediaHostSources = layout.projectDirectory.dir("client/composeCore/wasm-media-host").asFileTree.matching {
+    include("host.mjs", "decode-worker.mjs", "gpu-bridge.mjs", "video-sample.mjs", "package.json", "NOTICE")
+}
+
+// Yarn file dependencies retain stale source copies unless installation is forced.
+tasks.withType<KotlinNpmInstallTask>().matching { it.name == "kotlinWasmNpmInstall" }.configureEach {
+    inputs.files(wasmMediaHostSources).withPropertyName("wasmMediaHostSources")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    args.add("--force")
+}
+
+val wasmMediaHostConsumers = setOf(
+    ":client:composeCore", ":app:composeApp", ":app:webApp", ":panel:composeApp", ":panel:webApp",
+    ":dev:wasmMediaExperiment",
+)
+
+allprojects {
+    tasks.withType<KotlinWebpack>().configureEach {
+        if (project.path in wasmMediaHostConsumers && name.startsWith("wasmJs")) {
+            inputs.files(wasmMediaHostSources).withPropertyName("wasmMediaHostSources")
+                .withPathSensitivity(PathSensitivity.RELATIVE)
+        }
     }
 }
 
