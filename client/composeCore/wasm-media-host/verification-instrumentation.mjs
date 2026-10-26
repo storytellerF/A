@@ -10,6 +10,7 @@ export async function installMediaDiagnostics(
       gains: [],
       connected: new Set(),
       decoded: [],
+      videoSkips: [],
       audio: [],
       uploads: [],
       transferredFrames: new Set(),
@@ -40,6 +41,12 @@ export async function installMediaDiagnostics(
               mediaTest.transferredFrames.size,
             );
           }
+          if (data.result?.skippedBeforeConversion > 0)
+            mediaTest.videoSkips.push({
+              worker: mediaTest.workers.indexOf(this),
+              time: performance.now(),
+              count: data.result.skippedBeforeConversion,
+            });
           if (data.result?.pixels || data.result?.frame)
             mediaTest.decoded.push({
               worker: mediaTest.workers.indexOf(this),

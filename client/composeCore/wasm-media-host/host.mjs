@@ -151,14 +151,19 @@ export class MediaHost {
         }
         this.pending.delete(data.id);
         if (pending.op === "video" && data.result) {
-          this.metrics.decoded++;
           this.metrics.skippedBeforeConversion +=
             data.result.skippedBeforeConversion ?? 0;
-          this.metrics.copiedBytes += data.result.pixels?.byteLength ?? 0;
-          this.metrics.readbackMs += data.result.readbackMs;
+          if (!data.result.ended) {
+            this.metrics.decoded++;
+            this.metrics.copiedBytes += data.result.pixels?.byteLength ?? 0;
+            this.metrics.readbackMs += data.result.readbackMs;
+          }
         }
         if (data.error) pending.reject(new Error(data.error));
-        else pending.resolve(data.result);
+        else
+          pending.resolve(
+            pending.op === "video" && data.result?.ended ? null : data.result,
+          );
       };
       this.worker.onerror = () =>
         this.fail(

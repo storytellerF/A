@@ -39,10 +39,12 @@ export async function startSite() {
   const html = `<!doctype html><button id="play">Play</button><script type="module">
 import { createHost } from '/host.mjs';
 window.states=[]; window.hashes=[];
-window.host=createHost(new URL(location.href).searchParams.get('src')??'/fixture.webm', s=>states.push(s), f=>{
+const parameters=new URL(location.href).searchParams;
+window.host=createHost(parameters.get('src')??'/fixture.webm', s=>states.push(s), f=>{
+ if(f.frame){f.frame.close();return;}
  let hash=0; const bytes=new Uint8Array(f.pixels); for(let i=0;i<bytes.length;i+=97)hash=(hash*31+bytes[i])|0;
  hashes.push(hash);
-});
+}, true, parameters.get('mediaPath')??'rgba-copy');
 document.querySelector('#play').onclick=()=>host.play();
 </script>`;
   const server = createServer(async (req, res) => {

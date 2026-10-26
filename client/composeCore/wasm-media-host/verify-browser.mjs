@@ -93,6 +93,7 @@ try {
         );
         assert.ok(await page.evaluate(() => host.currentTime() < 1));
         const closed = await page.evaluate(async () => {
+          const audio = host.context;
           await host.close();
           const count = states.length;
           await new Promise((r) => setTimeout(r, 150));
@@ -100,13 +101,15 @@ try {
             status: host.status,
             nodes: host.nodes.size,
             worker: host.worker,
-            context: host.context?.state ?? null,
+            context: audio?.state ?? null,
+            activeContext: host.context,
             extraStates: states.length - count,
           };
         });
         assert.equal(closed.status, "closed");
         assert.equal(closed.nodes, 0);
         assert.equal(closed.worker, null);
+        assert.equal(closed.activeContext, null);
         assert.equal(closed.extraStates, 0);
         if (kind !== "silent") assert.equal(closed.context, "closed");
         assert.deepEqual(errors, []);
@@ -129,8 +132,10 @@ try {
         document.body.append(video);
         window.baselineVideo = video;
         window.baselineFrames = 0;
-        const frame = () => {
-          baselineFrames++;
+        window.baselineCallbacks = 0;
+        const frame = (_now, metadata) => {
+          baselineCallbacks++;
+          baselineFrames = metadata.presentedFrames;
           video.requestVideoFrameCallback(frame);
         };
         video.requestVideoFrameCallback(frame);
@@ -141,9 +146,10 @@ try {
       const baseline = await baselinePage.evaluate(() => ({
         time: baselineVideo.currentTime,
         frames: baselineFrames,
+        callbacks: baselineCallbacks,
         dropped: baselineVideo.getVideoPlaybackQuality().droppedVideoFrames,
       }));
-      assert.ok(baseline.frames > 30);
+      assert.ok(baseline.frames > 30, JSON.stringify({ browser: name, ...baseline }));
       results.push({
         browser: name,
         kind: "native-video-baseline",

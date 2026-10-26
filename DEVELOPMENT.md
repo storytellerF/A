@@ -1209,6 +1209,7 @@ npm install --prefix build/wasm-media-research/browser --no-package-lock --ignor
 node client/composeCore/wasm-media-host/generate-fixtures.mjs
 node --test client/composeCore/wasm-media-host/*.test.mjs
 node client/composeCore/wasm-media-host/verify-browser.mjs
+node client/composeCore/wasm-media-host/verify-worker-regressions.mjs
 node client/composeCore/wasm-media-host/benchmark-browser.mjs
 node client/composeCore/wasm-media-host/verify-compose.mjs
 node client/composeCore/wasm-media-host/verify-av-sync.mjs
@@ -1412,3 +1413,17 @@ samples across these capture policies. Manual `captureStream(0)` plus `requestFr
 after a final video draw is a separate diagnostic and has no completion acknowledgement.
 Per-paint capture still has real-time delivery, queue and GPU readback limits; retain
 independent desktop/presentation evidence instead of claiming lossless recording.
+
+The worker regression check runs Chrome and Edge against the bundled decoder. It
+blocks initial and pause-triggered source requests, requires a terminal error with
+no surviving retries, and drains expired samples to EOF in both wire paths.
+Network retry policy uses Mediabunny's pinned `getRetryDelay` option. Video EOF
+responses carry `ended: true` and `skippedBeforeConversion`; Host accounts for the
+skips before returning null to playback. EOF never increments decoded/accepted
+frames, copied bytes or readback time. Diagnostic `videoSkips` records include EOF
+so full-HD benchmark totals do not depend on a later frame being delivered.
+
+The native-video baseline reads `requestVideoFrameCallback` metadata's
+`presentedFrames`, and reports callback notifications separately: a delayed callback
+can cover multiple frames. Lifecycle checks retain the original AudioContext to
+verify its closed state independently of the Host clearing its context reference.

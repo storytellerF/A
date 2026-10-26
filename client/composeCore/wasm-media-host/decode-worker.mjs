@@ -43,7 +43,7 @@ async function execute({ op, url, time, path: requestedPath }) {
     input = new Input({
       source: new UrlSource(url, {
         maxCacheSize: 8 * 1024 * 1024,
-        retryDelay: () => null,
+        getRetryDelay: () => null,
       }),
       formats: ALL_FORMATS,
     });
@@ -69,7 +69,7 @@ async function execute({ op, url, time, path: requestedPath }) {
   }
   if (op === "video") {
     const { sample, skipped } = await readCurrentVideoSample(video, time);
-    if (!sample) return null;
+    if (!sample) return { ended: true, skippedBeforeConversion: skipped };
     try {
       if (path === "gpu-texture") {
         const frame = sample.toVideoFrame();

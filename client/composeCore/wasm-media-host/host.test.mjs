@@ -799,3 +799,46 @@ test("a preview callback failure releases the preview once and becomes visible f
   await host.close();
   assert.equal(produced[0].closes, 1);
 });
+
+test("video EOF preserves trailing skip counts without delivering or counting another frame", async (t) => {
+  let reads = 0;
+  const { host, frames } = fixture({
+    makeFrame: () =>
+      reads++ === 0
+        ? {
+            pixels: new ArrayBuffer(4),
+            width: 1,
+            height: 1,
+            timestamp: 0,
+            duration: 0.03,
+            readbackMs: 1.5,
+          }
+        : { ended: true, skippedBeforeConversion: 3 },
+  });
+  t.after(() => host.close());
+  await host.ready;
+  await host.play();
+  await flush();
+  assert.equal(host.videoEnded, true);
+  assert.equal(host.metrics.skippedBeforeConversion, 3);
+  assert.equal(host.metrics.decoded, 1);
+  assert.equal(host.metrics.acceptedFrames, 1);
+  assert.equal(host.metrics.copiedBytes, 4);
+  assert.equal(host.metrics.readbackMs, 1.5);
+  assert.equal(frames.length, 1);
+});
+
+test("EOF during preview preserves skips without publishing an empty video frame", async (t) => {
+  const { host, frames } = fixture({
+    makeFrame: () => ({ ended: true, skippedBeforeConversion: 2 }),
+  });
+  t.after(() => host.close());
+  await host.ready;
+  assert.equal(host.status, "paused");
+  assert.equal(host.metrics.skippedBeforeConversion, 2);
+  assert.equal(host.metrics.decoded, 0);
+  assert.equal(host.metrics.acceptedFrames, 0);
+  assert.equal(host.metrics.copiedBytes, 0);
+  assert.equal(host.metrics.readbackMs, 0);
+  assert.deepEqual(frames, []);
+});

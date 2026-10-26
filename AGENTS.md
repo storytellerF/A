@@ -452,3 +452,5 @@
 - Distinguish GPU surface canvases from PictureRecorder/RenderNode canvases when evaluating Canvas.recordingContext; direct SkiaLayer success does not establish Compose interop. When inspecting Wasm imports, skip accessor properties: enumerating GOT getters can mark weak imports required and cause diagnostic-only linker failures.
 
 - Use captureStream() without an explicit request-rate timer for canvas frame-ID observation, and record the capture policy. A high timer rate is not a guarantee that every video update is sampled; never compare historical timer-gated datasets as if their observation policy were unchanged.
+
+- Verify media network-failure behavior against the pinned decoder API, not only a mocked Worker. Preserve skipped-sample counters through EOF responses without counting EOF as a frame; exercise both RGBA and GPU wire paths.

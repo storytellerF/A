@@ -396,10 +396,9 @@ try {
                       decoded: decoded.length,
                       uploads: uploads.length,
                       copiedBytes: decoded.reduce((s, f) => s + f.bytes, 0),
-                      skippedBeforeConversion: decoded.reduce(
-                        (s, f) => s + (f.skippedBeforeConversion ?? 0),
-                        0,
-                      ),
+                      skippedBeforeConversion: mediaTest.videoSkips
+                        .filter((s) => s.time >= start && s.time < end)
+                        .reduce((total, s) => total + s.count, 0),
                       readbackMs: decoded.reduce((s, f) => s + f.readbackMs, 0),
                       uploadMs: uploads.map((u) => u.ms),
                       frames: unique,
