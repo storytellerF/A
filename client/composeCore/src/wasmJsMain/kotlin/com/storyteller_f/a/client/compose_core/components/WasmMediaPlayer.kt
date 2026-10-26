@@ -117,7 +117,7 @@ internal fun WasmMediaPlayer(item: RemoteMediaItem, modifier: Modifier, video: B
             }, autoStart = false, path = if (textureRenderer != null) "gpu-texture" else "rgba-copy")
         }
     LaunchedEffect(pixels) {
-        installMediaBitmap(pixels, profiling) { bitmap = it }
+        host.updateBitmapFrame(pixels, profiling) { bitmap = it }
     }
     DisposableEffect(host) {
         textureRenderer?.setFailureHandler { host.failRendering() }
@@ -208,6 +208,21 @@ private fun useGpuTextures(): Boolean =
     js(
     "new URLSearchParams(globalThis.location.search).get('mediaPath') === 'gpu-texture'",
 )
+
+private suspend fun BrowserMediaHost.updateBitmapFrame(
+    frame: PixelFrame?,
+    profiling: Boolean,
+    publish: (Bitmap?) -> Unit,
+) {
+    try {
+        installMediaBitmap(frame, profiling, publish)
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: Throwable) {
+        currentCoroutineContext().ensureActive()
+        failRendering()
+    }
+}
 
 private suspend fun installMediaBitmap(frame: PixelFrame?, profiling: Boolean, publish: (Bitmap?) -> Unit) {
     if (frame == null) {

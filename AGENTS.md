@@ -456,3 +456,5 @@
 - Verify media network-failure behavior against the pinned decoder API, not only a mocked Worker. Preserve skipped-sample counters through EOF responses without counting EOF as a frame; exercise both RGBA and GPU wire paths.
 
 - Keep Web Audio scheduling/starvation on render time and video/progress/end detection on output time. Output timestamp extrapolation must stop at suspended render progress and reset on seek; test reported queue latency without treating analyser onset as speaker output.
+
+- Route Wasm RGBA bitmap-import failures through Host cleanup. Rethrow cancellation and check coroutine activity before reporting errors from a superseded effect; verify preview/playback failures leave Compose responsive and release media resources.

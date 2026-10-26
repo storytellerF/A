@@ -1215,6 +1215,7 @@ node client/composeCore/wasm-media-host/generate-fixtures.mjs
 node --test client/composeCore/wasm-media-host/*.test.mjs
 node client/composeCore/wasm-media-host/verify-browser.mjs
 node client/composeCore/wasm-media-host/verify-worker-regressions.mjs
+node client/composeCore/wasm-media-host/verify-rgba-failure.mjs
 node client/composeCore/wasm-media-host/benchmark-browser.mjs
 node client/composeCore/wasm-media-host/verify-compose.mjs
 node client/composeCore/wasm-media-host/verify-av-sync.mjs
@@ -1437,3 +1438,12 @@ The native-video baseline reads `requestVideoFrameCallback` metadata's
 `presentedFrames`, and reports callback notifications separately: a delayed callback
 can cover multiple frames. Lifecycle checks retain the original AudioContext to
 verify its closed state independently of the Host clearing its context reference.
+
+RGBA bitmap-install errors are reported through the MediaHost rendering-failure action,
+which terminates decoding and audio without cancelling the Compose scene. Cancelled
+imports still propagate cancellation; a superseded effect must not report a stale
+failure. The RGBA failure check makes native bitmap installation return false or throw during
+preview and active playback, observes error state and resource cleanup, then exercises real Compose
+controls to unmount/remount and verifies that fresh playback recovers without an
+uncaught browser exception. Run it against the production fixture with
+`MEDIA_COMPOSE_BUILD=production`.
