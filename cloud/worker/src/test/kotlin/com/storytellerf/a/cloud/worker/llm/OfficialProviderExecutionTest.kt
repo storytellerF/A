@@ -131,7 +131,10 @@ private suspend fun executeChatProvider(provider: LlmProvider, path: String) =
     LlmHttpTestServer(CHAT_RESPONSE).use { server ->
         val config = LlmConfig(provider, apiKey = "test-key", baseUrl = server.baseUrl)
         KoogLlmService.create(config).use { service ->
-            assertEquals("test reply", service.generateResponse("Classify", "System instruction", testResponseSchema()))
+                assertEquals(
+                    "test reply",
+                    service.generateResponse("Classify", "System instruction", testResponseSchema()),
+                )
         }
         val request = server.requests.receive()
         assertEquals("POST", request.method)

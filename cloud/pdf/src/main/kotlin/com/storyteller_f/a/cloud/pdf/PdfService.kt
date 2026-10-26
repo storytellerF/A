@@ -27,6 +27,7 @@ sealed class SnapshotGeneration(open val path: File) {
     class SimpleGeneration(override val path: File) : SnapshotGeneration(path)
 }
 
+/** Both timestamps contain UTC calendar fields, matching shared.utils.now(). */
 data class PdfGenerationSpec(val created: LocalDateTime, val captured: LocalDateTime)
 
 interface PdfService {

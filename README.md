@@ -30,6 +30,20 @@ label; previews stay in memory and are not saved as plaintext.
 After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted
 request still reports failure; failed operations and partial uploads are not replayed automatically.
 
+## PDF snapshots
+
+PDF generation uses fonts installed on the server or desktop system; no PDF font files ship in the application.
+Install Noto Serif SC/CJK SC for Chinese text and a supported monospace family for code. Static Regular/Bold
+faces take priority; a TrueType or CFF2 variable font supplies missing weights. Generated PDFs embed the selected
+fonts, so readers do not need them installed.
+Snapshots use an A4 reading layout with a provenance panel, spaced headings and paragraphs, and numbered
+content pages. Signed snapshots retain their separate signature page. Publication/capture times and
+the signature page publication timestamp explicitly show `UTC+00:00` in a readable date/time format. Export currently accepts plain topics;
+images, inline formulas and HTML are not preserved, while diagram/formula code blocks remain source text.
+Lists, tables and reference links have formatting limitations; see
+[PDF content coverage](DEVELOPMENT.md#pdf-snapshot-layout-and-content-coverage) before relying on a snapshot as a complete archive.
+See [PDF font setup](DEVELOPMENT.md#pdf-font-sources-and-variable-font-instancing) for deployment options.
+
 ## Worker Configuration
 
 Worker task settings are stored per task type. A task without a persisted configuration does not run.

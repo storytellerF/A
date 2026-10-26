@@ -35,7 +35,13 @@ internal class CookieAuthenticationTest {
         val cookies = AcceptAllCookiesStorage()
         cookies.addCookie(
             Url("https://api.example.test/admin"),
-            Cookie("panel_session", "opaque-credential", domain = "api.example.test", path = "/admin", secure = true),
+                Cookie(
+                    "panel_session",
+                    "opaque-credential",
+                    domain = "api.example.test",
+                    path = "/admin",
+                    secure = true,
+                ),
         )
         val engine =
             MockEngine { request ->

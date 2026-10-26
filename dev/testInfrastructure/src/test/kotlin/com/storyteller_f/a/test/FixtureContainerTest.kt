@@ -28,7 +28,10 @@ class FixtureContainerTest {
                 FixtureContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
                     withExposedPorts(6379)
                     waitingFor(
-                        Wait.forLogMessage("never-ready-fixture-marker", 1).withStartupTimeout(Duration.ofSeconds(2)),
+                            Wait.forLogMessage(
+                                "never-ready-fixture-marker",
+                                1,
+                            ).withStartupTimeout(Duration.ofSeconds(2)),
                     )
                 }
             assertFailsWith<ContainerLaunchException> {

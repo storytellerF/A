@@ -913,7 +913,8 @@ ktlint:
     active: true
     autoCorrect: true
     forceMultilineWhenParameterCountGreaterOrEqualThan: 2147483647
-    functionBodyExpressionWrapping: 'default'
+    # Keep multiline bodies consistent with the active MultilineExpressionWrapping rule.
+    functionBodyExpressionWrapping: 'multiline'
     maxLineLength: 120
     indentSize: 4
   FunctionStartOfBodySpacing:

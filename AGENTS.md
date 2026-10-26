@@ -358,4 +358,24 @@
   so typed failures stay intact without passing through endpoint4k's Kotlin Result-based invocation overloads.
 
 - Preserve typed failure categories through `fromError` conversions; do not infer authentication or permission
-  failures solely from the diagnostic exception class. Host PDF tests need JVM-visible Noto Serif and Noto Sans Mono Regular.
+  failures solely from the diagnostic exception class. PDF tests use installed fonts and public HarfBuzz core/subset libraries (8.3.1+, 13.0+ for CFF2); never bundle PDF font binaries or register test fonts.
+
+- PDF font selection prefers static weight faces; pin all remaining VF axes explicitly before OpenPDF embedding. Cache font bytes only and create document-owned OpenPDF objects. Discover installed SFNT/TTC metadata without loading unused font contents; preserve collection face indices. See DEVELOPMENT.md for installation and native-library setup.
+
+- Read backup variable-font data only when a missing static weight needs it; unused fallback IO failures must not block available static faces.
+
+- Keep verification worktrees outside directories named `build`; Detekt excludes source files by absolute `/build/` path.
+
+- Convert pinned CFF2 instances to CFF1 with the public HarfBuzz downgrade flag before OpenPDF embedding; preserve subset flags and reject residual CFF2/variation tables.
+
+- Native cancellation tests must synchronize from inside the real C call, keep callbacks reachable until face destruction, release gates in finally, and join cleanup on a real dispatcher. Distinguish a thrown cancellation from caller Job cancellation of an uninterruptible synchronous conversion.
+
+- Multi-axis font regressions must hold other axes fixed and verify each requested axis through independent observable output; compare real outlines/metrics or reliable weight metadata, not only outputs from the same converter.
+
+- PDF syntax highlights may overlap and leave an unhighlighted suffix; emit each source character once and retain the tail. Check rendered pages as well as extracted text after layout changes.
+
+- Keep snapshot timestamp rendering independent of the host default timezone; PdfGenerationSpec carries UTC calendar values. Label the displayed UTC offset explicitly.
+
+- For read-only Detekt, override autoCorrect=false on every analysis task (including typed/source-set tasks), since the root build enables correction by default. Verify repository source hashes are unchanged.
+
+- Keep FunctionSignature.functionBodyExpressionWrapping=multiline while MultilineExpressionWrapping is active, so the two rules agree on multiline function bodies.

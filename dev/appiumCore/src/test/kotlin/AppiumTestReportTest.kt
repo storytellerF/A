@@ -40,13 +40,17 @@ class AppiumTestReportTest {
                 assertTrue(report.directory.resolve("result.properties").isFile)
                 assertFalse(report.directory.resolve("index.html").exists())
             }
-            assertTrue(
-                generatedRoot(root).resolve("index.html").readText().contains("&lt;test&gt; &amp; &quot;quoted&quot;"),
-            )
-            Regex("""href="([^"]+)"""").findAll(generatedRoot(root).resolve("index.html").readText()).forEach { link ->
-                val relative = URLDecoder.decode(link.groupValues[1], Charsets.UTF_8)
-                assertTrue(generatedRoot(root).resolve(relative).isFile)
-            }
+                assertTrue(
+                    generatedRoot(root).resolve("index.html").readText().contains(
+                        "&lt;test&gt; &amp; &quot;quoted&quot;",
+                    ),
+                )
+                Regex("""href="([^"]+)"""").findAll(
+                    generatedRoot(root).resolve("index.html").readText(),
+                ).forEach { link ->
+                    val relative = URLDecoder.decode(link.groupValues[1], Charsets.UTF_8)
+                    assertTrue(generatedRoot(root).resolve(relative).isFile)
+                }
         }
     }
 

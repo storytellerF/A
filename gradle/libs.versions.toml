@@ -140,6 +140,7 @@ androidx-navigationevent-compose = { module = "androidx.navigationevent:navigati
 nucleus-application = { module = "dev.nucleusframework:nucleus.nucleus-application", version.ref = "nucleus" }
 nucleus-decorated-window-tao = { module = "dev.nucleusframework:nucleus.decorated-window-tao", version.ref = "nucleus" }
 ktor-webrtc = { module = "io.ktor:ktor-client-webrtc", version.ref = "ktor" }
+jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibrariesCore" }

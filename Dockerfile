@@ -34,7 +34,7 @@ FROM ${BUILDER_STAGE} AS builder
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS server
 
-RUN apk add --no-cache libavif-dev font-noto-all
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -49,11 +49,18 @@ WORKDIR /app
 COPY --from=builder --chown=app:app /app/deploy/staged/server/ .
 ENTRYPOINT ["sh", "./bin/server"]
 
-FROM eclipse-temurin:21-jre-jammy@sha256:f04fb34e053148344e83317976114ec3f37e4b830ec8bdab5a2fe3cecd7d010b AS worker
+FROM registry.fedoraproject.org/fedora:44@sha256:3988086adef2975a8a3a6c15634e21625efebc6ac043c83f02f619efff6c5d11 AS worker
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libavif-dev libvulkan1 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+# Temurin comes from Adoptium; native libraries and fonts come from Fedora's signed repositories.
+RUN printf '%s\n' '[Adoptium]' 'name=Adoptium' \
+    'baseurl=https://packages.adoptium.net/artifactory/rpm/fedora/$releasever/$basearch' \
+    'enabled=1' 'gpgcheck=1' \
+    'gpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public' \
+    > /etc/yum.repos.d/adoptium.repo && \
+    dnf install -y --setopt=install_weak_deps=False temurin-21-jre libavif vulkan-loader libstdc++ \
+    google-noto-serif-cjk-fonts google-noto-sans-mono-fonts harfbuzz shadow-utils && \
+    test "$(rpm -q --queryformat '%{VERSION}' harfbuzz | cut -d. -f1)" -ge 13 && \
+    dnf clean all
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -70,7 +77,7 @@ ENTRYPOINT ["sh", "./bin/worker"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS ws
 
-RUN apk add --no-cache libavif-dev font-noto-all
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0'
 
 ARG APP_UID=1000
 ARG APP_GID=1000
@@ -87,7 +94,7 @@ ENTRYPOINT ["sh", "./bin/ws"]
 
 FROM eclipse-temurin:21-alpine@sha256:0bfc69a4758a86710e5c474032d28400a8bd00874766f9e8b1642ac2fd293159 AS cli
 
-RUN apk add --no-cache libavif-dev font-noto-all netcat-openbsd
+RUN apk add --no-cache libavif-dev font-noto-all font-noto-cjk 'harfbuzz-subset>=13.0.0' netcat-openbsd
 
 ARG APP_UID=1000
 ARG APP_GID=1000
