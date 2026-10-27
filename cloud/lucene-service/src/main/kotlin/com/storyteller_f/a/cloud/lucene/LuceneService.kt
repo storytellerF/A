@@ -67,52 +67,52 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
     override suspend fun health() = "ok"
     override suspend fun save(index: String, documents: List<RpcLuceneDocument>) =
         useIndex(index) {
-        IndexWriter(this, IndexWriterConfig(analyzer)).use { it.addDocuments(documents.map(::toDocument)) }
-        Unit
-    }
+            IndexWriter(this, IndexWriterConfig(analyzer)).use { it.addDocuments(documents.map(::toDocument)) }
+            Unit
+        }
     override suspend fun clean(index: String) =
         useIndex(index) {
-        IndexWriter(this, IndexWriterConfig(analyzer)).use { it.deleteDocuments(MatchAllDocsQuery.INSTANCE) }
-        Unit
-    }
+            IndexWriter(this, IndexWriterConfig(analyzer)).use { it.deleteDocuments(MatchAllDocsQuery.INSTANCE) }
+            Unit
+        }
     override suspend fun delete(index: String, query: RpcLuceneQuery) =
         useIndex(index) {
-        IndexWriter(this, IndexWriterConfig(analyzer)).use { it.deleteDocuments(buildQuery(query)) }
-        Unit
-    }
+            IndexWriter(this, IndexWriterConfig(analyzer)).use { it.deleteDocuments(buildQuery(query)) }
+            Unit
+        }
     override suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult =
         useIndex(index) {
-        require(query.offset >= 0 && query.size > 0) { "invalid pagination" }
-        val limit = Math.addExact(query.offset, query.size)
-        try {
-            DirectoryReader.open(this).use { reader ->
-                val searcher = IndexSearcher(reader)
-                val sort = buildSort(query.sort)
-                val hits = searcher.search(buildQuery(query), limit, sort)
-                val documents =
-                    hits.scoreDocs.drop(
-                        query.offset,
-                    ).map { readStoredDocument(searcher.storedFields().document(it.doc)) }
-                RpcLuceneResult(documents, hits.totalHits.value)
+            require(query.offset >= 0 && query.size > 0) { "invalid pagination" }
+            val limit = Math.addExact(query.offset, query.size)
+            try {
+                DirectoryReader.open(this).use { reader ->
+                    val searcher = IndexSearcher(reader)
+                    val sort = buildSort(query.sort)
+                    val hits = searcher.search(buildQuery(query), limit, sort)
+                    val documents =
+                        hits.scoreDocs.drop(
+                            query.offset,
+                        ).map { readStoredDocument(searcher.storedFields().document(it.doc)) }
+                    RpcLuceneResult(documents, hits.totalHits.value)
+                }
+            } catch (_: IndexNotFoundException) {
+                RpcLuceneResult(emptyList(), 0)
             }
-        } catch (_: IndexNotFoundException) {
-            RpcLuceneResult(emptyList(), 0)
         }
-    }
     private suspend fun <T> useIndex(index: String, block: FSDirectory.() -> T): T =
         withContext(Dispatchers.IO) {
-        require(index.matches(Regex("[a-zA-Z0-9_-]+"))) { "invalid index name" }
-        val path = base.resolve(index)
-        require(!Files.isSymbolicLink(path)) { "symbolic index paths are not allowed" }
-        indexes.computeIfAbsent(index) { Mutex() }.withLock {
-            FSDirectory.open(path.createDirectories()).use(block)
+            require(index.matches(Regex("[a-zA-Z0-9_-]+"))) { "invalid index name" }
+            val path = base.resolve(index)
+            require(!Files.isSymbolicLink(path)) { "symbolic index paths are not allowed" }
+            indexes.computeIfAbsent(index) { Mutex() }.withLock {
+                FSDirectory.open(path.createDirectories()).use(block)
+            }
         }
-    }
     private fun toDocument(source: RpcLuceneDocument) =
         Document().apply {
-        require(source.fields.all { it.name.isNotBlank() }) { "field names must not be blank" }
-        source.fields.forEach { addField(it.name, it) }
-    }
+            require(source.fields.all { it.name.isNotBlank() }) { "field names must not be blank" }
+            source.fields.forEach { addField(it.name, it) }
+        }
 
     private fun buildSort(fields: List<RpcLuceneSort>): Sort {
         if (fields.isEmpty()) {
@@ -165,46 +165,48 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
 
     private fun readStoredDocument(document: Document) =
         RpcLuceneStoredDocument(
-        document.fields.groupBy { it.name() }.mapValues { (_, fields) ->
-            fields.map { field ->
-                field.numericValue()?.let { RpcLuceneValue.LongNumber(it.toLong()) }
-                    ?: RpcLuceneValue.Text(field.stringValue())
-            }
-        },
-    )
+            document.fields.groupBy { it.name() }.mapValues { (_, fields) ->
+                fields.map { field ->
+                    field.numericValue()?.let { RpcLuceneValue.LongNumber(it.toLong()) }
+                        ?: RpcLuceneValue.Text(field.stringValue())
+                }
+            },
+        )
     private fun buildQuery(source: RpcLuceneQuery) =
         BooleanQuery.Builder().apply {
-        source.mustLong.forEach { (field, value) ->
-            add(
-                LongPoint.newExactQuery(field, value),
-                BooleanClause.Occur.MUST,
-            )
-        }
-        source.mustNotLong.forEach { (field, value) ->
-            add(
-                LongPoint.newExactQuery(field, value),
-                BooleanClause.Occur.MUST_NOT,
-            )
-        }
-        source.mustLongSet.forEach { (field, values) ->
-            add(
-                LongPoint.newSetQuery(field, values),
-                BooleanClause.Occur.MUST,
-            )
-        }
-        source.mustKeyword.forEach { (field, value) -> add(TermQuery(Term(field, value)), BooleanClause.Occur.MUST) }
-        source.text.forEach { text -> addTextQuery(text) }
-        val filters =
-            listOf(
-                source.mustLong.size,
-                source.mustLongSet.size,
-                source.mustKeyword.size,
-                source.text.size,
-            )
-        if (filters.all { it == 0 }) {
-            add(MatchAllDocsQuery.INSTANCE, BooleanClause.Occur.MUST)
-        }
-    }.build()
+            source.mustLong.forEach { (field, value) ->
+                add(
+                    LongPoint.newExactQuery(field, value),
+                    BooleanClause.Occur.MUST,
+                )
+            }
+            source.mustNotLong.forEach { (field, value) ->
+                add(
+                    LongPoint.newExactQuery(field, value),
+                    BooleanClause.Occur.MUST_NOT,
+                )
+            }
+            source.mustLongSet.forEach { (field, values) ->
+                add(
+                    LongPoint.newSetQuery(field, values),
+                    BooleanClause.Occur.MUST,
+                )
+            }
+            source.mustKeyword.forEach { (field, value) ->
+                add(TermQuery(Term(field, value)), BooleanClause.Occur.MUST)
+            }
+            source.text.forEach { text -> addTextQuery(text) }
+            val filters =
+                listOf(
+                    source.mustLong.size,
+                    source.mustLongSet.size,
+                    source.mustKeyword.size,
+                    source.text.size,
+                )
+            if (filters.all { it == 0 }) {
+                add(MatchAllDocsQuery.INSTANCE, BooleanClause.Occur.MUST)
+            }
+        }.build()
 }
 
 fun main() {

@@ -186,103 +186,103 @@ sealed interface TaskRecordCollection {
 
 fun FileCollection.getName(): String =
     when (this) {
-    FileCollection.Files -> "files"
-    is FileCollection.FileList -> "files_$objectId"
-    is FileCollection.FileSearch -> "files_${objectId}_$word"
-}
+        FileCollection.Files -> "files"
+        is FileCollection.FileList -> "files_$objectId"
+        is FileCollection.FileSearch -> "files_${objectId}_$word"
+    }
 
 fun UserCollection.getName(): String =
     when (this) {
-    is UserCollection.SearchUser -> "users_$word"
-    UserCollection.Users -> "users"
-    is UserCollection.Members -> "members_${objectId}_$word"
-    UserCollection.AllUsers -> "all_users"
-}
+        is UserCollection.SearchUser -> "users_$word"
+        UserCollection.Users -> "users"
+        is UserCollection.Members -> "members_${objectId}_$word"
+        UserCollection.AllUsers -> "all_users"
+    }
 
 fun RoomCollection.getName(): String =
     when (this) {
-    RoomCollection.Rooms -> "rooms"
+        RoomCollection.Rooms -> "rooms"
 
-    is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_${communityId ?: "<none>"}"
+        is RoomCollection.SearchRoom -> "rooms_${word}_${joinStatusSearch}_${communityId ?: "<none>"}"
 
-    is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
+        is RoomCollection.AllRooms -> "all_rooms_$isPrivate"
 
-    // 添加社区房间相关的名称生成
-    is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
+        // 添加社区房间相关的名称生成
+        is RoomCollection.CommunityRooms -> "community_rooms_$communityId"
 
-    is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
-}
+        is RoomCollection.CommunityRoomSearch -> "community_rooms_${communityId}_$word"
+    }
 
 fun ReactionCollection.getName(): String =
     when (this) {
-    ReactionCollection.Reactions -> "reactions"
-    is ReactionCollection.ReactionList -> "reactions_$objectId"
-}
+        ReactionCollection.Reactions -> "reactions"
+        is ReactionCollection.ReactionList -> "reactions_$objectId"
+    }
 
 fun UserReactionRecordCollection.getName(): String =
     when (this) {
-    is UserReactionRecordCollection.UserReactionRecords -> "user_reaction_records_$uid"
-}
+        is UserReactionRecordCollection.UserReactionRecords -> "user_reaction_records_$uid"
+    }
 
 fun TopicCollection.getName(): String =
     when (this) {
-    is TopicCollection.SearchTopic -> "topics_${word}_${parentId ?: "<none>"}"
-    is TopicCollection.ChildTopicList -> "topics_$objectId"
-    TopicCollection.Topics -> "topics"
-    TopicCollection.Recommend -> "topics_recommend"
-    TopicCollection.AllTopics -> "all_topics"
-    is TopicCollection.UserComments -> "user_comments"
-}
+        is TopicCollection.SearchTopic -> "topics_${word}_${parentId ?: "<none>"}"
+        is TopicCollection.ChildTopicList -> "topics_$objectId"
+        TopicCollection.Topics -> "topics"
+        TopicCollection.Recommend -> "topics_recommend"
+        TopicCollection.AllTopics -> "all_topics"
+        is TopicCollection.UserComments -> "user_comments"
+    }
 
 fun CommunityCollection.getName(): String =
     when (this) {
-    CommunityCollection.Communities -> "communities"
+        CommunityCollection.Communities -> "communities"
 
-    is CommunityCollection.SearchCommunity ->
-        "communities_${word}_${target ?: "<none>"}_${joinStatusSearch}_${hasPointer ?: "<none>"}"
+        is CommunityCollection.SearchCommunity ->
+            "communities_${word}_${target ?: "<none>"}_${joinStatusSearch}_${hasPointer ?: "<none>"}"
 
-    CommunityCollection.AllCommunities -> "all_communities"
-}
+        CommunityCollection.AllCommunities -> "all_communities"
+    }
 
 fun TitleCollection.getName(): String =
     when (this) {
-    is TitleCollection.SearchTitle ->
-        "titles_${uid}_${searchType}_${status ?: "<none>"}_${type ?: "<none>"}_${scopeId ?: "<none>"}"
+        is TitleCollection.SearchTitle ->
+            "titles_${uid}_${searchType}_${status ?: "<none>"}_${type ?: "<none>"}_${scopeId ?: "<none>"}"
 
-    TitleCollection.Titles -> "title"
+        TitleCollection.Titles -> "title"
 
-    TitleCollection.AllTitles -> "all_titles"
-}
+        TitleCollection.AllTitles -> "all_titles"
+    }
 
 fun UserLogCollection.getName(): String =
     when (this) {
-    is UserLogCollection.UserLogs -> "user_logs_$uid"
-}
+        is UserLogCollection.UserLogs -> "user_logs_$uid"
+    }
 
 fun UserFavoriteCollection.getName(): String =
     when (this) {
-    is UserFavoriteCollection.UserFavorites -> "user_favorites_$uid"
-}
+        is UserFavoriteCollection.UserFavorites -> "user_favorites_$uid"
+    }
 
 fun UserSubscriptionCollection.getName(): String =
     when (this) {
-    is UserSubscriptionCollection.UserSubscriptions -> "user_subscriptions_$uid"
-}
+        is UserSubscriptionCollection.UserSubscriptions -> "user_subscriptions_$uid"
+    }
 
 fun UploadRecordCollection.getName(): String =
     when (this) {
-    is UploadRecordCollection.UserUploadRecords -> "upload_records_$uid"
-}
+        is UploadRecordCollection.UserUploadRecords -> "upload_records_$uid"
+    }
 
 fun FileRefCollection.getName(): String =
     when (this) {
-    is FileRefCollection.FileRefs -> "file_refs_$fileId"
-}
+        is FileRefCollection.FileRefs -> "file_refs_$fileId"
+    }
 
 fun PanelLogCollection.getName(): String =
     when (this) {
-    is PanelLogCollection.PanelLogs -> "panel_logs_${targetId}_$objectType"
-}
+        is PanelLogCollection.PanelLogs -> "panel_logs_${targetId}_$objectType"
+    }
 
 fun TaskRecordCollection.getName(): String {
     val name =
@@ -340,20 +340,20 @@ sealed interface MemberCollection {
 
 fun MemberCollection.getName(): String =
     when (this) {
-    is MemberCollection.CommunityMembers ->
-        if (word.isNullOrBlank()) {
-            "community_members_$objectId"
-        } else {
-            "community_members_${objectId}_$word"
-        }
+        is MemberCollection.CommunityMembers ->
+            if (word.isNullOrBlank()) {
+                "community_members_$objectId"
+            } else {
+                "community_members_${objectId}_$word"
+            }
 
-    is MemberCollection.RoomMembers ->
-        if (word.isNullOrBlank()) {
-            "room_members_$objectId"
-        } else {
-            "room_members_${objectId}_$word"
-        }
-}
+        is MemberCollection.RoomMembers ->
+            if (word.isNullOrBlank()) {
+                "room_members_$objectId"
+            } else {
+                "room_members_${objectId}_$word"
+            }
+    }
 
 interface MemberInfoStorage : CollectionListStorage<MemberCollection, MemberInfo>
 
@@ -497,17 +497,17 @@ class WrappedPagingSource<K : Any, T : Any, M : Any>(
 
     override suspend fun load(params: LoadParams<K>): LoadResult<K, M> =
         when (val result = rawSource.load(params)) {
-        is LoadResult.Page<K, T> ->
-            LoadResult.Page(
-                process(result.data),
-                result.prevKey,
-                result.nextKey,
-                result.itemsBefore,
-                result.itemsAfter,
-            )
+            is LoadResult.Page<K, T> ->
+                LoadResult.Page(
+                    process(result.data),
+                    result.prevKey,
+                    result.nextKey,
+                    result.itemsBefore,
+                    result.itemsAfter,
+                )
 
-        is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
+            is LoadResult.Error<K, T> -> LoadResult.Error(result.throwable)
 
-        is LoadResult.Invalid<K, T> -> LoadResult.Invalid()
-    }
+            is LoadResult.Invalid<K, T> -> LoadResult.Invalid()
+        }
 }

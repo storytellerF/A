@@ -35,61 +35,61 @@ class DesktopVideoHostTest {
     @Test
     fun `playback callbacks update controls`() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val player = FakePlayer()
-        val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
-        runCurrent()
-        assertEquals("media", player.url)
-        player.playback(DesktopPlayback.MediaReady)
-        runCurrent()
-        assertEquals(4f / 3, assertIs<DesktopVideoState.Ready>(host.state.value).aspectRatio)
-        player.playback(DesktopPlayback.Buffering)
-        runCurrent()
-        assertTrue(assertIs<DesktopVideoState.Ready>(host.state.value).buffering)
-        player.playback(DesktopPlayback.Buffered)
-        runCurrent()
-        assertFalse(assertIs<DesktopVideoState.Ready>(host.state.value).buffering)
-        host.pause()
-        runCurrent()
-        assertFalse(assertIs<DesktopVideoState.Ready>(host.state.value).playing)
-        assertEquals(1, player.pauses)
-        host.play()
-        runCurrent()
-        assertTrue(assertIs<DesktopVideoState.Ready>(host.state.value).playing)
-        assertEquals(1, player.plays)
-        host.close()
-        runCurrent()
-        assertEquals(1, player.closes)
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val player = FakePlayer()
+            val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
+            runCurrent()
+            assertEquals("media", player.url)
+            player.playback(DesktopPlayback.MediaReady)
+            runCurrent()
+            assertEquals(4f / 3, assertIs<DesktopVideoState.Ready>(host.state.value).aspectRatio)
+            player.playback(DesktopPlayback.Buffering)
+            runCurrent()
+            assertTrue(assertIs<DesktopVideoState.Ready>(host.state.value).buffering)
+            player.playback(DesktopPlayback.Buffered)
+            runCurrent()
+            assertFalse(assertIs<DesktopVideoState.Ready>(host.state.value).buffering)
+            host.pause()
+            runCurrent()
+            assertFalse(assertIs<DesktopVideoState.Ready>(host.state.value).playing)
+            assertEquals(1, player.pauses)
+            host.play()
+            runCurrent()
+            assertTrue(assertIs<DesktopVideoState.Ready>(host.state.value).playing)
+            assertEquals(1, player.plays)
+            host.close()
+            runCurrent()
+            assertEquals(1, player.closes)
+        }
 
     @Test
     fun `closing during open releases native player`() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val player = FakePlayer()
-        val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
-        player.duringOpen = { host.close() }
-        runCurrent()
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val player = FakePlayer()
+            val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
+            player.duringOpen = { host.close() }
+            runCurrent()
 
-        assertEquals(1, player.closes)
-        assertIs<DesktopVideoState.Loading>(host.state.value)
-        player.playback(DesktopPlayback.Playing)
-        runCurrent()
-        assertIs<DesktopVideoState.Loading>(host.state.value)
-    }
+            assertEquals(1, player.closes)
+            assertIs<DesktopVideoState.Loading>(host.state.value)
+            player.playback(DesktopPlayback.Playing)
+            runCurrent()
+            assertIs<DesktopVideoState.Loading>(host.state.value)
+        }
 
     @Test
     fun `failed open releases native player`() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val player = FakePlayer().apply { duringOpen = { error("native open failed") } }
-        val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
-        runCurrent()
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val player = FakePlayer().apply { duringOpen = { error("native open failed") } }
+            val host = DesktopVideoHost("media", backgroundScope, dispatcher, dispatcher) { player }
+            runCurrent()
 
-        assertIs<DesktopVideoState.Failed>(host.state.value)
-        assertEquals(1, player.closes)
-        host.close()
-    }
+            assertIs<DesktopVideoState.Failed>(host.state.value)
+            assertEquals(1, player.closes)
+            host.close()
+        }
 
     private class FakePlayer : DesktopVideoPlayer {
         var url = ""

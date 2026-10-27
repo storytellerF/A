@@ -460,3 +460,37 @@
 - Route Wasm RGBA bitmap-import failures through Host cleanup. Rethrow cancellation and check coroutine activity before reporting errors from a superseded effect; verify preview/playback failures leave Compose responsive and release media resources.
 
 - Give published native media bitmaps a stable lifecycle owner; per-value DisposableEffect cleanup misses publications superseded before commit. Retain displayed/pending frames until commit, and verify explicit native cleanup with GC finalizers deferred during remove/source-replacement races.
+
+- Android Kover coverage can use pre-DEX offline instrumentation with the matching offline runtime; do not infer runtime incompatibility from missing Gradle device-test integration. Use D8 compatible with the project Kotlin metadata, export from the app process before force-stop, and report against the matching original class files. Keep minimal probes distinct from full APK/E2E support.
+
+- Measure Kotlin/Wasm coverage in the Wasm module, not only its JavaScript loader. Preserve WasmGC/EH and the browser-supported output features during binary instrumentation; enabling every Binaryen feature can introduce unsupported output encodings. Export counters before navigation/restart/quit, keep source-map/build identity and linked-code denominator explicit, and distinguish fixed-fixture probes from general Kotlin line/branch coverage.
+
+- Offline E2E coverage is opt-in through `-Pe2e.coverage=true`. Finish all selected
+  application/classpath/image preparation before live tests, snapshot before teardown
+  and restart, and preserve collection failures. Keep JVM/Android bytecode variants
+  separate; Wasm reports mapped linked source lines only. Match original bytecode,
+  source fingerprints and browser build identities before merging artifacts.
+- Kover 0.9.11's single-class Features instrumentation wrapper can assert on engine-
+  filtered generated classes; use the official batch instrumentation API rather than
+  swallowing that exception. Wasm rewrites invalidate sourceMappingURL/DWARF offsets;
+  remove those stale custom sections from covered binaries.
+- Keep Windows coverage launchers below cmd.exe's command-length limit using an
+  ordered manifest classpath JAR. Keep native graphics bundles consistent; an
+  unrelated EGL DLL on PATH can crash Tao before a coverage snapshot is possible.
+- Desktop coverage must select the current launch PID after every restart. A driver
+  force-quit can leave its old running marker behind; retain previously exported
+  snapshots without requesting those retired processes again.
+
+- Combined unit/E2E coverage unions repository source paths and executable lines;
+  retain independent platform metrics. Run ordinary Kover tasks before immutable
+  E2E preparation, and reject ambiguous source ownership instead of guessing.
+- Coverage-enabled builds must still refresh ordinary backend test images. Keep
+  latest and e2e-coverage image contexts separate so host tests never consume stale
+  normal images while only instrumented images are rebuilt.
+- Keep original CFF2 test fonts, OFL licenses and pinned checksums under openpdf test
+  resources; generated subsets stay in memory/build outputs. OS-backed session
+  storage tests belong to JVM/device source sets, not a fake Android host keystore.
+
+- Wasm source maps can assign synthetic operators to an empty EOF line. Exclude
+  anchors beyond physical source lines and retain unmapped barriers; never inherit
+  the previous executable line across those ranges.

@@ -98,42 +98,42 @@ class CustomGlobalDialogController<C>(
         block: suspend CustomGlobalDialogController<C>.() -> CustomResult<T, E>,
     ): CustomResult<T, DialogError> =
         mutex.withLock {
-        val dialogState = state.value
-        if (!dialogState.isEmpty()) {
-            CustomResult.Failure(DialogError.Busy())
-        } else {
-            try {
-                state.value = persistentListOf(GlobalDialogState.Loading())
-                val result =
-                    when (val operation = this.block()) {
-                        is CustomResult.Success -> operation.value
+            val dialogState = state.value
+            if (!dialogState.isEmpty()) {
+                CustomResult.Failure(DialogError.Busy())
+            } else {
+                try {
+                    state.value = persistentListOf(GlobalDialogState.Loading())
+                    val result =
+                        when (val operation = this.block()) {
+                            is CustomResult.Success -> operation.value
 
-                        is CustomResult.Failure -> {
-                            val error = DialogError.fromError(operation.error)
-                            state.value = persistentListOf(GlobalDialogState.Error(error.cause))
-                            return@withLock CustomResult.Failure(error)
+                            is CustomResult.Failure -> {
+                                val error = DialogError.fromError(operation.error)
+                                state.value = persistentListOf(GlobalDialogState.Error(error.cause))
+                                return@withLock CustomResult.Failure(error)
+                            }
                         }
+                    if (result is CustomGlobalDialogContent) {
+                        state.value = persistentListOf(GlobalDialogState.Custom(result))
+                    } else {
+                        state.value = persistentListOf()
                     }
-                if (result is CustomGlobalDialogContent) {
-                    state.value = persistentListOf(GlobalDialogState.Custom(result))
-                } else {
+                    CustomResult.success(result)
+                } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                     state.value = persistentListOf()
+                    throw cancellation
+                } catch (e: Exception) {
+                    Napier.e(e) {
+                        "global dialog"
+                    }
+                    state.value = persistentListOf(GlobalDialogState.Error(e))
+                    CustomResult.Failure(DialogError.from(e))
+                } finally {
+                    if (state.value.lastOrNull() is GlobalDialogState.Loading) state.value = persistentListOf()
                 }
-                CustomResult.success(result)
-            } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-                state.value = persistentListOf()
-                throw cancellation
-            } catch (e: Exception) {
-                Napier.e(e) {
-                    "global dialog"
-                }
-                state.value = persistentListOf(GlobalDialogState.Error(e))
-                CustomResult.Failure(DialogError.from(e))
-            } finally {
-                if (state.value.lastOrNull() is GlobalDialogState.Loading) state.value = persistentListOf()
             }
         }
-    }
 
     /** Updates the active loading dialog with progress produced by [block]. */
     fun emitProgress(block: (GlobalDialogState.Loading) -> GlobalDialogState.Loading) {

@@ -101,21 +101,21 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
     @Composable
     override fun transform(link: String): ImageData =
         if (link.startsWith("file:///")) {
-        val model = link.substring(7)
-        val painter = rememberAsyncImagePainter(model = model)
-        ImageData(painter)
-    } else {
-        val info = mediaMap[link]
-        val model = imageRequestInMarkdown(info)
-        val painter = rememberAsyncImagePainter(model = model)
-        ImageData(
-            painter,
-            modifier =
-            Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
-                info?.let { it1 -> onClick(it1) }
-            },
-        )
-    }
+            val model = link.substring(7)
+            val painter = rememberAsyncImagePainter(model = model)
+            ImageData(painter)
+        } else {
+            val info = mediaMap[link]
+            val model = imageRequestInMarkdown(info)
+            val painter = rememberAsyncImagePainter(model = model)
+            ImageData(
+                painter,
+                modifier =
+                Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                    info?.let { it1 -> onClick(it1) }
+                },
+            )
+        }
 }
 
 @Composable

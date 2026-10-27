@@ -92,12 +92,12 @@ class AudioPlayerComponent(url: String) {
 
 private fun createPlayer(url: String): jlp? =
     try {
-    jlp.createInstance(arrayOf("-url", url)).apply {
-        setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory::class.java))
+        jlp.createInstance(arrayOf("-url", url)).apply {
+            setAudioDevice(FactoryRegistry.systemRegistry().createAudioDevice(JavaSoundAudioDeviceFactory::class.java))
+        }
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "AudioView"
+        }
+        null
     }
-} catch (e: Exception) {
-    Napier.e(e) {
-        "AudioView"
-    }
-    null
-}

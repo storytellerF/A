@@ -32,10 +32,10 @@ fun generateMarkdownFromBlocks(blocks: List<ContentBlock>): String {
 
 private fun generateParagraphMarkdown(block: ContentBlock.Paragraph): String =
     if (block.level > 0) {
-    "${"#".repeat(block.level)} ${block.content}"
-} else {
-    block.content
-}
+        "${"#".repeat(block.level)} ${block.content}"
+    } else {
+        block.content
+    }
 
 private fun generateListItemMarkdown(block: ContentBlock.ListItem): String {
     val prefix = if (block.ordered) "1." else "-"
@@ -45,8 +45,8 @@ private fun generateListItemMarkdown(block: ContentBlock.ListItem): String {
 
 private fun generateQuoteMarkdown(block: ContentBlock.Quote): String =
     block.content.lines().joinToString("\n") {
-    "> $it"
-}
+        "> $it"
+    }
 
 private fun generateCodeBlockMarkdown(block: ContentBlock.CodeBlock): String {
     val lang = if (block.language.isNotBlank()) " ${block.language}" else ""
@@ -78,7 +78,7 @@ private fun generateRefBlockMarkdown(block: ContentBlock.RefBlock): String = "``
 
 private fun generateMathBlockMarkdown(block: ContentBlock.MathBlock): String =
     if (block.inline) {
-    "$${block.content}$"
-} else {
-    "```math\n${block.content}\n```"
-}
+        "$${block.content}$"
+    } else {
+        "```math\n${block.content}\n```"
+    }

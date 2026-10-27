@@ -224,18 +224,18 @@ fun checkUserNickname(update: UpdateUserBody): CustomResult<Unit, UserError> =
 
 fun isAllVisibleChar(s: String) =
     !s.codePoints().anyMatch { codePoint ->
-    val type = Character.getType(codePoint).toByte()
-    val isNonSpaceWhitespace =
-        (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code
-    type == Character.FORMAT ||
-        type == Character.NON_SPACING_MARK ||
-        type == Character.COMBINING_SPACING_MARK ||
-        type == Character.ENCLOSING_MARK ||
-        Character.isISOControl(codePoint) ||
-        isNonSpaceWhitespace ||
-        !Character.isDefined(codePoint) ||
-        !Character.isValidCodePoint(codePoint)
-}
+        val type = Character.getType(codePoint).toByte()
+        val isNonSpaceWhitespace =
+            (Character.isWhitespace(codePoint) || Character.isSpaceChar(codePoint)) && codePoint != ' '.code
+        type == Character.FORMAT ||
+            type == Character.NON_SPACING_MARK ||
+            type == Character.COMBINING_SPACING_MARK ||
+            type == Character.ENCLOSING_MARK ||
+            Character.isISOControl(codePoint) ||
+            isNonSpaceWhitespace ||
+            !Character.isDefined(codePoint) ||
+            !Character.isValidCodePoint(codePoint)
+    }
 
 enum class MediaCheckResult {
     EMPTY,
@@ -379,43 +379,43 @@ suspend fun Backend.getUserAlternateUserInfoList(
     fetch: PrimaryKeyFetch,
 ): CustomResult<PaginationResult<ChildAccountInfo>?, UserError> =
     database.user.getRawChildAccountPaginationListByHost(
-    uid,
-    fetch,
-).mapPagingResultNotNull(UserError::fromError) { results ->
-    processRawUserToUserInfo(
-        results.map {
-            it.rawUser
-        },
-    ).map { userList ->
-        val userInfoMap = userList.associateBy { it.id }
-        val unreadRoomMap = database.container.getUsersHasUnreadRoomMap(userInfoMap.keys.toList()).getOrThrow()
-        results.mapNotNull {
-            userInfoMap[it.rawUser.user.id]?.let { userInfo ->
-                ChildAccountInfo(
-                    hostId = it.childAccount.hostId,
-                    encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
-                    encryptedAesKey = it.childAccount.encryptedAesKey,
-                    userInfo = userInfo,
-                    algoType = it.rawUser.user.algoType,
-                    encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey,
-                    hasUnreadRoomMessage = unreadRoomMap[userInfo.id] == true,
-                )
+        uid,
+        fetch,
+    ).mapPagingResultNotNull(UserError::fromError) { results ->
+        processRawUserToUserInfo(
+            results.map {
+                it.rawUser
+            },
+        ).map { userList ->
+            val userInfoMap = userList.associateBy { it.id }
+            val unreadRoomMap = database.container.getUsersHasUnreadRoomMap(userInfoMap.keys.toList()).getOrThrow()
+            results.mapNotNull {
+                userInfoMap[it.rawUser.user.id]?.let { userInfo ->
+                    ChildAccountInfo(
+                        hostId = it.childAccount.hostId,
+                        encryptedPrivateKey = it.childAccount.encryptedPrivateKey,
+                        encryptedAesKey = it.childAccount.encryptedAesKey,
+                        userInfo = userInfo,
+                        algoType = it.rawUser.user.algoType,
+                        encryptedEncryptionPrivateKey = it.childAccount.encryptedEncryptionPrivateKey,
+                        hasUnreadRoomMessage = unreadRoomMap[userInfo.id] == true,
+                    )
+                }
             }
         }
-    }
-}.mapError(UserError::fromError)
+    }.mapError(UserError::fromError)
 
 suspend fun Backend.isKeyVerified(
     roomId: PrimaryKey,
     encryptedAes: Map<PrimaryKey, String>,
 ): CustomResult<Boolean, UserError> =
     database.container.getJoinedUserList(
-    roomId,
-).map { value ->
-    value.map {
-        it.uid
-    }.toSet().minus(encryptedAes.keys).isEmpty()
-}.mapError(UserError::fromError)
+        roomId,
+    ).map { value ->
+        value.map {
+            it.uid
+        }.toSet().minus(encryptedAes.keys).isEmpty()
+    }.mapError(UserError::fromError)
 
 /**
  * 搜索 room/community 的成员列表.
@@ -503,22 +503,22 @@ suspend fun Backend.getUserInfo(fetch: ObjectFetch, uid: PrimaryKey? = null) =
 
 suspend fun Backend.processRawUserToUserInfo(rawResults: List<RawUser>) =
     database.file.getFileRecordByIds(
-    rawResults.mapNotNull {
-        it.user.icon
-    },
-).andThen(UserError::fromError) { medias ->
-    processFileRecordToFileInfo(medias).map { list ->
-        val mediaInfoMap = list.associateBy { it.id }
-        rawResults.map { rawUser ->
-            rawUser.toUserInfo(avatar = rawUser.user.icon?.let { mediaInfoMap[it] })
+        rawResults.mapNotNull {
+            it.user.icon
+        },
+    ).andThen(UserError::fromError) { medias ->
+        processFileRecordToFileInfo(medias).map { list ->
+            val mediaInfoMap = list.associateBy { it.id }
+            rawResults.map { rawUser ->
+                rawUser.toUserInfo(avatar = rawUser.user.icon?.let { mediaInfoMap[it] })
+            }
         }
     }
-}
 
 suspend fun Backend.getUserOverview(uid: PrimaryKey) =
     database.getUserOverview(uid).andThen(UserError::fromError) {
-    processRawUserOverviewToUserOverview(it)
-}
+        processRawUserOverviewToUserOverview(it)
+    }
 
 suspend fun Backend.processRawUserOverviewToUserOverview(raw: RawUserOverview): CustomResult<UserOverview, UserError> =
     processRawUserToUserInfo(

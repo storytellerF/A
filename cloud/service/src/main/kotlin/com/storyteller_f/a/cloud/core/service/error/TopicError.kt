@@ -31,13 +31,13 @@ sealed interface TopicError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): TopicError =
             when (error) {
-            is TopicError -> error
-            is ConstraintFailure -> Conflict(error.cause)
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is TopicError -> error
+                is ConstraintFailure -> Conflict(error.cause)
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): TopicError {
             if (cause is CancellationException) throw cause

@@ -121,34 +121,34 @@ private suspend fun Backend.processTitleList(
 
 private fun getUidList(list: List<RawTitle>): List<PrimaryKey> =
     list.flatMap {
-    val title = it.title
-    val listOf = listOf(title.receiver, title.creator)
-    if (title.scopeType == ObjectType.USER) {
-        listOf + title.scopeId
-    } else {
-        listOf
-    }
-}.distinct()
+        val title = it.title
+        val listOf = listOf(title.receiver, title.creator)
+        if (title.scopeType == ObjectType.USER) {
+            listOf + title.scopeId
+        } else {
+            listOf
+        }
+    }.distinct()
 
 private fun getCommunityIdList(list: List<RawTitle>): List<Long> =
     list.mapNotNull {
-    val title = it.title
-    if (title.scopeType == ObjectType.COMMUNITY) {
-        title.scopeId
-    } else {
-        null
-    }
-}.distinct()
+        val title = it.title
+        if (title.scopeType == ObjectType.COMMUNITY) {
+            title.scopeId
+        } else {
+            null
+        }
+    }.distinct()
 
 private fun getRoomIdList(list: List<RawTitle>): List<Long> =
     list.mapNotNull {
-    val title = it.title
-    if (title.scopeType == ObjectType.ROOM) {
-        title.scopeId
-    } else {
-        null
-    }
-}.distinct()
+        val title = it.title
+        if (title.scopeType == ObjectType.ROOM) {
+            title.scopeId
+        } else {
+            null
+        }
+    }.distinct()
 
 private suspend fun Backend.getRelatedObject(
     uidList: List<PrimaryKey>,

@@ -73,35 +73,35 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
         notificationContext: BubbleNotificationContext,
     ): NotificationCompat.Builder =
         with(notificationContext) {
-        val bubbleIntent =
-            PendingIntent.getActivity(
-                context,
-                1,
-                Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id),
-                flagUpdateCurrent(true),
-            )
-        val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
-        val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
-        NotificationCompat.Builder(context, channel)
-            .setSmallIcon(R.drawable.ic_notify)
-            .setBubbleMetadata(bubbleData.build())
-            .setLocusId(LocusIdCompat(shortcutId))
-            .setShortcutId(shortcutId)
-            .addPerson(person)
-            .setStyle(style)
-            .setContentIntent(
+            val bubbleIntent =
                 PendingIntent.getActivity(
                     context,
-                    3,
-                    Intent(context, MainActivity::class.java)
-                        .setAction(Intent.ACTION_VIEW)
-                        .setData(getDeepLink("/room/${room.id}").toUri()),
+                    1,
+                    Intent(context, BubbleActivity::class.java).putExtra("roomId", room.id),
                     flagUpdateCurrent(true),
-                ),
-            )
-            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
-            .setContentTitle(room.name)
-    }
+                )
+            val bubbleData = NotificationCompat.BubbleMetadata.Builder(bubbleIntent, bitmap).setDesiredHeight(600)
+            val style = NotificationCompat.MessagingStyle(user).setGroupConversation(false)
+            NotificationCompat.Builder(context, channel)
+                .setSmallIcon(R.drawable.ic_notify)
+                .setBubbleMetadata(bubbleData.build())
+                .setLocusId(LocusIdCompat(shortcutId))
+                .setShortcutId(shortcutId)
+                .addPerson(person)
+                .setStyle(style)
+                .setContentIntent(
+                    PendingIntent.getActivity(
+                        context,
+                        3,
+                        Intent(context, MainActivity::class.java)
+                            .setAction(Intent.ACTION_VIEW)
+                            .setData(getDeepLink("/room/${room.id}").toUri()),
+                        flagUpdateCurrent(true),
+                    ),
+                )
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setContentTitle(room.name)
+        }
 
     private data class BubbleNotificationContext(
         val context: Application,
@@ -141,8 +141,8 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
 
     private suspend fun getIconBitmapFromName(context: Application, name: String): Bitmap? =
         svgStringToBitmap(
-        context,
-        """<svg xmlns="http://www.w3.org/2000/svg"
+            context,
+            """<svg xmlns="http://www.w3.org/2000/svg"
      width="40" height="30" viewBox="0 0 400 300"
      preserveAspectRatio="xMidYMid meet" role="img" aria-label="Centered star">
   <rect x="0" y="0" width="400" height="300" fill="#BCECE7" stroke="#cccccc"/>
@@ -156,7 +156,7 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
   </text>
 </svg>
 """,
-    )
+        )
 
     private suspend fun svgStringToBitmap(context: Application, svgString: String): Bitmap? {
         val file = File(context.cacheDir, "temp.svg")
@@ -167,12 +167,12 @@ object AndroidAppPlatformImpl : AppPlatformImpl {
 
     private fun flagUpdateCurrent(mutable: Boolean): Int =
         if (mutable) {
-        if (Build.VERSION.SDK_INT >= 31) {
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            if (Build.VERSION.SDK_INT >= 31) {
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
+            } else {
+                PendingIntent.FLAG_UPDATE_CURRENT
+            }
         } else {
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         }
-    } else {
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    }
 }

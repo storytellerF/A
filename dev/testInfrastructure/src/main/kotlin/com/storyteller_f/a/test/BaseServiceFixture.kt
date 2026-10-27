@@ -75,13 +75,15 @@ internal suspend fun startBaseServices(resources: FixtureResources): BaseService
 
 private fun createPostgres(network: Network): PostgreSQLContainer<*> =
     FixturePostgres().apply {
-    withNetwork(network)
-    withNetworkAliases("test-postgresql")
-    withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
-}
+        withNetwork(network)
+        withNetworkAliases("test-postgresql")
+        withTmpFs(mapOf("/var/lib/postgresql/data" to "rw"))
+    }
 
 private fun createFilesystem(network: Network): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-filesystem:latest")).apply {
+    FixtureContainer(
+        DockerImageName.parse("a-filesystem:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}"),
+    ).apply {
         withNetwork(network)
         withNetworkAliases("test-filesystem")
         withEnv("FILESYSTEM_PUBLIC_URL", "http://test-filesystem:$FILESYSTEM_HTTP_PORT")
@@ -91,7 +93,7 @@ private fun createFilesystem(network: Network): GenericContainer<*> =
     }
 
 private fun createLucene(network: Network): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-lucene:latest")).apply {
+    FixtureContainer(DockerImageName.parse("a-lucene:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}")).apply {
         withNetwork(network)
         withNetworkAliases("test-lucene")
         withTmpFs(mapOf("/data" to "rw,uid=1000,gid=1000"))

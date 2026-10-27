@@ -180,9 +180,9 @@ internal class LiteRtLlmClientTest {
 
     private fun buildPrompt() =
         prompt(existing = emptyPrompt()) {
-        system("Classify content")
-        user("ordinary topic")
-    }
+            system("Classify content")
+            user("ordinary topic")
+        }
 
     private fun withTemporaryDirectory(block: (Path) -> Unit) {
         val temporaryDirectory = createTempDirectory(prefix = "litert-cache-test-")

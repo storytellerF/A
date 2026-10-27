@@ -22,9 +22,9 @@ object UserFavorites : BaseTable() {
 
 fun UserFavorite.Companion.wrapRow(resultRow: ResultRow): UserFavorite =
     UserFavorite(
-    resultRow[UserFavorites.id],
-    resultRow[UserFavorites.uid],
-    resultRow[UserFavorites.objectId],
-    resultRow[UserFavorites.objectType],
-    resultRow[UserFavorites.createdTime],
-)
+        resultRow[UserFavorites.id],
+        resultRow[UserFavorites.uid],
+        resultRow[UserFavorites.objectId],
+        resultRow[UserFavorites.objectType],
+        resultRow[UserFavorites.createdTime],
+    )

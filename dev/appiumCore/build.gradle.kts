@@ -30,3 +30,14 @@ dependencies {
     implementation(libs.selenium.edge.driver)
     implementation(libs.selenium.firefox.driver)
 }
+
+val testWasmCoverageRuntime =
+    tasks.register<Exec>("testWasmCoverageRuntime") {
+    group = "verification"
+    description = "Verify browser coverage snapshot acknowledgement and unload ownership."
+    inputs.file("src/main/resources/wasm-coverage.js")
+    inputs.dir("src/test/js")
+    commandLine("node", "--test", "src/test/js/wasm-coverage.test.cjs")
+}
+
+tasks.test { dependsOn(testWasmCoverageRuntime) }

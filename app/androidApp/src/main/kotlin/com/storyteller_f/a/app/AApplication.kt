@@ -41,26 +41,26 @@ class AApplication : Application() {
 
 private fun buildMediaPlayer(): MediaPlayerService =
     object : MediaPlayerService() {
-    override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
-        val context = mainActivityRef?.get() ?: return
-        context.startActivity(
-            Intent(context, MediaPlayerActivity::class.java).apply {
+        override fun fullscreen(remoteMediaItem: RemoteMediaItem) {
+            val context = mainActivityRef?.get() ?: return
+            context.startActivity(
+                Intent(context, MediaPlayerActivity::class.java).apply {
 //                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 //                addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                putExtra("json", commonJson.encodeToString<RemoteMediaItem>(remoteMediaItem))
-            },
-        )
-    }
+                    putExtra("json", commonJson.encodeToString<RemoteMediaItem>(remoteMediaItem))
+                },
+            )
+        }
 
-    override suspend fun start(
-        remoteMediaItem: RemoteMediaItem,
-        localMediaPlaySession: LocalMediaPlaySession,
-        playList: List<ConstPlayItem>,
-    ) {
-        val instance = uiViewModel.instance.value
-        instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
-    }
+        override suspend fun start(
+            remoteMediaItem: RemoteMediaItem,
+            localMediaPlaySession: LocalMediaPlaySession,
+            playList: List<ConstPlayItem>,
+        ) {
+            val instance = uiViewModel.instance.value
+            instance.controller.startPlayMedia(remoteMediaItem, localMediaPlaySession, this, playList)
+        }
 
-    override val enablePip: Boolean
-        get() = true
-}
+        override val enablePip: Boolean
+            get() = true
+    }

@@ -29,24 +29,24 @@ class Cff2FontTest {
     @Test
     fun `discovery selects installed CFF2 OTF sources`() =
         withDirectory { directory ->
-        directory.resolve("source.otf").writeBytes(fontBytes("cff2-variable.otf"))
-        val family = InstalledPdfFonts.select("serif", InstalledPdfFonts.scan(listOf(directory)))
-        val result = family.getInstance(FontInstanceRepository(), 700).getOrThrow()
-        assertTrue(SfntFont(result.copyBytes(), 0).hasTable("CFF "))
-    }
+            directory.resolve("source.otf").writeBytes(fontBytes("cff2-variable.otf"))
+            val family = InstalledPdfFonts.select("serif", InstalledPdfFonts.scan(listOf(directory)))
+            val result = family.getInstance(FontInstanceRepository(), 700).getOrThrow()
+            assertTrue(SfntFont(result.copyBytes(), 0).hasTable("CFF "))
+        }
 
     @Test
     fun `OTF fallback is read only for missing weight`() =
         withDirectory { directory ->
-        val regular = fontBytes("serif-regular.ttf")
-        directory.resolve("serif-regular.ttf").writeBytes(regular)
-        val family = PdfFontFamily.load("serif", directory)
-        directory.resolve("serif-variable.otf").writeBytes(fontBytes("cff2-variable.otf"))
-        val repository = FontInstanceRepository()
-        assertContentEquals(regular, family.getInstance(repository, 400).getOrThrow().copyBytes())
-        val result = family.getInstance(repository, 700).getOrThrow()
-        assertTrue(SfntFont(result.copyBytes(), 0).hasTable("CFF "))
-    }
+            val regular = fontBytes("serif-regular.ttf")
+            directory.resolve("serif-regular.ttf").writeBytes(regular)
+            val family = PdfFontFamily.load("serif", directory)
+            directory.resolve("serif-variable.otf").writeBytes(fontBytes("cff2-variable.otf"))
+            val repository = FontInstanceRepository()
+            assertContentEquals(regular, family.getInstance(repository, 400).getOrThrow().copyBytes())
+            val result = family.getInstance(repository, 700).getOrThrow()
+            assertTrue(SfntFont(result.copyBytes(), 0).hasTable("CFF "))
+        }
 
     private fun withDirectory(block: (File) -> Unit) {
         val root = Files.createDirectories(Path.of("build/tmp/cff2-discovery")).toRealPath()

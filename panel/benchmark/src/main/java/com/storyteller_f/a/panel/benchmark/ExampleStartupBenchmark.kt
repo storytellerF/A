@@ -32,12 +32,12 @@ class ExampleStartupBenchmark {
     @Test
     fun startup() =
         benchmarkRule.measureRepeated(
-        packageName = "com.storyteller_f.a.panel",
-        metrics = listOf(StartupTimingMetric()),
-        iterations = 5,
-        startupMode = StartupMode.COLD,
-    ) {
-        pressHome()
-        startActivityAndWait()
-    }
+            packageName = "com.storyteller_f.a.panel",
+            metrics = listOf(StartupTimingMetric()),
+            iterations = 5,
+            startupMode = StartupMode.COLD,
+        ) {
+            pressHome()
+            startActivityAndWait()
+        }
 }

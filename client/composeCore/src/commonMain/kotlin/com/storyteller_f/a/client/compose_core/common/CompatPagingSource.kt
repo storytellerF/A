@@ -31,27 +31,27 @@ class CompatPagingSource<OK : Any, TK : Any, T : Any>(
 
     override fun getRefreshKey(state: PagingState<TK, T>): TK? =
         rawSource.getRefreshKey(
-        PagingState(
-            state.pages.map { page ->
-                LoadResult.Page(
-                    page.data,
-                    page.prevKey?.let(converter::to),
-                    page.nextKey?.let(converter::to),
-                    page.itemsBefore,
-                    page.itemsAfter,
-                )
-            },
-            state.anchorPosition,
-            state.config,
-            if (state.config.enablePlaceholders) {
-                (state.pages.firstOrNull()?.itemsBefore ?: 0).coerceAtLeast(
-                    0,
-                )
-            } else {
-                0
-            },
-        ),
-    )?.let(converter::from)
+            PagingState(
+                state.pages.map { page ->
+                    LoadResult.Page(
+                        page.data,
+                        page.prevKey?.let(converter::to),
+                        page.nextKey?.let(converter::to),
+                        page.itemsBefore,
+                        page.itemsAfter,
+                    )
+                },
+                state.anchorPosition,
+                state.config,
+                if (state.config.enablePlaceholders) {
+                    (state.pages.firstOrNull()?.itemsBefore ?: 0).coerceAtLeast(
+                        0,
+                    )
+                } else {
+                    0
+                },
+            ),
+        )?.let(converter::from)
 
     override suspend fun load(params: LoadParams<TK>): LoadResult<TK, T> {
         val loadResult =

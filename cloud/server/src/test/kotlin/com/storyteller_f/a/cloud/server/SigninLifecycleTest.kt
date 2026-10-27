@@ -19,26 +19,26 @@ internal class SigninLifecycleTest {
     @Test
     fun revocationClosesExistingWsAndRejectsHttp() =
         test {
-        attachSession { account ->
-            assertEquals(account.uid, restoreSession().getOrThrow().id)
-            val socket =
-                withTimeout(10_000) {
-                    webSocketClient.connectionHandler.data.filterNotNull().first()
-                }
-            signOutAll().getOrThrow()
-            val reason = withTimeout(10_000) { socket.closeReason.await() }
-            assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, reason?.code)
-            assertTrue(restoreSession().isFailure)
+            attachSession { account ->
+                assertEquals(account.uid, restoreSession().getOrThrow().id)
+                val socket =
+                    withTimeout(10_000) {
+                        webSocketClient.connectionHandler.data.filterNotNull().first()
+                    }
+                signOutAll().getOrThrow()
+                val reason = withTimeout(10_000) { socket.closeReason.await() }
+                assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, reason?.code)
+                assertTrue(restoreSession().isFailure)
+            }
         }
-    }
 
     @Test
     fun panelSessionRestoresAndRevokes() =
         test {
-        attachPanelSession { account ->
-            assertEquals(account.uid, restoreSession().getOrThrow().id)
-            signOutAll().getOrThrow()
-            assertTrue(restoreSession().isFailure)
+            attachPanelSession { account ->
+                assertEquals(account.uid, restoreSession().getOrThrow().id)
+                signOutAll().getOrThrow()
+                assertTrue(restoreSession().isFailure)
+            }
         }
-    }
 }

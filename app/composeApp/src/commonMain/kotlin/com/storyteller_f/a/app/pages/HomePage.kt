@@ -138,25 +138,25 @@ internal const val HOME_START_DESTINATION_ROOMS = "/rooms"
 
 internal fun homeRouteFromPreference(value: String?): HomeRoute =
     when (value) {
-    HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
-    HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
-    else -> HomeRoute.World
-}
+        HOME_START_DESTINATION_COMMUNITIES -> HomeRoute.Communities
+        HOME_START_DESTINATION_ROOMS -> HomeRoute.Rooms
+        else -> HomeRoute.World
+    }
 
 internal fun homePageFromPreference(value: String?): Int =
     when (value) {
-    HOME_START_DESTINATION_COMMUNITIES -> 1
-    HOME_START_DESTINATION_ROOMS -> 2
-    else -> 0
-}
+        HOME_START_DESTINATION_COMMUNITIES -> 1
+        HOME_START_DESTINATION_ROOMS -> 2
+        else -> 0
+    }
 
 @Composable
 internal fun homeStartDestinationLabel(value: String?): String =
     when (value) {
-    HOME_START_DESTINATION_COMMUNITIES -> stringResource(Res.string.home_start_destination_communities)
-    HOME_START_DESTINATION_ROOMS -> stringResource(Res.string.home_start_destination_rooms)
-    else -> stringResource(Res.string.home_start_destination_world)
-}
+        HOME_START_DESTINATION_COMMUNITIES -> stringResource(Res.string.home_start_destination_communities)
+        HOME_START_DESTINATION_ROOMS -> stringResource(Res.string.home_start_destination_rooms)
+        else -> stringResource(Res.string.home_start_destination_world)
+    }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

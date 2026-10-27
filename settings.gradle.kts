@@ -47,6 +47,7 @@ include(":app:desktopApp")
 
 include(":dev:wasmMediaExperiment")
 include(":dev:testInfrastructure")
+include(":dev:e2eCoverageRuntime")
 include(":dev:e2eCore")
 
 include(":dev:appiumCore")

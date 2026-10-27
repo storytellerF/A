@@ -10,6 +10,9 @@ plugins {
     // this is necessary to avoid the plugins to be loaded multiple times
     // in each subproject's classloader
     alias(libs.plugins.androidApplication) apply false
+    id("e2e-jvm-coverage") apply false
+    id("e2e-android-coverage") apply false
+    id("e2e-wasm-coverage") apply false
     alias(libs.plugins.androidLibrary) apply false
     alias(libs.plugins.jetbrainsCompose) apply false
     alias(libs.plugins.compose.compiler) apply false
@@ -144,6 +147,14 @@ subprojects {
     }
 }
 val koverIncludedProjects = listOf(
+    ":result",
+    ":cloud:runtime",
+    ":cloud:ws-api",
+    ":cloud:ws",
+    ":cloud:filesystem-service",
+    ":cloud:lucene-service",
+    ":services:filesystem-protocol",
+    ":services:lucene-protocol",
     ":shared",
     ":app:composeApp",
     ":app:cliApp",
@@ -199,6 +210,40 @@ subprojects {
     }
 }
 
+val e2eCoverageEnabled = providers.gradleProperty("e2e.coverage").map(String::toBooleanStrict).orElse(false)
+val e2eJvmTargets = setOf(
+    ":app:desktopApp", ":panel:desktopApp", ":app:cliApp", ":panel:cliApp",
+    ":cloud:server", ":cloud:worker", ":cloud:cli", ":cloud:ws",
+    ":cloud:filesystem-service", ":cloud:lucene-service",
+)
+if (e2eCoverageEnabled.get()) {
+    subprojects {
+        if (path in e2eJvmTargets) {
+            plugins.withId("java") { apply(plugin = "e2e-jvm-coverage") }
+        }
+        if (path in setOf(":app:androidApp", ":panel:androidApp")) {
+            plugins.withId("com.android.application") { apply(plugin = "e2e-android-coverage") }
+        }
+        if (path in setOf(":app:wasmAppium", ":panel:wasmAppium")) {
+            plugins.withId("java") { apply(plugin = "e2e-wasm-coverage") }
+        }
+        tasks.withType<Test>().matching { it.name in setOf("appiumTest", "e2eTest") }.configureEach {
+            systemProperty("e2e.coverage", true)
+            outputs.upToDateWhen { false }
+        }
+    }
+}
+
+val wasmCoverageExecutableSuffix = providers.systemProperty("os.name").map { if (it.startsWith("Windows")) ".exe" else "" }
+tasks.register<Exec>("buildWasmCoverageTool") {
+    group = "verification"
+    inputs.files(fileTree("dev/wasmCoverage") { include("src/**", "Cargo.toml", "Cargo.lock") })
+    outputs.file(layout.projectDirectory.file("dev/wasmCoverage/build/target/debug/a-wasm-coverage${wasmCoverageExecutableSuffix.get()}"))
+    workingDir(layout.projectDirectory)
+    commandLine("cargo", "build", "--locked", "--manifest-path", "dev/wasmCoverage/Cargo.toml",
+        "--target-dir", "dev/wasmCoverage/build/target")
+}
+
 val unitTestForks = providers.gradleProperty("unitTest.maxParallelForks").map {
     it.toInt().also { forks -> require(forks > 0) { "unitTest.maxParallelForks must be positive" } }
 }.orElse(gradle.startParameter.maxWorkerCount)
@@ -216,6 +261,78 @@ subprojects {
                 name.endsWith("UnitTest")
             ) {
                 maxParallelForks = unitTestForks.get()
+            }
+        }
+    }
+}
+
+// Complete every selected runner's immutable application artifacts before starting any live fixture.
+if (e2eCoverageEnabled.get()) {
+    val runners = listOf("app", "panel").flatMap { target ->
+        listOf("androidAppium", "desktopAppium", "wasmAppium", "cliE2e").map { ":$target:$it" }
+    }
+    val requested = gradle.startParameter.taskNames
+    val explicit = runners.filter { runner -> requested.any { it.startsWith("$runner:") } }
+    val selected = explicit.ifEmpty { runners }
+    val sources = fileTree(rootDir) {
+        include("**/src/main/**/*.kt", "**/src/main/**/*.java", "**/src/*Main/**/*.kt", "**/src/*Main/**/*.java")
+        exclude(".worktrees/**", "**/build/**", "dev/e2eCoverageRuntime/**")
+    }
+    val report = tasks.register<E2eCoverageReportTask>("e2eCoverageReport") {
+        group = "verification"
+        description = "Render completed JVM, Android and mapped Wasm E2E coverage artifacts."
+        mustRunAfter("koverXmlReport", "koverHtmlReport")
+        repositoryDirectory.set(layout.projectDirectory)
+        sourceFiles.from(sources)
+        reportDirectory.set(layout.buildDirectory.dir("reports/e2eCoverage"))
+        scratchDirectory.set(layout.buildDirectory.dir("e2e-coverage/merged-originals"))
+        selected.forEach { runner ->
+            val testName = if (runner.endsWith("cliE2e")) "e2eTest" else "appiumTest"
+            rawArtifacts.from(fileTree("${runner.trim(':').replace(':', '/')}/build/test-results/$testName/artifacts") {
+                include("**/coverage/**")
+                exclude("**/coverage/control/**", "**/report.pending.ic")
+            })
+        }
+        (e2eJvmTargets + setOf(":app:androidApp", ":panel:androidApp")).forEach { target ->
+            originalClassFiles.from(fileTree("${target.trim(':').replace(':', '/')}/build/e2e-coverage/originals") {
+                include("**/*.class", "**/classes.properties")
+            })
+        }
+        mustRunAfter(runners.map { "$it:${if (it.endsWith("cliE2e")) "e2eTest" else "appiumTest"}" })
+    }
+    val combined = tasks.register<CombinedCoverageReportTask>("coverageReport") {
+        group = "verification"
+        description = "Union ordinary unit-test and completed E2E source-line coverage, preserving independent reports."
+        dependsOn("koverXmlReport", "koverHtmlReport", report)
+        unitXml.set(layout.buildDirectory.file("reports/kover/report.xml"))
+        e2eReports.set(report.flatMap { it.reportDirectory })
+        sourceFiles.from(sources)
+        repositoryDirectory.set(layout.projectDirectory)
+        reportDirectory.set(layout.buildDirectory.dir("reports/coverage"))
+    }
+    val prepared = tasks.register("prepareE2eCoverageArtifacts") {
+        // Finish host tests and any compilation they require before immutable UI artifacts are launched.
+        dependsOn("koverXmlReport", "koverHtmlReport")
+        selected.forEach { runner ->
+            val target = runner.substringBeforeLast(':')
+            when {
+                runner.endsWith("androidAppium") -> dependsOn("$target:androidApp:installDebug", "$runner:appiumTestClasses")
+                runner.endsWith("desktopAppium") -> dependsOn("$target:desktopApp:writeAppiumRuntimeClasspath", "$runner:appiumTestClasses")
+                runner.endsWith("wasmAppium") -> dependsOn("$runner:prepareE2eCoverageWasmDistribution", "$runner:appiumTestClasses")
+                else -> dependsOn("$target:cliApp:prepareE2eCoverageDistribution", "$runner:e2eTestClasses")
+            }
+        }
+        e2eJvmTargets.filter { it.startsWith(":cloud:") }.forEach { dependsOn("$it:buildTestDockerImage") }
+    }
+    subprojects {
+        if (path in selected) {
+            configurations.matching { it.name in setOf("appiumTestRuntimeClasspath", "e2eTestRuntimeClasspath") }.configureEach {
+                val runtimeConfiguration = this
+                prepared.configure { dependsOn(runtimeConfiguration) }
+            }
+            tasks.withType<Test>().matching { it.name in setOf("appiumTest", "e2eTest") }.configureEach {
+                dependsOn(prepared)
+                finalizedBy(report, combined)
             }
         }
     }

@@ -27,19 +27,19 @@ data class Member(
 
 fun Member.toNestedMemberInfo() =
     NestedMemberInfo(
-    status,
-    joinedTime,
-    invitedTime,
-)
+        status,
+        joinedTime,
+        invitedTime,
+    )
 
 fun Member.toMemberInfo(userInfo: UserInfo) =
     MemberInfo(
-    id,
-    uid,
-    objectId,
-    objectType,
-    status,
-    joinedTime,
-    invitedTime,
-    userInfo,
-)
+        id,
+        uid,
+        objectId,
+        objectType,
+        status,
+        joinedTime,
+        invitedTime,
+        userInfo,
+    )

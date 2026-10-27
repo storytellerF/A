@@ -16,23 +16,23 @@ import kotlin.reflect.KClass
 class RedisCacheService(private val endpoint: String) : CacheService<String, String> {
     override suspend fun get(key: String, block: suspend () -> String): String =
         useRedis(endpoint) {
-        val cache = get(key)
-        if (cache == null) {
-            val new = block()
-            set(key, new)
-            new
-        } else {
-            cache
+            val cache = get(key)
+            if (cache == null) {
+                val new = block()
+                set(key, new)
+                new
+            } else {
+                cache
+            }
         }
-    }
 }
 
 private suspend fun <R> useRedis(endpoint: String, block: suspend KredsClient.() -> R): R =
     newClient(
-    Endpoint.from(endpoint),
-).use {
-    it.block()
-}
+        Endpoint.from(endpoint),
+    ).use {
+        it.block()
+    }
 
 class RedisCacheServiceFactory : CacheServiceFactory {
     override fun match(env: MergedEnv): Boolean = !env["CACHE_SERVICE"].isNullOrBlank()

@@ -23,10 +23,10 @@ data class UserLog(
 
 fun UserLog.toUserLogInfo() =
     UserLogInfo(
-    id = id,
-    uid = uid,
-    type = type,
-    objectId = objectId,
-    objectType = objectType,
-    createdTime = createdTime.date,
-)
+        id = id,
+        uid = uid,
+        type = type,
+        objectId = objectId,
+        objectType = objectType,
+        createdTime = createdTime.date,
+    )

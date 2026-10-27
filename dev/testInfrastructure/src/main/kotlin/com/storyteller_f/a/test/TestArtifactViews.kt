@@ -55,44 +55,44 @@ private fun writeArtifactView(file: File, view: File) {
 
 private fun renderArtifactContent(file: File, rawLink: String): String =
     when {
-    file.extension.lowercase() in setOf("png", "jpg", "jpeg", "gif", "webp") ->
-        """<img src="$rawLink" alt="${file.name.escapeHtml()}">"""
+        file.extension.lowercase() in setOf("png", "jpg", "jpeg", "gif", "webp") ->
+            """<img src="$rawLink" alt="${file.name.escapeHtml()}">"""
 
-    file.extension.lowercase() in setOf("mp4", "webm", "ogg") ->
-        """<video controls preload="metadata" src="$rawLink"></video>"""
+        file.extension.lowercase() in setOf("mp4", "webm", "ogg") ->
+            """<video controls preload="metadata" src="$rawLink"></video>"""
 
-    file.extension.lowercase() == "tar" ->
-        TarArchiveInputStream(file.inputStream().buffered()).use(::renderArchive)
+        file.extension.lowercase() == "tar" ->
+            TarArchiveInputStream(file.inputStream().buffered()).use(::renderArchive)
 
-    file.extension.lowercase() == "zip" ->
-        ZipArchiveInputStream(file.inputStream().buffered()).use(::renderArchive)
+        file.extension.lowercase() == "zip" ->
+            ZipArchiveInputStream(file.inputStream().buffered()).use(::renderArchive)
 
-    file.name.endsWith(".tar.gz") || file.extension.lowercase() == "tgz" ->
-        TarArchiveInputStream(GZIPInputStream(file.inputStream().buffered())).use(::renderArchive)
+        file.name.endsWith(".tar.gz") || file.extension.lowercase() == "tgz" ->
+            TarArchiveInputStream(GZIPInputStream(file.inputStream().buffered())).use(::renderArchive)
 
-    else -> file.inputStream().buffered().use { renderText(it.readNBytes(PREVIEW_BYTE_LIMIT + 1)) }
-}
+        else -> file.inputStream().buffered().use { renderText(it.readNBytes(PREVIEW_BYTE_LIMIT + 1)) }
+    }
 
 private fun renderArchive(archive: ArchiveInputStream): String =
     buildString {
-    append("<h2>Archive contents</h2>")
-    var remaining = ARCHIVE_BYTE_LIMIT
-    repeat(ARCHIVE_ENTRY_LIMIT) {
-        val entry = archive.nextEntry ?: return@buildString
-        append("<details open><summary>${entry.name.escapeHtml()} (${entry.size} bytes)</summary>")
-        if (!entry.isDirectory && archive.canReadEntryData(entry)) {
-            val bytes = archive.readNBytes(minOf(PREVIEW_BYTE_LIMIT + 1, remaining))
-            remaining -= bytes.size
-            if (bytes.isEmpty() && entry.size > 0) {
-                append("<p>Archive text preview limit reached.</p>")
-            } else {
-                append(renderText(bytes))
+        append("<h2>Archive contents</h2>")
+        var remaining = ARCHIVE_BYTE_LIMIT
+        repeat(ARCHIVE_ENTRY_LIMIT) {
+            val entry = archive.nextEntry ?: return@buildString
+            append("<details open><summary>${entry.name.escapeHtml()} (${entry.size} bytes)</summary>")
+            if (!entry.isDirectory && archive.canReadEntryData(entry)) {
+                val bytes = archive.readNBytes(minOf(PREVIEW_BYTE_LIMIT + 1, remaining))
+                remaining -= bytes.size
+                if (bytes.isEmpty() && entry.size > 0) {
+                    append("<p>Archive text preview limit reached.</p>")
+                } else {
+                    append(renderText(bytes))
+                }
             }
+            append("</details>")
         }
-        append("</details>")
+        append("<p>Only the first $ARCHIVE_ENTRY_LIMIT archive entries are shown.</p>")
     }
-    append("<p>Only the first $ARCHIVE_ENTRY_LIMIT archive entries are shown.</p>")
-}
 
 private fun renderText(bytes: ByteArray): String {
     if (bytes.any { it == 0.toByte() }) return "<p>Binary data has no text preview.</p>"
@@ -110,5 +110,5 @@ private fun renderText(bytes: ByteArray): String {
 
 internal fun encodeArtifactPath(path: Path): String =
     path.joinToString("/") { segment ->
-    java.net.URLEncoder.encode(segment.toString(), Charsets.UTF_8).replace("+", "%20")
-}
+        java.net.URLEncoder.encode(segment.toString(), Charsets.UTF_8).replace("+", "%20")
+    }

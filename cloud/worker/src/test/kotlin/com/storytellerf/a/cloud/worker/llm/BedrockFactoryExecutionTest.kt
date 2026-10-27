@@ -47,36 +47,36 @@ internal class BedrockFactoryExecutionTest {
     @Test
     fun `explicit API key wins over AWS credentials`() =
         runTest {
-        withContext(Dispatchers.IO) {
-            withSyntheticAwsCredentials {
-                RecordingBedrockEngine().use { engine ->
-                    val config = LlmConfig(LlmProvider.BEDROCK, apiKey = "test-bearer", region = "eu-west-1")
-                    executeFactoryRequest(config, engine)
-                    val request = engine.requests.single()
-                    assertEquals("Bearer test-bearer", request.headers["Authorization"])
-                    assertEquals("bedrock-runtime.eu-west-1.amazonaws.com", request.url.host.toString())
+            withContext(Dispatchers.IO) {
+                withSyntheticAwsCredentials {
+                    RecordingBedrockEngine().use { engine ->
+                        val config = LlmConfig(LlmProvider.BEDROCK, apiKey = "test-bearer", region = "eu-west-1")
+                        executeFactoryRequest(config, engine)
+                        val request = engine.requests.single()
+                        assertEquals("Bearer test-bearer", request.headers["Authorization"])
+                        assertEquals("bedrock-runtime.eu-west-1.amazonaws.com", request.url.host.toString())
+                    }
                 }
             }
         }
-    }
 
     @Test
     fun `default chain signs with configured region`() =
         runTest {
-        withContext(Dispatchers.IO) {
-            withSyntheticAwsCredentials {
-                RecordingBedrockEngine().use { engine ->
-                    val config = LlmConfig(LlmProvider.BEDROCK, region = "eu-central-1")
-                    executeFactoryRequest(config, engine)
-                    val request = engine.requests.single()
-                    val authorization = assertNotNull(request.headers["Authorization"])
-                    assertTrue(authorization.startsWith("AWS4-HMAC-SHA256 "))
-                    assertTrue(authorization.contains("/eu-central-1/bedrock/aws4_request"))
-                    assertEquals("bedrock-runtime.eu-central-1.amazonaws.com", request.url.host.toString())
+            withContext(Dispatchers.IO) {
+                withSyntheticAwsCredentials {
+                    RecordingBedrockEngine().use { engine ->
+                        val config = LlmConfig(LlmProvider.BEDROCK, region = "eu-central-1")
+                        executeFactoryRequest(config, engine)
+                        val request = engine.requests.single()
+                        val authorization = assertNotNull(request.headers["Authorization"])
+                        assertTrue(authorization.startsWith("AWS4-HMAC-SHA256 "))
+                        assertTrue(authorization.contains("/eu-central-1/bedrock/aws4_request"))
+                        assertEquals("bedrock-runtime.eu-central-1.amazonaws.com", request.url.host.toString())
+                    }
                 }
             }
         }
-    }
 
     @Test
     fun `default chain receives client region`() {
@@ -97,21 +97,22 @@ internal class BedrockFactoryExecutionTest {
     @Test
     fun `closing factory clients releases owned resources`() =
         runTest {
-        withSyntheticAwsCredentials {
-            for (apiKey in listOf(null, "test-bearer")) {
-                val config = LlmConfig(LlmProvider.BEDROCK, apiKey = apiKey)
-                val client = assertIs<BedrockLLMClient>(KoogClientFactory.createClient(config))
-                val runtime = runtimeOf(client)
-                KoogLlmService(client, KoogClientFactory.resolveModel(config), config).use {
-                    assertTrue(assertNotNull(runtime.config.httpClient.coroutineContext[Job]).isActive)
-                    assertEquals("test-access-key", runtime.config.credentialsProvider.resolve().accessKeyId)
+            withSyntheticAwsCredentials {
+                for (apiKey in listOf(null, "test-bearer")) {
+                    val config = LlmConfig(LlmProvider.BEDROCK, apiKey = apiKey)
+                    val client = assertIs<BedrockLLMClient>(KoogClientFactory.createClient(config))
+                    val runtime = runtimeOf(client)
+                    KoogLlmService(client, KoogClientFactory.resolveModel(config), config).use {
+                        assertTrue(assertNotNull(runtime.config.httpClient.coroutineContext[Job]).isActive)
+                        assertEquals("test-access-key", runtime.config.credentialsProvider.resolve().accessKeyId)
+                    }
+                    assertTrue(assertNotNull(runtime.config.httpClient.coroutineContext[Job]).isCompleted)
+                    val failure =
+                        assertFailsWith<IllegalStateException> { runtime.config.credentialsProvider.resolve() }
+                    assertEquals("Credentials provider is closed", failure.message)
                 }
-                assertTrue(assertNotNull(runtime.config.httpClient.coroutineContext[Job]).isCompleted)
-                val failure = assertFailsWith<IllegalStateException> { runtime.config.credentialsProvider.resolve() }
-                assertEquals("Credentials provider is closed", failure.message)
             }
         }
-    }
 }
 
 private suspend fun executeFactoryRequest(config: LlmConfig, engine: RecordingBedrockEngine) {

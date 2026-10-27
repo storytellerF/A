@@ -25,24 +25,24 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal fun createDeepSeekClient(config: LlmConfig): LLMClient =
     DeepSeekLLMClient(
-    apiKey = requireProviderKey(config),
-    settings = DeepSeekClientSettings(baseUrl = config.baseUrl ?: DeepSeekClientSettings().baseUrl),
-    httpClientFactory = KtorKoogHttpClient.Factory(),
-)
+        apiKey = requireProviderKey(config),
+        settings = DeepSeekClientSettings(baseUrl = config.baseUrl ?: DeepSeekClientSettings().baseUrl),
+        httpClientFactory = KtorKoogHttpClient.Factory(),
+    )
 
 internal fun createMistralClient(config: LlmConfig): LLMClient =
     MistralAILLMClient(
-    apiKey = requireProviderKey(config),
-    settings = MistralAIClientSettings(baseUrl = config.baseUrl ?: MistralAIClientSettings().baseUrl),
-    httpClientFactory = KtorKoogHttpClient.Factory(),
-)
+        apiKey = requireProviderKey(config),
+        settings = MistralAIClientSettings(baseUrl = config.baseUrl ?: MistralAIClientSettings().baseUrl),
+        httpClientFactory = KtorKoogHttpClient.Factory(),
+    )
 
 internal fun createDashscopeClient(config: LlmConfig): LLMClient =
     DashscopeLLMClient(
-    apiKey = requireProviderKey(config),
-    settings = DashscopeClientSettings(baseUrl = config.baseUrl ?: DashscopeClientSettings().baseUrl),
-    httpClientFactory = KtorKoogHttpClient.Factory(),
-)
+        apiKey = requireProviderKey(config),
+        settings = DashscopeClientSettings(baseUrl = config.baseUrl ?: DashscopeClientSettings().baseUrl),
+        httpClientFactory = KtorKoogHttpClient.Factory(),
+    )
 
 internal fun createBedrockClient(config: LlmConfig, httpEngine: HttpClientEngine? = null): LLMClient {
     val settings = BedrockClientSettings()

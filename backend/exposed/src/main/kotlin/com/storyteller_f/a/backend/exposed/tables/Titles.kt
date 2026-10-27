@@ -36,16 +36,16 @@ object Titles : BaseTable() {
 
 fun Title.Companion.wrapRow(row: ResultRow): Title =
     Title(
-    row[Titles.id],
-    row[Titles.createdTime],
-    row[Titles.name],
-    row[Titles.creator],
-    row[Titles.receiver],
-    row[Titles.type],
-    row[Titles.scopeId],
-    row[Titles.scopeType],
-    row[Titles.titleStatus],
-    row[Titles.descriptionTopicId],
-    row[Titles.expiresAt],
-    row[Titles.status],
-)
+        row[Titles.id],
+        row[Titles.createdTime],
+        row[Titles.name],
+        row[Titles.creator],
+        row[Titles.receiver],
+        row[Titles.type],
+        row[Titles.scopeId],
+        row[Titles.scopeType],
+        row[Titles.titleStatus],
+        row[Titles.descriptionTopicId],
+        row[Titles.expiresAt],
+        row[Titles.status],
+    )

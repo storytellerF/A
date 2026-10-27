@@ -31,8 +31,8 @@ class ElasticFileSearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         fileDocumentSearch: FileDocumentSearch,
@@ -51,31 +51,31 @@ class ElasticFileSearchService(connection: ElasticConnection) :
 
     private fun buildSearchRequest(fileDocumentSearch: FileDocumentSearch): SearchRequest =
         SearchRequest.of { s ->
-        s.index(INDEX_NAME).apply {
-            when (fileDocumentSearch) {
-                is FileDocumentSearch.Keyword -> {
-                    val fetch = fileDocumentSearch.fetch
-                    from(fetch.cursor?.value ?: 0)
-                    size(fetch.size)
-                    query { q ->
-                        q.bool { b ->
-                            // 添加 ownerId 过滤
-                            fileDocumentSearch.ownerId?.let { owner ->
-                                b.filter { f ->
-                                    f.term { t ->
-                                        t.field("ownerId").value(owner)
+            s.index(INDEX_NAME).apply {
+                when (fileDocumentSearch) {
+                    is FileDocumentSearch.Keyword -> {
+                        val fetch = fileDocumentSearch.fetch
+                        from(fetch.cursor?.value ?: 0)
+                        size(fetch.size)
+                        query { q ->
+                            q.bool { b ->
+                                // 添加 ownerId 过滤
+                                fileDocumentSearch.ownerId?.let { owner ->
+                                    b.filter { f ->
+                                        f.term { t ->
+                                            t.field("ownerId").value(owner)
+                                        }
                                     }
                                 }
+                                // 添加关键词搜索
+                                val keyword = preprocessUserInputKeyword(fileDocumentSearch.word)
+                                b.prioritizedField(keyword, "name")
                             }
-                            // 添加关键词搜索
-                            val keyword = preprocessUserInputKeyword(fileDocumentSearch.word)
-                            b.prioritizedField(keyword, "name")
                         }
                     }
                 }
             }
         }
-    }
 }
 
 class ElasticFileSearchServiceFactory : FileSearchServiceFactory {
@@ -83,6 +83,6 @@ class ElasticFileSearchServiceFactory : FileSearchServiceFactory {
 
     override fun build(env: MergedEnv): FileSearchService =
         buildElasticSearchService(env) {
-        ElasticFileSearchService(it)
-    }
+            ElasticFileSearchService(it)
+        }
 }

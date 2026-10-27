@@ -4,8 +4,10 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.E2eCoverage
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import org.openqa.selenium.WebDriver
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.URI
@@ -15,7 +17,19 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-class WasmDistributionServer(private val root: File, backendUrl: String? = null) : AutoCloseable {
+class WasmDistributionServer(
+    private val root: File,
+    backendUrl: String? = null,
+    coverageDirectory: File? = null,
+    measureCoverage: Boolean = true,
+) : AutoCloseable {
+    private val coverage =
+        if (E2eCoverage.enabled && measureCoverage) {
+            WasmCoverage(root.resolve("e2e-coverage-manifest.json"), requireNotNull(coverageDirectory))
+        } else {
+            null
+        }
+
     @Volatile private var backendUri = backendUrl?.let { URI.create("${it.removeSuffix("/")}/") }
     private val httpClient = HttpClient.newHttpClient()
     val requestedPaths = mutableListOf<String>()
@@ -37,8 +51,16 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
         server.stop(0)
     }
 
+    fun collectCoverage(browser: WebDriver) {
+        coverage?.collect(browser)
+    }
+
     private fun serve(exchange: HttpExchange) {
         val relativePath = exchange.requestURI.path.removePrefix("/").ifBlank { "index.html" }
+        if (relativePath.startsWith("__e2e-coverage/")) {
+            serveCoverage(exchange, relativePath.substringAfter('/'))
+            return
+        }
         requestedPaths += relativePath
         if (relativePath == "appium-bootstrap.html") {
             val content = "<!doctype html><title>Appium bootstrap</title>".toByteArray(StandardCharsets.UTF_8)
@@ -59,7 +81,14 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
         val content =
             if (relativePath == "index.html") {
                 val probe = checkNotNull(javaClass.getResource("/wasm-socket-probe.js")).readText()
-                file.readText().replace("<head>", "<head><script>$probe</script>").toByteArray(StandardCharsets.UTF_8)
+                val capture =
+                    coverage?.let {
+                        "<script src='/__e2e-coverage/runtime.js' data-build='${it.buildId}' data-lines='${it.lineCount}'></script>"
+                    }.orEmpty()
+                file.readText().replace(
+                    "<head>",
+                    "<head>$capture<script>$probe</script>",
+                ).toByteArray(StandardCharsets.UTF_8)
             } else {
                 Files.readAllBytes(file.toPath())
             }
@@ -68,6 +97,36 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
         exchange.responseHeaders.add("Cross-Origin-Embedder-Policy", "require-corp")
         exchange.sendResponseHeaders(200, content.size.toLong())
         exchange.responseBody.use { it.write(content) }
+    }
+
+    private fun serveCoverage(exchange: HttpExchange, operation: String) {
+        val collector = coverage
+        if (collector == null) {
+            exchange.sendResponseHeaders(404, -1)
+            exchange.close()
+            return
+        }
+        if (operation == "runtime.js" && exchange.requestMethod == "GET") {
+            val script = checkNotNull(javaClass.getResource("/wasm-coverage.js")).readBytes()
+            exchange.responseHeaders.add("Content-Type", "text/javascript")
+            exchange.sendResponseHeaders(200, script.size.toLong())
+            exchange.responseBody.use { it.write(script) }
+            return
+        }
+        try {
+            check(
+                operation in setOf("begin", "snapshot") && exchange.requestMethod == "POST",
+            ) { "Invalid coverage operation" }
+            val body = exchange.requestBody.buffered().use { it.readNBytes(MAX_COVERAGE_BODY_BYTES + 1) }
+            check(body.size <= MAX_COVERAGE_BODY_BYTES) { "Coverage snapshot is too large" }
+            collector.record(operation, body.toString(StandardCharsets.UTF_8))
+            exchange.sendResponseHeaders(204, -1)
+        } catch (failure: Exception) {
+            collector.invalidate(failure)
+            exchange.sendResponseHeaders(400, -1)
+        } finally {
+            exchange.close()
+        }
     }
 
     private fun proxyToBackend(exchange: HttpExchange) {
@@ -107,14 +166,15 @@ class WasmDistributionServer(private val root: File, backendUrl: String? = null)
 
     private fun contentTypeFor(extension: String): String =
         when (extension) {
-        "html" -> "text/html"
-        "js", "mjs" -> "text/javascript"
-        "wasm" -> "application/wasm"
-        "css" -> "text/css"
-        else -> "application/octet-stream"
-    }
+            "html" -> "text/html"
+            "js", "mjs" -> "text/javascript"
+            "wasm" -> "application/wasm"
+            "css" -> "text/css"
+            else -> "application/octet-stream"
+        }
 
     private companion object {
+        const val MAX_COVERAGE_BODY_BYTES = 4 * 1024 * 1024
         val REQUEST_HEADERS_NOT_FORWARDED = setOf("connection", "content-length", "host", "upgrade")
         val RESPONSE_HEADERS_NOT_FORWARDED = setOf("connection", "content-length", "transfer-encoding", "upgrade")
     }

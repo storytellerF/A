@@ -114,16 +114,16 @@ class RoomUserInfoStorage(appDatabase: AppDatabase) : UserInfoStorage {
 
     override fun observeData(collection: UserCollection): PagingSource<Int, UserInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override fun observeDatum(key: String): Flow<UserInfo?> = impl.observeDatum(UserCollection.Users.getName(), key)
 
     override suspend fun getDocument(collection: UserCollection, key: String): UserInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: UserCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -176,8 +176,8 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
 
     override fun observeData(collection: CommunityCollection): PagingSource<Int, CommunityInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override fun observeDatum(key: String): Flow<CommunityInfo?> {
         val scope = CommunityCollection.Communities.getName()
@@ -186,9 +186,9 @@ class RoomCommunityInfoStorage(appDatabase: AppDatabase) : CommunityInfoStorage 
 
     override suspend fun getDocument(collection: CommunityCollection, key: String): CommunityInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: CommunityCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -240,16 +240,16 @@ class RoomTopicInfoStorage(val appDatabase: AppDatabase) : TopicInfoStorage {
 
     override fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override fun observeDatum(key: String): Flow<TopicInfo?> = impl.observeDatum(TopicCollection.Topics.getName(), key)
 
     override suspend fun getDocument(collection: TopicCollection, key: String): TopicInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: TopicCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -297,8 +297,8 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
 
     override fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: TitleCollection) {
         impl.clean(collection.getName())
@@ -308,9 +308,9 @@ class RoomTitleInfoStorage(appDatabase: AppDatabase) : TitleInfoStorage {
 
     override suspend fun getDocument(collection: TitleCollection, key: String): TitleInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: TitleCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -339,17 +339,17 @@ class RoomMemberInfoStorage(appDatabase: AppDatabase) : MemberInfoStorage {
 
     override fun observeData(collection: MemberCollection): PagingSource<Int, MemberInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: MemberCollection) {
         impl.clean(collection.getName())
     }
     override suspend fun getDocument(collection: MemberCollection, key: String): MemberInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: MemberCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -364,19 +364,19 @@ class RoomMemberInfoStorage(appDatabase: AppDatabase) : MemberInfoStorage {
 class RemoteKeyRoomStorage(val appDatabase: AppDatabase) : RemoteKeyStorage {
     override suspend fun getPreRemoteKey(collection: String): RemoteKeys? =
         appDatabase.getCommonDao().get(
-        PRE_COLLECTION,
-        collection,
-    )?.let {
-        commonJson.safeDecodeFromStringOrNull(it.data)
-    }
+            PRE_COLLECTION,
+            collection,
+        )?.let {
+            commonJson.safeDecodeFromStringOrNull(it.data)
+        }
 
     override suspend fun getNextRemoteKey(collection: String): RemoteKeys? =
         appDatabase.getCommonDao().get(
-        NEXT_COLLECTION,
-        collection,
-    )?.let {
-        commonJson.safeDecodeFromStringOrNull(it.data)
-    }
+            NEXT_COLLECTION,
+            collection,
+        )?.let {
+            commonJson.safeDecodeFromStringOrNull(it.data)
+        }
 
     override suspend fun savePreRemoteKey(remoteKeys: RemoteKeys) {
         appDatabase.getCommonDao().insert(
@@ -424,8 +424,8 @@ class RoomReactionInfoStorage(appDatabase: AppDatabase) : ReactionInfoStorage {
 
     override fun observeData(collection: ReactionCollection): PagingSource<Int, ReactionInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: ReactionCollection) {
         impl.clean(collection.getName())
@@ -454,8 +454,8 @@ class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
 
     override fun observeData(): PagingSource<Int, ChildAccountInfo> =
         impl.observeData(
-        ChildAccountStorage.COLLECTION_NAME,
-    )
+            ChildAccountStorage.COLLECTION_NAME,
+        )
 
     override suspend fun clean() {
         impl.clean(ChildAccountStorage.COLLECTION_NAME)
@@ -463,9 +463,9 @@ class RoomChildAccountStorage(appDatabase: AppDatabase) : ChildAccountStorage {
 
     override fun observeDatum(key: String): Flow<ChildAccountInfo?> =
         impl.observeDatum(
-        ChildAccountStorage.COLLECTION_NAME,
-        key,
-    )
+            ChildAccountStorage.COLLECTION_NAME,
+            key,
+        )
 }
 
 class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
@@ -493,8 +493,8 @@ class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
 
     override fun observeData(collection: FileCollection): PagingSource<Int, FileInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: FileCollection) {
         impl.clean(collection.getName())
@@ -504,9 +504,9 @@ class RoomFileInfoStorage(appDatabase: AppDatabase) : FileInfoStorage {
 
     override suspend fun getDocument(collection: FileCollection, key: String): FileInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: FileCollection, key: String) {
         impl.delete(collection.getName(), key)
@@ -542,19 +542,19 @@ class RoomDownloadInfoStorage(val appDatabase: AppDatabase) : DownloadInfoStorag
 
     override fun observeDocumentByFileId(fileId: PrimaryKey): Flow<DownloadInfo?> =
         appDatabase.getDownloadDao()
-        .getByFileIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, fileId).map {
-            it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
-        }
+            .getByFileIdAsFlow(DownloadInfoStorage.COLLECTION_NAME, fileId).map {
+                it?.data?.let { string -> commonJson.safeDecodeFromStringOrNull(string) }
+            }
 
     override fun observeData(): PagingSource<Int, DownloadInfo> =
         WrappedPagingSource(
-        appDatabase.getDownloadDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME),
-        ::getLocalRefreshKey,
-    ) { entities ->
-        entities.mapNotNull {
-            commonJson.safeDecodeFromStringOrNull(it.data)
+            appDatabase.getDownloadDao().getAsSource(DownloadInfoStorage.COLLECTION_NAME),
+            ::getLocalRefreshKey,
+        ) { entities ->
+            entities.mapNotNull {
+                commonJson.safeDecodeFromStringOrNull(it.data)
+            }
         }
-    }
 
     override suspend fun clean() {
         appDatabase.getDownloadDao().clean(DownloadInfoStorage.COLLECTION_NAME)
@@ -586,13 +586,13 @@ class RoomUploadInfoStorage(val appDatabase: AppDatabase) : UploadInfoStorage {
 
     override fun observeData(collection: UploadCollection): PagingSource<Int, UploadInfo> =
         WrappedPagingSource(
-        appDatabase.getUploadDao().getAsSource(collection.getName()),
-        ::getLocalRefreshKey,
-    ) { entities ->
-        entities.mapNotNull {
-            commonJson.safeDecodeFromStringOrNull(it.data)
+            appDatabase.getUploadDao().getAsSource(collection.getName()),
+            ::getLocalRefreshKey,
+        ) { entities ->
+            entities.mapNotNull {
+                commonJson.safeDecodeFromStringOrNull(it.data)
+            }
         }
-    }
 
     override suspend fun delete(collection: UploadCollection, key: String) {
         appDatabase.getUploadDao().delete(collection.getName(), key)
@@ -635,9 +635,9 @@ class RoomUserOverviewStorage(appDatabase: AppDatabase) : UserOverviewStorage {
 
     override fun observeDatum(): Flow<UserOverview?> =
         impl.observeDatum(
-        UserOverviewStorage.COLLECTION_NAME,
-        "overview",
-    )
+            UserOverviewStorage.COLLECTION_NAME,
+            "overview",
+        )
 }
 
 class RoomUserFavoriteStorage(appDatabase: AppDatabase) : UserFavoriteStorage {
@@ -675,9 +675,9 @@ class RoomUserFavoriteStorage(appDatabase: AppDatabase) : UserFavoriteStorage {
 
     override fun observeDatum(key: String): Flow<UserFavoriteInfo?> =
         impl.observeDatum(
-        UserFavoriteStorage.COLLECTION_NAME,
-        key,
-    )
+            UserFavoriteStorage.COLLECTION_NAME,
+            key,
+        )
 
     override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
         val data = commonJson.encodeToString(item)
@@ -724,9 +724,9 @@ class RoomUserSubscriptionStorage(appDatabase: AppDatabase) : UserSubscriptionSt
 
     override fun observeDatum(key: String): Flow<UserSubscriptionInfo?> =
         impl.observeDatum(
-        UserSubscriptionStorage.COLLECTION_NAME,
-        key,
-    )
+            UserSubscriptionStorage.COLLECTION_NAME,
+            key,
+        )
 
     override suspend fun updateDocument(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
         val data = commonJson.encodeToString(item)
@@ -786,8 +786,8 @@ class RoomUserLogInfoStorage(appDatabase: AppDatabase) : UserLogInfoStorage {
 
     override fun observeData(collection: UserLogCollection): PagingSource<Int, UserLogInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: UserLogCollection) {
         impl.clean(collection.getName())
@@ -852,8 +852,8 @@ class RoomFileRefInfoStorage(appDatabase: AppDatabase) : FileRefInfoStorage {
 
     override fun observeData(collection: FileRefCollection): PagingSource<Int, FileRefInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: FileRefCollection) {
         impl.clean(collection.getName())
@@ -885,8 +885,8 @@ class RoomPanelLogInfoStorage(appDatabase: AppDatabase) : PanelLogInfoStorage {
 
     override fun observeData(collection: PanelLogCollection): PagingSource<Int, PanelLogInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: PanelLogCollection) {
         impl.clean(collection.getName())
@@ -918,8 +918,8 @@ class RoomTaskRecordInfoStorage(appDatabase: AppDatabase) : TaskRecordInfoStorag
 
     override fun observeData(collection: TaskRecordCollection): PagingSource<Int, TaskRecordInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override suspend fun clean(collection: TaskRecordCollection) {
         impl.clean(collection.getName())
@@ -967,10 +967,10 @@ fun getRoomModelStorage(name: String) = RoomModelStorage(getRoomDatabase(name))
 
 inline fun <reified T : Any> Json.safeDecodeFromStringOrNull(string: String): T? =
     try {
-    decodeFromString(string)
-} catch (e: SerializationException) {
-    Napier.e(e) {
-        "decodeFromString failed, string: $string"
+        decodeFromString(string)
+    } catch (e: SerializationException) {
+        Napier.e(e) {
+            "decodeFromString failed, string: $string"
+        }
+        null
     }
-    null
-}

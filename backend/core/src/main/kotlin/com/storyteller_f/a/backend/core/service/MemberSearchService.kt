@@ -33,14 +33,14 @@ data class MemberDocument(
             communityId: PrimaryKey? = null,
         ): MemberDocument =
             MemberDocument(
-            id = id,
-            uid = userInfo.id,
-            objectId = objectId,
-            objectType = objectType,
-            nickname = userInfo.nickname,
-            objectName = objectName,
-            communityId = communityId,
-        )
+                id = id,
+                uid = userInfo.id,
+                objectId = objectId,
+                objectType = objectType,
+                nickname = userInfo.nickname,
+                objectName = objectName,
+                communityId = communityId,
+            )
     }
 }
 

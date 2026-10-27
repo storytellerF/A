@@ -51,127 +51,127 @@ class SnapshotTest {
     @Test
     fun `test generate code fence`() =
         openPdfSnapshot(
-        """```kotlin
+            """```kotlin
                 |fun main() {
                 |    println("hello world")
                 |}
                 |```
-        """.trimMargin(),
-    )
+            """.trimMargin(),
+        )
 
     @Test
     fun `test generate code block`() =
         openPdfSnapshot(
-        """
+            """
                 |    fun main() {
                 |        println("hello world")
                 |    }
-        """.trimMargin(),
-    )
+            """.trimMargin(),
+        )
 
     @Test
     fun `test generate headings`() =
         openPdfSnapshot(
-        """
-        # Heading 1
-        ## Heading 2
-        Normal paragraph
+            """
+            # Heading 1
+            ## Heading 2
+            Normal paragraph
 
-        Heading A
-        ===
+            Heading A
+            ===
 
-        Heading B
-        ---
-        """.trimIndent(),
-    )
+            Heading B
+            ---
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate emphasis and strong`() =
         openPdfSnapshot(
-        """
-        *italic* and **bold** text with normal content.
-        """.trimIndent(),
-    )
+            """
+            *italic* and **bold** text with normal content.
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate code span`() =
         openPdfSnapshot(
-        """
-        Inline `code` span inside a sentence.
-        """.trimIndent(),
-    )
+            """
+            Inline `code` span inside a sentence.
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate lists`() =
         openPdfSnapshot(
-        """
-        - item 1
-            - nested item 1.1
-        - item 2
+            """
+            - item 1
+                - nested item 1.1
+            - item 2
 
-        1. first
-        2. second
-            1. sub first
-        """.trimIndent(),
-    )
+            1. first
+            2. second
+                1. sub first
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate block quote`() =
         openPdfSnapshot(
-        """
-        > quoted line
-        > second line
-        """.trimIndent(),
-    )
+            """
+            > quoted line
+            > second line
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate block quote with empty line`() =
         openPdfSnapshot(
-        """
-        > quoted line
-        >
-        > second line
-        """.trimIndent(),
-    )
+            """
+            > quoted line
+            >
+            > second line
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate link`() =
         openPdfSnapshot(
-        """
-        This is a [link text](https://example.com) in paragraph.
-        """.trimIndent(),
-    )
+            """
+            This is a [link text](https://example.com) in paragraph.
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate horizontal rule`() =
         openPdfSnapshot(
-        """
-        First paragraph.
+            """
+            First paragraph.
 
-        ---
+            ---
 
-        Second paragraph after horizontal rule.
-        """.trimIndent(),
-    )
+            Second paragraph after horizontal rule.
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate table`() =
         openPdfSnapshot(
-        """
-        | Header 1 | Header 2 | Header 3 |
-        | --- | --- | --- |
-        | Cell 1 | Cell 2 | Cell 3 |
-        | Cell 4 | Cell 5 | Cell 6 |
-        """.trimIndent(),
-    )
+            """
+            | Header 1 | Header 2 | Header 3 |
+            | --- | --- | --- |
+            | Cell 1 | Cell 2 | Cell 3 |
+            | Cell 4 | Cell 5 | Cell 6 |
+            """.trimIndent(),
+        )
 
     @Test
     fun `test generate strikethrough`() =
         openPdfSnapshot(
-        """
-        This is ~~strikethrough~~ text in a paragraph.
-        """.trimIndent(),
-    )
+            """
+            This is ~~strikethrough~~ text in a paragraph.
+            """.trimIndent(),
+        )
 }
 
 private fun openPdfSnapshot(content: String, map: Map<String, File> = emptyMap()) {

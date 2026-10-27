@@ -147,11 +147,11 @@ internal suspend fun Backend.sendTopicToNotificationRoom(
     content: String,
 ): CustomResult<Unit, WorkerError> =
     getNotificationRoom(user).andThen(WorkerError::fromError) { room ->
-    (room?.let { CustomResult.success(it) } ?: createNotificationRoom(user, uid))
-        .andThen(WorkerError::fromError) { notificationRoom ->
-            sedTopicAtRoom(uid, notificationRoom.id, content)
-        }
-}.mapError(WorkerError::fromError)
+        (room?.let { CustomResult.success(it) } ?: createNotificationRoom(user, uid))
+            .andThen(WorkerError::fromError) { notificationRoom ->
+                sedTopicAtRoom(uid, notificationRoom.id, content)
+            }
+    }.mapError(WorkerError::fromError)
 
 private suspend fun Backend.getNotificationRoom(user: User): CustomResult<Room?, WorkerError> =
     database.room.getRawRoom(
@@ -170,20 +170,20 @@ internal suspend fun Backend.sedTopicAtRoom(
     content: String,
 ): CustomResult<Unit, WorkerError> =
     database.room.getRoomPubKeyPaginationResult(
-    roomId,
-    PrimaryKeyFetch(null, 10),
-).andThen(WorkerError::fromError) { paginationResult ->
-    val encrypted = buildEncryptedTopicContent(content, paginationResult.list)
-    createTopicAtRoom(
-        NewRoomTopic(ObjectType.ROOM, roomId, encrypted),
-        uid,
-    ).andThen(WorkerError::fromError) { topic ->
-        topic?.let {
-            GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+        roomId,
+        PrimaryKeyFetch(null, 10),
+    ).andThen(WorkerError::fromError) { paginationResult ->
+        val encrypted = buildEncryptedTopicContent(content, paginationResult.list)
+        createTopicAtRoom(
+            NewRoomTopic(ObjectType.ROOM, roomId, encrypted),
+            uid,
+        ).andThen(WorkerError::fromError) { topic ->
+            topic?.let {
+                GlobalWsEventPublisher.publishNewTopic(RoomFrame.NewTopicInfo(it))
+            }
+            CustomResult.success(Unit)
         }
-        CustomResult.success(Unit)
-    }
-}.mapError(WorkerError::fromError)
+    }.mapError(WorkerError::fromError)
 
 private const val INTRO_START_OBJECT_ID = 1000L
 private const val INTRO_LOG_TAG = "intro"

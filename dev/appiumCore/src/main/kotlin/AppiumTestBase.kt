@@ -22,7 +22,7 @@ open class AppiumTestBase<out T : TargetAppiumHelper, out P : PlatformAppiumHelp
 
 fun runAppiumBlockingTest(block: suspend () -> Unit) =
     runBlocking {
-    withTimeout(10.minutes) {
-        block()
+        withTimeout(10.minutes) {
+            block()
+        }
     }
-}

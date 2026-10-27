@@ -72,7 +72,9 @@ kotlin {
         withHostTest {
             isIncludeAndroidResources = true
         }
-        withDeviceTest {
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
 //        @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
@@ -108,6 +110,12 @@ kotlin {
             create("headlessTest") {
                 dependsOn(commonTest.get())
             }
+        headlessTest.kotlin.exclude("platform_storage/**")
+        val platformStorageTest =
+            create("platformStorageTest") {
+                dependsOn(headlessTest)
+                kotlin.srcDir("src/headlessTest/kotlin/platform_storage")
+            }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
 
@@ -137,8 +145,9 @@ kotlin {
             dependsOn(headlessTest)
         }
         getByName("androidDeviceTest") {
-            dependsOn(commonTest.get())
+            dependsOn(platformStorageTest)
             dependencies {
+                implementation(libs.androidx.test.runner)
                 implementation(libs.androidx.ui.test.junit4.android)
             }
         }
@@ -244,7 +253,7 @@ kotlin {
             implementation(libs.litertlm.jvm)
         }
         jvmTest {
-            dependsOn(headlessTest)
+            dependsOn(platformStorageTest)
         }
     }
     compilerOptions {

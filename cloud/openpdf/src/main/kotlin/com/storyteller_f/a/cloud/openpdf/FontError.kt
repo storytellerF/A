@@ -17,13 +17,13 @@ internal sealed interface FontError : FailureDetails {
 
 internal inline fun <T> captureFontFailure(block: () -> T): CustomResult<T, FontError> =
     try {
-    CustomResult.success(block())
-} catch (error: CancellationException) {
-    throw error
-} catch (error: IllegalArgumentException) {
-    CustomResult.failure(FontError.InvalidFont(error))
-} catch (error: LinkageError) {
-    CustomResult.failure(FontError.NativeUnavailable(error))
-} catch (error: Exception) {
-    CustomResult.failure(FontError.InstancingFailed(error))
-}
+        CustomResult.success(block())
+    } catch (error: CancellationException) {
+        throw error
+    } catch (error: IllegalArgumentException) {
+        CustomResult.failure(FontError.InvalidFont(error))
+    } catch (error: LinkageError) {
+        CustomResult.failure(FontError.NativeUnavailable(error))
+    } catch (error: Exception) {
+        CustomResult.failure(FontError.InstancingFailed(error))
+    }

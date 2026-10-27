@@ -48,15 +48,15 @@ internal class PdfFontFamily private constructor(
                 )?.let(::File),
         ): PdfFontFamily =
             if (directory == null) {
-            InstalledPdfFonts.load(name)
-        } else {
-            require(directory.isDirectory) { "PDF font directory does not exist" }
-            PdfFontFamily(
-                { optionalFile(directory, "$name-regular") },
-                { optionalFile(directory, "$name-bold") },
-                { optionalFile(directory, "$name-variable") },
-            )
-        }
+                InstalledPdfFonts.load(name)
+            } else {
+                require(directory.isDirectory) { "PDF font directory does not exist" }
+                PdfFontFamily(
+                    { optionalFile(directory, "$name-regular") },
+                    { optionalFile(directory, "$name-bold") },
+                    { optionalFile(directory, "$name-variable") },
+                )
+            }
 
         fun fromFiles(regular: FontFileSource?, bold: FontFileSource?, variable: FontFileSource?): PdfFontFamily =
             PdfFontFamily({ regular?.readFace() }, { bold?.readFace() }, { variable?.readFace() })

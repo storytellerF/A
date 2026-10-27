@@ -32,23 +32,23 @@ private val json = Json { ignoreUnknownKeys = true }
 
 fun Community.Companion.wrapRow(row: ResultRow): Community =
     with(Communities) {
-    val fontSettingsJson = row[fontSettings]
-    val fontSettings =
-        fontSettingsJson?.let {
-            captureFailure(DatabaseError::from) { json.decodeFromString<FontSettings>(it) }
-                .onFailure { Napier.e("Failed to parse font_settings", it.cause) }
-                .getOrNull()
-        }
-    Community(
-        row[id],
-        row[createdTime],
-        row[Aids.value],
-        row[name],
-        row[owner],
-        row[memberPolicy],
-        row[icon],
-        row[poster],
-        fontSettings,
-        row[status],
-    )
-}
+        val fontSettingsJson = row[fontSettings]
+        val fontSettings =
+            fontSettingsJson?.let {
+                captureFailure(DatabaseError::from) { json.decodeFromString<FontSettings>(it) }
+                    .onFailure { Napier.e("Failed to parse font_settings", it.cause) }
+                    .getOrNull()
+            }
+        Community(
+            row[id],
+            row[createdTime],
+            row[Aids.value],
+            row[name],
+            row[owner],
+            row[memberPolicy],
+            row[icon],
+            row[poster],
+            fontSettings,
+            row[status],
+        )
+    }

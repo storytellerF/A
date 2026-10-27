@@ -44,8 +44,8 @@ class ElasticTopicSearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         topicDocumentSearch: TopicDocumentSearch,
@@ -70,30 +70,30 @@ class ElasticTopicSearchService(connection: ElasticConnection) :
 
     private fun buildSearchRequest(topicDocumentSearch: TopicDocumentSearch): SearchRequest =
         SearchRequest.of { s ->
-        s.index(INDEX_NAME).apply {
-            when (topicDocumentSearch) {
-                is TopicDocumentSearch.Recommend -> {
-                    buildTopicRecommendSearchRequest(topicDocumentSearch)
-                }
+            s.index(INDEX_NAME).apply {
+                when (topicDocumentSearch) {
+                    is TopicDocumentSearch.Recommend -> {
+                        buildTopicRecommendSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.RecommendNotLogin -> {
-                    buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch)
-                }
+                    is TopicDocumentSearch.RecommendNotLogin -> {
+                        buildTopicRecommendNotLoginSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.AllCommunityRoot -> {
-                    buildCommunityRootSearchRequest(topicDocumentSearch)
-                }
+                    is TopicDocumentSearch.AllCommunityRoot -> {
+                        buildCommunityRootSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.Topics -> {
-                    buildTopicSearchRequest(topicDocumentSearch)
-                }
+                    is TopicDocumentSearch.Topics -> {
+                        buildTopicSearchRequest(topicDocumentSearch)
+                    }
 
-                is TopicDocumentSearch.All -> {
-                    buildAllTopicSearchRequest(topicDocumentSearch)
+                    is TopicDocumentSearch.All -> {
+                        buildAllTopicSearchRequest(topicDocumentSearch)
+                    }
                 }
             }
         }
-    }
 
     private fun SearchRequest.Builder.buildAllTopicSearchRequest(topicDocumentSearch: TopicDocumentSearch.All) {
         val fetch = topicDocumentSearch.fetch
@@ -197,6 +197,6 @@ class ElasticTopicSearchServiceFactory : TopicSearchServiceFactory {
 
     override fun build(env: MergedEnv): TopicSearchService =
         buildElasticSearchService(env) {
-        ElasticTopicSearchService(it)
-    }
+            ElasticTopicSearchService(it)
+        }
 }

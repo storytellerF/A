@@ -24,10 +24,10 @@ class StorageCollectionTest {
     @Test
     fun roomRefreshPreservesDetailsAndOtherLists() =
         runTest {
-        val database = getRoomDatabase("collection-${Uuid.random().toHexString()}")
-        try {
-            val collection = RoomCollection.SearchRoom("", null, JoinStatusSearch.JOINED)
-            val other = RoomCollection.CommunityRooms(2)
+            val database = getRoomDatabase("collection-${Uuid.random().toHexString()}")
+            try {
+                val collection = RoomCollection.SearchRoom("", null, JoinStatusSearch.JOINED)
+                val other = RoomCollection.CommunityRooms(2)
                 assertCollectionCleanup(
                     database,
                     RoomCollection.Rooms.getName(),
@@ -36,63 +36,63 @@ class StorageCollectionTest {
                 ) {
                     RoomRoomInfoStorage(database).clean(collection)
                 }
-        } finally {
-            database.close()
+            } finally {
+                database.close()
+            }
         }
-    }
 
     @Test
     fun titleRefreshPreservesDetailsAndOtherLists() =
         runTest {
-        val database = getRoomDatabase("collection-${Uuid.random().toHexString()}")
-        try {
-            val collection = TitleCollection.SearchTitle(1, TitleSearchType.CREATOR)
-            assertCollectionCleanup(
-                database,
-                TitleCollection.Titles.getName(),
-                collection.getName(),
-                TitleCollection.AllTitles.getName(),
-            ) {
-                RoomTitleInfoStorage(database).clean(collection)
+            val database = getRoomDatabase("collection-${Uuid.random().toHexString()}")
+            try {
+                val collection = TitleCollection.SearchTitle(1, TitleSearchType.CREATOR)
+                assertCollectionCleanup(
+                    database,
+                    TitleCollection.Titles.getName(),
+                    collection.getName(),
+                    TitleCollection.AllTitles.getName(),
+                ) {
+                    RoomTitleInfoStorage(database).clean(collection)
+                }
+            } finally {
+                database.close()
             }
-        } finally {
-            database.close()
         }
-    }
 
     @Test
     fun refreshReplacementPreservesOrderAndLocalAnchor() =
         runTest {
-        val database = getRoomDatabase("paging-${Uuid.random().toHexString()}")
-        try {
-            val storage = RoomRoomInfoStorage(database)
-            val collection = RoomCollection.CommunityRooms(1)
-            val rows =
-                (0 until 60).map {
-                    RoomInfo.EMPTY.copy(id = (it * 37 % 101).toLong(), aid = "room-$it", name = "Room $it")
-                }
-            storage.saveLast(RoomCollection.CommunityRooms(2), rows.first())
-            storage.replace(collection, rows)
-            val page =
-                assertIs<PagingSource.LoadResult.Page<Int, RoomInfo>>(
-                    storage.observeData(collection).load(PagingSource.LoadParams.Refresh(null, 60, true)),
+            val database = getRoomDatabase("paging-${Uuid.random().toHexString()}")
+            try {
+                val storage = RoomRoomInfoStorage(database)
+                val collection = RoomCollection.CommunityRooms(1)
+                val rows =
+                    (0 until 60).map {
+                        RoomInfo.EMPTY.copy(id = (it * 37 % 101).toLong(), aid = "room-$it", name = "Room $it")
+                    }
+                storage.saveLast(RoomCollection.CommunityRooms(2), rows.first())
+                storage.replace(collection, rows)
+                val page =
+                    assertIs<PagingSource.LoadResult.Page<Int, RoomInfo>>(
+                        storage.observeData(collection).load(PagingSource.LoadParams.Refresh(null, 60, true)),
+                    )
+                assertEquals(rows.map { it.id }, page.data.map { it.id })
+                assertEquals(
+                    15,
+                    storage.observeData(collection).getRefreshKey(
+                        PagingState(listOf(page), 45, PagingConfig(20), 0),
+                    ),
                 )
-            assertEquals(rows.map { it.id }, page.data.map { it.id })
-            assertEquals(
-                15,
-                storage.observeData(collection).getRefreshKey(
-                    PagingState(listOf(page), 45, PagingConfig(20), 0),
-                ),
-            )
-            val updated = rows.map { it.copy(name = "Updated ${it.name}") }
-            storage.replace(collection, updated)
-            assertEquals(updated.first(), storage.getDocument(collection, updated.first().id))
-            assertEquals(updated.first(), storage.getDocument(RoomCollection.Rooms, updated.first().aid))
-            assertEquals(rows.first(), storage.getDocument(RoomCollection.CommunityRooms(2), rows.first().id))
-        } finally {
-            database.close()
+                val updated = rows.map { it.copy(name = "Updated ${it.name}") }
+                storage.replace(collection, updated)
+                assertEquals(updated.first(), storage.getDocument(collection, updated.first().id))
+                assertEquals(updated.first(), storage.getDocument(RoomCollection.Rooms, updated.first().aid))
+                assertEquals(rows.first(), storage.getDocument(RoomCollection.CommunityRooms(2), rows.first().id))
+            } finally {
+                database.close()
+            }
         }
-    }
 
     private suspend fun assertCollectionCleanup(
         database: AppDatabase,

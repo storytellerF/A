@@ -26,14 +26,14 @@ data class TopicDocument(
     companion object {
         fun fromTopic(topic: Topic, content: TopicContent.Plain): TopicDocument =
             TopicDocument(
-            id = topic.id,
-            content = content.plain,
-            rootId = topic.rootId,
-            rootType = topic.rootType.name,
-            parentId = topic.parentId,
-            parentType = topic.parentType.name,
-            author = topic.author,
-        )
+                id = topic.id,
+                content = content.plain,
+                rootId = topic.rootId,
+                rootType = topic.rootType.name,
+                parentId = topic.parentId,
+                parentType = topic.parentType.name,
+                author = topic.author,
+            )
     }
 }
 

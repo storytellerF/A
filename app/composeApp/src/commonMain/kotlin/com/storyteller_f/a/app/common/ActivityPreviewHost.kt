@@ -76,26 +76,26 @@ internal class ActivityPreviewHost(
 
     fun refreshUnread() =
         scope.launch {
-        unreadJob?.cancel()
-        unreadJob =
-            load(
-                mutableUnread,
-            ) { fetchUnread(PaginationQuery(size = CONTEXT_PREVIEW_SIZE)).map { it.previewState() } }
-    }
+            unreadJob?.cancel()
+            unreadJob =
+                load(
+                    mutableUnread,
+                ) { fetchUnread(PaginationQuery(size = CONTEXT_PREVIEW_SIZE)).map { it.previewState() } }
+        }
 
     fun refreshPinned() =
         scope.launch {
-        pinnedJob?.cancel()
-        pinnedJob =
-            load(mutablePinned) {
-                fetchPinned(PaginationQuery(size = CONTEXT_PREVIEW_SIZE)).map { response ->
-                    PreviewState.Ready(
-                        response.data.map { PinnedTopicPreview(it.id, it.messagePreview()) }.toImmutableList(),
-                        response.pagination?.total ?: response.data.size.toLong(),
-                    )
+            pinnedJob?.cancel()
+            pinnedJob =
+                load(mutablePinned) {
+                    fetchPinned(PaginationQuery(size = CONTEXT_PREVIEW_SIZE)).map { response ->
+                        PreviewState.Ready(
+                            response.data.map { PinnedTopicPreview(it.id, it.messagePreview()) }.toImmutableList(),
+                            response.pagination?.total ?: response.data.size.toLong(),
+                        )
+                    }
                 }
-            }
-    }
+        }
 
     fun onEvent(event: Any, context: Boolean) {
         if (context && event.changesRoomActivity()) refreshUnread()
@@ -113,11 +113,11 @@ internal class ActivityPreviewHost(
 
     fun pause() =
         scope.launch {
-        unreadJob?.cancel()
-        pinnedJob?.cancel()
-        mutableUnread.value = PreviewState.Idle
-        mutablePinned.value = PreviewState.Idle
-    }
+            unreadJob?.cancel()
+            pinnedJob?.cancel()
+            mutableUnread.value = PreviewState.Idle
+            mutablePinned.value = PreviewState.Idle
+        }
 
     fun close() = scope.cancel()
 
@@ -134,9 +134,9 @@ internal class ActivityPreviewHost(
 
 private fun RoomActivityListResponse.previewState() =
     PreviewState.Ready(
-    data.map { it.toPreview() }.toImmutableList(),
-    pagination?.total ?: data.size.toLong(),
-)
+        data.map { it.toPreview() }.toImmutableList(),
+        pagination?.total ?: data.size.toLong(),
+    )
 
 internal fun RoomActivityInfo.toPreview(): RoomActivityPreview {
     val message =
@@ -151,14 +151,14 @@ internal fun RoomActivityInfo.toPreview(): RoomActivityPreview {
 @OptIn(ExperimentalTime::class)
 private fun TopicInfo.messagePreview() =
     MessagePreview(
-    when (val body = content) {
-        is TopicContent.Plain -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
-        is TopicContent.Extracted -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
-        else -> MessageSummary.Unavailable
-    },
-    extension?.authorInfo?.nickname?.takeIf { it.isNotBlank() },
-    createdTime.formatTime(),
-)
+        when (val body = content) {
+            is TopicContent.Plain -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
+            is TopicContent.Extracted -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
+            else -> MessageSummary.Unavailable
+        },
+        extension?.authorInfo?.nickname?.takeIf { it.isNotBlank() },
+        createdTime.formatTime(),
+    )
 
 private fun summarizeMessage(text: String, hasFiles: Boolean): MessageSummary {
     val preview = text.take(180).replace('\n', ' ').replace('\r', ' ').trim()
@@ -171,13 +171,13 @@ private fun summarizeMessage(text: String, hasFiles: Boolean): MessageSummary {
 
 internal fun Any.changesRoomActivity(): Boolean =
     when (this) {
-    is OnTopicCreated -> topicInfo.rootType == ObjectType.ROOM
+        is OnTopicCreated -> topicInfo.rootType == ObjectType.ROOM
 
-    is OnTopicChanged -> topicInfo.rootType == ObjectType.ROOM
+        is OnTopicChanged -> topicInfo.rootType == ObjectType.ROOM
 
-    is OnRoomRead, is OnRoomCreated, is OnRoomJoined, is OnRoomExited, is OnRoomUpdated,
-    is OnCommunityJoined, is OnCommunityExited,
-    -> true
+        is OnRoomRead, is OnRoomCreated, is OnRoomJoined, is OnRoomExited, is OnRoomUpdated,
+        is OnCommunityJoined, is OnCommunityExited,
+        -> true
 
-    else -> false
-}
+        else -> false
+    }

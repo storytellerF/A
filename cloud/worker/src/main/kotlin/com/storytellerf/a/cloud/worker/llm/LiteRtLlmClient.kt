@@ -105,13 +105,13 @@ internal class LiteRtLlmClient private constructor(private val engine: Engine) :
 
 internal fun <T> createWithPreferredLiteRtBackend(create: (Backend) -> T): T =
     try {
-    create(Backend.GPU())
-} catch (exception: Exception) {
-    Napier.w(tag = "litert", throwable = exception) {
-        "LiteRT GPU initialization failed; falling back to CPU"
+        create(Backend.GPU())
+    } catch (exception: Exception) {
+        Napier.w(tag = "litert", throwable = exception) {
+            "LiteRT GPU initialization failed; falling back to CPU"
+        }
+        create(Backend.CPU())
     }
-    create(Backend.CPU())
-}
 
 internal fun <T> createWithLiteRtCacheAndPreferredBackend(
     modelPath: Path,
@@ -135,12 +135,12 @@ internal fun resolveLiteRtCacheDirectory(
     temporaryDirectory: Path,
 ): Path =
     configuredCacheDirectory?.toAbsolutePath()?.normalize()
-    ?: temporaryDirectory
-        .toAbsolutePath()
-        .normalize()
-        .resolve(DEFAULT_CACHE_APPLICATION_DIRECTORY)
-        .resolve(DEFAULT_CACHE_PROVIDER_DIRECTORY)
-        .resolve(modelCacheKey(modelPath))
+        ?: temporaryDirectory
+            .toAbsolutePath()
+            .normalize()
+            .resolve(DEFAULT_CACHE_APPLICATION_DIRECTORY)
+            .resolve(DEFAULT_CACHE_PROVIDER_DIRECTORY)
+            .resolve(modelCacheKey(modelPath))
 
 internal fun prepareLiteRtCacheDirectory(cacheDirectory: Path) {
     val preparedDirectory =
@@ -176,28 +176,28 @@ private fun createInitializedLiteRtEngine(modelPath: Path, cacheDirectory: Path,
 
 internal fun Prompt.systemInstruction(): String =
     messages
-    .filterIsInstance<Message.System>()
-    .joinToString(separator = "\n") { it.textContent() }
+        .filterIsInstance<Message.System>()
+        .joinToString(separator = "\n") { it.textContent() }
 
 internal fun Prompt.liteRtSamplerConfig(): SamplerConfig =
     SamplerConfig(
-    topK = DEFAULT_TOP_K,
-    topP = DEFAULT_TOP_P,
-    temperature = params.temperature ?: DEFAULT_TEMPERATURE,
-    seed = DEFAULT_SEED,
-)
+        topK = DEFAULT_TOP_K,
+        topP = DEFAULT_TOP_P,
+        temperature = params.temperature ?: DEFAULT_TEMPERATURE,
+        seed = DEFAULT_SEED,
+    )
 
 internal fun Prompt.liteRtResponseFormat(): ResponseFormat? =
     when (val schema = params.schema) {
-    null -> null
+        null -> null
 
-    is LLMParams.Schema.JSON.Standard -> ResponseFormat.json(schema.schema.toString())
+        is LLMParams.Schema.JSON.Standard -> ResponseFormat.json(schema.schema.toString())
 
-    else ->
-        throw UnsupportedOperationException(
-            "LiteRT JVM client supports only standard JSON response schemas",
-        )
-}
+        else ->
+            throw UnsupportedOperationException(
+                "LiteRT JVM client supports only standard JSON response schemas",
+            )
+    }
 
 internal fun Prompt.singleUserMessage(): String {
     val unsupportedMessages = messages.filterNot { it is Message.System || it is Message.User }

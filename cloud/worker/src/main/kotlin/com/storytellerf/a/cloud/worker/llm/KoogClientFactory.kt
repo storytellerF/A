@@ -66,35 +66,35 @@ object KoogClientFactory {
      */
     fun resolveModel(config: LlmConfig): LLModel =
         when (config.provider) {
-        LlmProvider.OPENAI -> resolveCatalogModel(OpenAIModels, config, OpenAIModels.Chat.GPT4o)
+            LlmProvider.OPENAI -> resolveCatalogModel(OpenAIModels, config, OpenAIModels.Chat.GPT4o)
 
-        LlmProvider.ANTHROPIC -> resolveCatalogModel(AnthropicModels, config, AnthropicModels.Sonnet_4)
+            LlmProvider.ANTHROPIC -> resolveCatalogModel(AnthropicModels, config, AnthropicModels.Sonnet_4)
 
-        LlmProvider.GOOGLE -> resolveCatalogModel(GoogleModels, config, GoogleModels.Gemini2_5Flash)
+            LlmProvider.GOOGLE -> resolveCatalogModel(GoogleModels, config, GoogleModels.Gemini2_5Flash)
 
-        LlmProvider.OLLAMA -> resolveCatalogModel(OllamaModels, config, OllamaModels.Meta.LLAMA_3_2)
+            LlmProvider.OLLAMA -> resolveCatalogModel(OllamaModels, config, OllamaModels.Meta.LLAMA_3_2)
 
-        LlmProvider.BEDROCK -> resolveCatalogModel(BedrockModels, config, BedrockModels.OpenAIGptOss120B)
+            LlmProvider.BEDROCK -> resolveCatalogModel(BedrockModels, config, BedrockModels.OpenAIGptOss120B)
 
-        LlmProvider.DEEPSEEK -> resolveCatalogModel(DeepSeekModels, config, DeepSeekModels.DeepSeekV4Flash)
+            LlmProvider.DEEPSEEK -> resolveCatalogModel(DeepSeekModels, config, DeepSeekModels.DeepSeekV4Flash)
 
-        LlmProvider.MISTRAL_AI -> resolveCatalogModel(MistralAIModels, config, MistralAIModels.Chat.MistralMedium31)
+            LlmProvider.MISTRAL_AI -> resolveCatalogModel(MistralAIModels, config, MistralAIModels.Chat.MistralMedium31)
 
-        LlmProvider.DASHSCOPE -> resolveCatalogModel(DashscopeModels, config, DashscopeModels.QWEN_PLUS)
+            LlmProvider.DASHSCOPE -> resolveCatalogModel(DashscopeModels, config, DashscopeModels.QWEN_PLUS)
 
-        LlmProvider.OPENAI_COMPATIBLE ->
-            LLModel(provider = LLMProvider.OpenAI, id = config.model ?: "gpt-3.5-turbo")
+            LlmProvider.OPENAI_COMPATIBLE ->
+                LLModel(provider = LLMProvider.OpenAI, id = config.model ?: "gpt-3.5-turbo")
 
-        LlmProvider.OPENROUTER ->
-            LLModel(
-                provider = LLMProvider.OpenRouter,
-                id = requireOpenRouterModel(config),
-                // Koog checks these before sending our completion/schema requests; the router validates model support.
-                capabilities = listOf(LLMCapability.Completion, LLMCapability.Schema.JSON.Standard),
-            )
+            LlmProvider.OPENROUTER ->
+                LLModel(
+                    provider = LLMProvider.OpenRouter,
+                    id = requireOpenRouterModel(config),
+                    // Koog checks these before sending our completion/schema requests; the router validates model support.
+                    capabilities = listOf(LLMCapability.Completion, LLMCapability.Schema.JSON.Standard),
+                )
 
-        LlmProvider.LITERT_LLM -> resolveLiteRtModel(config)
-    }
+            LlmProvider.LITERT_LLM -> resolveLiteRtModel(config)
+        }
 
     private fun createOpenAiClient(config: LlmConfig): LLMClient {
         val apiKey = config.apiKey ?: error("API key required for OpenAI")

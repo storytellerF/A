@@ -53,12 +53,12 @@ internal object InstalledPdfFonts {
 
     fun scan(roots: List<File>): List<InstalledFontFace> =
         roots.flatMap { root ->
-        root.walkTopDown().filter { it.isFile && it.extension.lowercase() in setOf("ttf", "otf", "ttc", "otc") }
-            .flatMap { file ->
-                // Unrelated unsupported or inaccessible installed fonts cannot block discovery.
-                captureFontFailure { InstalledFontMetadata.read(file) }.getOrNull().orEmpty().asSequence()
-            }.toList()
-    }
+            root.walkTopDown().filter { it.isFile && it.extension.lowercase() in setOf("ttf", "otf", "ttc", "otc") }
+                .flatMap { file ->
+                    // Unrelated unsupported or inaccessible installed fonts cannot block discovery.
+                    captureFontFailure { InstalledFontMetadata.read(file) }.getOrNull().orEmpty().asSequence()
+                }.toList()
+        }
 
     private fun directories(): List<File> {
         val home = File(System.getProperty("user.home"))

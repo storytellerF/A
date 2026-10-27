@@ -23,10 +23,10 @@ sealed interface DatabaseError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): DatabaseError =
             when (error) {
-            is DatabaseError -> error
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            else -> from(error.cause)
-        }
+                is DatabaseError -> error
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                else -> from(error.cause)
+            }
 
         fun from(cause: Throwable): DatabaseError {
             if (cause is CancellationException) throw cause

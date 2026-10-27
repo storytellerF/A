@@ -17,8 +17,8 @@ private val transactionFinalizers = setOf("ROLLBACK", "END", "COMMIT", "RELEASE"
 internal class CancellationSafeSQLiteDriver(private val delegate: SQLiteDriver) : SQLiteDriver by delegate {
     override suspend fun open(fileName: String): SQLiteConnection =
         awaitWorkerResponse(onCancelled = { it.close() }) {
-        CancellationSafeSQLiteConnection(delegate.open(fileName))
-    }
+            CancellationSafeSQLiteConnection(delegate.open(fileName))
+        }
 }
 
 private class CancellationSafeSQLiteConnection(private val delegate: SQLiteConnection) : SQLiteConnection by delegate {

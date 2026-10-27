@@ -36,98 +36,98 @@ class RpcRecoveryTest {
     @Test
     fun `failed establishment does not poison later calls`() =
         runTest {
-        withAdapter { adapter, server, _, _ ->
-            adapter.list("bucket", "").getOrThrow()
-            server.stop()
-            assertFailsWith<Exception> { adapter.list("bucket", "").getOrThrow() }
-            server.start()
-            assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _, _ ->
+                adapter.list("bucket", "").getOrThrow()
+                server.stop()
+                assertFailsWith<Exception> { adapter.list("bucket", "").getOrThrow() }
+                server.start()
+                assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `same adapter recovers after server restart`() =
         runTest {
-        withAdapter { adapter, server, _, pack ->
-            adapter.upload("bucket", listOf(pack)).getOrThrow()
-            server.stop()
-            server.start()
-            assertEquals(listOf("file"), adapter.list("bucket", "").getOrThrow().map { it.fullName })
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _, pack ->
+                adapter.upload("bucket", listOf(pack)).getOrThrow()
+                server.stop()
+                server.start()
+                assertEquals(listOf("file"), adapter.list("bucket", "").getOrThrow().map { it.fullName })
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `concurrent calls share one reconnected transport`() =
         runTest {
-        withAdapter { adapter, server, _, _ ->
-            adapter.list("bucket", "").getOrThrow()
-            server.stop()
-            server.start()
-            coroutineScope { List(16) { async { adapter.list("bucket", "").getOrThrow() } }.awaitAll() }
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _, _ ->
+                adapter.list("bucket", "").getOrThrow()
+                server.stop()
+                server.start()
+                coroutineScope { List(16) { async { adapter.list("bucket", "").getOrThrow() } }.awaitAll() }
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `interrupted upload is not replayed or resumed`() =
         runTest {
-        withAdapter { adapter, server, state, pack ->
-            state.pauseChunks.value = true
-            coroutineScope {
-                val pending = async { adapter.upload("bucket", listOf(pack)) }
-                state.entered.await()
-                server.stop()
-                assertFailsWith<Exception> { pending.await().getOrThrow() }
+            withAdapter { adapter, server, state, pack ->
+                state.pauseChunks.value = true
+                coroutineScope {
+                    val pending = async { adapter.upload("bucket", listOf(pack)) }
+                    state.entered.await()
+                    server.stop()
+                    assertFailsWith<Exception> { pending.await().getOrThrow() }
+                }
+                state.pauseChunks.value = false
+                server.start()
+                assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
+                assertEquals(1, state.begins.value)
+                assertEquals(0, state.finishes.value)
+                adapter.upload("bucket", listOf(pack)).getOrThrow()
+                assertEquals(2, state.begins.value)
+                assertEquals(1, state.finishes.value)
             }
-            state.pauseChunks.value = false
-            server.start()
-            assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
-            assertEquals(1, state.begins.value)
-            assertEquals(0, state.finishes.value)
-            adapter.upload("bucket", listOf(pack)).getOrThrow()
-            assertEquals(2, state.begins.value)
-            assertEquals(1, state.finishes.value)
         }
-    }
 
     @Test
     fun `caller cancellation aborts on pinned connection`() =
         runTest {
-        withAdapter { adapter, server, state, pack ->
-            state.pauseChunks.value = true
-            coroutineScope {
-                val pending = async { adapter.upload("bucket", listOf(pack)) }
-                state.entered.await()
-                pending.cancel(CancellationException("caller cancelled"))
-                assertFailsWith<CancellationException> { pending.await() }
-                pending.join()
+            withAdapter { adapter, server, state, pack ->
+                state.pauseChunks.value = true
+                coroutineScope {
+                    val pending = async { adapter.upload("bucket", listOf(pack)) }
+                    state.entered.await()
+                    pending.cancel(CancellationException("caller cancelled"))
+                    assertFailsWith<CancellationException> { pending.await() }
+                    pending.join()
+                }
+                state.pauseChunks.value = false
+                assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
+                assertEquals(1, state.aborts.value)
+                assertEquals(1, server.connections.value)
             }
-            state.pauseChunks.value = false
-            assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
-            assertEquals(1, state.aborts.value)
-            assertEquals(1, server.connections.value)
         }
-    }
 
     @Test
     fun `cancelled establishment leaves no cached client`() =
         runTest {
-        withAdapter { adapter, server, state, _ ->
-            state.pauseHealth.value = true
-            coroutineScope {
-                val pending = async { adapter.list("bucket", "") }
-                state.entered.await()
-                pending.cancel(CancellationException("cancel establishment"))
-                assertFailsWith<CancellationException> { pending.await() }
-                pending.join()
+            withAdapter { adapter, server, state, _ ->
+                state.pauseHealth.value = true
+                coroutineScope {
+                    val pending = async { adapter.list("bucket", "") }
+                    state.entered.await()
+                    pending.cancel(CancellationException("cancel establishment"))
+                    assertFailsWith<CancellationException> { pending.await() }
+                    pending.join()
+                }
+                state.pauseHealth.value = false
+                assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
+                assertEquals(2, server.connections.value)
             }
-            state.pauseHealth.value = false
-            assertTrue(adapter.list("bucket", "").getOrThrow().isEmpty())
-            assertEquals(2, server.connections.value)
         }
-    }
 
     private suspend fun withAdapter(
         block: suspend (
@@ -218,12 +218,12 @@ private class UploadConnection(private val state: UploadState) : FilesystemRpc {
     }
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): List<ObjectStorageRecord> =
         error(
-        "Unused",
-    )
+            "Unused",
+        )
     override suspend fun getChunk(bucketName: String, name: String, offset: Long, size: Int): ByteArray =
         error(
-        "Unused",
-    )
+            "Unused",
+        )
     override suspend fun compose(
         bucketName: String,
         targetFullName: String,
@@ -231,7 +231,7 @@ private class UploadConnection(private val state: UploadState) : FilesystemRpc {
         expectedSha256: String,
     ): ObjectStorageWriteRecord =
         error(
-        "Unused",
-    )
+            "Unused",
+        )
     override suspend fun delete(bucketName: String, names: List<String>): Unit = error("Unused")
 }

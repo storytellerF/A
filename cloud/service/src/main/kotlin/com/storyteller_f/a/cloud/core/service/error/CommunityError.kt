@@ -31,13 +31,13 @@ sealed interface CommunityError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): CommunityError =
             when (error) {
-            is CommunityError -> error
-            is ConstraintFailure -> Conflict(error.cause)
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is CommunityError -> error
+                is ConstraintFailure -> Conflict(error.cause)
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): CommunityError {
             if (cause is CancellationException) throw cause

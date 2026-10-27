@@ -22,13 +22,13 @@ object LayoutDefaults {
 
 fun Modifier.safeArea(paddingValues: PaddingValues, layoutDirection: LayoutDirection): Modifier =
     padding(
-    top = paddingValues.calculateTopPadding(),
-    start = paddingValues.calculateStartPadding(layoutDirection),
-    end = paddingValues.calculateEndPadding(layoutDirection),
-)
+        top = paddingValues.calculateTopPadding(),
+        start = paddingValues.calculateStartPadding(layoutDirection),
+        end = paddingValues.calculateEndPadding(layoutDirection),
+    )
 
 fun Modifier.horizontalSafeArea(paddingValues: PaddingValues, layoutDirection: LayoutDirection): Modifier =
     padding(
-    start = paddingValues.calculateStartPadding(layoutDirection),
-    end = paddingValues.calculateEndPadding(layoutDirection),
-)
+        start = paddingValues.calculateStartPadding(layoutDirection),
+        end = paddingValues.calculateEndPadding(layoutDirection),
+    )

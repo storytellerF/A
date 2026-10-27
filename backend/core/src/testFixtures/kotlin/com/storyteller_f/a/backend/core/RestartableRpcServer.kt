@@ -36,24 +36,24 @@ class RestartableRpcServer<Service : Any>(
 
     suspend fun start() =
         withContext(Dispatchers.IO) {
-        check(server == null)
-        val endpoint =
-            io.ktor.server.engine.embeddedServer(CIO, host = "127.0.0.1", port = port) {
-                install(WebSockets)
-                install(Krpc)
-                routing {
-                    rpc("/rpc") {
-                        opened.update { it + 1 }
-                        active.update { it + 1 }
-                        coroutineContext.job.invokeOnCompletion { active.update { it - 1 } }
-                        rpcConfig { serialization { json() } }
-                        registerService(serviceType, createService)
+            check(server == null)
+            val endpoint =
+                io.ktor.server.engine.embeddedServer(CIO, host = "127.0.0.1", port = port) {
+                    install(WebSockets)
+                    install(Krpc)
+                    routing {
+                        rpc("/rpc") {
+                            opened.update { it + 1 }
+                            active.update { it + 1 }
+                            coroutineContext.job.invokeOnCompletion { active.update { it - 1 } }
+                            rpcConfig { serialization { json() } }
+                            registerService(serviceType, createService)
+                        }
                     }
-                }
-            }.start(wait = false)
-        port = endpoint.engine.resolvedConnectors().single().port
-        server = endpoint
-    }
+                }.start(wait = false)
+            port = endpoint.engine.resolvedConnectors().single().port
+            server = endpoint
+        }
 
     suspend fun stop() {
         withContext(Dispatchers.IO) {

@@ -43,7 +43,7 @@ internal class WasmSocketProbe(private val browser: WebDriver) {
 
     fun assertForeignOriginRejected() {
         val socketUrl = script.executeScript("return window.appiumSocketProbe.sockets[0].url;")
-        WasmDistributionServer(File(".")).use { foreign ->
+        WasmDistributionServer(File("."), measureCoverage = false).use { foreign ->
             browser.get(foreign.bootstrapUrl)
             val opened =
                 script.executeAsyncScript(

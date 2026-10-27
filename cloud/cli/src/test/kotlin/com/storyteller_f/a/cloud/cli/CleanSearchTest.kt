@@ -29,10 +29,10 @@ class CleanSearchTest {
     @Test
     fun `clean removes every business search index`() =
         runTest {
-        val rpc = PopulatedIndexes()
-        cleanSearchIndexes(CleaningBackend(rpc))
-        assertEquals(emptySet(), rpc.remaining.value)
-    }
+            val rpc = PopulatedIndexes()
+            cleanSearchIndexes(CleaningBackend(rpc))
+            assertEquals(emptySet(), rpc.remaining.value)
+        }
 }
 
 private class CleaningBackend(rpc: LuceneRpc) : Backend {

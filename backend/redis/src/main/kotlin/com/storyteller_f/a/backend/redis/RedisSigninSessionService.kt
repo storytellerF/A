@@ -42,14 +42,14 @@ internal class RedisSigninSessionService(endpoint: String, private val namespace
 
     override suspend fun consumeChallenge(id: String, data: String, expectedType: String): Boolean =
         (
-        access {
-            client.eval(
-                CONSUME_CHALLENGE,
-                arrayOf(key(id)),
-                arrayOf(data, expectedType),
-            )
-        } as? Number
-        )?.toInt() == 1
+            access {
+                client.eval(
+                    CONSUME_CHALLENGE,
+                    arrayOf(key(id)),
+                    arrayOf(data, expectedType),
+                )
+            } as? Number
+            )?.toInt() == 1
 
     override suspend fun invalidateAccount(id: Long) {
         access { client.eval(REMOVE_ACCOUNT, arrayOf("signin:$namespace:account:$id"), emptyArray()) }
@@ -57,12 +57,12 @@ internal class RedisSigninSessionService(endpoint: String, private val namespace
 
     private suspend fun <T> access(block: suspend () -> T): T =
         try {
-        block()
-    } catch (cancellation: CancellationException) {
-        throw cancellation
-    } catch (_: Exception) {
-        throw SigninSessionUnavailableException()
-    }
+            block()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            throw SigninSessionUnavailableException()
+        }
 
     override fun close() = client.close()
 

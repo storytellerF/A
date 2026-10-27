@@ -26,49 +26,49 @@ internal class GoogleLlmExecutionTest {
     @Test
     fun `Google executes native content requests`() =
         runTest {
-        withGoogleService { service, requests ->
-            assertEquals(GOOGLE_TEST_RESPONSE, service.generateResponse("User message", "System instruction", null))
+            withGoogleService { service, requests ->
+                assertEquals(GOOGLE_TEST_RESPONSE, service.generateResponse("User message", "System instruction", null))
 
-            val request = requests.receive()
-            assertEquals("POST", request.method)
-            assertEquals("/v1beta/models/gemini-2.5-flash:generateContent", request.path)
-            assertEquals("key=test-key", request.query)
-            assertNull(request.authorization)
-            val content =
-                request.body.getValue("contents")
-                    .jsonArray.single().jsonObject
-            assertEquals("user", content.getValue("role").jsonPrimitive.content)
-            assertEquals("User message", content.googleText())
-            assertEquals("System instruction", request.body.getValue("systemInstruction").jsonObject.googleText())
-            val generation = request.body.getValue("generationConfig").jsonObject
-            assertEquals("0.7", generation.getValue("temperature").jsonPrimitive.content)
-            assertEquals("1024", generation.getValue("maxOutputTokens").jsonPrimitive.content)
-            assertNull(generation["responseJsonSchema"])
+                val request = requests.receive()
+                assertEquals("POST", request.method)
+                assertEquals("/v1beta/models/gemini-2.5-flash:generateContent", request.path)
+                assertEquals("key=test-key", request.query)
+                assertNull(request.authorization)
+                val content =
+                    request.body.getValue("contents")
+                        .jsonArray.single().jsonObject
+                assertEquals("user", content.getValue("role").jsonPrimitive.content)
+                assertEquals("User message", content.googleText())
+                assertEquals("System instruction", request.body.getValue("systemInstruction").jsonObject.googleText())
+                val generation = request.body.getValue("generationConfig").jsonObject
+                assertEquals("0.7", generation.getValue("temperature").jsonPrimitive.content)
+                assertEquals("1024", generation.getValue("maxOutputTokens").jsonPrimitive.content)
+                assertNull(generation["responseJsonSchema"])
+            }
         }
-    }
 
     @Test
     fun `Google sends native standard JSON schema`() =
         runTest {
-        val schema =
-            buildJsonObject {
-                put("type", "object")
-                put("properties", buildJsonObject { put("is_harmful", buildJsonObject { put("type", "boolean") }) })
-            }
-        withGoogleService { service, requests ->
-            assertEquals(
-                GOOGLE_TEST_RESPONSE,
-                service.generateResponse("Classify topic", null, LlmResponseSchema("decision", schema)),
-            )
+            val schema =
+                buildJsonObject {
+                    put("type", "object")
+                    put("properties", buildJsonObject { put("is_harmful", buildJsonObject { put("type", "boolean") }) })
+                }
+            withGoogleService { service, requests ->
+                assertEquals(
+                    GOOGLE_TEST_RESPONSE,
+                    service.generateResponse("Classify topic", null, LlmResponseSchema("decision", schema)),
+                )
 
-            val body = requests.receive().body
-            val generation = body.getValue("generationConfig").jsonObject
-            assertEquals("application/json", generation.getValue("responseMimeType").jsonPrimitive.content)
-            assertEquals(schema, generation.getValue("responseJsonSchema"))
-            assertNull(body["response_format"])
-            assertNull(body["messages"])
+                val body = requests.receive().body
+                val generation = body.getValue("generationConfig").jsonObject
+                assertEquals("application/json", generation.getValue("responseMimeType").jsonPrimitive.content)
+                assertEquals(schema, generation.getValue("responseJsonSchema"))
+                assertNull(body["response_format"])
+                assertNull(body["messages"])
+            }
         }
-    }
 }
 
 private suspend fun withGoogleService(block: suspend (KoogLlmService, Channel<CapturedLlmRequest>) -> Unit) =
@@ -86,31 +86,31 @@ private suspend fun withGoogleService(block: suspend (KoogLlmService, Channel<Ca
 
 private fun JsonObject.googleText(): String =
     getValue("parts").jsonArray.single().jsonObject
-    .getValue("text").jsonPrimitive.content
+        .getValue("text").jsonPrimitive.content
 
 private fun buildGoogleResponse(): JsonObject =
     buildJsonObject {
-    put(
-        "candidates",
-        buildJsonArray {
-            add(
-                buildJsonObject {
-                    put(
-                        "content",
-                        buildJsonObject {
-                            put("role", "model")
-                            put(
-                                "parts",
-                                buildJsonArray {
-                                    add(buildJsonObject { put("text", GOOGLE_TEST_RESPONSE) })
-                                },
-                            )
-                        },
-                    )
-                    put("finishReason", "STOP")
-                    put("index", 0)
-                },
-            )
-        },
-    )
-}
+        put(
+            "candidates",
+            buildJsonArray {
+                add(
+                    buildJsonObject {
+                        put(
+                            "content",
+                            buildJsonObject {
+                                put("role", "model")
+                                put(
+                                    "parts",
+                                    buildJsonArray {
+                                        add(buildJsonObject { put("text", GOOGLE_TEST_RESPONSE) })
+                                    },
+                                )
+                            },
+                        )
+                        put("finishReason", "STOP")
+                        put("index", 0)
+                    },
+                )
+            },
+        )
+    }

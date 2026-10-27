@@ -22,6 +22,6 @@ data class UserTwoFactor(
 
 fun UserTwoFactor?.toTwoFactorSettingsInfo(): TwoFactorSettingsInfo =
     TwoFactorSettingsInfo(
-    enabled = this?.enabled == true,
-    type = this?.type?.takeIf { enabled },
-)
+        enabled = this?.enabled == true,
+        type = this?.type?.takeIf { enabled },
+    )

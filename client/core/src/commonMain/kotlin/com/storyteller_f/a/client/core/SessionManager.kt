@@ -238,13 +238,13 @@ suspend fun prepareSignInFromPrivateKey(
     getData: suspend () -> CustomResult<String, RequestError>,
 ): CustomResult<PreparedSignInParam, RequestError> =
     getAlgo(authKey.algo).captureFailure(RequestError::from) {
-    val data = getData().getOrThrow()
-    val f = finalData(data)
+        val data = getData().getOrThrow()
+        val f = finalData(data)
 
-    val signature = signature(authKey.derPrivateKey, f).getOrThrow()
-    val address = calcAddress(authKey.derPublicKey).getOrThrow()
-    PreparedSignInParam(signature, address, authKey, data)
-}.mapError(RequestError::fromError)
+        val signature = signature(authKey.derPrivateKey, f).getOrThrow()
+        val address = calcAddress(authKey.derPublicKey).getOrThrow()
+        PreparedSignInParam(signature, address, authKey, data)
+    }.mapError(RequestError::fromError)
 
 data class SignResult<U>(
     val userInfo: U,

@@ -10,8 +10,8 @@ import androidx.compose.ui.window.ComposeUIViewController
 
 fun MainViewController() =
     ComposeUIViewController {
-    val panelUiViewModel = remember { createPanelUIViewModel() }
-    CompositionLocalProvider(LocalPanelUiViewModel provides panelUiViewModel) {
-        App()
+        val panelUiViewModel = remember { createPanelUIViewModel() }
+        CompositionLocalProvider(LocalPanelUiViewModel provides panelUiViewModel) {
+            App()
+        }
     }
-}

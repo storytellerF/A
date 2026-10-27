@@ -25,41 +25,41 @@ internal class DesktopRtcVideo(private val track: VideoTrack) : RtcVideo {
 
     suspend fun attach(sink: VideoTrackSink): Boolean =
         access.withLock {
-        if (closed) return@withLock false
-        track.addSink(sink)
-        sinks.add(sink)
-        true
-    }
+            if (closed) return@withLock false
+            track.addSink(sink)
+            sinks.add(sink)
+            true
+        }
 
     suspend fun detach(sink: VideoTrackSink) =
         access.withLock {
-        if (sinks.remove(sink)) track.removeSink(sink)
-    }
+            if (sinks.remove(sink)) track.removeSink(sink)
+        }
 
     override suspend fun close() =
         access.withLock {
-        closed = true
-        sinks.forEach { track.removeSink(it) }
-        sinks.clear()
-    }
+            closed = true
+            sinks.forEach { track.removeSink(it) }
+            sinks.clear()
+        }
 }
 
 internal actual fun createRtcEngine(): RtcEngine =
     KtorRtcEngine(Dispatchers.IO.limitedParallelism(1)) {
-    val devices = JvmMediaDevices()
-    try {
-        devices.audioModule.initPlayout()
-        devices.audioModule.startPlayout()
-        KtorRtcRuntime(
-            WebRtcClient(JvmWebRtc) { mediaTrackFactory = devices },
-            closeAudio = { it.getNative().dispose() },
-            closeResources = devices::close,
-        )
-    } catch (failure: Exception) {
-        devices.close()
-        throw failure
+        val devices = JvmMediaDevices()
+        try {
+            devices.audioModule.initPlayout()
+            devices.audioModule.startPlayout()
+            KtorRtcRuntime(
+                WebRtcClient(JvmWebRtc) { mediaTrackFactory = devices },
+                closeAudio = { it.getNative().dispose() },
+                closeResources = devices::close,
+            )
+        } catch (failure: Exception) {
+            devices.close()
+            throw failure
+        }
     }
-}
 
 internal actual fun wrapRtcVideo(track: WebRtcMedia.VideoTrack): RtcVideo = DesktopRtcVideo(track.getNative())
 
@@ -67,7 +67,7 @@ internal actual fun releaseRtcConnection(connection: WebRtcPeerConnection) = Uni
 
 internal actual fun playRtcAudio(track: WebRtcMedia.AudioTrack): RtcAudioPlayback =
     object : RtcAudioPlayback {
-    override fun close() {
-        track.enable(false)
+        override fun close() {
+            track.enable(false)
+        }
     }
-}

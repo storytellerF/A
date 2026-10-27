@@ -298,28 +298,28 @@ private suspend fun Backend.checkRoomIcon(update: UpdateRoomBody): CustomResult<
 
 private fun checkRoomName(update: UpdateRoomBody): CustomResult<Unit, RoomError> =
     when (
-    checkNickname(
-        update.name,
-        1..ROOM_NAME_LENGTH,
-    )
-) {
-    StringCheckResult.RANGE_MISMATCH ->
-        CustomResult.Failure(
-            RoomError.from(
-                CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH"),
-            ),
+        checkNickname(
+            update.name,
+            1..ROOM_NAME_LENGTH,
         )
+    ) {
+        StringCheckResult.RANGE_MISMATCH ->
+            CustomResult.Failure(
+                RoomError.from(
+                    CustomBadRequestException("room name must be between in 1 and $ROOM_NAME_LENGTH"),
+                ),
+            )
 
-    StringCheckResult.CONTAIN_INVALID_CHAR ->
-        CustomResult.Failure(
-            RoomError.from(CustomBadRequestException("room name must be visible")),
-        )
+        StringCheckResult.CONTAIN_INVALID_CHAR ->
+            CustomResult.Failure(
+                RoomError.from(CustomBadRequestException("room name must be visible")),
+            )
 
-    StringCheckResult.SUCCESS -> CustomResult.Success(Unit)
+        StringCheckResult.SUCCESS -> CustomResult.Success(Unit)
 
-    StringCheckResult.NULL, StringCheckResult.EMPTY ->
-        CustomResult.Failure(RoomError.from(CustomBadRequestException("room name must be visible")))
-}.mapError(RoomError::fromError)
+        StringCheckResult.NULL, StringCheckResult.EMPTY ->
+            CustomResult.Failure(RoomError.from(CustomBadRequestException("room name must be visible")))
+    }.mapError(RoomError::fromError)
 
 suspend fun searchRoomMembers(
     backend: Backend,
@@ -343,17 +343,17 @@ suspend fun searchRoomMembers(
 
 suspend fun Backend.processRawRoomToRoomInfo(list: List<RawRoom>) =
     database.file.getFileRecordByIds(
-    list.mapNotNull {
-        it.room.icon
-    },
-).andThen(RoomError::fromError) { medias ->
-    processFileRecordToFileInfo(medias).map { mediaList ->
-        val mediaInfoMap = mediaList.associateBy { it.id }
-        list.map { rawRoom ->
-            rawRoom.toRoomInfo(icon = rawRoom.room.icon?.let { mediaInfoMap[it] })
+        list.mapNotNull {
+            it.room.icon
+        },
+    ).andThen(RoomError::fromError) { medias ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
+            val mediaInfoMap = mediaList.associateBy { it.id }
+            list.map { rawRoom ->
+                rawRoom.toRoomInfo(icon = rawRoom.room.icon?.let { mediaInfoMap[it] })
+            }
         }
     }
-}
 
 suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch, uid: PrimaryKey? = null) =
     database.room.getRawRooms(listFetch, uid).andThen(RoomError::fromError) {
@@ -362,34 +362,34 @@ suspend fun Backend.getRoomInfoList(listFetch: ObjectListFetch.IdListFetch, uid:
 
 suspend fun Backend.getAllPublicRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getRoomPaginationResult(
-    uid = null,
-    community = null,
-    primaryKeyFetch = primaryKeyFetch,
-    joinSearch = JoinSearch.Unspecified(null),
-).mapPagingResultNotNull(RoomError::fromError) { list ->
-    processRawRoomToRoomInfo(list)
-}
+        uid = null,
+        community = null,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Unspecified(null),
+    ).mapPagingResultNotNull(RoomError::fromError) { list ->
+        processRawRoomToRoomInfo(list)
+    }
 
 suspend fun Backend.getAllPrivateRooms(primaryKeyFetch: PrimaryKeyFetch) =
     database.room.getPrivateRoomPaginationResult(
-    primaryKeyFetch = primaryKeyFetch,
-    word = null,
-).mapPagingResultNotNull(RoomError::fromError) { list ->
-    processRawRoomToRoomInfo(list)
-}
+        primaryKeyFetch = primaryKeyFetch,
+        word = null,
+    ).mapPagingResultNotNull(RoomError::fromError) { list ->
+        processRawRoomToRoomInfo(list)
+    }
 
 suspend fun Backend.getUserJoinedRooms(
     uid: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
 ): CustomResult<PaginationResult<RoomInfo>, RoomError> =
     database.room.getRoomPaginationResult(
-    uid = uid,
-    community = null,
-    primaryKeyFetch = primaryKeyFetch,
-    joinSearch = JoinSearch.Joined(uid),
-).mapPagingResultNotNull(RoomError::fromError) { list ->
-    processRawRoomToRoomInfo(list)
-}.mapError(RoomError::fromError)
+        uid = uid,
+        community = null,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Joined(uid),
+    ).mapPagingResultNotNull(RoomError::fromError) { list ->
+        processRawRoomToRoomInfo(list)
+    }.mapError(RoomError::fromError)
 
 suspend fun Backend.getCommunityRooms(
     communityId: PrimaryKey,
@@ -398,13 +398,13 @@ suspend fun Backend.getCommunityRooms(
     joinStatus: JoinStatusSearch? = null,
 ): CustomResult<PaginationResult<RoomInfo>, RoomError> =
     database.room.getRoomPaginationResult(
-    uid = uid,
-    community = communityId,
-    primaryKeyFetch = primaryKeyFetch,
-    joinSearch = joinStatus.toJoinSearch(uid),
-).mapPagingResultNotNull(RoomError::fromError) { list ->
-    processRawRoomToRoomInfo(list)
-}.mapError(RoomError::fromError)
+        uid = uid,
+        community = communityId,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = joinStatus.toJoinSearch(uid),
+    ).mapPagingResultNotNull(RoomError::fromError) { list ->
+        processRawRoomToRoomInfo(list)
+    }.mapError(RoomError::fromError)
 
 /**
  * 搜索社区中的房间.
@@ -482,9 +482,9 @@ suspend fun Backend.uncheckedGetRoomMemberInfos(
     primaryKeyFetch: PrimaryKeyFetch,
 ): CustomResult<PaginationResult<MemberInfo>, RoomError> =
     getContainerMemberInfos(
-    roomId,
-    primaryKeyFetch,
-).mapError(RoomError::fromError)
+        roomId,
+        primaryKeyFetch,
+    ).mapError(RoomError::fromError)
 
 suspend fun Backend.getRoomMemberInfos(
     roomId: PrimaryKey,

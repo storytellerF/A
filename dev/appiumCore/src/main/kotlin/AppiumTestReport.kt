@@ -55,6 +55,17 @@ internal class AppiumTestReport(
         }
     }
 
+    /** Coverage IO must complete before process teardown, including when the test was cancelled. */
+    suspend fun collectSuspending(label: String, block: suspend () -> Unit) {
+        try {
+            withContext(NonCancellable) { block() }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Exception) {
+            collectionErrors.add("$label: ${failure.stackTraceToString()}")
+        }
+    }
+
     suspend fun run(block: suspend () -> Unit) {
         var outcome: AppiumOutcome = AppiumOutcome.Running
         try {

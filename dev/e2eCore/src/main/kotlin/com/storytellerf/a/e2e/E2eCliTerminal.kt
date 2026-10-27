@@ -6,10 +6,12 @@ package com.storytellerf.a.e2e
 
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
+import com.storyteller_f.a.test.E2eCoverage
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -19,6 +21,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -43,11 +46,67 @@ class E2eCliTerminalFactory(private val ioDispatcher: CoroutineDispatcher = Disp
                 scope = scope,
                 ioDispatcher = ioDispatcher,
             )
-        return try {
-            block(terminal)
-        } finally {
-            terminal.close()
+        return withE2eTerminalCleanup(
+            cleanup = { failure -> closeTerminal(terminal, ports, installDirProperty, failure) },
+            block = { block(terminal) },
+        )
+    }
+
+    private suspend fun closeTerminal(
+        terminal: E2eCliTerminal,
+        ports: E2ePorts,
+        installDirProperty: String,
+        primaryFailure: Throwable?,
+    ) {
+        withContext(NonCancellable) {
+            val failures = mutableListOf<Throwable>()
+            try {
+                try {
+                    if (E2eCoverage.enabled) {
+                        val directory = checkNotNull(ports.artifactDirectory)
+                        val targetName = if (installDirProperty.contains("panel")) "panel" else "app"
+                        E2eCoverage.collectJvm(
+                            directory.resolve("coverage/control/cli"),
+                            directory.resolve("coverage/cli"),
+                            ":$targetName:cliApp",
+                        )
+                    }
+                } catch (cancellation: CancellationException) {
+                    throw cancellation
+                } catch (failure: Throwable) {
+                    failures.add(failure)
+                }
+            } finally {
+                closeTerminalProcess(terminal)?.let(failures::add)
+            }
+            failures.firstOrNull()?.let { failure ->
+                failures.drop(1).forEach(failure::addSuppressed)
+                primaryFailure?.addSuppressed(failure) ?: throw failure
+            }
         }
+    }
+
+    private suspend fun closeTerminalProcess(terminal: E2eCliTerminal): Throwable? =
+        try {
+            terminal.close()
+            null
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Throwable) {
+            failure
+        }
+}
+
+/** Like use, with an inline cleanup lambda so the owner can perform cancellation-safe suspending cleanup. */
+internal inline fun <T> withE2eTerminalCleanup(cleanup: (Throwable?) -> Unit, block: () -> T): T {
+    var primaryFailure: Throwable? = null
+    return try {
+        block()
+    } catch (failure: Throwable) {
+        primaryFailure = failure
+        throw failure
+    } finally {
+        cleanup(primaryFailure)
     }
 }
 
@@ -186,6 +245,12 @@ class E2eCliTerminal private constructor(
                 put("TERM", "xterm-256color")
                 put("SERVER_URL", "http://127.0.0.1:${ports.server}")
                 put("WS_SERVER_URL", "ws://127.0.0.1:${ports.ws}")
+                if (E2eCoverage.enabled) {
+                    put(
+                        "E2E_COVERAGE_DIRECTORY",
+                        checkNotNull(ports.artifactDirectory).resolve("coverage/control/cli").absolutePath,
+                    )
+                }
             }
             return environment
         }

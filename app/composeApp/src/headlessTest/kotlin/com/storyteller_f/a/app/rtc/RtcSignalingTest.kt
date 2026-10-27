@@ -18,27 +18,27 @@ class RtcSignalingTest {
     @Test
     fun candidatesRemainOrderedUntilNegotiationCompletes() =
         runTest {
-        val signaling = RtcSignaling()
-        val frames =
-            (0 until 24).map { index ->
-                RoomFrame.ReceiveCandidate(CustomCandidate("audio", index, "candidate-$index"), 1L, 2L)
-            }
-        frames.forEach(signaling::receiveCandidate)
-        assertEquals(frames, signaling.candidates.take(frames.size).toList())
-        signaling.cancel()
-    }
+            val signaling = RtcSignaling()
+            val frames =
+                (0 until 24).map { index ->
+                    RoomFrame.ReceiveCandidate(CustomCandidate("audio", index, "candidate-$index"), 1L, 2L)
+                }
+            frames.forEach(signaling::receiveCandidate)
+            assertEquals(frames, signaling.candidates.take(frames.size).toList())
+            signaling.cancel()
+        }
 
     @Test
     fun peersKeepIndependentCandidates() =
         runTest {
-        val first = RtcSignaling()
-        val second = RtcSignaling()
-        val frame = RoomFrame.ReceiveCandidate(CustomCandidate("audio", 0, "candidate"), 1L, 2L)
-        val received = async { second.candidates.take(1).toList() }
-        first.cancel()
-        second.receiveCandidate(frame)
-        assertEquals(listOf(frame), received.await())
-        assertTrue(first.answer.isCancelled)
-        second.cancel()
-    }
+            val first = RtcSignaling()
+            val second = RtcSignaling()
+            val frame = RoomFrame.ReceiveCandidate(CustomCandidate("audio", 0, "candidate"), 1L, 2L)
+            val received = async { second.candidates.take(1).toList() }
+            first.cancel()
+            second.receiveCandidate(frame)
+            assertEquals(listOf(frame), received.await())
+            assertTrue(first.answer.isCancelled)
+            second.cancel()
+        }
 }

@@ -5,6 +5,7 @@ set -e
 RUN_ANDROID=false
 RUN_DESKTOP=false
 RUN_E2E=false
+E2E_COVERAGE=false
 RUN_COMPOSE=false
 MODULE="app:composeApp"
 TEST_FILTERS=""
@@ -26,6 +27,7 @@ while [ "$#" -gt 0 ]; do
     --android) RUN_ANDROID=true; shift ;;
     --desktop) RUN_DESKTOP=true; shift ;;
     --e2e) RUN_E2E=true; shift ;;
+    --coverage) E2E_COVERAGE=true; shift ;;
     --compose) RUN_COMPOSE=true; shift ;;
     --plain) GRADLE_CONSOLE_ARGS="--console=plain"; shift ;;
     --module)
@@ -58,7 +60,10 @@ runGradle() {
   if [ -n "$GRADLE_CONSOLE_ARGS" ]; then
     set -- "$@" "$GRADLE_CONSOLE_ARGS"
   fi
-  ./gradlew "$@"
+  if [ "$E2E_COVERAGE" = true ]; then
+    set -- "$@" -Pe2e.coverage=true
+  fi
+  ./gradlew "$@" -Pserver.flavor=dev -Pserver.buildType=debug
 }
 
 runGradleWithTests() {
@@ -96,6 +101,11 @@ if [ "$RUN_ALL" = true ]; then
   RUN_DESKTOP=true
   RUN_E2E=true
   RUN_COMPOSE=true
+fi
+
+if [ "$E2E_COVERAGE" = true ] && [ "$RUN_E2E" != true ]; then
+  echo "--coverage requires --e2e or --all"
+  exit 1
 fi
 
 showNotification() {
@@ -192,7 +202,7 @@ if [ "$RUN_ANDROID" = true ] || [ "$RUN_E2E" = true ]; then
 fi
 
 echo "Running detekt..."
-if ! ./gradlew detekt $GRADLE_CONSOLE_ARGS; then
+if ! runGradle detekt --max-workers=1; then
     showNotification "Detekt 失败" "代码静态分析失败！请检查代码规范问题。" "false"
     exit 1
 fi

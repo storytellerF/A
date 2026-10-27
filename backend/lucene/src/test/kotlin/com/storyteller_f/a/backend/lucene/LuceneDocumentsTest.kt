@@ -69,38 +69,38 @@ class LuceneDocumentsTest {
     @Test
     fun `topic lookup uses explicit query fields`() =
         runBlocking {
-        val first = TopicDocument(1, "first", 2, "COMMUNITY", 3, "ROOM", 4)
-        val second = first.copy(id = 2, content = "second")
-        val ids = listOf(2L, 99L, 1L, 2L)
-        val rpc =
-            object : LuceneRpc {
-                override suspend fun health() = "ok"
-                override suspend fun save(index: String, documents: List<RpcLuceneDocument>): Unit =
-                    error(
-                    "unexpected save",
-                )
-                override suspend fun clean(index: String): Unit = error("unexpected clean")
-                override suspend fun delete(index: String, query: RpcLuceneQuery): Unit = error("unexpected delete")
-                override suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult {
-                    assertEquals("topic", index)
-                    assertEquals(mapOf(DOCUMENT_ID_FIELD to ids), query.mustLongSet)
-                    assertEquals(ids.size, query.size)
-                    return RpcLuceneResult(
-                        listOf(
-                            LuceneTopicDocument(first).save().stored(),
-                            LuceneTopicDocument(second).save().stored(),
-                        ),
-                        2,
-                    )
+            val first = TopicDocument(1, "first", 2, "COMMUNITY", 3, "ROOM", 4)
+            val second = first.copy(id = 2, content = "second")
+            val ids = listOf(2L, 99L, 1L, 2L)
+            val rpc =
+                object : LuceneRpc {
+                    override suspend fun health() = "ok"
+                    override suspend fun save(index: String, documents: List<RpcLuceneDocument>): Unit =
+                        error(
+                            "unexpected save",
+                        )
+                    override suspend fun clean(index: String): Unit = error("unexpected clean")
+                    override suspend fun delete(index: String, query: RpcLuceneQuery): Unit = error("unexpected delete")
+                    override suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult {
+                        assertEquals("topic", index)
+                        assertEquals(mapOf(DOCUMENT_ID_FIELD to ids), query.mustLongSet)
+                        assertEquals(ids.size, query.size)
+                        return RpcLuceneResult(
+                            listOf(
+                                LuceneTopicDocument(first).save().stored(),
+                                LuceneTopicDocument(second).save().stored(),
+                            ),
+                            2,
+                        )
+                    }
                 }
-            }
-        val service = LuceneTopicSearchService(rpc)
-        assertEquals(listOf(second, null, first, second), service.getDocuments(ids).getOrThrow())
-        assertEquals(emptyList(), service.getDocuments(emptyList()).getOrThrow())
-    }
+            val service = LuceneTopicSearchService(rpc)
+            assertEquals(listOf(second, null, first, second), service.getDocuments(ids).getOrThrow())
+            assertEquals(emptyList(), service.getDocuments(emptyList()).getOrThrow())
+        }
 
     private fun RpcLuceneDocument.stored() =
         RpcLuceneStoredDocument(
-        fields.filter { it.stored }.groupBy { it.name }.mapValues { (_, fields) -> fields.map { it.value } },
-    )
+            fields.filter { it.stored }.groupBy { it.name }.mapValues { (_, fields) -> fields.map { it.value } },
+        )
 }

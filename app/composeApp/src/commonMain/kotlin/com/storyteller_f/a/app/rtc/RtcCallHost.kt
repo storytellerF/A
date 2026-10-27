@@ -148,21 +148,21 @@ internal class RtcCallHost(
 
     fun toggleVideo() =
         changeMedia {
-        if (it.localVideo == null) it else it.copy(videoMuted = !it.videoMuted)
-    }
+            if (it.localVideo == null) it else it.copy(videoMuted = !it.videoMuted)
+        }
 
     fun switchCamera() =
         updateMedia { active ->
-        active.media.switchCamera()
-        active.copy(localVideo = active.media.video)
-    }
+            active.media.switchCamera()
+            active.copy(localVideo = active.media.video)
+        }
 
     private fun changeMedia(change: (RtcCallState.Active) -> RtcCallState.Active) =
         updateMedia { active ->
-        val updated = change(active)
-        updated.media.mute(updated.audioMuted, updated.videoMuted)
-        updated
-    }
+            val updated = change(active)
+            updated.media.mute(updated.audioMuted, updated.videoMuted)
+            updated
+        }
 
     private fun updateMedia(change: suspend (RtcCallState.Active) -> RtcCallState.Active) {
         scope.launch {
@@ -270,52 +270,52 @@ internal class RtcCallHost(
         identity: Any,
     ): Unit =
         coroutineScope {
-        val events =
-            RtcPeerEvents(
-                candidate = { candidate ->
-                    scope.launch {
-                        if (current == generation && peerIdentities[uid] === identity) {
-                            send(RoomFrame.SendCandidate(candidate, roomId, uid))
+            val events =
+                RtcPeerEvents(
+                    candidate = { candidate ->
+                        scope.launch {
+                            if (current == generation && peerIdentities[uid] === identity) {
+                                send(RoomFrame.SendCandidate(candidate, roomId, uid))
+                            }
                         }
-                    }
-                },
-                video = { video ->
-                    scope.launch {
-                        if (current == generation && peerIdentities[uid] === identity) {
-                            updateParticipant(
-                                uid,
-                            ) { it.copy(video = video) }
+                    },
+                    video = { video ->
+                        scope.launch {
+                            if (current == generation && peerIdentities[uid] === identity) {
+                                updateParticipant(
+                                    uid,
+                                ) { it.copy(video = video) }
+                            }
                         }
-                    }
-                },
-                connection = { connection ->
-                    scope.launch {
-                        if (current == generation && peerIdentities[uid] === identity) {
-                            updateParticipant(uid) { it.copy(connection = connection) }
+                    },
+                    connection = { connection ->
+                        scope.launch {
+                            if (current == generation && peerIdentities[uid] === identity) {
+                                updateParticipant(uid) { it.copy(connection = connection) }
+                            }
                         }
+                    },
+                )
+            val peer = engine.createPeer(media, events, this)
+            try {
+                when (frame) {
+                    is RoomFrame.CreateOffer -> {
+                        send(RoomFrame.SendOffer(CustomOffer(peer.createOffer()), roomId, uid))
+                        peer.acceptAnswer(signaling.answer.await().answer.sdp)
                     }
-                },
-            )
-        val peer = engine.createPeer(media, events, this)
-        try {
-            when (frame) {
-                is RoomFrame.CreateOffer -> {
-                    send(RoomFrame.SendOffer(CustomOffer(peer.createOffer()), roomId, uid))
-                    peer.acceptAnswer(signaling.answer.await().answer.sdp)
-                }
 
-                is RoomFrame.CreateAnswer -> {
-                    send(RoomFrame.SendAnswer(CustomAnswer(peer.createAnswer(frame.offer.sdp)), roomId, uid))
-                }
+                    is RoomFrame.CreateAnswer -> {
+                        send(RoomFrame.SendAnswer(CustomAnswer(peer.createAnswer(frame.offer.sdp)), roomId, uid))
+                    }
 
-                else -> error("Unexpected peer negotiation frame")
+                    else -> error("Unexpected peer negotiation frame")
+                }
+                signaling.candidates.onEach { peer.addCandidate(it.candidate) }.launchIn(this)
+                awaitCancellation()
+            } finally {
+                withContext(NonCancellable) { peer.close() }
             }
-            signaling.candidates.onEach { peer.addCandidate(it.candidate) }.launchIn(this)
-            awaitCancellation()
-        } finally {
-            withContext(NonCancellable) { peer.close() }
         }
-    }
 
     private fun updateParticipant(uid: PrimaryKey, update: (RtcParticipant) -> RtcParticipant) {
         val active = mutableState.value as? RtcCallState.Active ?: return
@@ -345,29 +345,29 @@ internal class RtcCallHost(
 
     private suspend fun releaseCall() =
         withContext(NonCancellable) {
-        if (mutableState.value == RtcCallState.Leaving) return@withContext
-        ++generation
-        joining?.cancel()
-        joining = null
-        val active = mutableState.value as? RtcCallState.Active
-        mutableState.value = RtcCallState.Leaving
-        peerIdentities.clear()
-        val jobs = peers.values.toList()
-        peers.clear()
-        signals.values.forEach(RtcSignaling::cancel)
-        signals.clear()
-        jobs.forEach(Job::cancel)
-        jobs.forEach { it.join() }
-        mediaMutex.withLock { active?.media?.close() }
-        if (active != null) {
-            try {
-                send(RoomFrame.StopCall(roomId))
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (failure: Exception) {
-                Napier.e(failure, tag = "rtc") { "Unable to leave room call" }
+            if (mutableState.value == RtcCallState.Leaving) return@withContext
+            ++generation
+            joining?.cancel()
+            joining = null
+            val active = mutableState.value as? RtcCallState.Active
+            mutableState.value = RtcCallState.Leaving
+            peerIdentities.clear()
+            val jobs = peers.values.toList()
+            peers.clear()
+            signals.values.forEach(RtcSignaling::cancel)
+            signals.clear()
+            jobs.forEach(Job::cancel)
+            jobs.forEach { it.join() }
+            mediaMutex.withLock { active?.media?.close() }
+            if (active != null) {
+                try {
+                    send(RoomFrame.StopCall(roomId))
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    Napier.e(failure, tag = "rtc") { "Unable to leave room call" }
+                }
             }
+            mutableState.value = RtcCallState.Ready()
         }
-        mutableState.value = RtcCallState.Ready()
-    }
 }

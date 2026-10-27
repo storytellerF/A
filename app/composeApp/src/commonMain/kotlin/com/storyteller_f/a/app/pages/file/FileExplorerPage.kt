@@ -928,13 +928,13 @@ private fun UploadStatusButton(file: UploadInfo?) {
 
 fun ClientFile.getUploadDataFromClipFile(sha256: String) =
     UploadData(
-    size,
-    name,
-    contentType,
-    sha256,
-) {
-    source()
-}
+        size,
+        name,
+        contentType,
+        sha256,
+    ) {
+        source()
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

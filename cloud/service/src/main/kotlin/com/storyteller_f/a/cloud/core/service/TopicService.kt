@@ -202,23 +202,23 @@ private suspend fun Backend.buildFileRefs(
     uid: PrimaryKey,
 ): CustomResult<List<FileRef>, TopicError> =
     database.file.getFileRecordByNames(documentFileList).map {
-    it.associateBy { fileRecord ->
-        fileRecord.fullName
-    }
-}.map { fileRecordMap ->
-    documentFileList.map { mediaName ->
-        val fileRecord = fileRecordMap.getValue(mediaName)
-        FileRef(
-            id = SnowflakeFactory.nextId(),
-            createdTime = now(),
-            objectId = topic.id,
-            objectType = ObjectType.TOPIC,
-            author = uid,
-            mediaName = mediaName,
-            fileId = fileRecord.id,
-        )
-    }
-}.mapError(TopicError::fromError)
+        it.associateBy { fileRecord ->
+            fileRecord.fullName
+        }
+    }.map { fileRecordMap ->
+        documentFileList.map { mediaName ->
+            val fileRecord = fileRecordMap.getValue(mediaName)
+            FileRef(
+                id = SnowflakeFactory.nextId(),
+                createdTime = now(),
+                objectId = topic.id,
+                objectType = ObjectType.TOPIC,
+                author = uid,
+                mediaName = mediaName,
+                fileId = fileRecord.id,
+            )
+        }
+    }.mapError(TopicError::fromError)
 
 suspend fun Backend.createTopicAtRoom(newTopic: NewRoomTopic, uid: PrimaryKey): CustomResult<TopicInfo?, TopicError> {
     if (newTopic.parentType != ObjectType.TOPIC && newTopic.parentType != ObjectType.ROOM) {
@@ -313,19 +313,19 @@ private suspend fun Backend.saveEncryptedTopic(
 
 suspend fun Backend.processTopicAfterCreate(topicInfo: TopicInfo, uid: PrimaryKey) =
     captureFailure(TopicError::from) {
-    val info =
-        if (topicInfo.content is TopicContent.Plain) {
-            processTopicFileObject(listOf(topicInfo)).firstOrNull().getOrThrow()
+        val info =
+            if (topicInfo.content is TopicContent.Plain) {
+                processTopicFileObject(listOf(topicInfo)).firstOrNull().getOrThrow()
+            } else {
+                topicInfo
+            }
+        val authorInfo = getUserInfo(ObjectFetch.IdFetch(uid)).getOrThrow()
+        if (authorInfo != null) {
+            info?.copy(extension = TopicInfo.Extension(authorInfo = authorInfo))
         } else {
-            topicInfo
+            info
         }
-    val authorInfo = getUserInfo(ObjectFetch.IdFetch(uid)).getOrThrow()
-    if (authorInfo != null) {
-        info?.copy(extension = TopicInfo.Extension(authorInfo = authorInfo))
-    } else {
-        info
     }
-}
 
 suspend fun Backend.createTopicSnapshot(uid: PrimaryKey, topicId: PrimaryKey): CustomResult<FileInfo?, TopicError> =
     checkTopicReadPermission(
@@ -601,16 +601,16 @@ private suspend fun Backend.getReactionMap(
     uid: PrimaryKey?,
 ): Map<PrimaryKey, List<ReactionInfo>> =
     database.reaction.getReactionInfoPaginationResult(
-    topics.map {
-        it.topic.id
-    },
-    uid,
-    ReactionFetch(null, 20),
-).map {
-    it.list
-}.map {
-    it.groupBy(ReactionInfo::objectId)
-}.getOrThrow()
+        topics.map {
+            it.topic.id
+        },
+        uid,
+        ReactionFetch(null, 20),
+    ).map {
+        it.list
+    }.map {
+        it.groupBy(ReactionInfo::objectId)
+    }.getOrThrow()
 
 private suspend fun Backend.getRoomMapByTopics(topics: List<RawTopic>): Map<PrimaryKey, RoomInfo> {
     val roomIds =
@@ -766,17 +766,17 @@ suspend fun Backend.processTopicFileObject(infos: List<TopicInfo>): CustomResult
 
 fun documentFileList(documentList: List<TopicInfo>): List<Pair<PrimaryKey, String>> =
     documentList.flatMap { document ->
-    val markdownText = document.content
-    if (markdownText is TopicContent.Plain) {
-        val mediaLinks = extractMarkdownMediaLink(markdownText.plain)
-        mediaLinks.map {
-            val prefix = document.author
-            document.id to "$prefix/$it"
+        val markdownText = document.content
+        if (markdownText is TopicContent.Plain) {
+            val mediaLinks = extractMarkdownMediaLink(markdownText.plain)
+            mediaLinks.map {
+                val prefix = document.author
+                document.id to "$prefix/$it"
+            }
+        } else {
+            emptyList()
         }
-    } else {
-        emptyList()
-    }
-}.distinct()
+    }.distinct()
 
 suspend fun Backend.recommendTopics(
     uid: PrimaryKey?,

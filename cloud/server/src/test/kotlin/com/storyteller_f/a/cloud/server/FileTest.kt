@@ -76,59 +76,59 @@ class FileTest {
     @Test
     fun `upload adds file and consumes quota`() =
         test {
-        attachSession { session ->
-            val response =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("hello"),
-                ).getOrThrow()
-            assertEquals("${session.uid}/hello.txt", response.data.first().fullName)
-            val fileList = getFileList(session.uid, ObjectType.USER, null, 10)
-            assertListSize(1, fileList)
-            val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
-            val fileInfo = fileList.getOrThrow().data.first()
-            HttpClient().use { downloadClient ->
-                assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
-            }
-            assertEquals(fileInfo.size, quotaInfo.used)
-            assertEquals(null, quotaInfo.lockId)
-            fileInfo
-        }
-    }
-
-    @Test
-    fun `copy creates file for new owner and consumes quota`() =
-        test {
-        val firstTuple =
             attachSession { session ->
                 val response =
                     upload(
                         ObjectTuple(session.uid, ObjectType.USER),
                         getUploadDataFromText("hello"),
                     ).getOrThrow()
-                response.data.first()
+                assertEquals("${session.uid}/hello.txt", response.data.first().fullName)
+                val fileList = getFileList(session.uid, ObjectType.USER, null, 10)
+                assertListSize(1, fileList)
+                val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
+                val fileInfo = fileList.getOrThrow().data.first()
+                HttpClient().use { downloadClient ->
+                    assertEquals("hello", downloadClient.get(fileInfo.url).bodyAsText())
+                }
+                assertEquals(fileInfo.size, quotaInfo.used)
+                assertEquals(null, quotaInfo.lockId)
+                fileInfo
             }
-        attachSession { session ->
-            val response = copy(firstTuple.custom.id).getOrThrow()
-            assertEquals("${session.uid}/hello.txt", response.fullName)
-            assertListSize(1, getFileList(session.uid, ObjectType.USER, null, 10))
-            val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
-            assertEquals(firstTuple.custom.size, quotaInfo.used)
-            assertEquals(null, quotaInfo.lockId)
         }
-    }
+
+    @Test
+    fun `copy creates file for new owner and consumes quota`() =
+        test {
+            val firstTuple =
+                attachSession { session ->
+                    val response =
+                        upload(
+                            ObjectTuple(session.uid, ObjectType.USER),
+                            getUploadDataFromText("hello"),
+                        ).getOrThrow()
+                    response.data.first()
+                }
+            attachSession { session ->
+                val response = copy(firstTuple.custom.id).getOrThrow()
+                assertEquals("${session.uid}/hello.txt", response.fullName)
+                assertListSize(1, getFileList(session.uid, ObjectType.USER, null, 10))
+                val quotaInfo = getQuotaInfo(ObjectTuple(session.uid, ObjectType.USER)).getOrThrow()
+                assertEquals(firstTuple.custom.size, quotaInfo.used)
+                assertEquals(null, quotaInfo.lockId)
+            }
+        }
 
     @Test
     fun `get png size`() =
         runTest {
-        val dimension =
-            getImageDimension("avatar1.png", "image/png") {
-                ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
-            }
-        assertNotNull(dimension)
-        assertEquals(dimension.width, 420)
-        assertEquals(dimension.height, 420)
-    }
+            val dimension =
+                getImageDimension("avatar1.png", "image/png") {
+                    ClassLoader.getSystemResourceAsStream("avatar1.png")!!.buffered()
+                }
+            assertNotNull(dimension)
+            assertEquals(dimension.width, 420)
+            assertEquals(dimension.height, 420)
+        }
 
     @Test
     fun `extract audio album`() {
@@ -171,418 +171,418 @@ class FileTest {
     @Test
     fun `test audio album`() =
         test {
-        attachSession { session ->
-            val name = "I_Do_not_Wanna_Live_Forever.flac"
-            val data = getUploadDataFromResources(name)
-            val response = upload(session.uid ob ObjectType.USER, data).getOrThrow()
-            extractAlbum(response.data.first().id).getOrThrow()
+            attachSession { session ->
+                val name = "I_Do_not_Wanna_Live_Forever.flac"
+                val data = getUploadDataFromResources(name)
+                val response = upload(session.uid ob ObjectType.USER, data).getOrThrow()
+                extractAlbum(response.data.first().id).getOrThrow()
+            }
         }
-    }
 
     @Test
     fun `test remove image info`() =
         test {
-        attachSession { session ->
-            val oldMeta =
-                Imaging.getMetadata(ClassLoader.getSystemResourceAsStream("52873358902_7857530666_o.jpg")!!, null)
-            val first =
-                upload(
-                    session.uid ob ObjectType.USER,
-                    getUploadDataFromResources("52873358902_7857530666_o.jpg"),
-                ).getOrThrow().data.first()
-            val tmpFile = File("build/test/52873358902_7857530666_o.jpg")
-            downloadFile(tmpFile, first)
-            val newMeta = Imaging.getMetadata(tmpFile)
-            assertTrue(oldMeta is JpegImageMetadata)
-            assertTrue(newMeta is JpegImageMetadata)
-            assertNotNull(oldMeta.exif)
-            assertNull(newMeta.exif)
+            attachSession { session ->
+                val oldMeta =
+                    Imaging.getMetadata(ClassLoader.getSystemResourceAsStream("52873358902_7857530666_o.jpg")!!, null)
+                val first =
+                    upload(
+                        session.uid ob ObjectType.USER,
+                        getUploadDataFromResources("52873358902_7857530666_o.jpg"),
+                    ).getOrThrow().data.first()
+                val tmpFile = File("build/test/52873358902_7857530666_o.jpg")
+                downloadFile(tmpFile, first)
+                val newMeta = Imaging.getMetadata(tmpFile)
+                assertTrue(oldMeta is JpegImageMetadata)
+                assertTrue(newMeta is JpegImageMetadata)
+                assertNotNull(oldMeta.exif)
+                assertNull(newMeta.exif)
+            }
         }
-    }
 
     @Test
     fun `chunked upload end-to-end`() =
         test {
-        attachSession { session ->
-            val tuple = ObjectTuple(session.uid, ObjectType.USER)
-            val name = "chunked.bin" // 保持长度 < 60，避免保存名被改写
-            val totalSize = 6_000_000L // 5.72Mib
-            val chunkSize = 5_242_880L // 5Mib
-            val fileSha256 =
-                sha256(
-                    Buffer().apply {
-                        for (i in 0 until totalSize) {
-                            writeByte((i % 256).toByte())
-                        }
-                    }.peek(),
-                )
+            attachSession { session ->
+                val tuple = ObjectTuple(session.uid, ObjectType.USER)
+                val name = "chunked.bin" // 保持长度 < 60，避免保存名被改写
+                val totalSize = 6_000_000L // 5.72Mib
+                val chunkSize = 5_242_880L // 5Mib
+                val fileSha256 =
+                    sha256(
+                        Buffer().apply {
+                            for (i in 0 until totalSize) {
+                                writeByte((i % 256).toByte())
+                            }
+                        }.peek(),
+                    )
 
-            // 初始化分块上传，拿到 recordId
-            val init =
-                initChunkUpload(
-                    tuple,
-                    name,
-                    totalSize,
-                    ContentType.Application.OctetStream,
-                    chunkSize,
-                    fileSha256,
-                    calculateTestFileCrc(totalSize),
-                ).getOrThrow()
-            val recordId = init.recordId
+                // 初始化分块上传，拿到 recordId
+                val init =
+                    initChunkUpload(
+                        tuple,
+                        name,
+                        totalSize,
+                        ContentType.Application.OctetStream,
+                        chunkSize,
+                        fileSha256,
+                        calculateTestFileCrc(totalSize),
+                    ).getOrThrow()
+                val recordId = init.recordId
 
-            val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
-            for (index in 0 until chunkCount) {
-                val start = index * chunkSize
-                val endExclusive = minOf(start + chunkSize, totalSize)
-                val buf =
-                    Buffer().apply {
-                        for (i in start until endExclusive) {
-                            writeByte((i % 256).toByte())
+                val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
+                for (index in 0 until chunkCount) {
+                    val start = index * chunkSize
+                    val endExclusive = minOf(start + chunkSize, totalSize)
+                    val buf =
+                        Buffer().apply {
+                            for (i in start until endExclusive) {
+                                writeByte((i % 256).toByte())
+                            }
                         }
-                    }
-                val hash = sha256(buf.peek())
-                uploadChunk(recordId, index, buf, hash).getOrThrow()
+                    val hash = sha256(buf.peek())
+                    uploadChunk(recordId, index, buf, hash).getOrThrow()
+                }
+
+                // 校验状态返回的分片索引与元信息
+                val status = getChunkStatus(recordId).getOrThrow()
+                assertEquals(chunkCount, status.uploaded.size)
+                assertEquals((0 until chunkCount).toList(), status.uploaded)
+                assertEquals(chunkSize, status.chunkSize)
+                assertEquals(totalSize, status.size)
+
+                // 完成分块合并并验证文件记录
+                val fileInfo = completeChunkUpload(recordId).getOrThrow()
+                assertEquals("${session.uid}/$name", fileInfo.fullName)
+                assertEquals(totalSize, fileInfo.size)
+                assertTrue(fileInfo.contentType.startsWith("application"))
+
+                // 列表查询应返回 1 个文件
+                val list = getFileList(session.uid, ObjectType.USER, null, 10)
+                assertEquals(1, list.getOrThrow().data.size)
             }
-
-            // 校验状态返回的分片索引与元信息
-            val status = getChunkStatus(recordId).getOrThrow()
-            assertEquals(chunkCount, status.uploaded.size)
-            assertEquals((0 until chunkCount).toList(), status.uploaded)
-            assertEquals(chunkSize, status.chunkSize)
-            assertEquals(totalSize, status.size)
-
-            // 完成分块合并并验证文件记录
-            val fileInfo = completeChunkUpload(recordId).getOrThrow()
-            assertEquals("${session.uid}/$name", fileInfo.fullName)
-            assertEquals(totalSize, fileInfo.size)
-            assertTrue(fileInfo.contentType.startsWith("application"))
-
-            // 列表查询应返回 1 个文件
-            val list = getFileList(session.uid, ObjectType.USER, null, 10)
-            assertEquals(1, list.getOrThrow().data.size)
         }
-    }
 
     @Test
     fun `abort chunk upload cleans up and unlocks quota`() =
         test {
-        attachSession { session ->
-            val tuple = ObjectTuple(session.uid, ObjectType.USER)
-            val name = "to-abort.bin"
-            val totalSize = 180_500L
-            val chunkSize = 64_000L
-            val fileSha256 =
-                sha256(
-                    Buffer().apply {
-                        for (i in 0 until totalSize) {
-                            writeByte((i % 256).toByte())
-                        }
-                    }.peek(),
-                )
+            attachSession { session ->
+                val tuple = ObjectTuple(session.uid, ObjectType.USER)
+                val name = "to-abort.bin"
+                val totalSize = 180_500L
+                val chunkSize = 64_000L
+                val fileSha256 =
+                    sha256(
+                        Buffer().apply {
+                            for (i in 0 until totalSize) {
+                                writeByte((i % 256).toByte())
+                            }
+                        }.peek(),
+                    )
 
-            val init =
-                initChunkUpload(
-                    tuple,
-                    name,
-                    totalSize,
-                    ContentType.Application.OctetStream,
-                    chunkSize,
-                    fileSha256,
-                    calculateTestFileCrc(totalSize),
-                ).getOrThrow()
-            val recordId = init.recordId
+                val init =
+                    initChunkUpload(
+                        tuple,
+                        name,
+                        totalSize,
+                        ContentType.Application.OctetStream,
+                        chunkSize,
+                        fileSha256,
+                        calculateTestFileCrc(totalSize),
+                    ).getOrThrow()
+                val recordId = init.recordId
 
-            // 初始锁应打开
-            val quotaLockId = getQuotaInfo(tuple).getOrThrow().lockId
-            assertNotEquals(quotaLockId, null)
+                // 初始锁应打开
+                val quotaLockId = getQuotaInfo(tuple).getOrThrow().lockId
+                assertNotEquals(quotaLockId, null)
 
-            // 上传一个分片后取消
-            val bytes = ByteArray(chunkSize.toInt()) { idx -> (idx % 256).toByte() }
-            val buf = Buffer().apply { write(bytes) }
-            val hash = sha256(buf.peek())
-            uploadChunk(recordId, 0, buf, hash).getOrThrow()
+                // 上传一个分片后取消
+                val bytes = ByteArray(chunkSize.toInt()) { idx -> (idx % 256).toByte() }
+                val buf = Buffer().apply { write(bytes) }
+                val hash = sha256(buf.peek())
+                uploadChunk(recordId, 0, buf, hash).getOrThrow()
 
-            // 取消上传
-            abortChunkUpload(recordId).getOrThrow()
+                // 取消上传
+                abortChunkUpload(recordId).getOrThrow()
 
-            // 状态查询应失败（记录已删除 + 分片已清理）
-            val statusResult = getChunkStatus(recordId).getOrThrow()
-            assertEquals(UploadRecordStatus.ABORTED, statusResult.status)
+                // 状态查询应失败（记录已删除 + 分片已清理）
+                val statusResult = getChunkStatus(recordId).getOrThrow()
+                assertEquals(UploadRecordStatus.ABORTED, statusResult.status)
 
-            // 配额锁应释放
-            val quotaAfter = getQuotaInfo(tuple).getOrThrow()
-            assertEquals(quotaAfter.lockId, null)
+                // 配额锁应释放
+                val quotaAfter = getQuotaInfo(tuple).getOrThrow()
+                assertEquals(quotaAfter.lockId, null)
+            }
         }
-    }
 
     @Test
     fun `chunk hash mismatch is rejected`() =
         test {
-        attachSession { session ->
-            val tuple = ObjectTuple(session.uid, ObjectType.USER)
-            val name = "bad-hash.bin"
-            val totalSize = 10_000L
-            val chunkSize = 1_000L
-            val fileSha256 =
-                sha256(
-                    Buffer().apply {
-                        for (i in 0 until totalSize) {
-                            writeByte((i % 256).toByte())
-                        }
-                    }.peek(),
-                )
+            attachSession { session ->
+                val tuple = ObjectTuple(session.uid, ObjectType.USER)
+                val name = "bad-hash.bin"
+                val totalSize = 10_000L
+                val chunkSize = 1_000L
+                val fileSha256 =
+                    sha256(
+                        Buffer().apply {
+                            for (i in 0 until totalSize) {
+                                writeByte((i % 256).toByte())
+                            }
+                        }.peek(),
+                    )
 
-            val init =
-                initChunkUpload(
-                    tuple,
-                    name,
-                    totalSize,
-                    ContentType.Application.OctetStream,
-                    chunkSize,
-                    fileSha256,
-                    calculateTestFileCrc(totalSize),
-                ).getOrThrow()
-            val recordId = init.recordId
+                val init =
+                    initChunkUpload(
+                        tuple,
+                        name,
+                        totalSize,
+                        ContentType.Application.OctetStream,
+                        chunkSize,
+                        fileSha256,
+                        calculateTestFileCrc(totalSize),
+                    ).getOrThrow()
+                val recordId = init.recordId
 
-            // 构造错误哈希的分片
-            val bytes = ByteArray(chunkSize.toInt()) { 1 }
-            val buf = Buffer().apply { write(bytes) }
+                // 构造错误哈希的分片
+                val bytes = ByteArray(chunkSize.toInt()) { 1 }
+                val buf = Buffer().apply { write(bytes) }
 
-            @Suppress("SpellCheckingInspection")
-            val wrongHash = "deadbeef" // 故意错误
-            val r = uploadChunk(recordId, 0, buf, wrongHash)
-            assertTrue(r.isFailure)
+                @Suppress("SpellCheckingInspection")
+                val wrongHash = "deadbeef" // 故意错误
+                val r = uploadChunk(recordId, 0, buf, wrongHash)
+                assertTrue(r.isFailure)
 
-            // 状态查询不应包含该分片索引
-            val status = getChunkStatus(recordId).getOrThrow()
-            assertTrue(status.uploaded.isEmpty())
+                // 状态查询不应包含该分片索引
+                val status = getChunkStatus(recordId).getOrThrow()
+                assertTrue(status.uploaded.isEmpty())
+            }
         }
-    }
 
     @Test
     fun `file sha256 mismatch is rejected for direct upload`() =
         test {
-        attachSession { session ->
-            val tuple = ObjectTuple(session.uid, ObjectType.USER)
-            val data = getUploadDataFromText("hello", "mismatch.txt")
-            val wrongSha256 = "0".repeat(64)
-            val wrongData =
-                UploadData(
-                    data.size,
-                    data.name,
-                    data.contentType,
-                    wrongSha256,
-                    data.block,
-                )
-            val r = upload(tuple, wrongData)
-            assertTrue(r.isFailure)
-            assertEquals(0, getFileList(session.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
+            attachSession { session ->
+                val tuple = ObjectTuple(session.uid, ObjectType.USER)
+                val data = getUploadDataFromText("hello", "mismatch.txt")
+                val wrongSha256 = "0".repeat(64)
+                val wrongData =
+                    UploadData(
+                        data.size,
+                        data.name,
+                        data.contentType,
+                        wrongSha256,
+                        data.block,
+                    )
+                val r = upload(tuple, wrongData)
+                assertTrue(r.isFailure)
+                assertEquals(0, getFileList(session.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
+            }
         }
-    }
 
     @Test
     fun `sha256 mismatch fails chunk completion and record`() =
         test {
-        attachSession { session ->
-            val tuple = ObjectTuple(session.uid, ObjectType.USER)
-            val name = "bad-file-hash.bin"
-            val totalSize = 300_000L
-            val chunkSize = 64_000L
-            val wrongSha256 = "0".repeat(64)
+            attachSession { session ->
+                val tuple = ObjectTuple(session.uid, ObjectType.USER)
+                val name = "bad-file-hash.bin"
+                val totalSize = 300_000L
+                val chunkSize = 64_000L
+                val wrongSha256 = "0".repeat(64)
 
-            val init =
-                initChunkUpload(
-                    tuple,
-                    name,
-                    totalSize,
-                    ContentType.Application.OctetStream,
-                    chunkSize,
-                    wrongSha256,
-                    calculateTestFileCrc(totalSize),
-                ).getOrThrow()
-            val recordId = init.recordId
+                val init =
+                    initChunkUpload(
+                        tuple,
+                        name,
+                        totalSize,
+                        ContentType.Application.OctetStream,
+                        chunkSize,
+                        wrongSha256,
+                        calculateTestFileCrc(totalSize),
+                    ).getOrThrow()
+                val recordId = init.recordId
 
-            val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
-            for (index in 0 until chunkCount) {
-                val start = index * chunkSize
-                val endExclusive = minOf(start + chunkSize, totalSize)
-                val buf =
-                    Buffer().apply {
-                        for (i in start until endExclusive) {
-                            writeByte((i % 256).toByte())
+                val chunkCount = ceil(totalSize / chunkSize.toDouble()).toInt()
+                for (index in 0 until chunkCount) {
+                    val start = index * chunkSize
+                    val endExclusive = minOf(start + chunkSize, totalSize)
+                    val buf =
+                        Buffer().apply {
+                            for (i in start until endExclusive) {
+                                writeByte((i % 256).toByte())
+                            }
                         }
-                    }
-                val hash = sha256(buf.peek())
-                uploadChunk(recordId, index, buf, hash).getOrThrow()
+                    val hash = sha256(buf.peek())
+                    uploadChunk(recordId, index, buf, hash).getOrThrow()
+                }
+
+                val result = completeChunkUpload(recordId)
+                assertTrue(result.isFailure)
+
+                val status = getChunkStatus(recordId).getOrThrow()
+                assertEquals(UploadRecordStatus.FAILED, status.status)
+                assertTrue(status.uploaded.isEmpty())
+
+                val quotaAfter = getQuotaInfo(tuple).getOrThrow()
+                assertEquals(null, quotaAfter.lockId)
+                assertEquals(0, getFileList(session.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
             }
-
-            val result = completeChunkUpload(recordId)
-            assertTrue(result.isFailure)
-
-            val status = getChunkStatus(recordId).getOrThrow()
-            assertEquals(UploadRecordStatus.FAILED, status.status)
-            assertTrue(status.uploaded.isEmpty())
-
-            val quotaAfter = getQuotaInfo(tuple).getOrThrow()
-            assertEquals(null, quotaAfter.lockId)
-            assertEquals(0, getFileList(session.uid, ObjectType.USER, null, 10).getOrThrow().data.size)
         }
-    }
 
     @Test
     fun `get refs for a file referenced by a topic`() =
         test {
-        attachSession { session ->
-            // 上传一个文件
-            val fileInfo =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("test file content"),
-                ).getOrThrow().data.first()
+            attachSession { session ->
+                // 上传一个文件
+                val fileInfo =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("test file content"),
+                    ).getOrThrow().data.first()
 
-            // 创建一个community和topic引用该文件
-            val communityId = createCommunity(NewCommunity("test-aid", "test-name")).getOrThrow().id
-            createTopic(
-                ObjectType.COMMUNITY,
-                communityId,
-                "![image](${fileInfo.name})",
-            ).getOrThrow()
+                // 创建一个community和topic引用该文件
+                val communityId = createCommunity(NewCommunity("test-aid", "test-name")).getOrThrow().id
+                createTopic(
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    "![image](${fileInfo.name})",
+                ).getOrThrow()
 
-            // 获取文件引用
-            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
-            assertEquals(1, refs.data.size)
-            assertEquals(ObjectType.TOPIC, refs.data.first().objectType)
-            assertEquals(fileInfo.id, refs.data.first().fileId)
+                // 获取文件引用
+                val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+                assertEquals(1, refs.data.size)
+                assertEquals(ObjectType.TOPIC, refs.data.first().objectType)
+                assertEquals(fileInfo.id, refs.data.first().fileId)
+            }
         }
-    }
 
     @Test
     fun `test get file refs when file has no references`() =
         test {
-        attachSession { session ->
-            // 上传一个文件但不引用它
-            val fileInfo =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("unreferenced file"),
-                ).getOrThrow().data.first()
+            attachSession { session ->
+                // 上传一个文件但不引用它
+                val fileInfo =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("unreferenced file"),
+                    ).getOrThrow().data.first()
 
-            // 获取文件引用应该为空
-            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
-            assertEquals(0, refs.data.size)
+                // 获取文件引用应该为空
+                val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+                assertEquals(0, refs.data.size)
+            }
         }
-    }
 
     @Test
     fun `get refs for a file used by multiple topics`() =
         test {
-        attachSession { session ->
-            // 上传一个文件
-            val fileInfo =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("shared file"),
-                ).getOrThrow().data.first()
+            attachSession { session ->
+                // 上传一个文件
+                val fileInfo =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("shared file"),
+                    ).getOrThrow().data.first()
 
-            // 创建community
-            val communityId = createCommunity(NewCommunity("test-aid-2", "test-name-2")).getOrThrow().id
+                // 创建community
+                val communityId = createCommunity(NewCommunity("test-aid-2", "test-name-2")).getOrThrow().id
 
-            // 创建多个topic引用该文件
-            createTopic(
-                ObjectType.COMMUNITY,
-                communityId,
-                "First topic ![image](${fileInfo.name})",
-            ).getOrThrow()
+                // 创建多个topic引用该文件
+                createTopic(
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    "First topic ![image](${fileInfo.name})",
+                ).getOrThrow()
 
-            createTopic(
-                ObjectType.COMMUNITY,
-                communityId,
-                "Second topic ![image](${fileInfo.name})",
-            ).getOrThrow()
+                createTopic(
+                    ObjectType.COMMUNITY,
+                    communityId,
+                    "Second topic ![image](${fileInfo.name})",
+                ).getOrThrow()
 
-            // 获取文件引用应该有2个
-            val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
-            assertEquals(2, refs.data.size)
-            refs.data.forEach { ref ->
-                assertEquals(ObjectType.TOPIC, ref.objectType)
-                assertEquals(fileInfo.id, ref.fileId)
+                // 获取文件引用应该有2个
+                val refs = getFileRefs(fileInfo.id, PaginationQuery(size = 10)).getOrThrow()
+                assertEquals(2, refs.data.size)
+                refs.data.forEach { ref ->
+                    assertEquals(ObjectType.TOPIC, ref.objectType)
+                    assertEquals(fileInfo.id, ref.fileId)
+                }
             }
         }
-    }
 
     @Test
     fun `test add file favorite`() =
         test {
-        attachSession { session ->
-            val response =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("hello favorite"),
-                ).getOrThrow()
-            val fileId = response.data.first().id
+            attachSession { session ->
+                val response =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("hello favorite"),
+                    ).getOrThrow()
+                val fileId = response.data.first().id
 
-            addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
-            assertListTotalSize(1, getFavorites(PaginationQuery()))
+                addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
+                assertListTotalSize(1, getFavorites(PaginationQuery()))
 
-            val fileInfo = getFileInfo(fileId).getOrThrow()
-            assertNotNull(fileInfo.favoriteId)
+                val fileInfo = getFileInfo(fileId).getOrThrow()
+                assertNotNull(fileInfo.favoriteId)
+            }
         }
-    }
 
     @Test
     fun `test remove file favorite`() =
         test {
-        attachSession { session ->
-            val response =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("hello favorite"),
-                ).getOrThrow()
-            val fileId = response.data.first().id
+            attachSession { session ->
+                val response =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("hello favorite"),
+                    ).getOrThrow()
+                val fileId = response.data.first().id
 
-            addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
+                addFavorite(NewFavorite(ObjectType.FILE, fileId)).getOrThrow()
 
-            removeFavorite(fileId, ObjectType.FILE).getOrThrow()
-            assertListTotalSize(0, getFavorites(PaginationQuery()))
+                removeFavorite(fileId, ObjectType.FILE).getOrThrow()
+                assertListTotalSize(0, getFavorites(PaginationQuery()))
+            }
         }
-    }
 
     @Test
     fun `test add file subscription`() =
         test {
-        attachSession { session ->
-            val response =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("hello subscription"),
-                ).getOrThrow()
-            val fileId = response.data.first().id
+            attachSession { session ->
+                val response =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("hello subscription"),
+                    ).getOrThrow()
+                val fileId = response.data.first().id
 
-            addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
-            assertListTotalSize(1, getSubscriptions(PaginationQuery()))
+                addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
+                assertListTotalSize(1, getSubscriptions(PaginationQuery()))
 
-            val fileInfo = getFileInfo(fileId).getOrThrow()
-            assertNotNull(fileInfo.subscriptionId)
+                val fileInfo = getFileInfo(fileId).getOrThrow()
+                assertNotNull(fileInfo.subscriptionId)
+            }
         }
-    }
 
     @Test
     fun `test remove file subscription`() =
         test {
-        attachSession { session ->
-            val response =
-                upload(
-                    ObjectTuple(session.uid, ObjectType.USER),
-                    getUploadDataFromText("hello subscription"),
-                ).getOrThrow()
-            val fileId = response.data.first().id
+            attachSession { session ->
+                val response =
+                    upload(
+                        ObjectTuple(session.uid, ObjectType.USER),
+                        getUploadDataFromText("hello subscription"),
+                    ).getOrThrow()
+                val fileId = response.data.first().id
 
-            addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
+                addSubscription(NewSubscription(fileId, ObjectType.FILE)).getOrThrow()
 
-            removeSubscription(fileId, ObjectType.FILE).getOrThrow()
-            assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+                removeSubscription(fileId, ObjectType.FILE).getOrThrow()
+                assertListTotalSize(0, getSubscriptions(PaginationQuery()))
+            }
         }
-    }
 }
 
 suspend fun UserSessionManager.downloadFile(tmpFile: File, first: FileInfo) {
@@ -681,7 +681,7 @@ private fun getMSSIM(i1: Mat, i2: Mat): Scalar? {
 
 private suspend fun calculateTestFileCrc(size: Long): String =
     calculateFileChecksums(
-    Buffer().apply {
-        for (index in 0 until size) writeByte((index % 256).toByte())
-    },
-).crc32c
+        Buffer().apply {
+            for (index in 0 until size) writeByte((index % 256).toByte())
+        },
+    ).crc32c

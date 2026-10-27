@@ -60,8 +60,8 @@ class ElasticMemberSearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         memberDocumentSearch: MemberDocumentSearch,
@@ -88,22 +88,22 @@ class ElasticMemberSearchService(connection: ElasticConnection) :
 
     private fun buildSearchRequest(memberDocumentSearch: MemberDocumentSearch): SearchRequest =
         SearchRequest.of { s ->
-        s.index(INDEX_NAME).apply {
-            when (memberDocumentSearch) {
-                is MemberDocumentSearch.Keyword -> {
-                    buildMemberSearchRequest(memberDocumentSearch)
-                }
+            s.index(INDEX_NAME).apply {
+                when (memberDocumentSearch) {
+                    is MemberDocumentSearch.Keyword -> {
+                        buildMemberSearchRequest(memberDocumentSearch)
+                    }
 
-                is MemberDocumentSearch.CommunityMembers -> {
-                    buildCommunityMemberSearchRequest(memberDocumentSearch)
-                }
+                    is MemberDocumentSearch.CommunityMembers -> {
+                        buildCommunityMemberSearchRequest(memberDocumentSearch)
+                    }
 
-                is MemberDocumentSearch.RoomMembers -> {
-                    buildRoomMemberSearchRequest(memberDocumentSearch)
+                    is MemberDocumentSearch.RoomMembers -> {
+                        buildRoomMemberSearchRequest(memberDocumentSearch)
+                    }
                 }
             }
         }
-    }
 
     private fun SearchRequest.Builder.buildRoomMemberSearchRequest(
         memberDocumentSearch: MemberDocumentSearch.RoomMembers,
@@ -194,6 +194,6 @@ class ElasticMemberSearchServiceFactory : MemberSearchServiceFactory {
 
     override fun build(env: MergedEnv): MemberSearchService =
         buildElasticSearchService(env) {
-        ElasticMemberSearchService(it)
-    }
+            ElasticMemberSearchService(it)
+        }
 }

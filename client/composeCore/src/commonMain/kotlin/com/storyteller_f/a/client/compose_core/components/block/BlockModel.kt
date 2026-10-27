@@ -153,6 +153,6 @@ fun generateBlockId(): String = "block_${kotlin.uuid.Uuid.random().toString().ta
  */
 fun createEmptyParagraphBlock(): ContentBlock.Paragraph =
     ContentBlock.Paragraph(
-    id = generateBlockId(),
-    content = "",
-)
+        id = generateBlockId(),
+        content = "",
+    )

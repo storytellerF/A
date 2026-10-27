@@ -18,10 +18,10 @@ data class FileDocument(override val id: PrimaryKey, val name: String, val owner
     companion object {
         fun fromFileRecord(fileRecord: FileRecord): FileDocument =
             FileDocument(
-            fileRecord.id,
-            fileRecord.name,
-            fileRecord.owner,
-        )
+                fileRecord.id,
+                fileRecord.name,
+                fileRecord.owner,
+            )
     }
 }
 

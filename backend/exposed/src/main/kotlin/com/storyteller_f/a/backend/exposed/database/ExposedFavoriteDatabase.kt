@@ -28,63 +28,63 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 class ExposedFavoriteDatabase(private val databaseSession: ExposedDatabaseSession) : FavoriteDatabase {
     override suspend fun getUserFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
         paginationFromResults(
-        getFavoriteListByPredicate {
-            where { UserFavorites.uid eq uid }
-                .bindPaginationQuery(UserFavorites, fetch)
-        },
-        getFavoriteCountByPredicate { where { UserFavorites.uid eq uid } },
-    )
+            getFavoriteListByPredicate {
+                where { UserFavorites.uid eq uid }
+                    .bindPaginationQuery(UserFavorites, fetch)
+            },
+            getFavoriteCountByPredicate { where { UserFavorites.uid eq uid } },
+        )
 
     override suspend fun addFavorite(userFavorite: UserFavorite) =
         databaseSession.dbQuery {
-        check(
-            UserFavorites.insert {
-                it[UserFavorites.id] = userFavorite.id
-                it[UserFavorites.uid] = userFavorite.uid
-                it[UserFavorites.objectId] = userFavorite.objectId
-                it[UserFavorites.objectType] = userFavorite.objectType
-                it[UserFavorites.createdTime] = userFavorite.createdTime
-            }.insertedCount > 0,
-        ) {
-            "Insert favorite failed"
+            check(
+                UserFavorites.insert {
+                    it[UserFavorites.id] = userFavorite.id
+                    it[UserFavorites.uid] = userFavorite.uid
+                    it[UserFavorites.objectId] = userFavorite.objectId
+                    it[UserFavorites.objectType] = userFavorite.objectType
+                    it[UserFavorites.createdTime] = userFavorite.createdTime
+                }.insertedCount > 0,
+            ) {
+                "Insert favorite failed"
+            }
+            userFavorite
         }
-        userFavorite
-    }
 
     override suspend fun removeFavorite(id: PrimaryKey) =
         databaseSession.dbQuery {
-        check(
-            UserFavorites.deleteWhere {
-                UserFavorites.id eq id
-            } > 0,
-        ) {
-            "Remove favorite failed"
+            check(
+                UserFavorites.deleteWhere {
+                    UserFavorites.id eq id
+                } > 0,
+            ) {
+                "Remove favorite failed"
+            }
         }
-    }
 
     override suspend fun getFavorite(id: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll().where {
-                UserFavorites.id eq id
+            search {
+                UserFavorites.selectAll().where {
+                    UserFavorites.id eq id
+                }
+            }
+            first {
+                UserFavorite.wrapRow(it)
             }
         }
-        first {
-            UserFavorite.wrapRow(it)
-        }
-    }
 
     override suspend fun getFavorite(uid: PrimaryKey, objectId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll().where {
-                UserFavorites.uid eq uid and (UserFavorites.objectId eq objectId)
+            search {
+                UserFavorites.selectAll().where {
+                    UserFavorites.uid eq uid and (UserFavorites.objectId eq objectId)
+                }
+            }
+            first {
+                UserFavorite.wrapRow(it)
             }
         }
-        first {
-            UserFavorite.wrapRow(it)
-        }
-    }
 
     override suspend fun getHasFavorite(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey) =
         databaseSession.dbSearch {
@@ -100,11 +100,11 @@ class ExposedFavoriteDatabase(private val databaseSession: ExposedDatabaseSessio
 
     override suspend fun getUserFavoriteCount() =
         databaseSession.dbSearch {
-        search {
-            UserFavorites.selectAll()
+            search {
+                UserFavorites.selectAll()
+            }
+            count()
         }
-        count()
-    }
 
     private suspend fun getFavoriteListByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {

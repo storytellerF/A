@@ -55,29 +55,29 @@ internal class RoomPagingUiTest {
 
     private fun assertRoomRefresh(revision: Int, indexShift: Int) =
         runComposeUiTest {
-        val fixture = RoomPagingFixture()
-        val list = LazyListState()
-        try {
-            setContent { RoomPagingContent(fixture, list) }
-            waitUntil { list.layoutInfo.totalItemsCount >= 60 && fixture.events.subscriptionCount.value == 1 }
-            onNodeWithTag("paged-rooms").performScrollToIndex(49)
-            val anchor = runOnIdle { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
-            val key = runOnIdle { list.layoutInfo.visibleItemsInfo.first().key }
-            runOnIdle { fixture.revision.value = revision }
-            assertTrue(fixture.events.tryEmit(OnRoomRead(1)))
-            waitUntil { fixture.committed.value == revision }
-            val label = "Room 48 revision $revision"
-            waitUntil { onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty() }
-            onNodeWithText(label).assertIsDisplayed()
-            runOnIdle {
-                assertEquals(anchor.first + indexShift, list.firstVisibleItemIndex)
-                assertEquals(anchor.second, list.firstVisibleItemScrollOffset)
-                assertEquals(key, list.layoutInfo.visibleItemsInfo.first().key)
+            val fixture = RoomPagingFixture()
+            val list = LazyListState()
+            try {
+                setContent { RoomPagingContent(fixture, list) }
+                waitUntil { list.layoutInfo.totalItemsCount >= 60 && fixture.events.subscriptionCount.value == 1 }
+                onNodeWithTag("paged-rooms").performScrollToIndex(49)
+                val anchor = runOnIdle { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+                val key = runOnIdle { list.layoutInfo.visibleItemsInfo.first().key }
+                runOnIdle { fixture.revision.value = revision }
+                assertTrue(fixture.events.tryEmit(OnRoomRead(1)))
+                waitUntil { fixture.committed.value == revision }
+                val label = "Room 48 revision $revision"
+                waitUntil { onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty() }
+                onNodeWithText(label).assertIsDisplayed()
+                runOnIdle {
+                    assertEquals(anchor.first + indexShift, list.firstVisibleItemIndex)
+                    assertEquals(anchor.second, list.firstVisibleItemScrollOffset)
+                    assertEquals(key, list.layoutInfo.visibleItemsInfo.first().key)
+                }
+            } finally {
+                fixture.database.close()
             }
-        } finally {
-            fixture.database.close()
         }
-    }
 }
 
 @Composable

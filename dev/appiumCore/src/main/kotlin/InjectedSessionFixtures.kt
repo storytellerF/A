@@ -19,25 +19,25 @@ data class InjectedSession(
 ) {
     fun toAuthKey(): AuthKey =
         AuthKey.P256(
-        pemPrivateKey = pemPrivateKey,
-        derPrivateKey = derPrivateKey,
-        derPublicKey = derPublicKey,
-    )
+            pemPrivateKey = pemPrivateKey,
+            derPrivateKey = derPrivateKey,
+            derPublicKey = derPublicKey,
+        )
 }
 
 fun buildInjectedSessionJson(session: InjectedSession): String =
     buildJsonObject {
-    put("algo", "P256")
-    put("address", session.address)
-    put("pemPrivateKey", session.pemPrivateKey)
-    put("derPrivateKey", session.derPrivateKey)
-    put("derPublicKey", session.derPublicKey)
-    // The device uses localhost while host fixtures use 127.0.0.1; bind injected Cookies to the target origin.
-    put(
-        "cookies",
-        Json.encodeToJsonElement(
-            ListSerializer(io.ktor.http.Cookie.serializer()),
-            session.cookies.map { it.copy(domain = null) },
-        ),
-    )
-}.toString()
+        put("algo", "P256")
+        put("address", session.address)
+        put("pemPrivateKey", session.pemPrivateKey)
+        put("derPrivateKey", session.derPrivateKey)
+        put("derPublicKey", session.derPublicKey)
+        // The device uses localhost while host fixtures use 127.0.0.1; bind injected Cookies to the target origin.
+        put(
+            "cookies",
+            Json.encodeToJsonElement(
+                ListSerializer(io.ktor.http.Cookie.serializer()),
+                session.cookies.map { it.copy(domain = null) },
+            ),
+        )
+    }.toString()

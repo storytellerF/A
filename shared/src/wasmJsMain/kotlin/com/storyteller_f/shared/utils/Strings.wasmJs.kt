@@ -12,10 +12,10 @@ actual fun safeFirstUnicode(text: String): String? =
 
 actual fun checkContent(text: String): CustomResult<Unit, ContentValidationError> =
     if (checkContentRaw(text)) {
-    CustomResult.Success(Unit)
-} else {
-    CustomResult.Failure(ContentValidationError.UnsupportedCharacters("invalid content"))
-}
+        CustomResult.Success(Unit)
+    } else {
+        CustomResult.Failure(ContentValidationError.UnsupportedCharacters("invalid content"))
+    }
 
 @Suppress("UnusedParameter")
 private fun checkContentRaw(text: String): Boolean =

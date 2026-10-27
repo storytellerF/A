@@ -48,18 +48,18 @@ private suspend fun Backend.executeTopicModerationTask(
     fetchSize: Int,
 ): CustomResult<Unit, WorkerError> =
     database.user.getTaskRecordsToRetry(
-    TaskRecordType.TOPIC_MODERATION,
-    fetchSize,
-).andThen(WorkerError::fromError) { retryRecords ->
-    if (retryRecords.isEmpty()) {
-        processNextTopicModeration(reviewer, fetchSize)
-    } else {
-        retryRecords.forEach { retryRecord ->
-            retryTopicModeration(retryRecord, reviewer)
+        TaskRecordType.TOPIC_MODERATION,
+        fetchSize,
+    ).andThen(WorkerError::fromError) { retryRecords ->
+        if (retryRecords.isEmpty()) {
+            processNextTopicModeration(reviewer, fetchSize)
+        } else {
+            retryRecords.forEach { retryRecord ->
+                retryTopicModeration(retryRecord, reviewer)
+            }
+            CustomResult.success(Unit)
         }
-        CustomResult.success(Unit)
-    }
-}.mapError(WorkerError::fromError)
+    }.mapError(WorkerError::fromError)
 
 private suspend fun Backend.processNextTopicModeration(
     reviewer: TopicSafetyReviewer,

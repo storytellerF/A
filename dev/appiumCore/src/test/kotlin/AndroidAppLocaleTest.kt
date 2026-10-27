@@ -12,49 +12,49 @@ class AndroidAppLocaleTest {
     @Test
     fun restoreOriginalLocaleAfterReset() =
         runAppiumBlockingTest {
-        val commands = mutableListOf<List<String>>()
-        var locale = "zh-CN"
-        withEnglishAndroidAppLocale("test.app", { args ->
-            commands.add(args)
-            when {
-                args.last() == "ro.build.version.sdk" -> "33"
-
-                "get-app-locales" in args -> "Locales for test.app are [$locale]"
-
-                "clear" in args -> {
-                    locale = ""
-                    "Success"
-                }
-
-                "set-app-locales" in args -> {
-                    locale = args.last()
-                    ""
-                }
-
-                else -> error("Unexpected command")
-            }
-        }) {
-            assertEquals("en-US", locale)
-            assertEquals("get-app-locales", commands[1][3])
-            assertEquals(listOf("shell", "pm", "clear", "test.app"), commands[2])
-        }
-        assertEquals("zh-CN", locale)
-    }
-
-    @Test
-    fun restoreEmptyOverrideAfterFailure() =
-        runAppiumBlockingTest {
-        val commands = mutableListOf<List<String>>()
-        assertFailsWith<IllegalStateException> {
+            val commands = mutableListOf<List<String>>()
+            var locale = "zh-CN"
             withEnglishAndroidAppLocale("test.app", { args ->
                 commands.add(args)
                 when {
                     args.last() == "ro.build.version.sdk" -> "33"
-                    "get-app-locales" in args -> "Locales for test.app are []"
-                    else -> ""
+
+                    "get-app-locales" in args -> "Locales for test.app are [$locale]"
+
+                    "clear" in args -> {
+                        locale = ""
+                        "Success"
+                    }
+
+                    "set-app-locales" in args -> {
+                        locale = args.last()
+                        ""
+                    }
+
+                    else -> error("Unexpected command")
                 }
-            }) { error("Test failed") }
+            }) {
+                assertEquals("en-US", locale)
+                assertEquals("get-app-locales", commands[1][3])
+                assertEquals(listOf("shell", "pm", "clear", "test.app"), commands[2])
+            }
+            assertEquals("zh-CN", locale)
         }
-        assertEquals(listOf("shell", "cmd", "locale", "set-app-locales", "test.app"), commands.last())
-    }
+
+    @Test
+    fun restoreEmptyOverrideAfterFailure() =
+        runAppiumBlockingTest {
+            val commands = mutableListOf<List<String>>()
+            assertFailsWith<IllegalStateException> {
+                withEnglishAndroidAppLocale("test.app", { args ->
+                    commands.add(args)
+                    when {
+                        args.last() == "ro.build.version.sdk" -> "33"
+                        "get-app-locales" in args -> "Locales for test.app are []"
+                        else -> ""
+                    }
+                }) { error("Test failed") }
+            }
+            assertEquals(listOf("shell", "cmd", "locale", "set-app-locales", "test.app"), commands.last())
+        }
 }

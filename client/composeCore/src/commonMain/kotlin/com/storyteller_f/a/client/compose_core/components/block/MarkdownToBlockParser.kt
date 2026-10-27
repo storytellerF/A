@@ -197,24 +197,24 @@ private fun parseCodeFence(node: ASTNode, content: String): ContentBlock {
 
 private fun parseObjectBlock(jsonContent: String): ContentBlock =
     try {
-    val obj = commonJson.decodeFromString<MarkdownObject>(jsonContent)
-    ContentBlock.ObjectBlock(
-        id = generateBlockId(),
-        name = obj.name,
-        url = obj.url,
-        contentType = obj.contentType,
-        cover = obj.cover,
-        title = obj.title,
-        isPlaylist = obj.isPlayList,
-    )
-} catch (_: Exception) {
-    // JSON 解析失败，降级为代码块
-    ContentBlock.CodeBlock(
-        id = generateBlockId(),
-        content = jsonContent,
-        language = "object",
-    )
-}
+        val obj = commonJson.decodeFromString<MarkdownObject>(jsonContent)
+        ContentBlock.ObjectBlock(
+            id = generateBlockId(),
+            name = obj.name,
+            url = obj.url,
+            contentType = obj.contentType,
+            cover = obj.cover,
+            title = obj.title,
+            isPlaylist = obj.isPlayList,
+        )
+    } catch (_: Exception) {
+        // JSON 解析失败，降级为代码块
+        ContentBlock.CodeBlock(
+            id = generateBlockId(),
+            content = jsonContent,
+            language = "object",
+        )
+    }
 
 private fun parseMathBlock(node: ASTNode, content: String, inline: Boolean): ContentBlock.MathBlock {
     val text = node.getTextInNode(content).trim().toString()

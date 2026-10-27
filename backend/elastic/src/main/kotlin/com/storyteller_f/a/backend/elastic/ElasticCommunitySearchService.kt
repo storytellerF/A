@@ -33,8 +33,8 @@ class ElasticCommunitySearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         communityDocumentSearch: CommunityDocumentSearch,
@@ -77,6 +77,6 @@ class ElasticCommunitySearchServiceFactory : CommunitySearchServiceFactory {
 
     override fun build(env: MergedEnv): CommunitySearchService =
         buildElasticSearchService(env) {
-        ElasticCommunitySearchService(it)
-    }
+            ElasticCommunitySearchService(it)
+        }
 }

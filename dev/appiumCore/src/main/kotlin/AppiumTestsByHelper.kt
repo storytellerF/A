@@ -16,42 +16,42 @@ import kotlin.test.assertIs
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSignUpByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { AppiumTestSetup(Unit) },
-    ) { scope, _ ->
-        scenarioSignUp(scope.driver)
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { AppiumTestSetup(Unit) },
+        ) { scope, _ ->
+            scenarioSignUp(scope.driver)
+        }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSignInAsSystemUserByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { AppiumTestSetup(Unit) },
-    ) { scope, _ ->
-        scenarioSignInAsSystemUser(scope.driver, targetHelper.readSystemPrivateKey())
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { AppiumTestSetup(Unit) },
+        ) { scope, _ ->
+            scenarioSignInAsSystemUser(scope.driver, targetHelper.readSystemPrivateKey())
+        }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testInjectedSessionByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            val session = targetHelper.createPreRegisteredSession(ports)
-            AppiumTestSetup(
-                data = session.address,
-                injectedSession = session,
-            )
-        },
-    ) { scope, address ->
-        scenarioVerifyInjectedSessionLoaded(scope.driver, address)
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val session = targetHelper.createPreRegisteredSession(ports)
+                AppiumTestSetup(
+                    data = session.address,
+                    injectedSession = session,
+                )
+            },
+        ) { scope, address ->
+            scenarioVerifyInjectedSessionLoaded(scope.driver, address)
+        }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testPublishTopicInUserSpaceByHelper() =
     runAppiumBlockingTest {
@@ -69,63 +69,63 @@ fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testPublishTopicInUser
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testFavoriteTopicByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            val data = prepareFavoriteTopicScenario { targetHelper.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioFavoritePreparedTopic(scope.driver, data)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val data = prepareFavoriteTopicScenario { targetHelper.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioFavoritePreparedTopic(scope.driver, data)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testOpenAsciidocPreviewByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        captureBrowserOpen = platformHelper.capturesExternalAsciidocPreview,
-        setup = { ports ->
-            val data = prepareAsciidocPreviewScenario { targetHelper.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioOpenAsciidocPreview(
-                scope.driver,
-                data.authenticated.session.address,
-                data.topicMarker,
-            )
-            scope.assertAsciidocPreviewOpened(data.asciidocSource)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            captureBrowserOpen = platformHelper.capturesExternalAsciidocPreview,
+            setup = { ports ->
+                val data = prepareAsciidocPreviewScenario { targetHelper.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioOpenAsciidocPreview(
+                    scope.driver,
+                    data.authenticated.session.address,
+                    data.topicMarker,
+                )
+                scope.assertAsciidocPreviewOpened(data.asciidocSource)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSubscribeTopicByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            val data = prepareSubscriptionTopicScenario { targetHelper.createAuthenticatedSession(ports) }
-            AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
-        },
-    ) { scope, data ->
-        try {
-            scenarioSubscribePreparedTopic(scope.driver, data)
-        } finally {
-            data.authenticated.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val data = prepareSubscriptionTopicScenario { targetHelper.createAuthenticatedSession(ports) }
+                AppiumTestSetup(data = data, injectedSession = data.authenticated.session)
+            },
+        ) { scope, data ->
+            try {
+                scenarioSubscribePreparedTopic(scope.driver, data)
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testCommunityProfileActionsByHelper() =
     testPreparedCommunityRoomScenarioByHelper { driver, data ->
@@ -144,17 +144,17 @@ fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testPublishTopicInComm
 
 fun AppiumTestBase<PanelAppiumHelper, PlatformAppiumHelper>.testPanelInjectedSessionByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            val session = targetHelper.createPreRegisteredSession(ports)
-            AppiumTestSetup(data = Unit, injectedSession = session)
-        },
-    ) { scope, _ ->
-        scenarioOpenAllUsersFromOverview(scope.driver, platformHelper is DesktopAppiumHelper)
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                val session = targetHelper.createPreRegisteredSession(ports)
+                AppiumTestSetup(data = Unit, injectedSession = session)
+            },
+        ) { scope, _ ->
+            scenarioOpenAllUsersFromOverview(scope.driver, platformHelper is DesktopAppiumHelper)
+        }
     }
-}
 
 private fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testPreparedCommunityRoomScenarioByHelper(
     block: suspend (AppTestDriver, PreparedCommunityRoomScenario) -> Unit,
@@ -173,105 +173,105 @@ private fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testPreparedCo
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSigninLifecycleByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            AppiumTestSetup(prepareAuthenticatedRoomScenario { targetHelper.createAuthenticatedSession(ports) })
-        },
-    ) { scope, data ->
-        try {
-            scenarioSignIn(scope.driver, data.authenticated.session.pemPrivateKey)
-            scope.restart()
-            scenarioVerifyInjectedSessionLoaded(scope.driver, data.authenticated.session.address)
-            if (platformHelper is WasmAppiumHelper) scope.driver.assertNotVisibleByText("Switch Account")
-            scope.driver.dismissDialog()
-            scenarioPublishTopicInRoom(scope.driver, data.communityName, data.roomName)
-            data.authenticated.sessionManager.signOutAll().getOrThrow()
-            assertEquals(
-                HttpStatusCode.Unauthorized,
-                assertIs<ServerErrorException>(
-                    data.authenticated.sessionManager.restoreSession().exceptionOrNull(),
-                ).status,
-            )
-            scope.driver.clickByDescription("avatar")
-            scope.driver.assertVisibleByText("Sign in")
-            scope.restart()
-            scope.driver.clickByDescription("avatar")
-            scope.driver.assertVisibleByText("Sign in")
-        } finally {
-            data.authenticated.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                AppiumTestSetup(prepareAuthenticatedRoomScenario { targetHelper.createAuthenticatedSession(ports) })
+            },
+        ) { scope, data ->
+            try {
+                scenarioSignIn(scope.driver, data.authenticated.session.pemPrivateKey)
+                scope.restart()
+                scenarioVerifyInjectedSessionLoaded(scope.driver, data.authenticated.session.address)
+                if (platformHelper is WasmAppiumHelper) scope.driver.assertNotVisibleByText("Switch Account")
+                scope.driver.dismissDialog()
+                scenarioPublishTopicInRoom(scope.driver, data.communityName, data.roomName)
+                data.authenticated.sessionManager.signOutAll().getOrThrow()
+                assertEquals(
+                    HttpStatusCode.Unauthorized,
+                    assertIs<ServerErrorException>(
+                        data.authenticated.sessionManager.restoreSession().exceptionOrNull(),
+                    ).status,
+                )
+                scope.driver.clickByDescription("avatar")
+                scope.driver.assertVisibleByText("Sign in")
+                scope.restart()
+                scope.driver.clickByDescription("avatar")
+                scope.driver.assertVisibleByText("Sign in")
+            } finally {
+                data.authenticated.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<PanelAppiumHelper, PlatformAppiumHelper>.testPanelSigninLifecycleByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports -> AppiumTestSetup(targetHelper.createAuthenticatedSession(ports)) },
-    ) { scope, data ->
-        try {
-            scenarioPanelSignin(scope.driver, data.session.pemPrivateKey)
-            scope.driver.assertVisibleByDescription("Menu")
-            scope.restart()
-            scope.driver.assertVisibleByDescription("Menu")
-            data.sessionManager.signOutAll().getOrThrow()
-            assertEquals(
-                HttpStatusCode.Unauthorized,
-                assertIs<ServerErrorException>(data.sessionManager.restoreSession().exceptionOrNull()).status,
-            )
-            scope.restart()
-            scope.driver.assertVisibleByText("Sign in")
-            scope.restart()
-            scope.driver.assertVisibleByText("Sign in")
-        } finally {
-            data.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports -> AppiumTestSetup(targetHelper.createAuthenticatedSession(ports)) },
+        ) { scope, data ->
+            try {
+                scenarioPanelSignin(scope.driver, data.session.pemPrivateKey)
+                scope.driver.assertVisibleByDescription("Menu")
+                scope.restart()
+                scope.driver.assertVisibleByDescription("Menu")
+                data.sessionManager.signOutAll().getOrThrow()
+                assertEquals(
+                    HttpStatusCode.Unauthorized,
+                    assertIs<ServerErrorException>(data.sessionManager.restoreSession().exceptionOrNull()).status,
+                )
+                scope.restart()
+                scope.driver.assertVisibleByText("Sign in")
+                scope.restart()
+                scope.driver.assertVisibleByText("Sign in")
+            } finally {
+                data.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testChildSigninByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports -> AppiumTestSetup(targetHelper.createAuthenticatedSession(ports)) },
-    ) { scope, data ->
-        try {
-            val child = data.sessionManager.addChildAccount().getOrThrow()
-            scenarioSignIn(scope.driver, data.session.pemPrivateKey)
-            scope.driver.clickByText("Switch Account")
-            scope.driver.clickByTextContaining(child.userInfo.address)
-            scope.driver.clickByDescription("avatar")
-            scope.driver.assertVisibleByTextContaining(child.userInfo.address)
-            scope.restart()
-            scenarioVerifyInjectedSessionLoaded(scope.driver, data.session.address)
-        } finally {
-            data.sessionManager.client.close()
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports -> AppiumTestSetup(targetHelper.createAuthenticatedSession(ports)) },
+        ) { scope, data ->
+            try {
+                val child = data.sessionManager.addChildAccount().getOrThrow()
+                scenarioSignIn(scope.driver, data.session.pemPrivateKey)
+                scope.driver.clickByText("Switch Account")
+                scope.driver.clickByTextContaining(child.userInfo.address)
+                scope.driver.clickByDescription("avatar")
+                scope.driver.assertVisibleByTextContaining(child.userInfo.address)
+                scope.restart()
+                scenarioVerifyInjectedSessionLoaded(scope.driver, data.session.address)
+            } finally {
+                data.sessionManager.client.close()
+            }
         }
     }
-}
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testSignoutPersistenceByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports -> AppiumTestSetup(targetHelper.createPreRegisteredSession(ports)) },
-    ) { scope, data ->
-        scenarioSignIn(scope.driver, data.pemPrivateKey)
-        scope.driver.clickByText("Sign out")
-        scope.driver.clickByText("Yes")
-        // Restart only after asynchronous sign-out has reached its observable completion state.
-        scope.driver.clickByDescription("avatar")
-        scope.driver.assertVisibleByText("Sign in")
-        scope.restart()
-        scope.driver.clickByDescription("avatar")
-        scope.driver.assertVisibleByText("Sign in")
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports -> AppiumTestSetup(targetHelper.createPreRegisteredSession(ports)) },
+        ) { scope, data ->
+            scenarioSignIn(scope.driver, data.pemPrivateKey)
+            scope.driver.clickByText("Sign out")
+            scope.driver.clickByText("Yes")
+            // Restart only after asynchronous sign-out has reached its observable completion state.
+            scope.driver.clickByDescription("avatar")
+            scope.driver.assertVisibleByText("Sign in")
+            scope.restart()
+            scope.driver.clickByDescription("avatar")
+            scope.driver.assertVisibleByText("Sign in")
+        }
     }
-}
 
 fun AppiumTestBase<PanelAppiumHelper, PlatformAppiumHelper>.testPanelSignoutPersistenceByHelper() =
     runAppiumBlockingTest {

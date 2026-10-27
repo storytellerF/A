@@ -24,20 +24,22 @@ internal class FontInstanceRepository(private val instancer: FontInstancer = Har
         axes: Map<String, Float> = emptyMap(),
     ): CustomResult<FontInstance, FontError> =
         captureFontFailure {
-        val source = bytes.copyOf()
-        val metadata = SfntFont(source, faceIndex)
-        validateAxes(metadata.axes, axes)
-        val normalized = metadata.axes.mapValues { (tag, axis) -> axes[tag] ?: axis.default }.toSortedMap()
-        val digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(source))
-        val standalone = String(source, 0, 4, Charsets.US_ASCII) != "ttcf"
-        val static = !metadata.hasTable("fvar") && !metadata.hasTable("CFF2") && standalone
-        val engine = if (static) "sfnt-static-v1" else instancer.version
-        val key = "$digest/$faceIndex/${normalized.mapValues { (_, value) -> if (value == 0f) 0f else value }}/$engine"
-        cache.get()[key] ?: publish(
-            key,
-            FontInstance(if (static) source else instancer.instantiate(source, faceIndex, normalized).getOrThrow()),
-        )
-    }
+            val source = bytes.copyOf()
+            val metadata = SfntFont(source, faceIndex)
+            validateAxes(metadata.axes, axes)
+            val normalized = metadata.axes.mapValues { (tag, axis) -> axes[tag] ?: axis.default }.toSortedMap()
+            val digest = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(source))
+            val standalone = String(source, 0, 4, Charsets.US_ASCII) != "ttcf"
+            val static = !metadata.hasTable("fvar") && !metadata.hasTable("CFF2") && standalone
+            val engine = if (static) "sfnt-static-v1" else instancer.version
+            val key = "$digest/$faceIndex/${normalized.mapValues { (_, value) ->
+                if (value == 0f) 0f else value
+            }}/$engine"
+            cache.get()[key] ?: publish(
+                key,
+                FontInstance(if (static) source else instancer.instantiate(source, faceIndex, normalized).getOrThrow()),
+            )
+        }
 
     private fun publish(key: String, value: FontInstance): FontInstance {
         while (true) {

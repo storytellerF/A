@@ -117,9 +117,9 @@ private fun SelectedMemberPolicyDescription(radioOptions: List<MemberJoinPolicy>
 
 private fun getMemberPolicies(): List<MemberJoinPolicy> =
     listOf(
-    MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"),
-    MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community"),
-)
+        MemberJoinPolicy("Open", MemberPolicy.OPEN, "Anyone can join this community"),
+        MemberJoinPolicy("Invite Only", MemberPolicy.INVITE_ONLY, "Only invite members can join this community"),
+    )
 
 @Composable
 private fun CommunityMemberPolicyRadioGroup(

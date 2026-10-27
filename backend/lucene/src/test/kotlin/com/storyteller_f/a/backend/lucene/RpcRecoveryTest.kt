@@ -33,117 +33,117 @@ class RpcRecoveryTest {
     @Test
     fun `failed establishment does not poison later calls`() =
         runTest {
-        withAdapter { adapter, server, _ ->
-            adapter.clean().getOrThrow()
-            server.stop()
-            assertFailsWith<Exception> { adapter.clean().getOrThrow() }
-            server.start()
-            adapter.clean().getOrThrow()
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _ ->
+                adapter.clean().getOrThrow()
+                server.stop()
+                assertFailsWith<Exception> { adapter.clean().getOrThrow() }
+                server.start()
+                adapter.clean().getOrThrow()
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `same adapter recovers after server restart`() =
         runTest {
-        withAdapter { adapter, server, _ ->
-            adapter.saveDocument(listOf(FileDocument(1, "report.txt", 2))).getOrThrow()
-            server.stop()
-            server.start()
-            assertEquals("report.txt", search(adapter).single().name)
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _ ->
+                adapter.saveDocument(listOf(FileDocument(1, "report.txt", 2))).getOrThrow()
+                server.stop()
+                server.start()
+                assertEquals("report.txt", search(adapter).single().name)
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `concurrent calls share one reconnected transport`() =
         runTest {
-        withAdapter { adapter, server, _ ->
-            adapter.clean().getOrThrow()
-            server.stop()
-            server.start()
-            coroutineScope { List(16) { async { adapter.clean().getOrThrow() } }.awaitAll() }
-            assertEquals(2, server.connections.value)
+            withAdapter { adapter, server, _ ->
+                adapter.clean().getOrThrow()
+                server.stop()
+                server.start()
+                coroutineScope { List(16) { async { adapter.clean().getOrThrow() } }.awaitAll() }
+                assertEquals(2, server.connections.value)
+            }
         }
-    }
 
     @Test
     fun `interrupted save is not replayed`() =
         runTest {
-        withAdapter { adapter, server, state ->
-            state.pauseSave.value = true
-            coroutineScope {
-                val pending = async { adapter.saveDocument(listOf(FileDocument(1, "report.txt", 2))) }
-                state.entered.await()
-                server.stop()
-                assertFailsWith<Exception> { pending.await().getOrThrow() }
+            withAdapter { adapter, server, state ->
+                state.pauseSave.value = true
+                coroutineScope {
+                    val pending = async { adapter.saveDocument(listOf(FileDocument(1, "report.txt", 2))) }
+                    state.entered.await()
+                    server.stop()
+                    assertFailsWith<Exception> { pending.await().getOrThrow() }
+                }
+                state.pauseSave.value = false
+                server.start()
+                assertEquals("report.txt", search(adapter).single().name)
+                assertEquals(1, state.saves.value)
             }
-            state.pauseSave.value = false
-            server.start()
-            assertEquals("report.txt", search(adapter).single().name)
-            assertEquals(1, state.saves.value)
         }
-    }
 
     @Test
     fun `caller cancellation retains healthy connection`() =
         runTest {
-        withAdapter { adapter, server, state ->
-            state.pauseSearch.value = true
-            coroutineScope {
-                val pending = async { search(adapter) }
-                state.entered.await()
-                pending.cancel(CancellationException("caller cancelled"))
-                assertFailsWith<CancellationException> { pending.await() }
-                pending.join()
+            withAdapter { adapter, server, state ->
+                state.pauseSearch.value = true
+                coroutineScope {
+                    val pending = async { search(adapter) }
+                    state.entered.await()
+                    pending.cancel(CancellationException("caller cancelled"))
+                    assertFailsWith<CancellationException> { pending.await() }
+                    pending.join()
+                }
+                state.pauseSearch.value = false
+                adapter.clean().getOrThrow()
+                assertEquals(1, server.connections.value)
             }
-            state.pauseSearch.value = false
-            adapter.clean().getOrThrow()
-            assertEquals(1, server.connections.value)
         }
-    }
 
     @Test
     fun `cancelled establishment leaves no cached client`() =
         runTest {
-        withAdapter { adapter, server, state ->
-            state.pauseHealth.value = true
-            coroutineScope {
-                val pending = async { adapter.clean() }
-                state.entered.await()
-                pending.cancel(CancellationException("cancel establishment"))
-                assertFailsWith<CancellationException> { pending.await() }
-                pending.join()
+            withAdapter { adapter, server, state ->
+                state.pauseHealth.value = true
+                coroutineScope {
+                    val pending = async { adapter.clean() }
+                    state.entered.await()
+                    pending.cancel(CancellationException("cancel establishment"))
+                    assertFailsWith<CancellationException> { pending.await() }
+                    pending.join()
+                }
+                state.pauseHealth.value = false
+                adapter.clean().getOrThrow()
+                assertEquals(2, server.connections.value)
             }
-            state.pauseHealth.value = false
-            adapter.clean().getOrThrow()
-            assertEquals(2, server.connections.value)
         }
-    }
 
     @Test
     fun `cancelled waiter preserves establishing client`() =
         runTest {
-        withAdapter { adapter, server, state ->
-            state.pauseHealth.value = true
-            coroutineScope {
-                val owner = async { adapter.clean().getOrThrow() }
-                state.entered.await()
-                val queued = CompletableDeferred<Unit>()
-                val waiter =
-                    async {
-                        queued.complete(Unit)
-                        adapter.clean()
-                    }
-                queued.await()
-                waiter.cancel(CancellationException("cancel queued request"))
-                assertFailsWith<CancellationException> { waiter.await() }
-                state.healthRelease.complete(Unit)
-                owner.await()
+            withAdapter { adapter, server, state ->
+                state.pauseHealth.value = true
+                coroutineScope {
+                    val owner = async { adapter.clean().getOrThrow() }
+                    state.entered.await()
+                    val queued = CompletableDeferred<Unit>()
+                    val waiter =
+                        async {
+                            queued.complete(Unit)
+                            adapter.clean()
+                        }
+                    queued.await()
+                    waiter.cancel(CancellationException("cancel queued request"))
+                    assertFailsWith<CancellationException> { waiter.await() }
+                    state.healthRelease.complete(Unit)
+                    owner.await()
+                }
+                assertEquals(1, server.connections.value)
             }
-            assertEquals(1, server.connections.value)
         }
-    }
 
     private suspend fun search(adapter: LuceneFileSearchService) =
         adapter.searchDocument(FileDocumentSearch.Keyword("report", fetch = OffsetFetch(null, 10))).getOrThrow().list

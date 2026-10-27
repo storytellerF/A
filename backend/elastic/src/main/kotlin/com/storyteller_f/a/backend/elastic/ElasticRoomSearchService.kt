@@ -31,8 +31,8 @@ class ElasticRoomSearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         roomDocumentSearch: RoomDocumentSearch,
@@ -51,26 +51,27 @@ class ElasticRoomSearchService(connection: ElasticConnection) :
 
     private fun buildSearchRequest(roomDocumentSearch: RoomDocumentSearch): SearchRequest =
         SearchRequest.of { s ->
-        s.index(INDEX_NAME).apply {
-            when (roomDocumentSearch) {
-                is RoomDocumentSearch.Keyword -> {
-                    val fetch = roomDocumentSearch.fetch
-                    from(fetch.cursor?.value ?: 0)
-                    size(fetch.size)
-                    val word = roomDocumentSearch.words
-                    query { q ->
-                        q.bool { b ->
-                            val keyword = preprocessUserInputKeyword(word)
-                            b.must { m ->
-                                m.bool { nestedBool ->
-                                    nestedBool.prioritizedFields(keyword, "aid", "name")
+            s.index(INDEX_NAME).apply {
+                when (roomDocumentSearch) {
+                    is RoomDocumentSearch.Keyword -> {
+                        val fetch = roomDocumentSearch.fetch
+                        from(fetch.cursor?.value ?: 0)
+                        size(fetch.size)
+                        val word = roomDocumentSearch.words
+                        query { q ->
+                            q.bool { b ->
+                                val keyword = preprocessUserInputKeyword(word)
+                                b.must { m ->
+                                    m.bool { nestedBool ->
+                                        nestedBool.prioritizedFields(keyword, "aid", "name")
+                                    }
                                 }
-                            }
-                            // 添加对communityId的过滤
-                            roomDocumentSearch.communityId?.let { communityId ->
-                                b.filter { f ->
-                                    f.term { t ->
-                                        t.field("communityId").value(communityId)
+                                // 添加对communityId的过滤
+                                roomDocumentSearch.communityId?.let { communityId ->
+                                    b.filter { f ->
+                                        f.term { t ->
+                                            t.field("communityId").value(communityId)
+                                        }
                                     }
                                 }
                             }
@@ -79,7 +80,6 @@ class ElasticRoomSearchService(connection: ElasticConnection) :
                 }
             }
         }
-    }
 }
 
 class ElasticRoomSearchServiceFactory : RoomSearchServiceFactory {
@@ -87,6 +87,6 @@ class ElasticRoomSearchServiceFactory : RoomSearchServiceFactory {
 
     override fun build(env: MergedEnv): RoomSearchService =
         buildElasticSearchService(env) {
-        ElasticRoomSearchService(it)
-    }
+            ElasticRoomSearchService(it)
+        }
 }

@@ -182,22 +182,22 @@ fun rememberBlockEditorState(initialMarkdown: String = ""): BlockEditorState {
  */
 private fun updateBlockContent(block: ContentBlock, newContent: String): ContentBlock =
     when (block) {
-    is ContentBlock.Paragraph -> block.copy(content = newContent)
+        is ContentBlock.Paragraph -> block.copy(content = newContent)
 
-    is ContentBlock.ListItem -> block.copy(content = newContent)
+        is ContentBlock.ListItem -> block.copy(content = newContent)
 
-    is ContentBlock.Quote -> block.copy(content = newContent)
+        is ContentBlock.Quote -> block.copy(content = newContent)
 
-    is ContentBlock.CodeBlock -> block.copy(content = newContent)
+        is ContentBlock.CodeBlock -> block.copy(content = newContent)
 
-    // 以下三种类型需要专门的编辑界面，目前不会执行这些分支。
-    is ContentBlock.ImageBlock -> block.copy(alt = newContent)
+        // 以下三种类型需要专门的编辑界面，目前不会执行这些分支。
+        is ContentBlock.ImageBlock -> block.copy(alt = newContent)
 
-    is ContentBlock.ObjectBlock -> block.copy(title = newContent)
+        is ContentBlock.ObjectBlock -> block.copy(title = newContent)
 
-    is ContentBlock.RefBlock -> block.copy(refPath = newContent)
+        is ContentBlock.RefBlock -> block.copy(refPath = newContent)
 
-    is ContentBlock.MathBlock -> block.copy(content = newContent)
+        is ContentBlock.MathBlock -> block.copy(content = newContent)
 
-    is ContentBlock.Divider -> block
-}
+        is ContentBlock.Divider -> block
+    }

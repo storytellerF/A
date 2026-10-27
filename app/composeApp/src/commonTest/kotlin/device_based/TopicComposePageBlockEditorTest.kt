@@ -37,239 +37,239 @@ class TopicComposePageBlockEditorTest {
     @Test
     fun rendersInitialMarkdownInBlockEditor() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("# Title") {
-            latestMarkdown = it
+            setBlockEditorContent("# Title") {
+                latestMarkdown = it
+            }
+
+            onNodeWithText("Title").assertExists()
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "# Title"
+            }
+
+            assertEquals("# Title", latestMarkdown)
         }
-
-        onNodeWithText("Title").assertExists()
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "# Title"
-        }
-
-        assertEquals("# Title", latestMarkdown)
-    }
 
     @Test
     fun updatesMarkdownWhenListBlockChanges() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("- old item") {
-            latestMarkdown = it
+            setBlockEditorContent("- old item") {
+                latestMarkdown = it
+            }
+
+            onNodeWithText("old item").performClick()
+            onNode(hasSetTextAction()).performTextReplacement("new item")
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "- new item"
+            }
+
+            assertEquals("- new item", latestMarkdown)
         }
-
-        onNodeWithText("old item").performClick()
-        onNode(hasSetTextAction()).performTextReplacement("new item")
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "- new item"
-        }
-
-        assertEquals("- new item", latestMarkdown)
-    }
 
     @Test
     fun insertsCodeBlockFromToolbar() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("Intro") {
-            latestMarkdown = it
-        }
+            setBlockEditorContent("Intro") {
+                latestMarkdown = it
+            }
 
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "Intro"
-        }
-        onNodeWithContentDescription("Code Block").performClick()
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "Intro"
+            }
+            onNodeWithContentDescription("Code Block").performClick()
 
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown ==
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown ==
+                    """
+                    Intro
+
+                    ```
+
+                    ```
+                    """.trimIndent()
+            }
+
+            assertEquals(
                 """
                 Intro
 
                 ```
 
                 ```
-                """.trimIndent()
+                """.trimIndent(),
+                latestMarkdown,
+            )
         }
-
-        assertEquals(
-            """
-            Intro
-
-            ```
-
-            ```
-            """.trimIndent(),
-            latestMarkdown,
-        )
-    }
 
     @Test
     fun rendersMixedMarkdownBlocks() =
         runComposeUiTest {
-        val input =
-            """
-            # Title
+            val input =
+                """
+                # Title
 
-            > Quote
+                > Quote
 
-            ```kotlin
-            println(1)
-            ```
+                ```kotlin
+                println(1)
+                ```
 
-            ```math
-            x^2
-            ```
-            """.trimIndent()
-        var latestMarkdown = ""
+                ```math
+                x^2
+                ```
+                """.trimIndent()
+            var latestMarkdown = ""
 
-        setBlockEditorContent(input) {
-            latestMarkdown = it
+            setBlockEditorContent(input) {
+                latestMarkdown = it
+            }
+
+            onNodeWithText("Title").assertExists()
+            onNodeWithText("Quote").assertExists()
+            onNodeWithText("kotlin").assertExists()
+            onNodeWithText("println(1)").assertExists()
+            onNodeWithText("Math Formula").assertExists()
+            onNodeWithText("x^2").assertExists()
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == expectedComplexMarkdown
+            }
+
+            assertEquals(
+                expectedComplexMarkdown,
+                latestMarkdown,
+            )
         }
-
-        onNodeWithText("Title").assertExists()
-        onNodeWithText("Quote").assertExists()
-        onNodeWithText("kotlin").assertExists()
-        onNodeWithText("println(1)").assertExists()
-        onNodeWithText("Math Formula").assertExists()
-        onNodeWithText("x^2").assertExists()
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == expectedComplexMarkdown
-        }
-
-        assertEquals(
-            expectedComplexMarkdown,
-            latestMarkdown,
-        )
-    }
 
     @Test
     fun updatesMarkdownWhenQuoteBlockChanges() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("> old quote") {
-            latestMarkdown = it
+            setBlockEditorContent("> old quote") {
+                latestMarkdown = it
+            }
+
+            onNodeWithText("old quote").performClick()
+            onNode(hasSetTextAction()).performTextReplacement("new quote")
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "> new quote"
+            }
+
+            assertEquals("> new quote", latestMarkdown)
         }
-
-        onNodeWithText("old quote").performClick()
-        onNode(hasSetTextAction()).performTextReplacement("new quote")
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "> new quote"
-        }
-
-        assertEquals("> new quote", latestMarkdown)
-    }
 
     @Test
     fun updatesMarkdownWhenCodeBlockChanges() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("```\nold()\n```") {
-            latestMarkdown = it
+            setBlockEditorContent("```\nold()\n```") {
+                latestMarkdown = it
+            }
+
+            onNodeWithText("old()").performClick()
+            onNode(hasSetTextAction()).performTextReplacement("new()")
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "```\nnew()\n```"
+            }
+
+            assertEquals("```\nnew()\n```", latestMarkdown)
         }
-
-        onNodeWithText("old()").performClick()
-        onNode(hasSetTextAction()).performTextReplacement("new()")
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "```\nnew()\n```"
-        }
-
-        assertEquals("```\nnew()\n```", latestMarkdown)
-    }
 
     @Test
     fun deletesLastBlockAndKeepsEditorUsable() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("Only block") {
-            latestMarkdown = it
+            setBlockEditorContent("Only block") {
+                latestMarkdown = it
+            }
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "Only block"
+            }
+            onNodeWithContentDescription("Delete or change type").performClick()
+            onNodeWithText("Delete").performClick()
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == ""
+            }
+            onNodeWithContentDescription("Heading").performClick()
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "# "
+            }
+
+            assertEquals("# ", latestMarkdown)
         }
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "Only block"
-        }
-        onNodeWithContentDescription("Delete or change type").performClick()
-        onNodeWithText("Delete").performClick()
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == ""
-        }
-        onNodeWithContentDescription("Heading").performClick()
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "# "
-        }
-
-        assertEquals("# ", latestMarkdown)
-    }
 
     @Test
     fun changesListBlockToCodeBlockFromBlockMenu() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("- item") {
-            latestMarkdown = it
+            setBlockEditorContent("- item") {
+                latestMarkdown = it
+            }
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "- item"
+            }
+            onNodeWithContentDescription("Delete or change type").performClick()
+            onNodeWithText("To Code Block").performClick()
+
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "```\nitem\n```"
+            }
+
+            assertEquals("```\nitem\n```", latestMarkdown)
         }
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "- item"
-        }
-        onNodeWithContentDescription("Delete or change type").performClick()
-        onNodeWithText("To Code Block").performClick()
-
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "```\nitem\n```"
-        }
-
-        assertEquals("```\nitem\n```", latestMarkdown)
-    }
 
     @Test
     fun insertsReferenceBlockFromMediaMenu() =
         runComposeUiTest {
-        var latestMarkdown = ""
+            var latestMarkdown = ""
 
-        setBlockEditorContent("Intro") {
-            latestMarkdown = it
-        }
+            setBlockEditorContent("Intro") {
+                latestMarkdown = it
+            }
 
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown == "Intro"
-        }
-        onNodeWithContentDescription("Insert media").performClick()
-        onNodeWithText("Reference (CSA)").performClick()
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown == "Intro"
+            }
+            onNodeWithContentDescription("Insert media").performClick()
+            onNodeWithText("Reference (CSA)").performClick()
 
-        waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
-            latestMarkdown ==
+            waitUntil(timeoutMillis = TEST_TIMEOUT_MILLIS) {
+                latestMarkdown ==
+                    """
+                    Intro
+
+                    ```csa
+                    /topic/
+                    ```
+                    """.trimIndent()
+            }
+
+            assertEquals(
                 """
                 Intro
 
                 ```csa
                 /topic/
                 ```
-                """.trimIndent()
+                """.trimIndent(),
+                latestMarkdown,
+            )
         }
-
-        assertEquals(
-            """
-            Intro
-
-            ```csa
-            /topic/
-            ```
-            """.trimIndent(),
-            latestMarkdown,
-        )
-    }
 
     private fun ComposeUiTest.setBlockEditorContent(input: String, updateInput: (String) -> Unit) {
         setContent {

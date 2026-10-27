@@ -558,10 +558,10 @@ private suspend fun AppGlobalDialogController.createTitle(
     newTitle: NewTitle,
 ): CustomResult<TitleInfo, TitleActionError> =
     request {
-    createTitle(newTitle)
-}.onSuccess { title ->
-    emitEvent(OnTitleCreated(title))
-}.mapError(TitleActionError::fromError)
+        createTitle(newTitle)
+    }.onSuccess { title ->
+        emitEvent(OnTitleCreated(title))
+    }.mapError(TitleActionError::fromError)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

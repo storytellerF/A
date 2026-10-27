@@ -151,38 +151,38 @@ class AddPresetTest {
     @Test
     fun `yaml download returns the processed archive`() =
         runTest {
-        setLogPath()
-        val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
-        val sourceZip = writeDownloadSourceZip(tempDir)
-        val hash = sha256File(sourceZip)
-        val server = HttpServer.create(InetSocketAddress(0), 0)
-        val requestCount = AtomicInteger()
-        try {
-            server.createBundleContext(sourceZip, requestCount)
-            server.start()
+            setLogPath()
+            val tempDir = createTempDirectory(prefix = "addpreset-e2e-").toFile()
+            val sourceZip = writeDownloadSourceZip(tempDir)
+            val hash = sha256File(sourceZip)
+            val server = HttpServer.create(InetSocketAddress(0), 0)
+            val requestCount = AtomicInteger()
+            try {
+                server.createBundleContext(sourceZip, requestCount)
+                server.start()
 
-            val configFile = writeDownloadConfig(tempDir, server.address.port, hash)
+                val configFile = writeDownloadConfig(tempDir, server.address.port, hash)
 
-            HttpClient(OkHttp).use { client ->
-                val downloaded = downloadPresetFileIfNeed(configFile.name, tempDir, client)
-                assertNotNull(downloaded)
-                assertEquals(File(tempDir, "download/processed/bundle.zip").canonicalPath, downloaded.canonicalPath)
-                assertTrue(downloaded.exists())
-                assertEquals(1, requestCount.get())
+                HttpClient(OkHttp).use { client ->
+                    val downloaded = downloadPresetFileIfNeed(configFile.name, tempDir, client)
+                    assertNotNull(downloaded)
+                    assertEquals(File(tempDir, "download/processed/bundle.zip").canonicalPath, downloaded.canonicalPath)
+                    assertTrue(downloaded.exists())
+                    assertEquals(1, requestCount.get())
 
-                val originalDownload = File(tempDir, "download/bundle.zip")
-                assertDownloadedArchives(downloaded, originalDownload, hash)
+                    val originalDownload = File(tempDir, "download/bundle.zip")
+                    assertDownloadedArchives(downloaded, originalDownload, hash)
 
-                val secondResult = downloadPresetFileIfNeed(configFile.name, tempDir, client)
-                assertNotNull(secondResult)
-                assertEquals(downloaded.canonicalPath, secondResult.canonicalPath)
-                assertEquals(1, requestCount.get())
+                    val secondResult = downloadPresetFileIfNeed(configFile.name, tempDir, client)
+                    assertNotNull(secondResult)
+                    assertEquals(downloaded.canonicalPath, secondResult.canonicalPath)
+                    assertEquals(1, requestCount.get())
+                }
+            } finally {
+                server.stop(0)
+                tempDir.deleteRecursively()
             }
-        } finally {
-            server.stop(0)
-            tempDir.deleteRecursively()
         }
-    }
 
     @Test
     fun `recognize download config path variants`() {

@@ -17,10 +17,10 @@ suspend fun UserSessionManager.getUnreadRoomActivities(
     query: PaginationQuery,
 ): CustomResult<RoomActivityListResponse, RequestError> =
     serviceCatching {
-    this@getUnreadRoomActivities.decryptRoomActivities(
-        CustomApi.Users.Unread.activities(query),
-    )
-}.mapError(RequestError::fromError)
+        this@getUnreadRoomActivities.decryptRoomActivities(
+            CustomApi.Users.Unread.activities(query),
+        )
+    }.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.getJoinedPinnedTopics(query: PaginationQuery) =
     serviceCatching { CustomApi.Users.PinnedTopics.get(query) }

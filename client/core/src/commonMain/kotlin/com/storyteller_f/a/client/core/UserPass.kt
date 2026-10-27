@@ -48,20 +48,20 @@ data class RawUserPassInfo(val address: String, val authKey: AuthKey) {
 data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
     override suspend fun signature(data: String): CustomResult<String, CredentialError> =
         getAlgo(
-        rawUSerPass.algo,
-    ).signature(
-        rawUSerPass.authKey.derPrivateKey,
-        data,
-    ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
+            rawUSerPass.algo,
+        ).signature(
+            rawUSerPass.authKey.derPrivateKey,
+            data,
+        ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
 
     override suspend fun verify(signature: String, data: String): CustomResult<Boolean, CredentialError> =
         getAlgo(
-        rawUSerPass.algo,
-    ).verify(
-        rawUSerPass.authKey.derPublicKey,
-        signature,
-        data,
-    ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
+            rawUSerPass.algo,
+        ).verify(
+            rawUSerPass.authKey.derPublicKey,
+            signature,
+            data,
+        ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
 
     override suspend fun decrypt(
         encrypted: ByteArray,
@@ -82,10 +82,10 @@ data class RawUserPass(val rawUSerPass: RawUserPassInfo) : UserPass {
 
     override suspend fun address(): CustomResult<String, CredentialError> =
         getAlgo(
-        rawUSerPass.algo,
-    ).calcAddress(
-        rawUSerPass.authKey.derPublicKey,
-    ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
+            rawUSerPass.algo,
+        ).calcAddress(
+            rawUSerPass.authKey.derPublicKey,
+        ).mapError(CredentialError::fromError).mapError(CredentialError::fromError)
 
     @OptIn(ExperimentalEncodingApi::class)
     override suspend fun decryptChildAccount(

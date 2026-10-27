@@ -81,8 +81,8 @@ inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>, E>.ma
     block: (List<T>) -> CustomResult<List<R>, FailureDetails>,
 ): CustomResult<PaginationResult<R>, F> =
     andThen(mapError) { page ->
-    block(page.list).map { PaginationResult(it, page.total) }
-}
+        block(page.list).map { PaginationResult(it, page.total) }
+    }
 
 inline fun <T, E, R> CustomResult<PaginationResult<T>, E>.mapPagingNotNull(
     block: (List<T>) -> List<R>,
@@ -93,40 +93,40 @@ inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>?, E>.m
     block: (List<T>) -> CustomResult<List<R>, FailureDetails>,
 ): CustomResult<PaginationResult<R>?, F> =
     andThenPresent(mapError) { page ->
-    block(page.list).map { PaginationResult(it, page.total) }
-}
+        block(page.list).map { PaginationResult(it, page.total) }
+    }
 
 inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>?, E>.mapPagingResultIfNotNullNullable(
     mapError: (FailureDetails) -> F,
     block: (List<T>) -> CustomResult<List<R>?, FailureDetails>,
 ): CustomResult<PaginationResult<R>?, F> =
     andThenPresent(mapError) { page ->
-    block(page.list).mapPresent { PaginationResult(it, page.total) }
-}
+        block(page.list).mapPresent { PaginationResult(it, page.total) }
+    }
 
 inline fun <T, E : FailureDetails, R, F> CustomResult<PaginationResult<T>, E>.mapPagingResultNullable(
     mapError: (FailureDetails) -> F,
     block: (List<T>) -> CustomResult<List<R>?, FailureDetails>,
 ): CustomResult<PaginationResult<R>?, F> =
     andThen(mapError) { page ->
-    block(page.list).mapPresent { PaginationResult(it, page.total) }
-}
+        block(page.list).mapPresent { PaginationResult(it, page.total) }
+    }
 
 fun <T> paginationFromResults(
     listResult: CustomResult<List<T>, DatabaseError>,
     totalResult: CustomResult<Long, DatabaseError>,
 ): CustomResult<PaginationResult<T>, DatabaseError> =
     listResult.andThen(DatabaseError::fromError) { list ->
-    totalResult.map { total -> PaginationResult(list, total) }
-}
+        totalResult.map { total -> PaginationResult(list, total) }
+    }
 
 fun <T> paginationNullableFromResults(
     listResult: CustomResult<List<T>?, DatabaseError>,
     totalResult: CustomResult<Long, DatabaseError>,
 ): CustomResult<PaginationResult<T>?, DatabaseError> =
     listResult.andThenPresent(DatabaseError::fromError) { list ->
-    totalResult.map { total -> PaginationResult(list, total) }
-}
+        totalResult.map { total -> PaginationResult(list, total) }
+    }
 
 data class ContainerInfo(
     val member: Member?,

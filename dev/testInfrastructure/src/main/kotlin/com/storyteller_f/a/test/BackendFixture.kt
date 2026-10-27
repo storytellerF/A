@@ -35,14 +35,14 @@ suspend fun <T> useBackendFixture(
     block: suspend (BackendFixture) -> T,
 ): T =
     withFixtureResources(logDirectory) { resources ->
-    val services = startBaseServices(resources)
-    val commonEnv = backendEnvironment() + services.containerEnvironment + environment(services)
-    resources.start("cli", createCli(services.network, commonEnv))
-    val ws = resources.start("ws", createWs(services.network, commonEnv))
-    val server = resources.start("server", createServer(services.network, commonEnv))
-    resources.start("worker", createWorker(services.network, commonEnv))
-    block(BackendFixture(services, server.host, server.getMappedPort(SERVER_PORT), ws.getMappedPort(WS_PORT)))
-}
+        val services = startBaseServices(resources)
+        val commonEnv = backendEnvironment() + services.containerEnvironment + environment(services)
+        resources.start("cli", createCli(services.network, commonEnv))
+        val ws = resources.start("ws", createWs(services.network, commonEnv))
+        val server = resources.start("server", createServer(services.network, commonEnv))
+        resources.start("worker", createWorker(services.network, commonEnv))
+        block(BackendFixture(services, server.host, server.getMappedPort(SERVER_PORT), ws.getMappedPort(WS_PORT)))
+    }
 
 /** Finds repository inputs independently of the test module's working directory. */
 fun resolveTestPresetPath(): File = resolveRepositoryFile("dev/preset/0_preset_user.json").parentFile
@@ -73,7 +73,7 @@ private fun backendEnvironment(): Map<String, String> {
 }
 
 private fun createCli(network: Network, env: Map<String, String>): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-cli:latest")).apply {
+    FixtureContainer(DockerImageName.parse("a-cli:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}")).apply {
         withNetwork(network)
         withEnv(env + mapOf("CLI_INIT_ENABLE" to "true", "CLI_READY_PORT" to CLI_READY_PORT.toString()))
         withCopyFileToContainer(MountableFile.forHostPath(resolveTestPresetPath().toPath()), "/app/deploy/preset_data")
@@ -82,7 +82,7 @@ private fun createCli(network: Network, env: Map<String, String>): GenericContai
     }
 
 private fun createWs(network: Network, env: Map<String, String>): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-ws:latest")).apply {
+    FixtureContainer(DockerImageName.parse("a-ws:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}")).apply {
         withNetwork(network)
         withNetworkAliases("test-ws")
         withEnv(env)
@@ -91,7 +91,7 @@ private fun createWs(network: Network, env: Map<String, String>): GenericContain
     }
 
 private fun createServer(network: Network, env: Map<String, String>): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-server:latest")).apply {
+    FixtureContainer(DockerImageName.parse("a-server:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}")).apply {
         withNetwork(network)
         withEnv(env)
         withExposedPorts(SERVER_PORT)
@@ -99,5 +99,5 @@ private fun createServer(network: Network, env: Map<String, String>): GenericCon
     }
 
 private fun createWorker(network: Network, env: Map<String, String>): GenericContainer<*> =
-    FixtureContainer(DockerImageName.parse("a-worker:latest"))
+    FixtureContainer(DockerImageName.parse("a-worker:${if (E2eCoverage.enabled) "e2e-coverage" else "latest"}"))
         .withNetwork(network).withEnv(env)

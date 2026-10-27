@@ -97,9 +97,10 @@ inline fun <reified R : Any> DefaultWebSocketServerSession.usePrincipal(block: (
 
 inline fun <reified R> handleResult(
     backend: Backend,
-): suspend RoutingContext.(it: CustomResult<R, FailureDetails>) -> Unit = { result ->
-    handleResultInternal(result, backend.customConfig.buildType)
-}
+): suspend RoutingContext.(it: CustomResult<R, FailureDetails>) -> Unit =
+    { result ->
+        handleResultInternal(result, backend.customConfig.buildType)
+    }
 
 suspend inline fun <reified R, E : FailureDetails> RoutingContext.handleResultInternal(
     result: CustomResult<R, E>,

@@ -18,30 +18,30 @@ class BrowserRtcCaptureTest {
     @Test
     fun capturesTracksAndBuildsAudioVideoOffer() =
         runTest {
-        withContext(Dispatchers.Main) {
-            val fixture = installSyntheticCapture()
-            try {
-                val engine = createRtcEngine()
-                val media = engine.openMedia(video = true)
+            withContext(Dispatchers.Main) {
+                val fixture = installSyntheticCapture()
                 try {
-                    assertNotNull(media.video)
-                    val peer = engine.createPeer(media, RtcPeerEvents({}, {}, {}), this)
+                    val engine = createRtcEngine()
+                    val media = engine.openMedia(video = true)
                     try {
-                        val offer = peer.createOffer()
-                        assertTrue(offer.contains("m=audio"))
-                        assertTrue(offer.contains("m=video"))
+                        assertNotNull(media.video)
+                        val peer = engine.createPeer(media, RtcPeerEvents({}, {}, {}), this)
+                        try {
+                            val offer = peer.createOffer()
+                            assertTrue(offer.contains("m=audio"))
+                            assertTrue(offer.contains("m=video"))
+                        } finally {
+                            peer.close()
+                        }
                     } finally {
-                        peer.close()
+                        media.close()
                     }
+                    assertTrue(syntheticTracksStopped(fixture))
                 } finally {
-                    media.close()
+                    restoreSyntheticCapture(fixture)
                 }
-                assertTrue(syntheticTracksStopped(fixture))
-            } finally {
-                restoreSyntheticCapture(fixture)
             }
         }
-    }
 }
 
 @JsFun(

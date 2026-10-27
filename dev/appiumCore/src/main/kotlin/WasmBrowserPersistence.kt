@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 
 /** Exercise the real persistent profile used for browser restart acceptance with synthetic data only. */
 suspend fun testWasmProfilePersistence(browserType: WasmBrowser, distribution: File) {
-    WasmDistributionServer(distribution).use { server ->
+    WasmDistributionServer(distribution, measureCoverage = false).use { server ->
         browserType.withProfile { profile ->
             val first = browserType.createDriver(profile, Dimension(500, 800))
             try {

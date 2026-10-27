@@ -38,10 +38,10 @@ fun Title.isExpired(currentTime: LocalDateTime = now()): Boolean =
 
 fun Title.effectiveTitleStatus(currentTime: LocalDateTime = now()): TitleWorkStatus =
     if (isExpired(currentTime)) {
-    TitleWorkStatus.EXPIRED
-} else {
-    TitleWorkStatus.OK
-}
+        TitleWorkStatus.EXPIRED
+    } else {
+        TitleWorkStatus.OK
+    }
 
 fun Title.toTitleInfo(
     extensions: TitleInfo.Extension? = null,
@@ -50,21 +50,21 @@ fun Title.toTitleInfo(
     currentTime: LocalDateTime = now(),
 ): TitleInfo =
     TitleInfo(
-    id = id,
-    createdTime = createdTime,
-    type = type,
-    creator = creator,
-    receiver = receiver,
-    scopeId = scopeId,
-    scopeType = scopeType,
-    name = name,
-    descriptionTopicId = descriptionTopicId,
-    extension = extensions,
-    favoriteId = favoriteId,
-    subscriptionId = subscriptionId,
-    titleStatus = effectiveTitleStatus(currentTime),
-    expiresAt = expiresAt,
-    status = status,
-)
+        id = id,
+        createdTime = createdTime,
+        type = type,
+        creator = creator,
+        receiver = receiver,
+        scopeId = scopeId,
+        scopeType = scopeType,
+        name = name,
+        descriptionTopicId = descriptionTopicId,
+        extension = extensions,
+        favoriteId = favoriteId,
+        subscriptionId = subscriptionId,
+        titleStatus = effectiveTitleStatus(currentTime),
+        expiresAt = expiresAt,
+        status = status,
+    )
 
 data class RawTitle(val title: Title, val favoriteId: PrimaryKey? = null, val subscriptionId: PrimaryKey? = null)

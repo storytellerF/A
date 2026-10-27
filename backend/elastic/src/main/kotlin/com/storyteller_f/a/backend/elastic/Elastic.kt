@@ -114,23 +114,23 @@ suspend fun <T> ElasticsearchAsyncClient.getDocumentList(
     clazz: Class<T>,
 ): List<T?> =
     try {
-    if (idList.size == 1) {
-        idList.map { id ->
-            get({
-                it.index(indexName).id(id.toString())
-            }, clazz).await().source()
+        if (idList.size == 1) {
+            idList.map { id ->
+                get({
+                    it.index(indexName).id(id.toString())
+                }, clazz).await().source()
+            }
+        } else {
+            mget({ builder ->
+                builder.index(indexName).ids(idList.map { it.toString() })
+            }, clazz).await().docs().map {
+                it.result().source()
+            }
         }
-    } else {
-        mget({ builder ->
-            builder.index(indexName).ids(idList.map { it.toString() })
-        }, clazz).await().docs().map {
-            it.result().source()
-        }
+    } catch (exception: ElasticsearchException) {
+        if (exception.status() != 404) throw exception
+        idList.map { null }
     }
-} catch (exception: ElasticsearchException) {
-    if (exception.status() != 404) throw exception
-    idList.map { null }
-}
 
 suspend fun <T : PrimaryKeyIdentifiable> ElasticsearchAsyncClient.saveDocumentList(
     connection: ElasticConnection,
@@ -187,26 +187,26 @@ suspend fun <T> ElasticsearchAsyncClient.searchDocumentList(
     clazz: Class<T>,
 ): PaginationResult<T> =
     try {
-    val response = search(request, clazz).await()
-    val hits = response.hits()
-    val total = hits.total()?.value()
-    Napier.i {
-        "size: ${hits.hits().size} maxScore: ${hits.maxScore() ?: "<none>"} total: ${total ?: "<none>"}"
+        val response = search(request, clazz).await()
+        val hits = response.hits()
+        val total = hits.total()?.value()
+        Napier.i {
+            "size: ${hits.hits().size} maxScore: ${hits.maxScore() ?: "<none>"} total: ${total ?: "<none>"}"
+        }
+        PaginationResult(
+            hits.hits().mapNotNull {
+                it.source()
+            },
+            total ?: 0,
+        )
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
+    } catch (e: Exception) {
+        Napier.e(e) {
+            "elastic search failed"
+        }
+        PaginationResult(emptyList(), 0)
     }
-    PaginationResult(
-        hits.hits().mapNotNull {
-            it.source()
-        },
-        total ?: 0,
-    )
-} catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-    throw cancellation
-} catch (e: Exception) {
-    Napier.e(e) {
-        "elastic search failed"
-    }
-    PaginationResult(emptyList(), 0)
-}
 
 fun <T> buildElasticSearchService(env: MergedEnv, b: (ElasticConnection) -> T): T {
     val certFile = env["ELASTIC_CERT_FILE"] ?: error("ELASTIC_CERT_FILE is empty")

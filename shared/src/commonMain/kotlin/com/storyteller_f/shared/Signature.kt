@@ -121,12 +121,12 @@ object AlgoP256 : Algo {
         data: String,
     ): CustomResult<Boolean, CryptoError> =
         captureCrypto {
-        val publicKey =
-            CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256)
-                .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKey.hexToByteArray())
-        publicKey.signatureVerifier(SHA256, ECDSA.SignatureFormat.DER)
-            .tryVerifySignature(data.encodeToByteArray(), derSignature.hexToByteArray())
-    }
+            val publicKey =
+                CryptographyProvider.Default.get(ECDSA).publicKeyDecoder(EC.Curve.P256)
+                    .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKey.hexToByteArray())
+            publicKey.signatureVerifier(SHA256, ECDSA.SignatureFormat.DER)
+                .tryVerifySignature(data.encodeToByteArray(), derSignature.hexToByteArray())
+        }
 
     override suspend fun signature(derPrivateKey: String, data: String): CustomResult<String, CryptoError> =
         captureCrypto {
@@ -165,19 +165,19 @@ object AlgoP256 : Algo {
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     override suspend fun generatePemKeyPair(): CustomResult<Pair<String, String>, CryptoError> =
         captureCrypto {
-        val keyPair =
-            CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256)
-                .generateKey()
-        val privatePem =
-            keyPair.privateKey
-                .encodeToByteArray(EC.PrivateKey.Format.PEM)
-                .decodeToString()
-        val publicPem =
-            keyPair.publicKey
-                .encodeToByteArray(EC.PublicKey.Format.PEM)
-                .decodeToString()
-        privatePem to publicPem
-    }
+            val keyPair =
+                CryptographyProvider.Default.get(ECDSA).keyPairGenerator(EC.Curve.P256)
+                    .generateKey()
+            val privatePem =
+                keyPair.privateKey
+                    .encodeToByteArray(EC.PrivateKey.Format.PEM)
+                    .decodeToString()
+            val publicPem =
+                keyPair.publicKey
+                    .encodeToByteArray(EC.PublicKey.Format.PEM)
+                    .decodeToString()
+            privatePem to publicPem
+        }
 
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     override suspend fun getDerPublicKeyFromPem(pemPublicKeyStr: String): CustomResult<String, CryptoError> =
@@ -196,105 +196,105 @@ object AlgoP256 : Algo {
 
     private fun createEncryptionAlgo(): EncryptionAlgo =
         object : Type1Algo {
-        override suspend fun kemEncrypt(
-            derPublicKeyStr: String,
-            aesKeyBytes: ByteArray,
-        ): CustomResult<ByteArray, CryptoError> =
-            captureCrypto {
-            val tempKeyPair =
-                CryptographyProvider.Default.get(
-                    ECDH,
-                ).keyPairGenerator(EC.Curve.P256).generateKey()
+            override suspend fun kemEncrypt(
+                derPublicKeyStr: String,
+                aesKeyBytes: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                    val tempKeyPair =
+                        CryptographyProvider.Default.get(
+                            ECDH,
+                        ).keyPairGenerator(EC.Curve.P256).generateKey()
 
-            val publicKey =
-                CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256)
-                    .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray())
+                    val publicKey =
+                        CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256)
+                            .decodeFromByteArray(EC.PublicKey.Format.DER, derPublicKeyStr.hexToByteArray())
 
-            val shared =
-                tempKeyPair.privateKey.sharedSecretGenerator()
-                    .generateSharedSecretToByteArray(publicKey)
+                    val shared =
+                        tempKeyPair.privateKey.sharedSecretGenerator()
+                            .generateSharedSecretToByteArray(publicKey)
 
-            val derivedKeys =
-                CryptographyProvider.Default.get(HKDF)
-                    .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())
-                    .deriveSecretToByteArray(shared)
+                    val derivedKeys =
+                        CryptographyProvider.Default.get(HKDF)
+                            .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())
+                            .deriveSecretToByteArray(shared)
 
-            val aesKey = derivedKeys.copyOfRange(0, 32)
-            val macKey = derivedKeys.copyOfRange(32, 64)
+                    val aesKey = derivedKeys.copyOfRange(0, 32)
+                    val macKey = derivedKeys.copyOfRange(32, 64)
 
-            val encrypted =
-                CryptographyProvider.Default.get(AES.GCM)
-                    .keyDecoder()
-                    .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
-                    .cipher()
-                    .encrypt(aesKeyBytes)
+                    val encrypted =
+                        CryptographyProvider.Default.get(AES.GCM)
+                            .keyDecoder()
+                            .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
+                            .cipher()
+                            .encrypt(aesKeyBytes)
 
-            val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted
-            val signature =
-                CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
-                    .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
-                    .signatureGenerator()
-                    .generateSignature(concat)
+                    val concat = tempKeyPair.publicKey.encodeToByteArray(EC.PublicKey.Format.RAW) + encrypted
+                    val signature =
+                        CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
+                            .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
+                            .signatureGenerator()
+                            .generateSignature(concat)
 
-            concat + signature
+                    concat + signature
+                }
+
+            override suspend fun kemDecrypt(
+                derPrivateKeyStr: String,
+                encrypted: ByteArray,
+            ): CustomResult<ByteArray, CryptoError> =
+                captureCrypto {
+                    val publicKeyContent = encrypted.copyOfRange(0, 65)
+                    val publicKey =
+                        CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256)
+                            .decodeFromByteArray(EC.PublicKey.Format.RAW, publicKeyContent)
+                    val shared =
+                        CryptographyProvider.Default.get(ECDH).privateKeyDecoder(EC.Curve.P256)
+                            .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray())
+                            .sharedSecretGenerator().generateSharedSecretToByteArray(publicKey)
+
+                    val derivedKey =
+                        CryptographyProvider.Default.get(HKDF)
+                            .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())
+                            .deriveSecretToByteArray(shared)
+
+                    val aesKey = derivedKey.copyOfRange(0, 32)
+                    val macKey = derivedKey.copyOfRange(32, 64)
+                    val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32)
+                    val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
+                    check(
+                        CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
+                            .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
+                            .signatureVerifier().tryVerifySignature(noMacResult, macResult),
+                    ) { "hmac verify failed" }
+                    val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32)
+
+                    CryptographyProvider.Default.get(AES.GCM)
+                        .keyDecoder()
+                        .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
+                        .cipher()
+                        .decrypt(encryptedContent)
+                }
         }
-
-        override suspend fun kemDecrypt(
-            derPrivateKeyStr: String,
-            encrypted: ByteArray,
-        ): CustomResult<ByteArray, CryptoError> =
-            captureCrypto {
-            val publicKeyContent = encrypted.copyOfRange(0, 65)
-            val publicKey =
-                CryptographyProvider.Default.get(ECDH).publicKeyDecoder(EC.Curve.P256)
-                    .decodeFromByteArray(EC.PublicKey.Format.RAW, publicKeyContent)
-            val shared =
-                CryptographyProvider.Default.get(ECDH).privateKeyDecoder(EC.Curve.P256)
-                    .decodeFromByteArray(EC.PrivateKey.Format.DER, derPrivateKeyStr.hexToByteArray())
-                    .sharedSecretGenerator().generateSharedSecretToByteArray(publicKey)
-
-            val derivedKey =
-                CryptographyProvider.Default.get(HKDF)
-                    .secretDerivation(SHA256, 512.bits, null, "ecies".encodeToByteArray())
-                    .deriveSecretToByteArray(shared)
-
-            val aesKey = derivedKey.copyOfRange(0, 32)
-            val macKey = derivedKey.copyOfRange(32, 64)
-            val noMacResult = encrypted.copyOfRange(0, encrypted.size - 32)
-            val macResult = encrypted.copyOfRange(encrypted.size - 32, encrypted.size)
-            check(
-                CryptographyProvider.Default.get(HMAC).keyDecoder(SHA256)
-                    .decodeFromByteArray(HMAC.Key.Format.RAW, macKey)
-                    .signatureVerifier().tryVerifySignature(noMacResult, macResult),
-            ) { "hmac verify failed" }
-            val encryptedContent = encrypted.copyOfRange(65, encrypted.size - 32)
-
-            CryptographyProvider.Default.get(AES.GCM)
-                .keyDecoder()
-                .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
-                .cipher()
-                .decrypt(encryptedContent)
-        }
-    }
 }
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun encryptDataByAES(data: String): CustomResult<Pair<ByteArray, ByteArray>, CryptoError> =
     captureCrypto {
-    val key = CryptographyProvider.Default.get(AES.CBC).keyGenerator(256.bits).generateKey()
-    val encodedAesKey = key.encodeToByteArray(AES.Key.Format.RAW)
-    val encryptedData = key.cipher(true).encrypt(data.encodeToByteArray())
-    encryptedData to encodedAesKey
-}
+        val key = CryptographyProvider.Default.get(AES.CBC).keyGenerator(256.bits).generateKey()
+        val encodedAesKey = key.encodeToByteArray(AES.Key.Format.RAW)
+        val encryptedData = key.cipher(true).encrypt(data.encodeToByteArray())
+        encryptedData to encodedAesKey
+    }
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun encryptDataByAES(data: String, aesKey: ByteArray): CustomResult<ByteArray, CryptoError> =
     captureCrypto {
-    val key =
-        CryptographyProvider.Default.get(AES.CBC).keyDecoder()
-            .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
-    key.cipher(true).encrypt(data.encodeToByteArray())
-}
+        val key =
+            CryptographyProvider.Default.get(AES.CBC).keyDecoder()
+                .decodeFromByteArray(AES.Key.Format.RAW, aesKey)
+        key.cipher(true).encrypt(data.encodeToByteArray())
+    }
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun decryptDataByAES(encrypted: ByteArray, aesKey: ByteArray): CustomResult<String, CryptoError> =
@@ -308,17 +308,17 @@ suspend fun decryptDataByAES(encrypted: ByteArray, aesKey: ByteArray): CustomRes
 
 fun getAlgo(algo: AlgoType): Algo =
     when (algo) {
-    AlgoType.P256 -> AlgoP256
-    AlgoType.DILITHIUM -> AlgoDilithium
-}
+        AlgoType.P256 -> AlgoP256
+        AlgoType.DILITHIUM -> AlgoDilithium
+    }
 
 suspend fun <T> algoRunCatching(
     algo: AlgoType = AlgoType.P256,
     block: suspend Algo.() -> T,
 ): CustomResult<T, CryptoError> =
     captureCrypto {
-    getAlgo(algo).block()
-}
+        getAlgo(algo).block()
+    }
 
 expect suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError>
 expect suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError>
@@ -328,13 +328,13 @@ expect fun loadCryptoLibIfNeed()
 @OptIn(ExperimentalStdlibApi::class, dev.whyoleg.cryptography.DelicateCryptographyApi::class)
 suspend fun calcAddressSHA256AndRipemd160(derPublicKeyStr: String): CustomResult<String, CryptoError> =
     captureCrypto {
-    val decode = derPublicKeyStr.hexToByteArray()
-    // 先计算SHA256
-    val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode)
-    // 再计算RIPEMD160
-    val ripemd160Digest = ripemd160Platform(sha256Digest)
-    ripemd160Digest.toHexString()
-}
+        val decode = derPublicKeyStr.hexToByteArray()
+        // 先计算SHA256
+        val sha256Digest = CryptographyProvider.Default.get(SHA256).hasher().hash(decode)
+        // 再计算RIPEMD160
+        val ripemd160Digest = ripemd160Platform(sha256Digest)
+        ripemd160Digest.toHexString()
+    }
 
 expect val AlgoDilithium: Algo
 
@@ -374,5 +374,5 @@ suspend fun Algo.decryptMessage(
     encryptedAesKey: ByteArray,
 ): CustomResult<String, CryptoError> =
     encryptionAlgo.kemDecrypt(derPrivateKey, encryptedAesKey).flatMap {
-    decryptDataByAES(encrypted, it)
-}
+        decryptDataByAES(encrypted, it)
+    }

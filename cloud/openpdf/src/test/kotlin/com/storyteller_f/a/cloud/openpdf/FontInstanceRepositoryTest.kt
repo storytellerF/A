@@ -131,15 +131,17 @@ class FontInstanceRepositoryTest {
     @Test
     fun `concurrent cache publication is complete`() =
         runTest {
-        val bytes = fontBytes("variable.ttf")
-        val repository = FontInstanceRepository()
-        val instances =
-            (1..8).map {
-                async(Dispatchers.Default) { repository.getInstance(bytes, axes = mapOf("wght" to 400f)).getOrThrow() }
-            }.awaitAll()
-        instances.forEach { assertSame(instances.first(), it) }
-        assertFalse(SfntFont(instances.first().copyBytes(), 0).hasTable("fvar"))
-    }
+            val bytes = fontBytes("variable.ttf")
+            val repository = FontInstanceRepository()
+            val instances =
+                (1..8).map {
+                    async(Dispatchers.Default) {
+                        repository.getInstance(bytes, axes = mapOf("wght" to 400f)).getOrThrow()
+                    }
+                }.awaitAll()
+            instances.forEach { assertSame(instances.first(), it) }
+            assertFalse(SfntFont(instances.first().copyBytes(), 0).hasTable("fvar"))
+        }
 
     @Test
     fun `cancellation propagates without cache publication`() {
@@ -192,10 +194,10 @@ class FontInstanceRepositoryTest {
                     axes: Map<String, Float>,
                 ): CustomResult<ByteArray, FontError> =
                     if (calls.incrementAndGet() == 1) {
-                    CustomResult.failure(FontError.InstancingFailed(IllegalStateException("synthetic failure")))
-                } else {
-                    CustomResult.success(output)
-                }
+                        CustomResult.failure(FontError.InstancingFailed(IllegalStateException("synthetic failure")))
+                    } else {
+                        CustomResult.success(output)
+                    }
             }
         val repository = FontInstanceRepository(instancer)
         val source = fontBytes("variable.ttf")
@@ -283,19 +285,19 @@ class FontInstanceRepositoryTest {
 
     private fun cff2Metadata(variable: Boolean = true): ByteArray =
         if (variable) {
-        ByteBuffer.allocate(60).order(ByteOrder.BIG_ENDIAN)
-            .putInt(encodeTag("OTTO")).putShort(2).putShort(0)
-            .putShort(0).putShort(0)
-            .putInt(encodeTag("CFF2")).putInt(0).putInt(60).putInt(0)
-            .putInt(encodeTag("fvar")).putInt(0).putInt(44).putInt(16)
-            .putInt(0x10000).putShort(16).putShort(0)
-            .putShort(0).putShort(20).putInt(0).array()
-    } else {
-        ByteBuffer.allocate(28).order(ByteOrder.BIG_ENDIAN)
-            .putInt(encodeTag("OTTO")).putShort(1).putShort(0)
-            .putShort(0).putShort(0)
-            .putInt(encodeTag("CFF2")).putInt(0).putInt(28).putInt(0).array()
-    }
+            ByteBuffer.allocate(60).order(ByteOrder.BIG_ENDIAN)
+                .putInt(encodeTag("OTTO")).putShort(2).putShort(0)
+                .putShort(0).putShort(0)
+                .putInt(encodeTag("CFF2")).putInt(0).putInt(60).putInt(0)
+                .putInt(encodeTag("fvar")).putInt(0).putInt(44).putInt(16)
+                .putInt(0x10000).putShort(16).putShort(0)
+                .putShort(0).putShort(20).putInt(0).array()
+        } else {
+            ByteBuffer.allocate(28).order(ByteOrder.BIG_ENDIAN)
+                .putInt(encodeTag("OTTO")).putShort(1).putShort(0)
+                .putShort(0).putShort(0)
+                .putInt(encodeTag("CFF2")).putInt(0).putInt(28).putInt(0).array()
+        }
 
     @Test
     fun `native errors preserve fatal VM failures`() {
@@ -331,10 +333,10 @@ class FontInstanceRepositoryTest {
             private set
         override fun invokeInt(name: String, vararg args: Any?): Int =
             when {
-            name == "hb_version_atleast" -> if (supportsCff2) 1 else 0
-            name == "hb_subset_input_get_flags" -> flags
-            else -> 1
-        }
+                name == "hb_version_atleast" -> if (supportsCff2) 1 else 0
+                name == "hb_subset_input_get_flags" -> flags
+                else -> 1
+            }
         override fun invokeVoid(name: String, vararg args: Any?) {
             if (name == "hb_subset_input_set_flags") flags = checkNotNull(args[1]) as Int
         }

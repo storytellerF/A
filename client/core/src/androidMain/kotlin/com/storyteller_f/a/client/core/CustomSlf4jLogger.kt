@@ -75,10 +75,10 @@ class CustomSlf4jLogger(private val customName: String) : AbstractLogger() {
 
     private fun getLevel(level: Level): LogLevel =
         when (level) {
-        Level.ERROR -> LogLevel.ERROR
-        Level.WARN -> LogLevel.WARNING
-        Level.INFO -> LogLevel.INFO
-        Level.DEBUG -> LogLevel.DEBUG
-        Level.TRACE -> LogLevel.VERBOSE
-    }
+            Level.ERROR -> LogLevel.ERROR
+            Level.WARN -> LogLevel.WARNING
+            Level.INFO -> LogLevel.INFO
+            Level.DEBUG -> LogLevel.DEBUG
+            Level.TRACE -> LogLevel.VERBOSE
+        }
 }

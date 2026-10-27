@@ -100,44 +100,44 @@ class ExposedTitleDatabase(val exposedDatabaseSession: ExposedDatabaseSession) :
 
     override suspend fun getAllRawTitles(primaryKeyFetch: PrimaryKeyFetch) =
         paginationFromResults(
-        getTitleListByPredicate {
-            bindPaginationQuery(Titles, primaryKeyFetch)
-        },
-        getTitleCountByPredicate(),
-    )
+            getTitleListByPredicate {
+                bindPaginationQuery(Titles, primaryKeyFetch)
+            },
+            getTitleCountByPredicate(),
+        )
 
     override suspend fun getTitleCount() = getTitleCountByPredicate()
 
     override suspend fun getTitle(id: PrimaryKey) =
         captureFailure(DatabaseError::from) {
-        val list =
-            exposedDatabaseSession.dbSearch {
-                search {
-                    Titles.selectAll().andWhere { Titles.id eq id }
-                }
-                map {
-                    Title.wrapRow(it)
-                }
-            }.getOrThrow()
-        list.firstOrNull()?.let { RawTitle(it) }
-    }
+            val list =
+                exposedDatabaseSession.dbSearch {
+                    search {
+                        Titles.selectAll().andWhere { Titles.id eq id }
+                    }
+                    map {
+                        Title.wrapRow(it)
+                    }
+                }.getOrThrow()
+            list.firstOrNull()?.let { RawTitle(it) }
+        }
 
     override suspend fun updateTitleStatus(id: PrimaryKey, status: ObjectStatus) =
         exposedDatabaseSession.dbQuery {
-        Titles.update({ Titles.id eq id }) {
-            it[Titles.status] = status
-        } > 0
-    }
+            Titles.update({ Titles.id eq id }) {
+                it[Titles.status] = status
+            } > 0
+        }
 
     private suspend fun getTitleListByPredicate(queryProvider: Query.() -> Query) =
         exposedDatabaseSession.dbSearch {
-        search {
-            Titles.selectAll().queryProvider()
+            search {
+                Titles.selectAll().queryProvider()
+            }
+            map {
+                RawTitle(Title.wrapRow(it))
+            }
         }
-        map {
-            RawTitle(Title.wrapRow(it))
-        }
-    }
 
     private suspend fun getTitleCountByPredicate(queryProvider: Query.() -> Query = { this }) =
         exposedDatabaseSession.dbSearch {

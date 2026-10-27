@@ -34,41 +34,41 @@ class Test {
     @Test
     fun `concurrent 401 responses share an auth refresh`() =
         runTest {
-        val initialResponsesReleased = CompletableDeferred<Unit>()
-        val lock = Mutex()
-        var initial401Count = 0
-        val retryCookies = mutableListOf<String?>()
-        val userPass = CountingUserPass(initialResponsesReleased)
-        val passHolder =
-            SimplePassHolder().also {
-                it.updateState(ClientSessionState.Success(userPass))
-            }
-        val manager =
-            UserSessionModel().also {
-                it.updateUser(UserInfo.EMPTY)
-            }
-        val client =
-            buildSingleFlightTestClient(manager, passHolder) { request ->
-                handleSingleFlightRequest(request, lock, retryCookies) {
-                    initial401Count += 1
-                    if (initial401Count == 3) {
-                        initialResponsesReleased.complete(Unit)
+            val initialResponsesReleased = CompletableDeferred<Unit>()
+            val lock = Mutex()
+            var initial401Count = 0
+            val retryCookies = mutableListOf<String?>()
+            val userPass = CountingUserPass(initialResponsesReleased)
+            val passHolder =
+                SimplePassHolder().also {
+                    it.updateState(ClientSessionState.Success(userPass))
+                }
+            val manager =
+                UserSessionModel().also {
+                    it.updateUser(UserInfo.EMPTY)
+                }
+            val client =
+                buildSingleFlightTestClient(manager, passHolder) { request ->
+                    handleSingleFlightRequest(request, lock, retryCookies) {
+                        initial401Count += 1
+                        if (initial401Count == 3) {
+                            initialResponsesReleased.complete(Unit)
+                        }
                     }
                 }
-            }
 
-        val responses =
-            List(3) {
-                async {
-                    client.get("https://example.test/resource/$it").bodyAsText()
-                }
-            }.awaitAll()
+            val responses =
+                List(3) {
+                    async {
+                        client.get("https://example.test/resource/$it").bodyAsText()
+                    }
+                }.awaitAll()
 
-        assertEquals(listOf("ok", "ok", "ok"), responses)
-        assertEquals(1, userPass.signatureCount)
-        assertEquals(3, retryCookies.size)
-        assertEquals("user_session=success", retryCookies.last())
-    }
+            assertEquals(listOf("ok", "ok", "ok"), responses)
+            assertEquals(1, userPass.signatureCount)
+            assertEquals(3, retryCookies.size)
+            assertEquals("user_session=success", retryCookies.last())
+        }
 
     private fun buildSingleFlightTestClient(
         manager: UserSessionModel,
@@ -139,8 +139,8 @@ private class CountingUserPass(private val initialResponsesReleased: Completable
         encryptedAesKey: ByteArray,
     ): CustomResult<String, CredentialError> =
         CustomResult.success(
-        "",
-    )
+            "",
+        )
 
     override suspend fun address(): CustomResult<String, CredentialError> = CustomResult.success("address")
 

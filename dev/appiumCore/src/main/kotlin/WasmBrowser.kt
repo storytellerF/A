@@ -62,14 +62,14 @@ enum class WasmBrowser {
         }
     }
 
-    suspend fun <T> withBrowser(windowSize: Dimension = Dimension(1280, 900), block: (WebDriver) -> T): T =
+    suspend fun <T> withBrowser(
+        windowSize: Dimension = Dimension(1280, 900),
+        beforeClose: (WebDriver) -> Unit = {},
+        block: (WebDriver) -> T,
+    ): T =
         withProfile { profile ->
             val browser = createDriver(profile, windowSize)
-            try {
-                block(browser)
-            } finally {
-                browser.quit()
-            }
+            useWasmBrowser(browser, beforeClose, block)
         }
 
     suspend fun <T> withProfile(block: suspend (File) -> T): T {
@@ -83,19 +83,39 @@ enum class WasmBrowser {
 
     private fun chromiumArguments(profile: File, windowSize: Dimension) =
         listOf(
-        "--headless=new",
-        "--user-data-dir=${profile.canonicalPath}",
-        "--lang=en-US",
-        "--window-size=${windowSize.width},${windowSize.height}",
-        "--no-first-run",
-        "--no-default-browser-check",
-    )
+            "--headless=new",
+            "--user-data-dir=${profile.canonicalPath}",
+            "--lang=en-US",
+            "--window-size=${windowSize.width},${windowSize.height}",
+            "--no-first-run",
+            "--no-default-browser-check",
+        )
 
     private fun firefoxService(): GeckoDriverService =
         object : GeckoDriverService.Builder() {
-        // In-place profiles require an explicit port, including when reusing the profile after quit.
-        // https://firefox-source-docs.mozilla.org/testing/geckodriver/Profiles.html
-        override fun createArgs(): List<String> =
-            super.createArgs() + listOf("--marionette-port", PortProber.findFreePort().toString())
-    }.build()
+            // In-place profiles require an explicit port, including when reusing the profile after quit.
+            // https://firefox-source-docs.mozilla.org/testing/geckodriver/Profiles.html
+            override fun createArgs(): List<String> =
+                super.createArgs() + listOf("--marionette-port", PortProber.findFreePort().toString())
+        }.build()
 }
+
+/** Kotlin use retains the test failure and suppresses failures from snapshot/driver cleanup. */
+internal fun <T> useWasmBrowser(browser: WebDriver, beforeClose: (WebDriver) -> Unit, block: (WebDriver) -> T): T =
+    AutoCloseable {
+        val failures = mutableListOf<Throwable>()
+        try {
+            beforeClose(browser)
+        } catch (failure: Throwable) {
+            failures.add(failure)
+        }
+        try {
+            browser.quit()
+        } catch (failure: Throwable) {
+            failures.add(failure)
+        }
+        failures.firstOrNull()?.let { failure ->
+            failures.drop(1).forEach(failure::addSuppressed)
+            throw failure
+        }
+    }.use { block(browser) }

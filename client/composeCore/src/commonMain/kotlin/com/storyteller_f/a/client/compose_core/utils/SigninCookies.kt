@@ -38,25 +38,25 @@ internal class SigninCookies(
 
     override suspend fun get(requestUrl: Url): List<Cookie> =
         gate.withLock {
-        loadCookies()
-        delegate.get(requestUrl)
-    }
+            loadCookies()
+            delegate.get(requestUrl)
+        }
 
     override suspend fun addCookie(requestUrl: Url, cookie: Cookie) =
         gate.withLock {
-        loadCookies()
-        delegate.addCookie(requestUrl, cookie)
-        if (cookie.name == "user_session" || cookie.name == "panel_session") {
-            saved.removeAll { it.cookie.name == cookie.name && Url(it.url).host == requestUrl.host }
-            if (cookie.maxAge != 0 && cookie.value.isNotEmpty()) {
-                val expires =
-                    cookie.maxAge?.let { GMTDate(GMTDate().timestamp + it.toLong() * 1000) }
-                        ?: cookie.expires
-                saved.add(SavedCookie(requestUrl.toString(), cookie.copy(maxAge = null, expires = expires)))
+            loadCookies()
+            delegate.addCookie(requestUrl, cookie)
+            if (cookie.name == "user_session" || cookie.name == "panel_session") {
+                saved.removeAll { it.cookie.name == cookie.name && Url(it.url).host == requestUrl.host }
+                if (cookie.maxAge != 0 && cookie.value.isNotEmpty()) {
+                    val expires =
+                        cookie.maxAge?.let { GMTDate(GMTDate().timestamp + it.toLong() * 1000) }
+                            ?: cookie.expires
+                    saved.add(SavedCookie(requestUrl.toString(), cookie.copy(maxAge = null, expires = expires)))
+                }
+                persistCookies()
             }
-            persistCookies()
         }
-    }
 
     override fun close() = delegate.close()
 

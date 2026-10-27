@@ -94,18 +94,18 @@ internal suspend fun ExposedContainerDatabase.queryUnreadRoomActivityRecords(uid
 
 internal suspend fun ExposedContainerDatabase.countUnreadRoomActivities(uid: PrimaryKey) =
     databaseSession.dbSearch {
-    search { unreadRoomActivityQuery(uid) }
-    count()
-}
+        search { unreadRoomActivityQuery(uid) }
+        count()
+    }
 
 /** Filter the complete joined-room set before grouping and pagination, never a loaded room page. */
 private fun unreadRoomActivityQuery(uid: PrimaryKey): Query = unreadRoomMessageQuery(uid).groupBy(Members.objectId)
 
 internal suspend fun ExposedContainerDatabase.countUnreadRoomMessages(uid: PrimaryKey) =
     databaseSession.dbSearch {
-    search { unreadRoomMessageQuery(uid, aggregate = true) }
-    map { it[unreadMessageColumn] }
-}.map { it.single() }
+        search { unreadRoomMessageQuery(uid, aggregate = true) }
+        map { it[unreadMessageColumn] }
+    }.map { it.single() }
 
 private fun unreadRoomMessageQuery(uid: PrimaryKey, aggregate: Boolean = false): Query =
     Members.join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)

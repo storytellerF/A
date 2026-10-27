@@ -114,9 +114,10 @@ internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMC
         override suspend fun moderate(
             prompt: ai.koog.prompt.Prompt,
             model: LLModel,
-        ): ai.koog.prompt.dsl.ModerationResult = throw UnsupportedOperationException(
-            "Moderation not supported by OpenAI-compatible client",
-        )
+        ): ai.koog.prompt.dsl.ModerationResult =
+            throw UnsupportedOperationException(
+                "Moderation not supported by OpenAI-compatible client",
+            )
 
         override fun llmProvider(): ai.koog.prompt.llm.LLMProvider = ai.koog.prompt.llm.LLMProvider.OpenAI
 

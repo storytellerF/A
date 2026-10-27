@@ -154,30 +154,30 @@ private suspend fun Backend.searchFilesByWord(
     clientIp: String? = null,
 ): CustomResult<PaginationResult<FileInfo>?, FileError> =
     (
-    if (word.isNullOrBlank()) {
-        CustomResult.success(PaginationResult(emptyList(), 0))
-    } else {
-        // 使用 fileSearchService 搜索
-        val searchQuery =
-            if (ownerId != null) {
-                FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
-            } else {
-                FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
-            }
-        fileSearchService.searchDocument(searchQuery).andThenPresent(FileError::fromError) { (documents, total) ->
-            val fileIds = documents.map { it.id }
-            if (fileIds.isEmpty()) {
-                CustomResult.success(PaginationResult(emptyList(), total))
-            } else {
-                database.file.getFileRecordByIds(fileIds).andThenPresent(FileError::fromError) { fileRecords ->
-                    processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
-                }.mapPresent { fileInfos ->
-                    PaginationResult(fileInfos, total)
+        if (word.isNullOrBlank()) {
+            CustomResult.success(PaginationResult(emptyList(), 0))
+        } else {
+            // 使用 fileSearchService 搜索
+            val searchQuery =
+                if (ownerId != null) {
+                    FileDocumentSearch.Keyword(word, ownerId, fetch = primaryKeyFetch)
+                } else {
+                    FileDocumentSearch.Keyword(word, fetch = primaryKeyFetch)
+                }
+            fileSearchService.searchDocument(searchQuery).andThenPresent(FileError::fromError) { (documents, total) ->
+                val fileIds = documents.map { it.id }
+                if (fileIds.isEmpty()) {
+                    CustomResult.success(PaginationResult(emptyList(), total))
+                } else {
+                    database.file.getFileRecordByIds(fileIds).andThenPresent(FileError::fromError) { fileRecords ->
+                        processFileRecordToFileInfo(fileRecords, ownerId, clientIp)
+                    }.mapPresent { fileInfos ->
+                        PaginationResult(fileInfos, total)
+                    }
                 }
             }
         }
-    }
-    ).mapError(FileError::fromError)
+        ).mapError(FileError::fromError)
 
 @OptIn(ExperimentalUuidApi::class)
 suspend fun Backend.extractAlbum(fileRecordId: PrimaryKey, root: File, uid: PrimaryKey) =
@@ -276,9 +276,9 @@ private fun newCoverFileName(fileName: String, contentType: String): String {
 
 fun getCoverExtensionFromMimeType(mimeType: String): String =
     MimeTypes.getDefaultMimeTypes().forName(
-    mimeType,
-)?.extension
-    ?: error("Unsupported mime type: $mimeType")
+        mimeType,
+    )?.extension
+        ?: error("Unsupported mime type: $mimeType")
 
 suspend fun Backend.getFileInfoPaginationResult(
     uid: PrimaryKey,
@@ -286,18 +286,18 @@ suspend fun Backend.getFileInfoPaginationResult(
     clientIp: String? = null,
 ): CustomResult<PaginationResult<FileInfo>, FileError> =
     database.file.getFileRecordPaginationList(uid, primaryKeyFetch)
-    .mapPagingResultNotNull(FileError::fromError) { list ->
-        processFileRecordToFileInfo(list, uid, clientIp)
-    }.mapError(FileError::fromError)
+        .mapPagingResultNotNull(FileError::fromError) { list ->
+            processFileRecordToFileInfo(list, uid, clientIp)
+        }.mapError(FileError::fromError)
 
 suspend fun Backend.getAllFileInfos(
     primaryKeyFetch: PrimaryKeyFetch,
 ): CustomResult<PaginationResult<FileInfo>, FileError> =
     database.file.getAllFileRecordPaginationList(
-    primaryKeyFetch,
-).mapPagingResultNotNull(FileError::fromError) { list ->
-    processFileRecordToFileInfo(list)
-}.mapError(FileError::fromError)
+        primaryKeyFetch,
+    ).mapPagingResultNotNull(FileError::fromError) { list ->
+        processFileRecordToFileInfo(list)
+    }.mapError(FileError::fromError)
 
 suspend fun Backend.getUserUploadRecords(uid: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
     database.file.getUploadRecordPaginationList(uid, primaryKeyFetch).mapPagingNotNull { list ->
@@ -409,28 +409,28 @@ internal suspend fun removeExifIfImage(
     f: MutableList<File>,
 ): List<ProcessedUploadPack> =
     uploadPacks.map {
-    if (it.contentType.startsWith("image")) {
-        val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
-        target.outputStream().buffered().use { output ->
-            cleanImageMeta(it.pack.file, output, it.contentType)
-        }
-        f.add(target)
-        val newSha256 =
-            target.inputStream().buffered().use { input ->
-                sha256(input.asSource().buffered())
+        if (it.contentType.startsWith("image")) {
+            val target = File(System.getProperty("java.io.tmpdir"), Uuid.random().toHexString() + it.pack.name)
+            target.outputStream().buffered().use { output ->
+                cleanImageMeta(it.pack.file, output, it.contentType)
             }
-        it.copy(
-            pack =
-            it.pack.copy(
-                file = target,
-                size = target.length(),
-                sha256 = newSha256,
-            ),
-        )
-    } else {
-        it
+            f.add(target)
+            val newSha256 =
+                target.inputStream().buffered().use { input ->
+                    sha256(input.asSource().buffered())
+                }
+            it.copy(
+                pack =
+                it.pack.copy(
+                    file = target,
+                    size = target.length(),
+                    sha256 = newSha256,
+                ),
+            )
+        } else {
+            it
+        }
     }
-}
 
 private suspend fun Backend.uploadFilesToStorage(
     ownerId: PrimaryKey,

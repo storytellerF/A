@@ -26,34 +26,34 @@ class UserStatusTest {
     @Test
     fun `test ReadOnly user cannot create topic`() =
         test(mapOf("DISABLE_TEST_WS" to "true")) {
-        val adminTuple = attachPanelSession()
-        val userTuple =
-            attachSession {
-                // As NORMAL (default), creation should work
-                val response1 = createTopic(ObjectType.USER, it.uid, "Test topic").getOrThrow()
-                assertNotNull(response1)
+            val adminTuple = attachPanelSession()
+            val userTuple =
+                attachSession {
+                    // As NORMAL (default), creation should work
+                    val response1 = createTopic(ObjectType.USER, it.uid, "Test topic").getOrThrow()
+                    assertNotNull(response1)
+                }
+
+            // Set to READ_ONLY via Admin
+            loginPanelSession(adminTuple) {
+                updateUserStatus(userTuple.uid, UpdateUserStatusBody(UserStatus.READ_ONLY)).getOrThrow()
+
+                // Verify status in Overview
+                val userOverview = getUserOverview(userTuple.uid).getOrThrow()
+                assertEquals(UserStatus.READ_ONLY, userOverview.userInfo.status)
             }
 
-        // Set to READ_ONLY via Admin
-        loginPanelSession(adminTuple) {
-            updateUserStatus(userTuple.uid, UpdateUserStatusBody(UserStatus.READ_ONLY)).getOrThrow()
-
-            // Verify status in Overview
-            val userOverview = getUserOverview(userTuple.uid).getOrThrow()
-            assertEquals(UserStatus.READ_ONLY, userOverview.userInfo.status)
+            // As READ_ONLY, creation should be forbidden
+            loginSession(userTuple) {
+                assertEquals(UserStatus.READ_ONLY, getUserOverview().getOrThrow().userInfo.status)
+                val error =
+                    assertFailsWith<ServerErrorException> {
+                        createTopic(ObjectType.USER, it.uid, "Test topic 2").getOrThrow()
+                    }
+                assertEquals(HttpStatusCode.Forbidden, error.status)
+                assertIs<ForbiddenException>(
+                    workerBackend.checkRootWritePermission(ObjectType.USER, it.uid, it.uid).exceptionOrNull(),
+                )
+            }
         }
-
-        // As READ_ONLY, creation should be forbidden
-        loginSession(userTuple) {
-            assertEquals(UserStatus.READ_ONLY, getUserOverview().getOrThrow().userInfo.status)
-            val error =
-                assertFailsWith<ServerErrorException> {
-                    createTopic(ObjectType.USER, it.uid, "Test topic 2").getOrThrow()
-                }
-            assertEquals(HttpStatusCode.Forbidden, error.status)
-            assertIs<ForbiddenException>(
-                workerBackend.checkRootWritePermission(ObjectType.USER, it.uid, it.uid).exceptionOrNull(),
-            )
-        }
-    }
 }

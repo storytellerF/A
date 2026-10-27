@@ -414,10 +414,11 @@ private fun DrawerNavItem(icon: ImageVector, label: String, onClick: () -> Unit)
     )
 }
 
-private fun onNavigate(scope: CoroutineScope, drawerState: DrawerState, navigate: () -> Unit): () -> Unit = {
-    scope.launch { drawerState.close() }
-    navigate()
-}
+private fun onNavigate(scope: CoroutineScope, drawerState: DrawerState, navigate: () -> Unit): () -> Unit =
+    {
+        scope.launch { drawerState.close() }
+        navigate()
+    }
 
 class CustomPanelSessionManager(val proxy: SimplePanelSessionManager, val historyFactory: SessionHistoryManager) :
     PanelSessionManager by proxy {

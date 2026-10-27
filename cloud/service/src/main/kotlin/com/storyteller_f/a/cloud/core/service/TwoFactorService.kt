@@ -121,12 +121,12 @@ private fun generateBase32Secret(): String {
 
 private fun generateRecoveryCodes(): List<String> =
     List(RECOVERY_CODE_COUNT) {
-    val bytes =
-        ByteArray(RECOVERY_CODE_BYTES).apply {
-            secureRandom.nextBytes(this)
-        }
-    encodeBase32(bytes).chunked(4).joinToString("-")
-}
+        val bytes =
+            ByteArray(RECOVERY_CODE_BYTES).apply {
+                secureRandom.nextBytes(this)
+            }
+        encodeBase32(bytes).chunked(4).joinToString("-")
+    }
 
 private fun hashRecoveryCode(code: String): String {
     val bytes = MessageDigest.getInstance("SHA-256").digest(code.encodeToByteArray())

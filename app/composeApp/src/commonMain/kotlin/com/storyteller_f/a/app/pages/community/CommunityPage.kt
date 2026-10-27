@@ -174,9 +174,9 @@ private fun CommunityPageInternal(communityId: PrimaryKey, needShowDialog: Boole
 @Composable
 fun communityNavRoutes(): List<NavRoute> =
     listOf(
-    NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
-    NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
-)
+        NavRoute("/topics", Icons.Default.Topic, stringResource(Res.string.topics)),
+        NavRoute("/rooms", Icons.Default.ChatBubble, stringResource(Res.string.rooms)),
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -24,19 +24,19 @@ object Rooms : BaseTable() {
 
 fun Room.Companion.wrapRow(row: ResultRow): Room =
     with(Rooms) {
-    Room(
-        row[id],
-        row[createdTime],
-        row[Aids.value],
-        row[name],
-        row[creator],
-        row[icon],
-        row[communityId],
-        row[status],
-    )
-}
+        Room(
+            row[id],
+            row[createdTime],
+            row[Aids.value],
+            row[name],
+            row[creator],
+            row[icon],
+            row[communityId],
+            row[status],
+        )
+    }
 
 fun Room.Companion.findRoomById(id: PrimaryKey) =
     Rooms.selectAll().where {
-    Rooms.id eq id
-}
+        Rooms.id eq id
+    }

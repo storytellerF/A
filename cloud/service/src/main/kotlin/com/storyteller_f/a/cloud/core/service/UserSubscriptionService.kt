@@ -28,22 +28,22 @@ import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.addSubscription(uid: PrimaryKey, newSubscription: NewSubscription) =
     checkObjectWritable(
-    newSubscription.objectType,
-    newSubscription.objectId,
-).andThenPresent(UserSubscriptionError::fromError) {
-    addIfNotExists({
-        database.subscription.getSubscription(uid, newSubscription.objectId)
-    }, {
-        val id = SnowflakeFactory.nextId()
-        val userSubscription =
-            UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
-        database.subscription.addSubscription(userSubscription).onSuccess {
-            addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
-        }
-    })
-}.andThenPresent(UserSubscriptionError::fromError) {
-    processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
-}.firstOrNull()
+        newSubscription.objectType,
+        newSubscription.objectId,
+    ).andThenPresent(UserSubscriptionError::fromError) {
+        addIfNotExists({
+            database.subscription.getSubscription(uid, newSubscription.objectId)
+        }, {
+            val id = SnowflakeFactory.nextId()
+            val userSubscription =
+                UserSubscription(id, uid, newSubscription.objectId, newSubscription.objectType, now())
+            database.subscription.addSubscription(userSubscription).onSuccess {
+                addUserLog(uid, UserLogType.ADD_SUBSCRIPTION, newSubscription.tuple())
+            }
+        })
+    }.andThenPresent(UserSubscriptionError::fromError) {
+        processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
+    }.firstOrNull()
 
 suspend fun Backend.removeSubscription(uid: PrimaryKey, subscriptionId: PrimaryKey) =
     database.subscription.getSubscription(subscriptionId)

@@ -72,32 +72,40 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
     @Test
     fun `test html semantics bridge mounts`() =
         runAppiumBlockingTest {
-        WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            browserType.withBrowser { driver ->
-                driver.get("${server.url}?appium=true")
-                captureFailure(ArtifactCollectionError::CollectionFailed) {
-                    WebDriverWait(driver, Duration.ofSeconds(30)).until(
-                        ExpectedConditions.presenceOfElementLocated(By.cssSelector("[aria-label='avatar']")),
-                    )
-                }.getOrElse { cause ->
-                    val body = driver.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
-                    val console =
-                        captureFailure(
-                            ArtifactCollectionError::CollectionFailed,
-                        ) { driver.manage().logs().get("browser").all }.getOrNull().orEmpty()
-                    val errors =
-                        (driver as org.openqa.selenium.JavascriptExecutor)
-                            .executeScript("return window.appiumErrors || []")
-                            ?: emptyList<Any>()
-                    throw AssertionError(
-                        "Wasm semantics did not mount; requested=${server.requestedPaths}; body=$body; " +
-                            "console=$console; errors=$errors",
-                        cause.cause,
-                    )
+            WasmDistributionServer(
+                resolveWasmDistribution(),
+                coverageDirectory =
+                createWasmCoverageDirectory(
+                    "WasmAppiumTest",
+                    "test html semantics bridge mounts",
+                    browserType,
+                ),
+            ).use { server ->
+                browserType.withBrowser(beforeClose = server::collectCoverage) { driver ->
+                    driver.get("${server.url}?appium=true")
+                    captureFailure(ArtifactCollectionError::CollectionFailed) {
+                        WebDriverWait(driver, Duration.ofSeconds(30)).until(
+                            ExpectedConditions.presenceOfElementLocated(By.cssSelector("[aria-label='avatar']")),
+                        )
+                    }.getOrElse { cause ->
+                        val body = driver.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
+                        val console =
+                            captureFailure(
+                                ArtifactCollectionError::CollectionFailed,
+                            ) { driver.manage().logs().get("browser").all }.getOrNull().orEmpty()
+                        val errors =
+                            (driver as org.openqa.selenium.JavascriptExecutor)
+                                .executeScript("return window.appiumErrors || []")
+                                ?: emptyList<Any>()
+                        throw AssertionError(
+                            "Wasm semantics did not mount; requested=${server.requestedPaths}; body=$body; " +
+                                "console=$console; errors=$errors",
+                            cause.cause,
+                        )
+                    }
                 }
             }
         }
-    }
 
     @Test
     fun `test sign up`() = testSignUpByHelper()
@@ -131,7 +139,7 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
 }
 
 private fun resolveWasmDistribution(): File {
-    val distribution = File("build/wasmDistribution")
+    val distribution = File(System.getProperty("e2e.coverage.wasmDistribution", "build/wasmDistribution"))
     return distribution.takeIf { File(it, "index.html").isFile }
         ?: error("Wasm distribution was not prepared; run :app:wasmAppium:prepareWasmDistribution first.")
 }

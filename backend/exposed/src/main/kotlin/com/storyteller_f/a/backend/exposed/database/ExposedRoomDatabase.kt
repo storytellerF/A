@@ -59,13 +59,13 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
     RoomDatabase {
     override suspend fun checkRoomIsPrivate(roomId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Room.findRoomById(roomId)
+            search {
+                Room.findRoomById(roomId)
+            }
+            first {
+                it[Rooms.communityId] == null
+            }
         }
-        first {
-            it[Rooms.communityId] == null
-        }
-    }
 
     override suspend fun getRoomPaginationResult(
         uid: PrimaryKey?,
@@ -86,13 +86,13 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
 
     override suspend fun getRoomCommunityId(parentId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Room.findRoomById(parentId)
+            search {
+                Room.findRoomById(parentId)
+            }
+            first {
+                it[Rooms.communityId]
+            }
         }
-        first {
-            it[Rooms.communityId]
-        }
-    }
 
     override suspend fun getRoomPubKeyPaginationResult(roomId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
         paginationFromResults(
@@ -153,24 +153,24 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
         rooms: List<Room>,
     ): CustomResult<List<RawRoom>, DatabaseError> =
         containerDatabase.getContainerInfo(
-        rooms.map {
-            it.id
-        },
-        uid,
-    ).map { map ->
-        rooms.map { room ->
-            val containerInfo = map[room.id]
-            RawRoom(
-                room,
-                containerInfo?.member?.takeIf { it.status == MemberStatus.JOINED }?.joinedTime,
-                containerInfo?.userTopicRead?.topicId,
-                containerInfo?.memberCount,
-                containerInfo?.latestTopicId,
-                containerInfo?.favoriteId,
-                containerInfo?.subscriptionId,
-            )
+            rooms.map {
+                it.id
+            },
+            uid,
+        ).map { map ->
+            rooms.map { room ->
+                val containerInfo = map[room.id]
+                RawRoom(
+                    room,
+                    containerInfo?.member?.takeIf { it.status == MemberStatus.JOINED }?.joinedTime,
+                    containerInfo?.userTopicRead?.topicId,
+                    containerInfo?.memberCount,
+                    containerInfo?.latestTopicId,
+                    containerInfo?.favoriteId,
+                    containerInfo?.subscriptionId,
+                )
+            }
         }
-    }
 
     override suspend fun createRoom(room: Room, members: List<Member>): CustomResult<Room, DatabaseError> =
         databaseSession.dbQuery {
@@ -223,66 +223,66 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
 
     override suspend fun getRoomList(objectListFetch: ObjectListFetch) =
         getRoomListByPredicate {
-        where {
-            when (objectListFetch) {
-                is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+            where {
+                when (objectListFetch) {
+                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                    is ObjectListFetch.IdListFetch -> Rooms.id inList objectListFetch.idList
+                }
             }
         }
-    }
 
     override suspend fun updateRoom(id: PrimaryKey, body: UpdateRoomBody) =
         databaseSession.dbQuery {
-        listOf(
-            suspend {
-                val newIcon = body.icon
-                val newName = body.name
-                if (!newName.isNullOrBlank() || newIcon != null) {
-                    Rooms.update({
-                        Rooms.id eq id
-                    }) {
-                        if (!newName.isNullOrBlank()) {
-                            it[Rooms.name] = newName
-                        }
-                        if (newIcon != null) {
-                            it[Rooms.icon] = newIcon
-                        }
-                    } > 0
-                } else {
-                    true
-                }
-            },
-        ).all {
-            it()
+            listOf(
+                suspend {
+                    val newIcon = body.icon
+                    val newName = body.name
+                    if (!newName.isNullOrBlank() || newIcon != null) {
+                        Rooms.update({
+                            Rooms.id eq id
+                        }) {
+                            if (!newName.isNullOrBlank()) {
+                                it[Rooms.name] = newName
+                            }
+                            if (newIcon != null) {
+                                it[Rooms.icon] = newIcon
+                            }
+                        } > 0
+                    } else {
+                        true
+                    }
+                },
+            ).all {
+                it()
+            }
         }
-    }
 
     override suspend fun updateRoomStatus(id: PrimaryKey, status: ObjectStatus) =
         databaseSession.dbQuery {
-        Rooms.update({ Rooms.id eq id }) {
-            it[Rooms.status] = status
-        } > 0
-    }
+            Rooms.update({ Rooms.id eq id }) {
+                it[Rooms.status] = status
+            } > 0
+        }
 
     override suspend fun getPrivateRoomCount() =
         databaseSession.dbSearch {
-        search {
-            Rooms.selectAll().where {
-                Rooms.communityId.isNull()
+            search {
+                Rooms.selectAll().where {
+                    Rooms.communityId.isNull()
+                }
             }
+            count()
         }
-        count()
-    }
 
     override suspend fun getPublicRoomCount() =
         databaseSession.dbSearch {
-        search {
-            Rooms.selectAll().where {
-                Rooms.communityId.isNotNull()
+            search {
+                Rooms.selectAll().where {
+                    Rooms.communityId.isNotNull()
+                }
             }
+            count()
         }
-        count()
-    }
 
     override suspend fun getPrivateRoomPaginationResult(primaryKeyFetch: PrimaryKeyFetch, word: String?) =
         paginationFromResults(
@@ -313,33 +313,33 @@ class ExposedRoomDatabase(val databaseSession: ExposedDatabaseSession, val conta
 
     private suspend fun getRoomListByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Rooms
-                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .select(Rooms.fields + Aids.value)
-                .queryBuilder()
+            search {
+                Rooms
+                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                    .select(Rooms.fields + Aids.value)
+                    .queryBuilder()
+            }
+            map(Room::wrapRow)
         }
-        map(Room::wrapRow)
-    }
 
     private suspend fun getRoomByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Rooms
-                .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
-                .select(Rooms.fields + Aids.value)
-                .queryBuilder()
+            search {
+                Rooms
+                    .join(Aids, JoinType.INNER, Rooms.id, Aids.objectId)
+                    .select(Rooms.fields + Aids.value)
+                    .queryBuilder()
+            }
+            first(Room::wrapRow)
         }
-        first(Room::wrapRow)
-    }
 
     private suspend fun getRoomCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Rooms.select(Rooms.id).queryBuilder()
+            search {
+                Rooms.select(Rooms.id).queryBuilder()
+            }
+            count()
         }
-        count()
-    }
 
     fun Query.buildRoomSearchWhereQuery(joinStatusSearch: JoinSearch, community: PrimaryKey?): Query {
         if (community != null) {

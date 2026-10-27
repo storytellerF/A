@@ -23,66 +23,66 @@ class ComposeChecksumTest {
     @Test
     fun `multipart compose validates CRC32C not SHA256`() =
         runTest {
-        withStorage { service, expected ->
-            assertEquals(
-                "combined",
-                service.compose(
-                    "checksums",
+            withStorage { service, expected ->
+                assertEquals(
                     "combined",
-                    listOf("first", "last"),
-                    "0".repeat(64),
-                    expected.crc32c,
-                ).getOrThrow().fullName,
-            )
-            val actual =
-                service.getInputStream("checksums", "combined").getOrThrow().buffered().use {
-                    computeChecksums(it.readBytes())
-                }
-            assertEquals(expected, actual)
+                    service.compose(
+                        "checksums",
+                        "combined",
+                        listOf("first", "last"),
+                        "0".repeat(64),
+                        expected.crc32c,
+                    ).getOrThrow().fullName,
+                )
+                val actual =
+                    service.getInputStream("checksums", "combined").getOrThrow().buffered().use {
+                        computeChecksums(it.readBytes())
+                    }
+                assertEquals(expected, actual)
+            }
         }
-    }
 
     @Test
     fun `CRC32C mismatch retains parts without a target`() =
         runTest {
-        withStorage { service, expected ->
-            val result =
-                service.compose(
-                    "checksums",
-                    "combined",
-                    listOf("first", "last"),
-                    expected.sha256,
-                    "AAAAAA==",
+            withStorage { service, expected ->
+                val result =
+                    service.compose(
+                        "checksums",
+                        "combined",
+                        listOf("first", "last"),
+                        expected.sha256,
+                        "AAAAAA==",
+                    )
+                assertTrue(
+                    generateSequence(result.exceptionOrNull()) { it.cause }
+                        .any { it.message == "file crc32c mismatch" },
                 )
-            assertTrue(
-                generateSequence(result.exceptionOrNull()) { it.cause }
-                    .any { it.message == "file crc32c mismatch" },
-            )
-            val objects = service.list("checksums", "").getOrThrow().map { it.fullName }
-            assertFalse("combined" in objects)
-            assertEquals(setOf("first", "last"), objects.toSet())
+                val objects = service.list("checksums", "").getOrThrow().map { it.fullName }
+                assertFalse("combined" in objects)
+                assertEquals(setOf("first", "last"), objects.toSet())
+            }
         }
-    }
 
     @Test
     fun `single source copy also verifies CRC32C`() =
         runTest {
-        withStorage(singleSource = true) { service, _ ->
-            val result =
-                service.compose(
-                    "checksums",
-                    "combined",
-                    listOf("last"),
-                    "0".repeat(64),
-                    "AAAAAA==",
+            withStorage(singleSource = true) { service, _ ->
+                val result =
+                    service.compose(
+                        "checksums",
+                        "combined",
+                        listOf("last"),
+                        "0".repeat(64),
+                        "AAAAAA==",
+                    )
+                assertTrue(
+                    generateSequence(result.exceptionOrNull()) { it.cause }
+                        .any { it.message == "file crc32c mismatch" },
                 )
-            assertTrue(
-                generateSequence(result.exceptionOrNull()) { it.cause }
-                    .any { it.message == "file crc32c mismatch" },
-            )
-            assertFalse(service.list("checksums", "").getOrThrow().any { it.fullName == "combined" })
+                assertFalse(service.list("checksums", "").getOrThrow().any { it.fullName == "combined" })
+            }
         }
-    }
 
     private fun computeChecksums(bytes: ByteArray): FileChecksums {
         val crc = java.util.zip.CRC32C().apply { update(bytes) }.value

@@ -95,12 +95,12 @@ suspend fun addReaction(
     p: CommonPath,
 ): CustomResult<ReactionInfo?, ReactionError> =
     (
-    if (isEmoji(emoji)) {
-        backend.addReaction(uid, p.id, emoji)
-    } else {
-        CustomResult.Failure(ReactionError.from(CustomBadRequestException("invalid emoji")))
-    }
-    ).mapError(ReactionError::fromError)
+        if (isEmoji(emoji)) {
+            backend.addReaction(uid, p.id, emoji)
+        } else {
+            CustomResult.Failure(ReactionError.from(CustomBadRequestException("invalid emoji")))
+        }
+        ).mapError(ReactionError::fromError)
 
 suspend fun deleteReaction(
     deleteReaction: DeleteReaction,

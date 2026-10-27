@@ -16,5 +16,5 @@ internal expect fun md5Platform(input: ByteArray): ByteArray
 
 suspend fun sha256(source: Source): String =
     CryptographyProvider.Default.get(
-    SHA256,
-).hasher().hash(source).toHexString()
+        SHA256,
+    ).hasher().hash(source).toHexString()

@@ -59,16 +59,16 @@ class RoomRoomInfoStorage(appDatabase: AppDatabase) : RoomInfoStorage {
 
     override fun observeData(collection: RoomCollection): PagingSource<Int, RoomInfo> =
         impl.observeData(
-        collection.getName(),
-    )
+            collection.getName(),
+        )
 
     override fun observeDatum(key: String): Flow<RoomInfo?> = impl.observeDatum(RoomCollection.Rooms.getName(), key)
 
     override suspend fun getDocument(collection: RoomCollection, key: String): RoomInfo? =
         impl.getDocument(
-        collection.getName(),
-        key,
-    )
+            collection.getName(),
+            key,
+        )
 
     override suspend fun delete(collection: RoomCollection, key: String) {
         impl.delete(collection.getName(), key)

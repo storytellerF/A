@@ -26,15 +26,15 @@ object ReactionRecords : BaseTable() {
 
 fun ReactionRecord.Companion.wrapRow(resultRow: ResultRow): ReactionRecord =
     with(ReactionRecords) {
-    ReactionRecord(
-        resultRow[uid],
-        resultRow[objectId],
-        resultRow[objectType],
-        resultRow[emoji],
-        resultRow[id],
-        resultRow[createdTime],
-    )
-}
+        ReactionRecord(
+            resultRow[uid],
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[emoji],
+            resultRow[id],
+            resultRow[createdTime],
+        )
+    }
 object Reactions : Table() {
     val objectId = customPrimaryKey("object_id")
     val objectType = objectType("object_type")
@@ -51,11 +51,11 @@ object Reactions : Table() {
 
 fun Reaction.Companion.wrapRow(resultRow: ResultRow): Reaction =
     with(Reactions) {
-    Reaction(
-        resultRow[objectId],
-        resultRow[objectType],
-        resultRow[emoji],
-        resultRow[count],
-        resultRow[lastReactionId],
-    )
-}
+        Reaction(
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[emoji],
+            resultRow[count],
+            resultRow[lastReactionId],
+        )
+    }

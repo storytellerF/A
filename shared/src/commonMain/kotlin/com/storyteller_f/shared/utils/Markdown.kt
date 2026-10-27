@@ -122,37 +122,37 @@ fun extractHeadParagraph(markdownText: String): String {
 
 fun markdownElementTypes(): List<IElementType> =
     listOf(
-    MarkdownElementTypes.MARKDOWN_FILE,
-    MarkdownElementTypes.UNORDERED_LIST,
-    MarkdownElementTypes.ORDERED_LIST,
-    MarkdownElementTypes.LIST_ITEM,
-    MarkdownElementTypes.BLOCK_QUOTE,
-    MarkdownElementTypes.CODE_FENCE,
-    MarkdownElementTypes.CODE_BLOCK,
-    MarkdownElementTypes.CODE_SPAN,
-    MarkdownElementTypes.HTML_BLOCK,
-    MarkdownElementTypes.PARAGRAPH,
-    MarkdownElementTypes.EMPH,
-    MarkdownElementTypes.STRONG,
-    MarkdownElementTypes.LINK_DEFINITION,
-    MarkdownElementTypes.LINK_LABEL,
-    MarkdownElementTypes.LINK_DESTINATION,
-    MarkdownElementTypes.LINK_TITLE,
-    MarkdownElementTypes.LINK_TEXT,
-    MarkdownElementTypes.INLINE_LINK,
-    MarkdownElementTypes.FULL_REFERENCE_LINK,
-    MarkdownElementTypes.SHORT_REFERENCE_LINK,
-    MarkdownElementTypes.IMAGE,
-    MarkdownElementTypes.AUTOLINK,
-    MarkdownElementTypes.SETEXT_1,
-    MarkdownElementTypes.SETEXT_2,
-    MarkdownElementTypes.ATX_1,
-    MarkdownElementTypes.ATX_2,
-    MarkdownElementTypes.ATX_3,
-    MarkdownElementTypes.ATX_4,
-    MarkdownElementTypes.ATX_5,
-    MarkdownElementTypes.ATX_6,
-)
+        MarkdownElementTypes.MARKDOWN_FILE,
+        MarkdownElementTypes.UNORDERED_LIST,
+        MarkdownElementTypes.ORDERED_LIST,
+        MarkdownElementTypes.LIST_ITEM,
+        MarkdownElementTypes.BLOCK_QUOTE,
+        MarkdownElementTypes.CODE_FENCE,
+        MarkdownElementTypes.CODE_BLOCK,
+        MarkdownElementTypes.CODE_SPAN,
+        MarkdownElementTypes.HTML_BLOCK,
+        MarkdownElementTypes.PARAGRAPH,
+        MarkdownElementTypes.EMPH,
+        MarkdownElementTypes.STRONG,
+        MarkdownElementTypes.LINK_DEFINITION,
+        MarkdownElementTypes.LINK_LABEL,
+        MarkdownElementTypes.LINK_DESTINATION,
+        MarkdownElementTypes.LINK_TITLE,
+        MarkdownElementTypes.LINK_TEXT,
+        MarkdownElementTypes.INLINE_LINK,
+        MarkdownElementTypes.FULL_REFERENCE_LINK,
+        MarkdownElementTypes.SHORT_REFERENCE_LINK,
+        MarkdownElementTypes.IMAGE,
+        MarkdownElementTypes.AUTOLINK,
+        MarkdownElementTypes.SETEXT_1,
+        MarkdownElementTypes.SETEXT_2,
+        MarkdownElementTypes.ATX_1,
+        MarkdownElementTypes.ATX_2,
+        MarkdownElementTypes.ATX_3,
+        MarkdownElementTypes.ATX_4,
+        MarkdownElementTypes.ATX_5,
+        MarkdownElementTypes.ATX_6,
+    )
 
 fun extractMarkdownMediaLink(markdownText: String): MutableList<String> {
     val parsedTree = astNode(markdownText)
@@ -362,18 +362,20 @@ data class MarkdownObject(
 
 fun generateImageMarkdownContent(info: FileInfo): String = """![${info.name}](${info.name} "${info.name}")"""
 
-fun generateObjectMarkdownContent(info: FileInfo): String = """```object
+fun generateObjectMarkdownContent(info: FileInfo): String =
+    """```object
 {"name": "${info.name}","contentType": "${info.contentType}"}
 ```"""
 
-fun generateModelMarkdownContent(objectTuple: ObjectTuple): String = """```csa
+fun generateModelMarkdownContent(objectTuple: ObjectTuple): String =
+    """```csa
 /${
-    when (objectTuple.objectType) {
-        ObjectType.USER -> "user"
-        ObjectType.COMMUNITY -> "community"
-        ObjectType.ROOM -> "room"
-        ObjectType.TOPIC -> "topic"
-        else -> error("unknown object type ${objectTuple.objectType}")
-    }
-}/${objectTuple.objectId}
+        when (objectTuple.objectType) {
+            ObjectType.USER -> "user"
+            ObjectType.COMMUNITY -> "community"
+            ObjectType.ROOM -> "room"
+            ObjectType.TOPIC -> "topic"
+            else -> error("unknown object type ${objectTuple.objectType}")
+        }
+    }/${objectTuple.objectId}
 ```"""

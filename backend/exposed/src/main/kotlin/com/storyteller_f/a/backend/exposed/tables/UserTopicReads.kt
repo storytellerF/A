@@ -26,11 +26,11 @@ object UserTopicReads : Table() {
 
 fun UserTopicRead.Companion.wrapRow(resultRow: ResultRow): UserTopicRead =
     with(UserTopicReads) {
-    UserTopicRead(
-        resultRow[uid],
-        resultRow[updatedAt],
-        resultRow[objectId],
-        resultRow[objectType],
-        resultRow[topicId],
-    )
-}
+        UserTopicRead(
+            resultRow[uid],
+            resultRow[updatedAt],
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[topicId],
+        )
+    }

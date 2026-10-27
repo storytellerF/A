@@ -136,10 +136,10 @@ private class AuthRefreshGate {
 
     suspend fun enter(): AuthRefreshTurn =
         mutex.withLock {
-        current?.let { AuthRefreshTurn.Waiter(it) } ?: CompletableDeferred<Boolean>().also {
-            current = it
-        }.let { AuthRefreshTurn.Leader(it) }
-    }
+            current?.let { AuthRefreshTurn.Waiter(it) } ?: CompletableDeferred<Boolean>().also {
+                current = it
+            }.let { AuthRefreshTurn.Leader(it) }
+        }
 
     private suspend fun clear(result: CompletableDeferred<Boolean>) {
         mutex.withLock {

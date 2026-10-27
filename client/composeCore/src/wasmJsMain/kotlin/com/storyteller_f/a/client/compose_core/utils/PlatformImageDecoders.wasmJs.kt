@@ -150,10 +150,10 @@ private suspend fun AvifWorkerResponse.toBitmap(): Bitmap {
 
 private suspend fun awaitSkikoReady(): Unit =
     suspendCancellableCoroutine { continuation ->
-    onWasmReady {
-        if (continuation.isActive) continuation.resume(Unit)
+        onWasmReady {
+            if (continuation.isActive) continuation.resume(Unit)
+        }
     }
-}
 
 private fun createWorkerRequest(id: String, buffer: ArrayBuffer, options: Options): JsAny {
     val targetWidth = (options.size.width as? Dimension.Pixels)?.px ?: 0

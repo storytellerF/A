@@ -248,16 +248,16 @@ private fun RowScope.BlockPreview(
 
 private fun getBlockText(block: ContentBlock): String =
     when (block) {
-    is ContentBlock.Paragraph -> block.content
-    is ContentBlock.ListItem -> block.content
-    is ContentBlock.Quote -> block.content
-    is ContentBlock.CodeBlock -> block.content
-    is ContentBlock.ImageBlock -> block.alt
-    is ContentBlock.ObjectBlock -> block.title ?: block.name
-    is ContentBlock.RefBlock -> block.refPath
-    is ContentBlock.MathBlock -> block.content
-    is ContentBlock.Divider -> ""
-}
+        is ContentBlock.Paragraph -> block.content
+        is ContentBlock.ListItem -> block.content
+        is ContentBlock.Quote -> block.content
+        is ContentBlock.CodeBlock -> block.content
+        is ContentBlock.ImageBlock -> block.alt
+        is ContentBlock.ObjectBlock -> block.title ?: block.name
+        is ContentBlock.RefBlock -> block.refPath
+        is ContentBlock.MathBlock -> block.content
+        is ContentBlock.Divider -> ""
+    }
 
 /**
  * 可编辑的段落块.

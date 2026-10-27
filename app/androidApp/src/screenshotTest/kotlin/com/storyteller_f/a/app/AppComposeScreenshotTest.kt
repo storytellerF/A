@@ -241,11 +241,11 @@ private fun ScreenshotAppTheme(content: @Composable () -> Unit) {
 
 private fun sampleRoom() =
     RoomInfo.EMPTY.copy(
-    id = 301,
-    createdTime = fixedTime(),
-    name = "Snapshot room",
-    memberCount = 12,
-)
+        id = 301,
+        createdTime = fixedTime(),
+        name = "Snapshot room",
+        memberCount = 12,
+    )
 
 private fun fixedTime() = LocalDateTime(2026, 1, 2, 3, 4, 5)
 

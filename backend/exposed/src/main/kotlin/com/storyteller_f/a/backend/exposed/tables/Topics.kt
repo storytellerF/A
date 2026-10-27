@@ -32,20 +32,20 @@ object Topics : BaseTable() {
 
 fun Topic.Companion.wrapRow(row: ResultRow): Topic =
     with(Topics) {
-    Topic(
-        row[id],
-        row[createdTime],
-        row[author],
-        row[parentId],
-        row[parentType],
-        row[rootId],
-        row[rootType],
-        row[content].bytes,
-        row[isEncrypted],
-        row[level],
-        row[pinned],
-        row[lastModifiedTime],
-        row.getOrNull(Aids.value),
-        row[status],
-    )
-}
+        Topic(
+            row[id],
+            row[createdTime],
+            row[author],
+            row[parentId],
+            row[parentType],
+            row[rootId],
+            row[rootType],
+            row[content].bytes,
+            row[isEncrypted],
+            row[level],
+            row[pinned],
+            row[lastModifiedTime],
+            row.getOrNull(Aids.value),
+            row[status],
+        )
+    }

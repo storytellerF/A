@@ -38,6 +38,8 @@ data class DesktopAppiumRuntimeConfig(
     val includeWsUrl: Boolean,
     /** Maximum time to wait for the desktop application's main window. */
     val windowWaitSeconds: Long = 120L,
+    val coverageClassSet: String =
+        if (mainClassName.contains(".panel.")) ":panel:desktopApp" else ":app:desktopApp",
 )
 
 abstract class TargetAppiumHelper {

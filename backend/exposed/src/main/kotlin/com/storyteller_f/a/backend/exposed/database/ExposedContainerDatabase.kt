@@ -75,82 +75,82 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun addMember(member: Member) =
         databaseSession.dbQuery {
-        check(
-            Members.insert {
-                it[id] = member.id
-                it[createdTime] = member.createdTime
-                it[joinedTime] = member.joinedTime
-                it[invitedTime] = member.invitedTime
-                it[uid] = member.uid
-                it[objectId] = member.objectId
-                it[objectType] = member.objectType
-                it[status] = member.status
-            }.insertedCount > 0,
-        ) {
-            "join failed"
+            check(
+                Members.insert {
+                    it[id] = member.id
+                    it[createdTime] = member.createdTime
+                    it[joinedTime] = member.joinedTime
+                    it[invitedTime] = member.invitedTime
+                    it[uid] = member.uid
+                    it[objectId] = member.objectId
+                    it[objectType] = member.objectType
+                    it[status] = member.status
+                }.insertedCount > 0,
+            ) {
+                "join failed"
+            }
+            member
         }
-        member
-    }
 
     override suspend fun updateMemberStatus(member: Member) =
         databaseSession.dbQuery {
-        check(
-            Members.update(where = {
-                Members.id eq member.id
-            }) {
-                it[joinedTime] = member.joinedTime
-                it[invitedTime] = member.invitedTime
-                it[status] = member.status
-            } > 0,
-        ) {
-            "update member failed"
+            check(
+                Members.update(where = {
+                    Members.id eq member.id
+                }) {
+                    it[joinedTime] = member.joinedTime
+                    it[invitedTime] = member.invitedTime
+                    it[status] = member.status
+                } > 0,
+            ) {
+                "update member failed"
+            }
+            member
         }
-        member
-    }
 
     override suspend fun deleteMember(containerId: PrimaryKey, id: PrimaryKey) =
         databaseSession.dbQuery {
-        check(
-            Members.deleteWhere {
-                objectId eq containerId and (uid eq id)
-            } > 0,
-        ) {
-            "delete member failed"
+            check(
+                Members.deleteWhere {
+                    objectId eq containerId and (uid eq id)
+                } > 0,
+            ) {
+                "delete member failed"
+            }
         }
-    }
 
     override suspend fun getJoinedUserList(roomId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Members.selectAll().where {
-                Members.objectId eq roomId
+            search {
+                Members.selectAll().where {
+                    Members.objectId eq roomId
+                }
             }
+            map(Member::wrapRow)
         }
-        map(Member::wrapRow)
-    }
 
     override suspend fun getUserJoinedTime(parentIds: List<PrimaryKey>, uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Members.select(Members.fields).where {
-                Members.uid eq uid and (Members.objectId inList parentIds)
+            search {
+                Members.select(Members.fields).where {
+                    Members.uid eq uid and (Members.objectId inList parentIds)
+                }
             }
+            map(Member::wrapRow)
         }
-        map(Member::wrapRow)
-    }
 
     override suspend fun getMemberCount(parentIds: List<PrimaryKey>) =
         databaseSession.dbSearch {
-        val column = Members.uid.countDistinct()
-        search {
-            Members.select(Members.objectId, column).where {
-                Members.objectId inList parentIds
-            }.groupBy(Members.objectId)
+            val column = Members.uid.countDistinct()
+            search {
+                Members.select(Members.objectId, column).where {
+                    Members.objectId inList parentIds
+                }.groupBy(Members.objectId)
+            }
+            map {
+                it[Members.objectId] to it[column]
+            }
         }
-        map {
-            it[Members.objectId] to it[column]
-        }
-    }
 
     override suspend fun getContainerInfo(
         parentIds: List<PrimaryKey>,
@@ -219,13 +219,13 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun getTopicReadList(parentIds: List<PrimaryKey>, uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserTopicReads.selectAll().where {
-                UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)
+            search {
+                UserTopicReads.selectAll().where {
+                    UserTopicReads.uid eq uid and (UserTopicReads.objectId inList parentIds)
+                }
             }
+            map(UserTopicRead::wrapRow)
         }
-        map(UserTopicRead::wrapRow)
-    }
 
     override suspend fun getUsersHasUnreadRoomMap(
         uidList: List<PrimaryKey>,
@@ -329,31 +329,31 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun getQuotaInfo(ownerId: PrimaryKey, quotaType: QuotaType) =
         databaseSession.dbSearch {
-        search {
-            Quotas.selectAll().where {
-                Quotas.ownerId eq ownerId and (Quotas.quotaType eq quotaType)
+            search {
+                Quotas.selectAll().where {
+                    Quotas.ownerId eq ownerId and (Quotas.quotaType eq quotaType)
+                }
+            }
+            first {
+                Quota.wrapRow(it)
             }
         }
-        first {
-            Quota.wrapRow(it)
-        }
-    }
 
     override suspend fun insertQuota(quota: Quota) =
         databaseSession.dbQuery {
-        check(
-            Quotas.insert {
-                it[ownerId] = quota.ownerId
-                it[ownerType] = quota.ownerType
-                it[total] = quota.total
-                it[used] = quota.used
-                it[quotaType] = quota.quotaType
-                it[lockId] = null
-            }.insertedCount > 0,
-        ) {
-            "insert quota failed"
+            check(
+                Quotas.insert {
+                    it[ownerId] = quota.ownerId
+                    it[ownerType] = quota.ownerType
+                    it[total] = quota.total
+                    it[used] = quota.used
+                    it[quotaType] = quota.quotaType
+                    it[lockId] = null
+                }.insertedCount > 0,
+            ) {
+                "insert quota failed"
+            }
         }
-    }
 
     override suspend fun getLatestTopicInContainer(parentIds: List<PrimaryKey>, uid: PrimaryKey?) =
         databaseSession.dbSearch {
@@ -372,15 +372,15 @@ class ExposedContainerDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun getMember(containerId: PrimaryKey, id: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Members.selectAll().where {
-                Members.objectId eq containerId and (Members.uid eq id)
+            search {
+                Members.selectAll().where {
+                    Members.objectId eq containerId and (Members.uid eq id)
+                }
+            }
+            first {
+                Member.wrapRow(it)
             }
         }
-        first {
-            Member.wrapRow(it)
-        }
-    }
 
     override suspend fun getMemberByIds(
         uid: PrimaryKey,

@@ -17,28 +17,28 @@ class FixtureContainerTest {
     @Test
     fun exportLogsBeforeFailedStartupRemoval() =
         runBlocking {
-        val logs =
-            createTestArtifactDirectory(
-                testArtifactRoot(),
-                "FixtureContainerTest",
-                "exportLogsBeforeFailedStartupRemoval",
-            )
-        recordTestArtifacts(logs, "FixtureContainerTest", "exportLogsBeforeFailedStartupRemoval") {
-            val container =
-                FixtureContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
-                    withExposedPorts(6379)
-                    waitingFor(
+            val logs =
+                createTestArtifactDirectory(
+                    testArtifactRoot(),
+                    "FixtureContainerTest",
+                    "exportLogsBeforeFailedStartupRemoval",
+                )
+            recordTestArtifacts(logs, "FixtureContainerTest", "exportLogsBeforeFailedStartupRemoval") {
+                val container =
+                    FixtureContainer(DockerImageName.parse("redis:7.4-alpine")).apply {
+                        withExposedPorts(6379)
+                        waitingFor(
                             Wait.forLogMessage(
                                 "never-ready-fixture-marker",
                                 1,
                             ).withStartupTimeout(Duration.ofSeconds(2)),
-                    )
+                        )
+                    }
+                assertFailsWith<ContainerLaunchException> {
+                    withFixtureResources(logs) { resources -> resources.start("redis", container) }
                 }
-            assertFailsWith<ContainerLaunchException> {
-                withFixtureResources(logs) { resources -> resources.start("redis", container) }
+                assertTrue(logs.resolve("redis.log").readText().contains("Ready to accept connections"))
+                assertTrue(container.containerId == null)
             }
-            assertTrue(logs.resolve("redis.log").readText().contains("Ready to accept connections"))
-            assertTrue(container.containerId == null)
         }
-    }
 }

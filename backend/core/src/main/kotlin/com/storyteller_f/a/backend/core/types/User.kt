@@ -32,20 +32,20 @@ data class User(
 
 fun User.toUserInfo(avatar: FileInfo? = null): UserInfo =
     UserInfo(
-    id,
-    address,
-    aid,
-    nickname,
-    avatar,
-    null,
-    null,
-    status,
-)
+        id,
+        address,
+        aid,
+        nickname,
+        avatar,
+        null,
+        null,
+        status,
+    )
 
 data class RawUser(val user: User, val favoriteId: PrimaryKey? = null, val subscriptionId: PrimaryKey? = null)
 
 fun RawUser.toUserInfo(avatar: FileInfo? = null) =
     user.toUserInfo(avatar).copy(
-    favoriteId = favoriteId,
-    subscriptionId = subscriptionId,
-)
+        favoriteId = favoriteId,
+        subscriptionId = subscriptionId,
+    )

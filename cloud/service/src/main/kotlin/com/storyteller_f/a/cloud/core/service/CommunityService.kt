@@ -260,37 +260,37 @@ suspend fun Backend.createCommunity(
     uid: PrimaryKey,
 ): CustomResult<CommunityInfo?, CommunityError> =
     captureFailure(CommunityError::from) {
-    checkAid(newCommunity.aid).getOrThrow()
-    checkCommunityName(newCommunity).getOrThrow()
-}.andThen(CommunityError::fromError) {
-    val id = SnowflakeFactory.nextId()
-    val memberId = SnowflakeFactory.nextId()
-    val community =
-        Community(
-            id,
-            now(),
-            newCommunity.aid,
-            newCommunity.name,
-            uid,
-            newCommunity.memberPolicy,
-            newCommunity.icon,
-            null,
-        )
-    database.community.createCommunity(community, memberId).onSuccess {
-        communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
-            .onFailure {
-                Napier.e(it.cause) {
-                    "save community document failed"
+        checkAid(newCommunity.aid).getOrThrow()
+        checkCommunityName(newCommunity).getOrThrow()
+    }.andThen(CommunityError::fromError) {
+        val id = SnowflakeFactory.nextId()
+        val memberId = SnowflakeFactory.nextId()
+        val community =
+            Community(
+                id,
+                now(),
+                newCommunity.aid,
+                newCommunity.name,
+                uid,
+                newCommunity.memberPolicy,
+                newCommunity.icon,
+                null,
+            )
+        database.community.createCommunity(community, memberId).onSuccess {
+            communitySearchService.saveDocument(listOf(CommunityDocument.fromCommunity(community)))
+                .onFailure {
+                    Napier.e(it.cause) {
+                        "save community document failed"
+                    }
                 }
-            }
-        addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
-        // 保存创建者到 MemberSearchService
-        saveMemberDocument(uid, memberId, id, newCommunity.name)
-    }
-}.andThen(CommunityError::fromError) { (community, member) ->
-    val rawCommunity = RawCommunity(community, member, null, 0)
-    processRawCommunityToCommunityInfo(listOf(rawCommunity))
-}.firstOrNull().mapError(CommunityError::fromError)
+            addUserLog(uid, UserLogType.CREATE, community.id ob ObjectType.COMMUNITY)
+            // 保存创建者到 MemberSearchService
+            saveMemberDocument(uid, memberId, id, newCommunity.name)
+        }
+    }.andThen(CommunityError::fromError) { (community, member) ->
+        val rawCommunity = RawCommunity(community, member, null, 0)
+        processRawCommunityToCommunityInfo(listOf(rawCommunity))
+    }.firstOrNull().mapError(CommunityError::fromError)
 
 private suspend fun Backend.saveMemberDocument(uid: PrimaryKey, memberId: PrimaryKey, id: PrimaryKey, name: String) {
     getUserInfo(ObjectFetch.IdFetch(uid)).onPresent { userInfo ->
@@ -306,30 +306,30 @@ private suspend fun Backend.saveMemberDocument(uid: PrimaryKey, memberId: Primar
 
 private fun checkCommunityName(newCommunity: NewCommunity): CustomResult<Unit, CommunityError> =
     when (
-    checkNickname(
-        newCommunity.name,
-        1..COMMUNITY_NAME_LENGTH,
-    )
-) {
-    StringCheckResult.RANGE_MISMATCH ->
-        CustomResult.Failure(
-            CommunityError.from(
-                CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH"),
-            ),
+        checkNickname(
+            newCommunity.name,
+            1..COMMUNITY_NAME_LENGTH,
         )
+    ) {
+        StringCheckResult.RANGE_MISMATCH ->
+            CustomResult.Failure(
+                CommunityError.from(
+                    CustomBadRequestException("community name must be between in 1 and $COMMUNITY_NAME_LENGTH"),
+                ),
+            )
 
-    StringCheckResult.CONTAIN_INVALID_CHAR ->
-        CustomResult.Failure(
-            CommunityError.from(
-                CustomBadRequestException("community name must be visible"),
-            ),
-        )
+        StringCheckResult.CONTAIN_INVALID_CHAR ->
+            CustomResult.Failure(
+                CommunityError.from(
+                    CustomBadRequestException("community name must be visible"),
+                ),
+            )
 
-    StringCheckResult.SUCCESS -> CustomResult.success(Unit)
+        StringCheckResult.SUCCESS -> CustomResult.success(Unit)
 
-    StringCheckResult.NULL, StringCheckResult.EMPTY ->
-        CustomResult.Failure(CommunityError.from(CustomBadRequestException("name must be set")))
-}.mapError(CommunityError::fromError)
+        StringCheckResult.NULL, StringCheckResult.EMPTY ->
+            CustomResult.Failure(CommunityError.from(CustomBadRequestException("name must be set")))
+    }.mapError(CommunityError::fromError)
 
 suspend fun Backend.updateCommunity(
     id: PrimaryKey,
@@ -484,36 +484,36 @@ suspend fun Backend.processRawCommunityToCommunityInfo(
     list: List<RawCommunity>,
 ): CustomResult<List<CommunityInfo>?, CommunityError> =
     database.file.getFileRecordByIds(
-    list.flatMap { (community) ->
-        community.fontSettings?.let { fs ->
-            listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId)
-        }.orEmpty() + listOf(community.iconId, community.posterId)
-    }.filterNotNull(),
-).andThenPresent(CommunityError::fromError) { medias ->
-    processFileRecordToFileInfo(medias).map { mediaList ->
-        val map = mediaList.associateBy { it.id }
-        list.map { rawResult ->
-            val fs = rawResult.community.fontSettings
-            val fontSettingsWithInfo =
-                fs?.let {
-                    val contentFont = if (it.contentFontId == null) null else map[it.contentFontId]
-                    val codeFont = if (it.codeFontId == null) null else map[it.codeFontId]
-                    val fallbackFont = if (it.fallbackFontId == null) null else map[it.fallbackFontId]
-                    FontSettingsWithInfo(
-                        settings = it,
-                        contentFont = contentFont,
-                        codeFont = codeFont,
-                        fallbackFont = fallbackFont,
-                    )
-                }
-            rawResult.toCommunityIfo(
-                rawResult.community.iconId?.let { map[it] },
-                rawResult.community.posterId?.let { map[it] },
-                fontSettingsWithInfo,
-            )
+        list.flatMap { (community) ->
+            community.fontSettings?.let { fs ->
+                listOfNotNull(fs.contentFontId, fs.codeFontId, fs.fallbackFontId)
+            }.orEmpty() + listOf(community.iconId, community.posterId)
+        }.filterNotNull(),
+    ).andThenPresent(CommunityError::fromError) { medias ->
+        processFileRecordToFileInfo(medias).map { mediaList ->
+            val map = mediaList.associateBy { it.id }
+            list.map { rawResult ->
+                val fs = rawResult.community.fontSettings
+                val fontSettingsWithInfo =
+                    fs?.let {
+                        val contentFont = if (it.contentFontId == null) null else map[it.contentFontId]
+                        val codeFont = if (it.codeFontId == null) null else map[it.codeFontId]
+                        val fallbackFont = if (it.fallbackFontId == null) null else map[it.fallbackFontId]
+                        FontSettingsWithInfo(
+                            settings = it,
+                            contentFont = contentFont,
+                            codeFont = codeFont,
+                            fallbackFont = fallbackFont,
+                        )
+                    }
+                rawResult.toCommunityIfo(
+                    rawResult.community.iconId?.let { map[it] },
+                    rawResult.community.posterId?.let { map[it] },
+                    fontSettingsWithInfo,
+                )
+            }
         }
-    }
-}.mapError(CommunityError::fromError)
+    }.mapError(CommunityError::fromError)
 
 fun JoinStatusSearch?.toJoinSearch(uid: PrimaryKey?): JoinSearch {
     if (this != JoinStatusSearch.JOINED) return JoinSearch.Unspecified(uid)
@@ -537,21 +537,21 @@ suspend fun Backend.getUserJoinedCommunities(
     hasPosterSearch: PosterSearch? = null,
 ): CustomResult<PaginationResult<CommunityInfo>?, CommunityError> =
     database.community.getCommunityPaginationResult(
-    hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
-    primaryKeyFetch = primaryKeyFetch,
-    joinSearch = JoinSearch.Joined(target),
-).mapPagingResultIfNotNullNullable(CommunityError::fromError) {
-    processCommunities(it, uid, target)
-}.mapError(CommunityError::fromError)
+        hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
+        primaryKeyFetch = primaryKeyFetch,
+        joinSearch = JoinSearch.Joined(target),
+    ).mapPagingResultIfNotNullNullable(CommunityError::fromError) {
+        processCommunities(it, uid, target)
+    }.mapError(CommunityError::fromError)
 
 suspend fun Backend.getCommunityMemberInfos(
     communityId: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
 ): CustomResult<PaginationResult<MemberInfo>, CommunityError> =
     getContainerMemberInfos(
-    communityId,
-    primaryKeyFetch,
-).mapError(CommunityError::fromError)
+        communityId,
+        primaryKeyFetch,
+    ).mapError(CommunityError::fromError)
 
 suspend fun Backend.getContainerMemberInfos(objectId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
     database.container.getMemberWithUserPaginationResult(objectId, primaryKeyFetch)
