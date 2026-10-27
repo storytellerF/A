@@ -64,11 +64,11 @@ internal class PanelInputHost(
 
     suspend fun createAuthKey(): AuthKey =
         withContext(coordination) {
-        val selectedAlgo = algo.value
-        val signingKey = privateKey.value
-        val encryptionKey = encryptionPrivateKey.value
-        withContext(worker) { getAuthKey(selectedAlgo, signingKey, encryptionKey) }
-    }
+            val selectedAlgo = algo.value
+            val signingKey = privateKey.value
+            val encryptionKey = encryptionPrivateKey.value
+            withContext(worker) { getAuthKey(selectedAlgo, signingKey, encryptionKey) }
+        }
 
     fun close() {
         scope.cancel()

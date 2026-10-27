@@ -106,27 +106,27 @@ private object AppiumHtmlSemantics {
 
     private fun createElement(id: Long, input: Boolean): HTMLElement =
         if (input) {
-        (document.createElement("textarea") as HTMLTextAreaElement).also { textArea ->
-            textArea.addEventListener("input", {
-                inputCallbacks[id]?.invoke(textArea.value)
-                window.requestAnimationFrame {
+            (document.createElement("textarea") as HTMLTextAreaElement).also { textArea ->
+                textArea.addEventListener("input", {
+                    inputCallbacks[id]?.invoke(textArea.value)
                     window.requestAnimationFrame {
-                        textArea.setAttribute(
-                            "data-appium-input-delivered-length",
-                            textArea.value.length.toString(),
-                        )
+                        window.requestAnimationFrame {
+                            textArea.setAttribute(
+                                "data-appium-input-delivered-length",
+                                textArea.value.length.toString(),
+                            )
+                        }
                     }
-                }
-            })
+                })
+            }
+        } else {
+            (document.createElement("button") as HTMLElement).also { button ->
+                button.setAttribute("type", "button")
+                button.addEventListener("click", {
+                    actionCallbacks[id]?.invoke()
+                })
+            }
         }
-    } else {
-        (document.createElement("button") as HTMLElement).also { button ->
-            button.setAttribute("type", "button")
-            button.addEventListener("click", {
-                actionCallbacks[id]?.invoke()
-            })
-        }
-    }
 
     private fun HTMLElement.updateInputAttributes(id: Long, input: Boolean) {
         if (input) {
@@ -166,11 +166,11 @@ private object AppiumHtmlSemantics {
 
     private fun isInViewport(left: Float, top: Float, width: Float, height: Float): Boolean =
         width > 0f &&
-        height > 0f &&
-        left + width > 0f &&
-        top + height > 0f &&
-        left < window.innerWidth &&
-        top < window.innerHeight
+            height > 0f &&
+            left + width > 0f &&
+            top + height > 0f &&
+            left < window.innerWidth &&
+            top < window.innerHeight
 
     private fun HTMLElement.updateAttachment(inViewport: Boolean) {
         if (inViewport && parentElement == null) {
@@ -233,9 +233,9 @@ private object AppiumHtmlSemantics {
 
     private fun overlay(): HTMLElement =
         document.getElementById(OVERLAY_ID) as? HTMLElement
-        ?: (document.createElement("div") as HTMLElement).also { element ->
-            element.id = OVERLAY_ID
-            element.style.setProperty("pointer-events", "none")
-            document.body?.appendChild(element)
-        }
+            ?: (document.createElement("div") as HTMLElement).also { element ->
+                element.id = OVERLAY_ID
+                element.style.setProperty("pointer-events", "none")
+                document.body?.appendChild(element)
+            }
 }

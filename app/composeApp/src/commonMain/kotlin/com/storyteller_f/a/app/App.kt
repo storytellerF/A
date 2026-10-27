@@ -722,69 +722,69 @@ fun BubblePage(roomId: Long) {
 
 private fun createAppNavFactoryForBubble(): AppNavFactory =
     object : AppNavFactory {
-    override fun newAppNav() =
-        object : AppNav {
-        override val backStack: NavBackStack<NavKey>
-            get() = throw UnsupportedOperationException("Bubble navigation does not expose a back stack")
+        override fun newAppNav() =
+            object : AppNav {
+                override val backStack: NavBackStack<NavKey>
+                    get() = throw UnsupportedOperationException("Bubble navigation does not expose a back stack")
 
-        override fun gotoSignIn() = Unit
+                override fun gotoSignIn() = Unit
 
-        override fun gotoCall(roomId: PrimaryKey) = Unit
+                override fun gotoCall(roomId: PrimaryKey) = Unit
 
-        override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) = Unit
+                override fun gotoRoom(roomId: PrimaryKey, showDialog: Boolean) = Unit
 
-        override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) = Unit
+                override fun gotoCommunity(communityId: PrimaryKey, showDialog: Boolean) = Unit
 
-        override fun gotoTopic(topicId: PrimaryKey) = Unit
+                override fun gotoTopic(topicId: PrimaryKey) = Unit
 
-        override fun gotoHome() = Unit
+                override fun gotoHome() = Unit
 
-        override fun gotoTopicCompose(data: TopicComposeData) = Unit
+                override fun gotoTopicCompose(data: TopicComposeData) = Unit
 
-        override fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
+                override fun gotoMemberPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
 
-        override fun gotoAbout() = Unit
+                override fun gotoAbout() = Unit
 
-        override fun gotoUser(uid: PrimaryKey) = Unit
+                override fun gotoUser(uid: PrimaryKey) = Unit
 
-        override fun back() = Unit
+                override fun back() = Unit
 
-        override fun gotoUserSetting() = Unit
+                override fun gotoUserSetting() = Unit
 
-        override fun gotoPreference() = Unit
+                override fun gotoPreference() = Unit
 
-        override fun gotoMedia(info: FileInfo) = Unit
+                override fun gotoMedia(info: FileInfo) = Unit
 
-        override fun gotoLocalImage(url: String) = Unit
+                override fun gotoLocalImage(url: String) = Unit
 
-        override fun gotoTitleCompose() = Unit
+                override fun gotoTitleCompose() = Unit
 
-        override fun gotoCommunityTitleCompose(communityId: PrimaryKey) = Unit
+                override fun gotoCommunityTitleCompose(communityId: PrimaryKey) = Unit
 
-        override fun gotoRoomTitleCompose(roomId: PrimaryKey) = Unit
+                override fun gotoRoomTitleCompose(roomId: PrimaryKey) = Unit
 
-        override fun gotoCommunityCompose() = Unit
+                override fun gotoCommunityCompose() = Unit
 
-        override fun gotoRoomCompose() = Unit
+                override fun gotoRoomCompose() = Unit
 
-        override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
+                override fun gotoSettingPage(objectId: PrimaryKey, objectType: ObjectType) = Unit
 
-        override fun gotoFontSettingsPage(communityId: PrimaryKey) = Unit
+                override fun gotoFontSettingsPage(communityId: PrimaryKey) = Unit
 
-        override fun gotoReactionListPage(topicId: PrimaryKey) = Unit
+                override fun gotoReactionListPage(topicId: PrimaryKey) = Unit
 
-        override fun gotoFavoritePage() = Unit
+                override fun gotoFavoritePage() = Unit
 
-        override fun gotoSubscriptionPage() = Unit
-        override fun gotoUserReactionRecordsPage() = Unit
+                override fun gotoSubscriptionPage() = Unit
+                override fun gotoUserReactionRecordsPage() = Unit
 
-        override fun gotoUserCommentsPage() = Unit
+                override fun gotoUserCommentsPage() = Unit
 
-        override fun gotoFileExplorer(objectTuple: ObjectTuple?) = Unit
+                override fun gotoFileExplorer(objectTuple: ObjectTuple?) = Unit
 
-        override fun gotoFileRefs(fileId: PrimaryKey) = Unit
+                override fun gotoFileRefs(fileId: PrimaryKey) = Unit
+            }
     }
-}
 
 @Composable
 fun UploadPage() {

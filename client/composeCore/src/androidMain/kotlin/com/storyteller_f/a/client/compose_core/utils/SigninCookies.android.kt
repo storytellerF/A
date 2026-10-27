@@ -25,25 +25,25 @@ internal actual suspend fun readSigninCookies(key: String): String? = readProtec
 
 internal actual suspend fun readProtectedValue(key: String): String? =
     withContext(Dispatchers.IO) {
-    val value = protectedPreferences().getString(key, null) ?: return@withContext null
-    val encrypted = Base64.decode(value)
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    cipher.init(Cipher.DECRYPT_MODE, sessionKey(), GCMParameterSpec(128, encrypted.copyOfRange(0, 12)))
-    cipher.doFinal(encrypted.copyOfRange(12, encrypted.size)).decodeToString()
-}
+        val value = protectedPreferences().getString(key, null) ?: return@withContext null
+        val encrypted = Base64.decode(value)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, sessionKey(), GCMParameterSpec(128, encrypted.copyOfRange(0, 12)))
+        cipher.doFinal(encrypted.copyOfRange(12, encrypted.size)).decodeToString()
+    }
 
 internal actual suspend fun writeSigninCookies(key: String, value: String) = writeProtectedValue(key, value)
 
 internal actual suspend fun writeProtectedValue(key: String, value: String) =
     withContext(Dispatchers.IO) {
-    val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-    cipher.init(Cipher.ENCRYPT_MODE, sessionKey())
-    check(
-        protectedPreferences().edit()
-            .putString(key, Base64.encode(cipher.iv + cipher.doFinal(value.encodeToByteArray())))
-            .commit(),
-    ) { "Protected storage write failed" }
-}
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, sessionKey())
+        check(
+            protectedPreferences().edit()
+                .putString(key, Base64.encode(cipher.iv + cipher.doFinal(value.encodeToByteArray())))
+                .commit(),
+        ) { "Protected storage write failed" }
+    }
 
 private fun protectedPreferences() =
     checkNotNull(getAppContextRefValue()).getSharedPreferences("protected-data", Context.MODE_PRIVATE)

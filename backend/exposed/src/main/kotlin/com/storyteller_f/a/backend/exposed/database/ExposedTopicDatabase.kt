@@ -62,12 +62,12 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
     TopicDatabase {
     override suspend fun getTopicRootTuple(parentId: PrimaryKey) =
         getTopicByPredicate({
-        ObjectTuple(it[Topics.rootId], it[Topics.rootType])
-    }) {
-        where {
-            Topics.id eq parentId
+            ObjectTuple(it[Topics.rootId], it[Topics.rootType])
+        }) {
+            where {
+                Topics.id eq parentId
+            }
         }
-    }
 
     override suspend fun getTopic(fetch: ObjectFetch): CustomResult<Topic?, DatabaseError> =
         getTopicByPredicate(Topic::wrapRow) {
@@ -84,32 +84,32 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         extraQuery: Query.() -> Query = { this },
     ): CustomResult<T?, DatabaseError> =
         databaseSession.dbSearch {
-        search {
-            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value).extraQuery()
+            search {
+                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                    .select(Topics.fields + Aids.value).extraQuery()
+            }
+            first(block)
         }
-        first(block)
-    }
 
     private suspend fun getTopicListByPredicate(
         queryBuilder: Query.() -> Query = { this },
     ): CustomResult<List<Topic>, DatabaseError> =
         databaseSession.dbSearch {
-        search {
-            Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
-                .select(Topics.fields + Aids.value)
-                .queryBuilder()
+            search {
+                Topics.join(Aids, JoinType.LEFT, Topics.id, Aids.objectId)
+                    .select(Topics.fields + Aids.value)
+                    .queryBuilder()
+            }
+            map(Topic::wrapRow)
         }
-        map(Topic::wrapRow)
-    }
 
     suspend fun getTopicCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Topics.selectAll().queryBuilder()
+            search {
+                Topics.selectAll().queryBuilder()
+            }
+            count()
         }
-        count()
-    }
 
     override suspend fun getTopicListByIds(ids: List<PrimaryKey>): CustomResult<List<Topic>, DatabaseError> =
         getTopicListByPredicate {
@@ -123,16 +123,16 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         extraQuery: Query.() -> Query = { this },
     ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         paginationFromResults(
-        getTopicListByPredicate {
-            extraQuery().bindPaginationQuery(
-                Topics,
-                primaryKeyFetch,
-            )
-        },
-        getTopicCountByPredicate {
-            extraQuery()
-        },
-    )
+            getTopicListByPredicate {
+                extraQuery().bindPaginationQuery(
+                    Topics,
+                    primaryKeyFetch,
+                )
+            },
+            getTopicCountByPredicate {
+                extraQuery()
+            },
+        )
 
     override suspend fun getTopicByParentId(
         uid: PrimaryKey?,
@@ -141,25 +141,25 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         pinType: TopicPinSearch?,
     ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         getTopicPaginationByPredicate(primaryKeyFetch) {
-        where {
-            Topics.parentId eq parentId
-        }
-        when (pinType) {
-            TopicPinSearch.PINNED ->
-                andWhere {
-                    Topics.pinned eq true
-                }
+            where {
+                Topics.parentId eq parentId
+            }
+            when (pinType) {
+                TopicPinSearch.PINNED ->
+                    andWhere {
+                        Topics.pinned eq true
+                    }
 
-            TopicPinSearch.UNPINNED ->
-                andWhere {
-                    Topics.pinned eq false
-                }
+                TopicPinSearch.UNPINNED ->
+                    andWhere {
+                        Topics.pinned eq false
+                    }
 
-            else -> {
-                orderBy(Topics.pinned to SortOrder.DESC)
+                else -> {
+                    orderBy(Topics.pinned to SortOrder.DESC)
+                }
             }
         }
-    }
 
     override suspend fun getJoinedCommunityPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
         getTopicPaginationByPredicate(fetch) {
@@ -188,14 +188,14 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
     @OptIn(ExperimentalStdlibApi::class)
     override suspend fun saveEncryptedTopic(topic: Topic, content: TopicContent.Encrypted) =
         databaseSession.dbQuery {
-        Topic.new(topic)
-        EncryptedKeys.batchInsert(content.encryptedKey.keys) {
-            this[EncryptedKeys.topicId] = topic.id
-            this[EncryptedKeys.uid] = it
-            this[EncryptedKeys.encryptedAes] = ExposedBlob(content.encryptedKey.getValue(it).hexToByteArray())
+            Topic.new(topic)
+            EncryptedKeys.batchInsert(content.encryptedKey.keys) {
+                this[EncryptedKeys.topicId] = topic.id
+                this[EncryptedKeys.uid] = it
+                this[EncryptedKeys.encryptedAes] = ExposedBlob(content.encryptedKey.getValue(it).hexToByteArray())
+            }
+            Unit
         }
-        Unit
-    }
 
     override suspend fun savePlainTopic(topic: Topic, content: TopicContent.Plain, fileRefs: List<FileRef>) =
         databaseSession.dbQuery {
@@ -205,26 +205,26 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
 
     override suspend fun updateTopicPinned(topicId: PrimaryKey, newValue: Boolean) =
         databaseSession.dbQuery {
-        Topics.update({
-            Topics.id eq topicId
-        }) {
-            it[Topics.pinned] = newValue
-        } > 0
-    }
+            Topics.update({
+                Topics.id eq topicId
+            }) {
+                it[Topics.pinned] = newValue
+            } > 0
+        }
 
     override suspend fun updateTopicStatus(topicId: PrimaryKey, status: ObjectStatus) =
         databaseSession.dbQuery {
-        Topics.update({
-            Topics.id eq topicId
-        }) {
-            it[Topics.status] = status
-        } > 0
-    }
+            Topics.update({
+                Topics.id eq topicId
+            }) {
+                it[Topics.status] = status
+            } > 0
+        }
 
     override suspend fun getTopicList(primaryKeyFetch: PrimaryKeyFetch) =
         getTopicListByPredicate {
-        bindPaginationQuery(Topics, primaryKeyFetch)
-    }
+            bindPaginationQuery(Topics, primaryKeyFetch)
+        }
 
     override suspend fun getTopicCommentCount(
         topicIdList: List<PrimaryKey>,
@@ -265,10 +265,10 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
         primaryKeyFetch: PrimaryKeyFetch,
     ): CustomResult<PaginationResult<Topic>, DatabaseError> =
         getTopicPaginationByPredicate(primaryKeyFetch) {
-        where {
-            Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+            where {
+                Topics.author eq uid and (Topics.parentType eq ObjectType.TOPIC)
+            }
         }
-    }
 
     override suspend fun getUserCommentCount(uid: PrimaryKey): CustomResult<Long, DatabaseError> =
         getTopicCountByPredicate {
@@ -336,26 +336,26 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
 
     override suspend fun createTitle(title: Title, topic: Topic) =
         databaseSession.dbQuery {
-        check(
-            Titles.insert {
-                it[Titles.id] = title.id
-                it[Titles.createdTime] = title.createdTime
-                it[Titles.name] = title.name
-                it[Titles.creator] = title.creator
-                it[Titles.receiver] = title.receiver
-                it[Titles.type] = title.type
-                it[Titles.scopeId] = title.scopeId
-                it[Titles.scopeType] = title.scopeType
-                it[Titles.status] = title.status
-                it[Titles.descriptionTopicId] = title.descriptionTopicId
-                it[Titles.titleStatus] = title.titleStatus
-                it[Titles.expiresAt] = title.expiresAt
-            }.insertedCount > 0,
-        ) {
-            "insert title failed"
+            check(
+                Titles.insert {
+                    it[Titles.id] = title.id
+                    it[Titles.createdTime] = title.createdTime
+                    it[Titles.name] = title.name
+                    it[Titles.creator] = title.creator
+                    it[Titles.receiver] = title.receiver
+                    it[Titles.type] = title.type
+                    it[Titles.scopeId] = title.scopeId
+                    it[Titles.scopeType] = title.scopeType
+                    it[Titles.status] = title.status
+                    it[Titles.descriptionTopicId] = title.descriptionTopicId
+                    it[Titles.titleStatus] = title.titleStatus
+                    it[Titles.expiresAt] = title.expiresAt
+                }.insertedCount > 0,
+            ) {
+                "insert title failed"
+            }
+            Topic.new(topic)
         }
-        Topic.new(topic)
-    }
 
     override suspend fun getTopicCount() = getTopicCountByPredicate()
 
@@ -366,19 +366,19 @@ class ExposedTopicDatabase(val databaseSession: ExposedDatabaseSession, val comb
 
 private suspend fun Topic.Companion.new(info: Topic) =
     check(
-    Topics.insert {
-        it[id] = info.id
-        it[author] = info.author
-        it[createdTime] = now()
-        it[parentType] = info.parentType
-        it[parentId] = info.parentId
-        it[rootId] = info.rootId
-        it[rootType] = info.rootType
-        it[content] = ExposedBlob(info.content)
-        it[isEncrypted] = info.isEncrypted
-        it[level] = info.level
-        it[status] = info.status
-    }.insertedCount > 0,
-) {
-    "insert topic failed"
-}
+        Topics.insert {
+            it[id] = info.id
+            it[author] = info.author
+            it[createdTime] = now()
+            it[parentType] = info.parentType
+            it[parentId] = info.parentId
+            it[rootId] = info.rootId
+            it[rootType] = info.rootType
+            it[content] = ExposedBlob(info.content)
+            it[isEncrypted] = info.isEncrypted
+            it[level] = info.level
+            it[status] = info.status
+        }.insertedCount > 0,
+    ) {
+        "insert topic failed"
+    }

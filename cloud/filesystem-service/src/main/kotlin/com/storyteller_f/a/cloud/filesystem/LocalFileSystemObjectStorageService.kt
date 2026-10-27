@@ -58,13 +58,13 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         uploadPacks: List<UploadPack>,
     ): CustomResult<List<ObjectStorageWriteRecord>, FilesystemError> =
         useFileSystem {
-        val bucketPath = resolveBucket(bucketName)
-        uploadPacks.map { uploadPack ->
-            val target = resolveObject(bucketPath, uploadPack.fullName).createParentDirectories()
-            Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
-            ObjectStorageWriteRecord(uploadPack.fullName)
+            val bucketPath = resolveBucket(bucketName)
+            uploadPacks.map { uploadPack ->
+                val target = resolveObject(bucketPath, uploadPack.fullName).createParentDirectories()
+                Files.copy(uploadPack.file.toPath(), target, StandardCopyOption.REPLACE_EXISTING)
+                ObjectStorageWriteRecord(uploadPack.fullName)
+            }
         }
-    }
 
     @OptIn(ExperimentalTime::class)
     suspend fun get(bucketName: String, names: List<String>): CustomResult<List<ObjectStorageRecord>, FilesystemError> =
@@ -91,9 +91,9 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
     @OptIn(ExperimentalPathApi::class)
     suspend fun clean(bucketName: String): CustomResult<Unit, FilesystemError> =
         useFileSystem {
-        val bucketPath = resolveBucket(bucketName)
-        bucketPath.deleteRecursively()
-    }
+            val bucketPath = resolveBucket(bucketName)
+            bucketPath.deleteRecursively()
+        }
 
     suspend fun list(bucketName: String, prefix: String): CustomResult<List<ObjectStorageRecord>, FilesystemError> {
         val p = if (prefix.isBlank()) resolveBucket(bucketName) else resolveObject(bucketName, prefix)
@@ -117,17 +117,17 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         copyPacks: List<CopyPack>,
     ): CustomResult<List<ObjectStorageRecord>, FilesystemError> =
         useFileSystem {
-        val bucketPath = resolveBucket(bucketName)
-        copyPacks.map {
-            val p = resolveObject(bucketPath, it.originFullName)
-            if (!p.isRegularFile()) {
-                error("${it.originFullName} not exists")
+            val bucketPath = resolveBucket(bucketName)
+            copyPacks.map {
+                val p = resolveObject(bucketPath, it.originFullName)
+                if (!p.isRegularFile()) {
+                    error("${it.originFullName} not exists")
+                }
+                val targetFile = resolveObject(bucketPath, it.newFullName).createParentDirectories()
+                p.copyTo(targetFile, true)
+                it.newFullName
             }
-            val targetFile = resolveObject(bucketPath, it.newFullName).createParentDirectories()
-            p.copyTo(targetFile, true)
-            it.newFullName
-        }
-    }.fold(onSuccess = { get(bucketName, it) }, onFailure = { CustomResult.Failure(FilesystemError.fromError(it)) })
+        }.fold(onSuccess = { get(bucketName, it) }, onFailure = { CustomResult.Failure(FilesystemError.fromError(it)) })
 
     suspend fun getInputStream(bucketName: String, name: String): CustomResult<BufferedInputStream, FilesystemError> =
         useFileSystem {
@@ -146,44 +146,44 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
         expectedSha256: String,
     ): CustomResult<ObjectStorageWriteRecord, FilesystemError> =
         useFileSystem {
-        val bucketPath = resolveBucket(bucketName)
-        val target = resolveObject(bucketPath, targetFullName).createParentDirectories()
-        val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val temporary = Files.createTempFile(target.parent, ".compose-", ".tmp")
-        try {
-            Files.newOutputStream(temporary).buffered().use { out ->
-                val bytes = ByteArray(DEFAULT_BUFFER_SIZE)
-                sourceFullNames.forEach { src ->
-                    val source = resolveObject(bucketPath, src)
-                    check(source.isRegularFile()) { "source $src not exists" }
-                    Files.newInputStream(source).buffered().use { input ->
-                        var count = input.read(bytes)
-                        while (count >= 0) {
-                            digest.update(bytes, 0, count)
-                            out.write(bytes, 0, count)
-                            count = input.read(bytes)
+            val bucketPath = resolveBucket(bucketName)
+            val target = resolveObject(bucketPath, targetFullName).createParentDirectories()
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val temporary = Files.createTempFile(target.parent, ".compose-", ".tmp")
+            try {
+                Files.newOutputStream(temporary).buffered().use { out ->
+                    val bytes = ByteArray(DEFAULT_BUFFER_SIZE)
+                    sourceFullNames.forEach { src ->
+                        val source = resolveObject(bucketPath, src)
+                        check(source.isRegularFile()) { "source $src not exists" }
+                        Files.newInputStream(source).buffered().use { input ->
+                            var count = input.read(bytes)
+                            while (count >= 0) {
+                                digest.update(bytes, 0, count)
+                                out.write(bytes, 0, count)
+                                count = input.read(bytes)
+                            }
                         }
                     }
                 }
+                check(digest.digest().toHexString() == expectedSha256) { "file hash mismatch" }
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+                ObjectStorageWriteRecord(targetFullName)
+            } finally {
+                Files.deleteIfExists(temporary)
             }
-            check(digest.digest().toHexString() == expectedSha256) { "file hash mismatch" }
-            Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
-            ObjectStorageWriteRecord(targetFullName)
-        } finally {
-            Files.deleteIfExists(temporary)
         }
-    }
 
     suspend fun delete(bucketName: String, names: List<String>): CustomResult<Unit, FilesystemError> =
         useFileSystem {
-        val bucketPath = resolveBucket(bucketName)
-        names.forEach { name ->
-            val p = resolveObject(bucketPath, name)
-            if (p.exists()) {
-                Files.deleteIfExists(p)
+            val bucketPath = resolveBucket(bucketName)
+            names.forEach { name ->
+                val p = resolveObject(bucketPath, name)
+                if (p.exists()) {
+                    Files.deleteIfExists(p)
+                }
             }
         }
-    }
 
     suspend fun <T> useFileSystem(block: suspend () -> T): CustomResult<T, FilesystemError> =
         withContext(Dispatchers.IO) {
@@ -198,10 +198,10 @@ internal class LocalFileSystemObjectStorageService(private val url: String, base
 
     suspend fun getPathResponse(it: List<String>): Path? =
         useFileSystem {
-        if (it.size < 2) return@useFileSystem null
-        val path = resolveObject(it.first(), it.drop(1).joinToString("/"))
-        path.takeIf { candidate -> candidate.isRegularFile() }?.toRealPath()
-    }.getOrNull()
+            if (it.size < 2) return@useFileSystem null
+            val path = resolveObject(it.first(), it.drop(1).joinToString("/"))
+            path.takeIf { candidate -> candidate.isRegularFile() }?.toRealPath()
+        }.getOrNull()
 
     private fun resolveBucket(bucketName: String): Path {
         val bucket = Paths.get(bucketName)

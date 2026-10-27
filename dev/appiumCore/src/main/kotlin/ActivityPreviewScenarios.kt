@@ -257,44 +257,44 @@ private suspend fun preparePrivateActivityScenario(
 
 fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testRoomActivityRefreshByHelper() =
     runAppiumBlockingTest {
-    platformHelper.runTest(
-        testName = testName,
-        target = targetHelper,
-        setup = { ports ->
-            AppiumTestSetup(
-                prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) },
-            )
-        },
-    ) { scope, data ->
-        try {
-            val driver = scope.driver
-            scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
-            driver.dismissDialog()
-            driver.clickByText("Rooms")
-            driver.assertVisibleByTextContaining(data.latestMessage)
-            driver.assertVisibleByText("3")
-            val activity =
-                data.viewer.sessionManager.getUserRooms(
-                    PaginationQuery(),
-                ).getOrThrow().activities.single { it.room.id == data.roomId }
-            data.viewer.sessionManager.addReadLog(
-                UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
-            ).getOrThrow()
-            driver.refreshList()
-            driver.assertVisibleByTextContaining(data.latestMessage)
-            driver.assertNotVisibleByText("3")
-            if (driver is AndroidAppTestDriver) {
-                driver.assertUnreadRoomsIndicator(false)
-            } else if (driver is WasmAppTestDriver) {
-                driver.assertUnreadRoomsIndicator(false)
-            } else {
-                driver.assertNotVisibleByText("Unread rooms")
+        platformHelper.runTest(
+            testName = testName,
+            target = targetHelper,
+            setup = { ports ->
+                AppiumTestSetup(
+                    prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) },
+                )
+            },
+        ) { scope, data ->
+            try {
+                val driver = scope.driver
+                scenarioSignIn(driver, data.viewer.session.pemPrivateKey)
+                driver.dismissDialog()
+                driver.clickByText("Rooms")
+                driver.assertVisibleByTextContaining(data.latestMessage)
+                driver.assertVisibleByText("3")
+                val activity =
+                    data.viewer.sessionManager.getUserRooms(
+                        PaginationQuery(),
+                    ).getOrThrow().activities.single { it.room.id == data.roomId }
+                data.viewer.sessionManager.addReadLog(
+                    UpdateUserRead(ObjectTuple(data.roomId, ObjectType.ROOM), requireNotNull(activity.latestMessageId)),
+                ).getOrThrow()
+                driver.refreshList()
+                driver.assertVisibleByTextContaining(data.latestMessage)
+                driver.assertNotVisibleByText("3")
+                if (driver is AndroidAppTestDriver) {
+                    driver.assertUnreadRoomsIndicator(false)
+                } else if (driver is WasmAppTestDriver) {
+                    driver.assertUnreadRoomsIndicator(false)
+                } else {
+                    driver.assertNotVisibleByText("Unread rooms")
+                }
+            } finally {
+                data.viewer.sessionManager.client.close()
             }
-        } finally {
-            data.viewer.sessionManager.client.close()
         }
     }
-}
 
 private fun AppTestDriver.resizeActivityViewport(width: Int, height: Int) {
     when (this) {

@@ -105,27 +105,27 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
 
     private suspend fun processReactionToReactionInfo(uid: PrimaryKey?, list: List<Reaction>) =
         (
-        if (uid == null) {
-            CustomResult.success(emptyMap())
-        } else {
-            val objectIdList = list.map { it.objectId }.distinct()
-            hasReactedEmoji(objectIdList, uid).map {
-                it.groupByPair().mapValues { v ->
-                    v.value.toSet()
+            if (uid == null) {
+                CustomResult.success(emptyMap())
+            } else {
+                val objectIdList = list.map { it.objectId }.distinct()
+                hasReactedEmoji(objectIdList, uid).map {
+                    it.groupByPair().mapValues { v ->
+                        v.value.toSet()
+                    }
                 }
             }
+            ).map { reactedMap ->
+            list.map { reaction ->
+                ReactionInfo(
+                    reaction.emoji,
+                    reaction.objectId,
+                    reaction.count,
+                    reactedMap[reaction.objectId]?.contains(reaction.emoji) == true,
+                    reaction.lastReactionId,
+                )
+            }
         }
-        ).map { reactedMap ->
-        list.map { reaction ->
-            ReactionInfo(
-                reaction.emoji,
-                reaction.objectId,
-                reaction.count,
-                reactedMap[reaction.objectId]?.contains(reaction.emoji) == true,
-                reaction.lastReactionId,
-            )
-        }
-    }
 
     override suspend fun hasReactedEmoji(
         objectIdList: List<PrimaryKey>,
@@ -203,24 +203,24 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
 
     override suspend fun deleteReaction(reactionId: PrimaryKey) =
         databaseSession.dbQuery {
-        ReactionRecords.deleteWhere { ReactionRecords.id eq reactionId }
-    }.map { value -> value > 0 }
+            ReactionRecords.deleteWhere { ReactionRecords.id eq reactionId }
+        }.map { value -> value > 0 }
 
     override suspend fun insertReaction(reactionRecord: ReactionRecord) =
         databaseSession.dbQuery {
-        check(
-            ReactionRecords.insert { statement ->
-                statement[ReactionRecords.id] = reactionRecord.id
-                statement[ReactionRecords.uid] = reactionRecord.uid
-                statement[ReactionRecords.objectId] = reactionRecord.objectId
-                statement[ReactionRecords.objectType] = reactionRecord.objectType
-                statement[ReactionRecords.emoji] = reactionRecord.emoji
-                statement[ReactionRecords.createdTime] = reactionRecord.createdTime
-            }.insertedCount > 0,
-        ) {
-            "insert reaction failed"
+            check(
+                ReactionRecords.insert { statement ->
+                    statement[ReactionRecords.id] = reactionRecord.id
+                    statement[ReactionRecords.uid] = reactionRecord.uid
+                    statement[ReactionRecords.objectId] = reactionRecord.objectId
+                    statement[ReactionRecords.objectType] = reactionRecord.objectType
+                    statement[ReactionRecords.emoji] = reactionRecord.emoji
+                    statement[ReactionRecords.createdTime] = reactionRecord.createdTime
+                }.insertedCount > 0,
+            ) {
+                "insert reaction failed"
+            }
         }
-    }
 
     override suspend fun getReactionCount(
         objectIdList: List<PrimaryKey>,
@@ -289,11 +289,11 @@ class ExposedReactionDatabase(val databaseSession: ExposedDatabaseSession) : Rea
 
     private suspend fun getUserReactionRecordCountByUid(uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            ReactionRecords.selectAll().where {
-                ReactionRecords.uid eq uid
+            search {
+                ReactionRecords.selectAll().where {
+                    ReactionRecords.uid eq uid
+                }
             }
+            count()
         }
-        count()
-    }
 }

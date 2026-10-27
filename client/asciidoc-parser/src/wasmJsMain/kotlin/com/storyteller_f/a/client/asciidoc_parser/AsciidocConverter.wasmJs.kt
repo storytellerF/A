@@ -26,7 +26,7 @@ actual suspend fun convertAsciidoc(source: String): String =
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun asciidoctorOptions(): AsciidoctorOptions =
     js(
-    """
+        """
     ({ safe: 'safe', attributes: { showtitle: true } })
     """,
-)
+    )

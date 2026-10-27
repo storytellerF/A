@@ -124,15 +124,15 @@ fun TopicComposePage(data: TopicComposeData, backPrePage: () -> Unit) {
 @Composable
 private fun getCommunityTypography(data: TopicComposeData): Typography? =
     (data as? TopicComposeData.PublicRoom)?.run {
-    val fontSettings = getFontSettings(communityId)
-    val typography = MaterialTheme.typography
-    val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
-    typography.copy(
-        bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
-        bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
-        bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily),
-    )
-}
+        val fontSettings = getFontSettings(communityId)
+        val typography = MaterialTheme.typography
+        val defaultFont = fontSettings.contentFontFamily ?: fontSettings.fallbackFontFamily
+        typography.copy(
+            bodyLarge = typography.bodyLarge.copy(fontFamily = defaultFont ?: typography.bodyLarge.fontFamily),
+            bodyMedium = typography.bodyMedium.copy(fontFamily = defaultFont ?: typography.bodyMedium.fontFamily),
+            bodySmall = typography.bodySmall.copy(fontFamily = defaultFont ?: typography.bodySmall.fontFamily),
+        )
+    }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

@@ -17,24 +17,24 @@ class FileServiceTest {
     @Test
     fun `cleanup updates upload size`() =
         runBlocking {
-        val source = Files.createTempFile("upload-source-", ".image").toFile()
-        val cleanedFiles = mutableListOf<File>()
-        try {
-            source.writeText("cleaned image content")
-            val originalSize = source.length() + 100
-            val processed =
-                ProcessedUploadPack(
-                    UploadPack(source, "image.test", originalSize, "owner/image.test", "old-sha"),
-                    "image/x-test",
-                )
+            val source = Files.createTempFile("upload-source-", ".image").toFile()
+            val cleanedFiles = mutableListOf<File>()
+            try {
+                source.writeText("cleaned image content")
+                val originalSize = source.length() + 100
+                val processed =
+                    ProcessedUploadPack(
+                        UploadPack(source, "image.test", originalSize, "owner/image.test", "old-sha"),
+                        "image/x-test",
+                    )
 
-            val cleaned = removeExifIfImage(listOf(processed), cleanedFiles).single().pack
+                val cleaned = removeExifIfImage(listOf(processed), cleanedFiles).single().pack
 
-            assertEquals(cleaned.file.length(), cleaned.size)
-            assertNotEquals(originalSize, cleaned.size)
-        } finally {
-            source.delete()
-            cleanedFiles.forEach(File::delete)
+                assertEquals(cleaned.file.length(), cleaned.size)
+                assertNotEquals(originalSize, cleaned.size)
+            } finally {
+                source.delete()
+                cleanedFiles.forEach(File::delete)
+            }
         }
-    }
 }

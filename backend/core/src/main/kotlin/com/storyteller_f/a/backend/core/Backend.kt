@@ -143,35 +143,35 @@ fun loadAvif() {
 
 suspend fun extractSvgDimensionInfo(inputStreamProducer: suspend () -> InputStream): Dimension? =
     withContext(
-    Dispatchers.IO,
-) {
-    inputStreamProducer().use { inputStream ->
-        val factory = XMLInputFactory.newInstance()
-        val reader = factory.createXMLStreamReader(inputStream)
-        try {
-            if (reader.hasNext()) {
-                val event = reader.next()
-                if (event == XMLStreamConstants.START_ELEMENT &&
-                    "svg".equals(
-                        reader.localName,
-                        true,
-                    )
-                ) {
-                    val viewBox: String? = reader.getAttributeValue(null, "viewBox")
-                    val height: String? = reader.getAttributeValue(null, "height")
-                    val width: String? = reader.getAttributeValue(null, "width")
-                    getSvgDimension(viewBox, width to height)
+        Dispatchers.IO,
+    ) {
+        inputStreamProducer().use { inputStream ->
+            val factory = XMLInputFactory.newInstance()
+            val reader = factory.createXMLStreamReader(inputStream)
+            try {
+                if (reader.hasNext()) {
+                    val event = reader.next()
+                    if (event == XMLStreamConstants.START_ELEMENT &&
+                        "svg".equals(
+                            reader.localName,
+                            true,
+                        )
+                    ) {
+                        val viewBox: String? = reader.getAttributeValue(null, "viewBox")
+                        val height: String? = reader.getAttributeValue(null, "height")
+                        val width: String? = reader.getAttributeValue(null, "width")
+                        getSvgDimension(viewBox, width to height)
+                    } else {
+                        null
+                    }
                 } else {
                     null
                 }
-            } else {
-                null
+            } finally {
+                reader.close()
             }
-        } finally {
-            reader.close()
         }
     }
-}
 
 suspend fun getImageDimension(
     filePath: String,
@@ -233,15 +233,15 @@ suspend fun <T> Backend.addIfNotExists(
     add: suspend () -> CustomResult<T, DatabaseError>,
 ): CustomResult<T?, DatabaseError> =
     get().andThen(DatabaseError::fromError) {
-    if (it != null) {
-        CustomResult.success(it)
-    } else {
-        add().recover(DatabaseError::fromError) { failure ->
-            if (failure is ConstraintFailure) {
-                get()
-            } else {
-                CustomResult.Failure(failure)
+        if (it != null) {
+            CustomResult.success(it)
+        } else {
+            add().recover(DatabaseError::fromError) { failure ->
+                if (failure is ConstraintFailure) {
+                    get()
+                } else {
+                    CustomResult.Failure(failure)
+                }
             }
         }
     }
-}

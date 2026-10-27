@@ -297,13 +297,13 @@ suspend fun AppGlobalDialogController.selectFileAndUpload(
 
 private fun getUploadDataFromPlatformFile(f: PlatformFile, sha256: String, bytes: ByteArray) =
     UploadData(
-    f.size(),
-    f.name,
-    ContentType.defaultForFileExtension(f.extension),
-    sha256,
-) {
-    Buffer().also { it.write(bytes) }
-}
+        f.size(),
+        f.name,
+        ContentType.defaultForFileExtension(f.extension),
+        sha256,
+    ) {
+        Buffer().also { it.write(bytes) }
+    }
 
 class PlatformClientFile private constructor(val platformFile: PlatformFile, private val bytes: ByteArray) :
     ClientFile {

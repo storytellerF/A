@@ -23,11 +23,11 @@ actual suspend fun getDerPublicKeyFromPrivateKeyP256(pemPrivateKeyStr: String): 
 
 actual suspend fun getDerPrivateKeyP256(pemPrivateKeyStr: String): CustomResult<String, CryptoError> =
     captureCrypto {
-    CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
-        .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKeyStr.encodeToByteArray())
-        .encodeToByteArray(EC.PrivateKey.Format.DER)
-        .toHexString()
-}
+        CryptographyProvider.Default.get(ECDSA).privateKeyDecoder(EC.Curve.P256)
+            .decodeFromByteArray(EC.PrivateKey.Format.PEM, pemPrivateKeyStr.encodeToByteArray())
+            .encodeToByteArray(EC.PrivateKey.Format.DER)
+            .toHexString()
+    }
 
 @OptIn(dev.whyoleg.cryptography.DelicateCryptographyApi::class)
 actual suspend fun ripemd160Platform(data: ByteArray): ByteArray =

@@ -414,11 +414,11 @@ fun <T : Any> LazyGridScope.pagingItems(
 
 private fun LoadState?.toLoadingState() =
     when (this) {
-    null -> null
-    is LoadState.Loading -> LoadingState.Loading
-    is LoadState.Error -> LoadingState.Error(error)
-    is LoadState.NotLoading -> LoadingState.Done
-}
+        null -> null
+        is LoadState.Loading -> LoadingState.Loading
+        is LoadState.Error -> LoadingState.Error(error)
+        is LoadState.NotLoading -> LoadingState.Done
+    }
 
 @Composable
 fun debounce(v: LoadState): LoadingState? {

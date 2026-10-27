@@ -26,12 +26,12 @@ sealed interface ServerError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): ServerError =
             when (error) {
-            is ServerError -> error
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is ServerError -> error
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): ServerError {
             if (cause is CancellationException) throw cause

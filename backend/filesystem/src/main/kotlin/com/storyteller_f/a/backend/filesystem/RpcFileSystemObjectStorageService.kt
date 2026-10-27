@@ -43,9 +43,9 @@ class FileSystemObjectStorageService(
     constructor(rpc: FilesystemRpc, publicUrl: String? = null) : this(RpcServiceProvider { rpc }, publicUrl)
     override suspend fun upload(bucketName: String, uploadPacks: List<UploadPack>) =
         rpcResult {
-        val rpc = connection.acquire()
-        uploadPacks.map { pack -> uploadOne(rpc, bucketName, pack) }
-    }
+            val rpc = connection.acquire()
+            uploadPacks.map { pack -> uploadOne(rpc, bucketName, pack) }
+        }
 
     private suspend fun uploadOne(rpc: FilesystemRpc, bucketName: String, pack: UploadPack): ObjectStorageWriteRecord {
         val transferId = UUID.randomUUID().toString()
@@ -96,26 +96,26 @@ class FileSystemObjectStorageService(
 
     override suspend fun get(bucketName: String, names: List<String>) =
         rpcResult {
-        publicRecords(
-            connection.acquire().get(bucketName, names),
-        )
-    }
+            publicRecords(
+                connection.acquire().get(bucketName, names),
+            )
+        }
     override suspend fun clean(bucketName: String) = rpcResult { connection.acquire().cleanObjects(bucketName) }
     override suspend fun list(bucketName: String, prefix: String) =
         rpcResult {
-        publicRecords(
-            connection.acquire().list(bucketName, prefix),
-        )
-    }
+            publicRecords(
+                connection.acquire().list(bucketName, prefix),
+            )
+        }
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>) =
         rpcResult {
-        publicRecords(
-            connection.acquire().copy(
-                bucketName,
-                copyPacks.map { RpcCopyPack(it.originFullName, it.newFullName) },
-            ),
-        )
-    }
+            publicRecords(
+                connection.acquire().copy(
+                    bucketName,
+                    copyPacks.map { RpcCopyPack(it.originFullName, it.newFullName) },
+                ),
+            )
+        }
 
     private fun publicRecords(records: List<RpcObjectStorageRecord>): List<ObjectStorageRecord> =
         records.map { rpcRecord ->
@@ -137,23 +137,23 @@ class FileSystemObjectStorageService(
         name: String,
     ): CustomResult<InputStream, ObjectStorageError> =
         rpcResult {
-        val rpc = connection.acquire()
-        val temporary = Files.createTempFile("a-filesystem-rpc-", ".download")
-        try {
-            Files.newOutputStream(temporary).buffered().use { output ->
-                var offset = 0L
-                do {
-                    val chunk = rpc.getChunk(bucketName, name, offset, TRANSFER_CHUNK_SIZE)
-                    output.write(chunk)
-                    offset += chunk.size
-                } while (chunk.size == TRANSFER_CHUNK_SIZE)
+            val rpc = connection.acquire()
+            val temporary = Files.createTempFile("a-filesystem-rpc-", ".download")
+            try {
+                Files.newOutputStream(temporary).buffered().use { output ->
+                    var offset = 0L
+                    do {
+                        val chunk = rpc.getChunk(bucketName, name, offset, TRANSFER_CHUNK_SIZE)
+                        output.write(chunk)
+                        offset += chunk.size
+                    } while (chunk.size == TRANSFER_CHUNK_SIZE)
+                }
+                DeletingInputStream(temporary)
+            } catch (throwable: Throwable) {
+                Files.deleteIfExists(temporary)
+                throw throwable
             }
-            DeletingInputStream(temporary)
-        } catch (throwable: Throwable) {
-            Files.deleteIfExists(temporary)
-            throw throwable
         }
-    }
 
     override suspend fun compose(
         bucketName: String,
@@ -169,11 +169,11 @@ class FileSystemObjectStorageService(
 
     override suspend fun delete(bucketName: String, names: List<String>) =
         rpcResult {
-        connection.acquire().delete(
-            bucketName,
-            names,
-        )
-    }
+            connection.acquire().delete(
+                bucketName,
+                names,
+            )
+        }
 }
 
 private class DeletingInputStream(private val path: Path) :
@@ -189,9 +189,9 @@ private class DeletingInputStream(private val path: Path) :
 
 private inline fun <T> rpcResult(block: () -> T): CustomResult<T, ObjectStorageError> =
     captureFailure(
-    ObjectStorageError::from,
-    block,
-)
+        ObjectStorageError::from,
+        block,
+    )
 
 class FileSystemObjectStorageServiceFactory : ObjectStorageServiceFactory {
     override fun match(env: MergedEnv) = env["MEDIA_SERVICE"] == "filesystem"

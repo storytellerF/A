@@ -322,23 +322,23 @@ fun MediaController.playNewMedia(playList: List<ConstPlayItem>) {
 
 private fun buildListener(player: Player, listener: VideoListener): Player.Listener =
     object : Player.Listener {
-    override fun onVideoSizeChanged(videoSize: VideoSize) {
-        super.onVideoSizeChanged(videoSize)
-        listener.onUpdateSize(CustomVideoSize(videoSize.width, videoSize.height))
-    }
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            super.onVideoSizeChanged(videoSize)
+            listener.onUpdateSize(CustomVideoSize(videoSize.width, videoSize.height))
+        }
 
-    override fun onIsLoadingChanged(isLoading: Boolean) {
-        super.onIsLoadingChanged(isLoading)
-        listener.onUpdateLoading(isLoading)
-    }
+        override fun onIsLoadingChanged(isLoading: Boolean) {
+            super.onIsLoadingChanged(isLoading)
+            listener.onUpdateLoading(isLoading)
+        }
 
-    override fun onIsPlayingChanged(isPlaying: Boolean) {
-        super.onIsPlayingChanged(isPlaying)
-        listener.onPlayStateChange(isPlaying)
-    }
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            super.onIsPlayingChanged(isPlaying)
+            listener.onPlayStateChange(isPlaying)
+        }
 
-    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-        super.onMediaItemTransition(mediaItem, reason)
-        listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            super.onMediaItemTransition(mediaItem, reason)
+            listener.onMediaItemChanged(mediaItem?.mediaId, player.currentMediaItemIndex)
+        }
     }
-}

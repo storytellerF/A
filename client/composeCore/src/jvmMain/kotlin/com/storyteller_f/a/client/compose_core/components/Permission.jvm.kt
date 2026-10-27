@@ -9,7 +9,7 @@ import androidx.compose.runtime.*
 @Composable
 actual fun isPermissionGranted(permission: Permission): MutableState<Boolean> =
     remember {
-    mutableStateOf(true)
-}
+        mutableStateOf(true)
+    }
 
 actual fun requestPermission(permission: Permission) = Unit

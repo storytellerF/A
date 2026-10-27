@@ -27,12 +27,12 @@ object UserLogs : BaseTable() {
 
 fun UserLog.Companion.wrapRow(resultRow: ResultRow): UserLog =
     with(UserLogs) {
-    UserLog(
-        resultRow[id],
-        resultRow[createdTime],
-        resultRow[uid],
-        resultRow[type],
-        resultRow[objectId],
-        resultRow[objectType],
-    )
-}
+        UserLog(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[uid],
+            resultRow[type],
+            resultRow[objectId],
+            resultRow[objectType],
+        )
+    }

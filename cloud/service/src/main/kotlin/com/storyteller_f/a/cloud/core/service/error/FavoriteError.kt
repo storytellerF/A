@@ -31,13 +31,13 @@ sealed interface FavoriteError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): FavoriteError =
             when (error) {
-            is FavoriteError -> error
-            is ConstraintFailure -> Conflict(error.cause)
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is FavoriteError -> error
+                is ConstraintFailure -> Conflict(error.cause)
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): FavoriteError {
             if (cause is CancellationException) throw cause

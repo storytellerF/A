@@ -80,16 +80,16 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun getJoinedCommunityIds(uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Communities
-                .join(Members, JoinType.INNER, Communities.id, Members.objectId) {
-                    Members.uid eq uid
-                }.select(Communities.id)
+            search {
+                Communities
+                    .join(Members, JoinType.INNER, Communities.id, Members.objectId) {
+                        Members.uid eq uid
+                    }.select(Communities.id)
+            }
+            map {
+                it[Communities.id]
+            }
         }
-        map {
-            it[Communities.id]
-        }
-    }
 
     override suspend fun getCommunityPaginationResult(
         hasPosterSearch: PosterSearch?,
@@ -134,55 +134,55 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
         memberId: PrimaryKey,
     ): CustomResult<Pair<Community, Member>, DatabaseError> =
         databaseSession.dbQuery {
-        check(
-            Communities.insert {
-                it[Communities.id] = community.id
-                it[Communities.name] = community.name
-                it[Communities.owner] = community.owner
-                it[Communities.createdTime] = community.createdTime
-                it[Communities.memberPolicy] = community.memberPolicy
-                community.fontSettings?.let { fs ->
-                    it[Communities.fontSettings] = json.encodeToString(fs)
-                }
-            }.insertedCount > 0,
-        ) {
-            "insert community failed"
+            check(
+                Communities.insert {
+                    it[Communities.id] = community.id
+                    it[Communities.name] = community.name
+                    it[Communities.owner] = community.owner
+                    it[Communities.createdTime] = community.createdTime
+                    it[Communities.memberPolicy] = community.memberPolicy
+                    community.fontSettings?.let { fs ->
+                        it[Communities.fontSettings] = json.encodeToString(fs)
+                    }
+                }.insertedCount > 0,
+            ) {
+                "insert community failed"
+            }
+            check(
+                Aids.insert {
+                    it[value] = community.aid
+                    it[objectId] = community.id
+                    it[objectType] = ObjectType.COMMUNITY
+                }.insertedCount > 0,
+            ) {
+                "insert aid failed"
+            }
+            val member =
+                Member(
+                    memberId,
+                    community.owner,
+                    community.id,
+                    ObjectType.COMMUNITY,
+                    community.createdTime,
+                    MemberStatus.JOINED,
+                    community.createdTime,
+                )
+            check(
+                Members.insert {
+                    it[id] = member.id
+                    it[createdTime] = member.createdTime
+                    it[joinedTime] = member.joinedTime
+                    it[invitedTime] = member.invitedTime
+                    it[uid] = member.uid
+                    it[objectId] = member.objectId
+                    it[objectType] = member.objectType
+                    it[status] = member.status
+                }.insertedCount > 0,
+            ) {
+                "join failed"
+            }
+            community to member
         }
-        check(
-            Aids.insert {
-                it[value] = community.aid
-                it[objectId] = community.id
-                it[objectType] = ObjectType.COMMUNITY
-            }.insertedCount > 0,
-        ) {
-            "insert aid failed"
-        }
-        val member =
-            Member(
-                memberId,
-                community.owner,
-                community.id,
-                ObjectType.COMMUNITY,
-                community.createdTime,
-                MemberStatus.JOINED,
-                community.createdTime,
-            )
-        check(
-            Members.insert {
-                it[id] = member.id
-                it[createdTime] = member.createdTime
-                it[joinedTime] = member.joinedTime
-                it[invitedTime] = member.invitedTime
-                it[uid] = member.uid
-                it[objectId] = member.objectId
-                it[objectType] = member.objectType
-                it[status] = member.status
-            }.insertedCount > 0,
-        ) {
-            "join failed"
-        }
-        community to member
-    }
 
     override suspend fun getRawCommunities(
         objectListFetch: ObjectListFetch,
@@ -207,46 +207,46 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     override suspend fun updateCommunity(id: PrimaryKey, body: UpdateCommunityBody) =
         databaseSession.dbQuery {
-        val newIcon = body.icon
-        val newName = body.name
-        val newPoster = body.poster
-        val newFontSettings = body.fontSettings
-        if (!newName.isNullOrBlank() || newIcon != null || newPoster != null || newFontSettings != null) {
-            Communities.update({
-                Communities.id eq id
-            }) {
-                if (!newName.isNullOrBlank()) {
-                    it[Communities.name] = newName
-                }
-                if (newIcon != null) {
-                    it[Communities.icon] = newIcon
-                }
-                if (newPoster != null) {
-                    it[Communities.poster] = newPoster
-                }
-                if (newFontSettings != null) {
-                    it[Communities.fontSettings] = json.encodeToString(newFontSettings)
-                }
-            } > 0
-        } else {
-            true
+            val newIcon = body.icon
+            val newName = body.name
+            val newPoster = body.poster
+            val newFontSettings = body.fontSettings
+            if (!newName.isNullOrBlank() || newIcon != null || newPoster != null || newFontSettings != null) {
+                Communities.update({
+                    Communities.id eq id
+                }) {
+                    if (!newName.isNullOrBlank()) {
+                        it[Communities.name] = newName
+                    }
+                    if (newIcon != null) {
+                        it[Communities.icon] = newIcon
+                    }
+                    if (newPoster != null) {
+                        it[Communities.poster] = newPoster
+                    }
+                    if (newFontSettings != null) {
+                        it[Communities.fontSettings] = json.encodeToString(newFontSettings)
+                    }
+                } > 0
+            } else {
+                true
+            }
         }
-    }
 
     override suspend fun updateCommunityStatus(id: PrimaryKey, status: ObjectStatus) =
         databaseSession.dbQuery {
-        Communities.update({ Communities.id eq id }) {
-            it[Communities.status] = status
-        } > 0
-    }
+            Communities.update({ Communities.id eq id }) {
+                it[Communities.status] = status
+            } > 0
+        }
 
     override suspend fun getCommunityCount() =
         databaseSession.dbSearch {
-        search {
-            Communities.selectAll()
+            search {
+                Communities.selectAll()
+            }
+            count()
         }
-        count()
-    }
 
     private suspend fun getCommunityListByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
@@ -261,14 +261,14 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     private suspend fun getCommunityByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Communities
-                .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
-                .select(Communities.fields + Aids.value)
-                .queryBuilder()
+            search {
+                Communities
+                    .join(Aids, JoinType.INNER, Communities.id, Aids.objectId)
+                    .select(Communities.fields + Aids.value)
+                    .queryBuilder()
+            }
+            first(Community::wrapRow)
         }
-        first(Community::wrapRow)
-    }
 
     private suspend fun getCommunityCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
@@ -280,20 +280,20 @@ class ExposedCommunityDatabase(val databaseSession: ExposedDatabaseSession, val 
 
     fun Query.bindPosterSearch(hasPosterSearch: PosterSearch?): Query =
         when (hasPosterSearch) {
-        PosterSearch.HAS_POSTER ->
-            andWhere {
-                Communities.poster.isNotNull()
-            }
+            PosterSearch.HAS_POSTER ->
+                andWhere {
+                    Communities.poster.isNotNull()
+                }
 
-        PosterSearch.NO_POSTER ->
-            andWhere {
-                Communities.poster.isNull()
-            }
+            PosterSearch.NO_POSTER ->
+                andWhere {
+                    Communities.poster.isNull()
+                }
 
-        else -> {
-            orderBy(Communities.poster.isNull(), SortOrder.ASC)
+            else -> {
+                orderBy(Communities.poster.isNull(), SortOrder.ASC)
+            }
         }
-    }
 
     fun Query.buildCommunitySearchQuery(joinSearch: JoinSearch, hasPosterSearch: PosterSearch?): Query {
         when (joinSearch) {

@@ -20,95 +20,95 @@ class BrowserRtcMediaDevicesTest {
     @Test
     fun missingAudioDeviceBecomesReportable() =
         runTest {
-        val devices = BrowserRtcMediaDevices(FailingMediaDevices { throwMissingDevice() })
-        val failure = assertFailsWith<WebRtcMedia.DeviceException> { devices.createAudioTrack() }
-        assertTrue(failure.cause?.message.orEmpty().contains("No capture device"))
-        assertTrue(failure.stackTraceToString().contains("DeviceException"))
-    }
+            val devices = BrowserRtcMediaDevices(FailingMediaDevices { throwMissingDevice() })
+            val failure = assertFailsWith<WebRtcMedia.DeviceException> { devices.createAudioTrack() }
+            assertTrue(failure.cause?.message.orEmpty().contains("No capture device"))
+            assertTrue(failure.stackTraceToString().contains("DeviceException"))
+        }
 
     @Test
     fun missingVideoDeviceBecomesReportable() =
         runTest {
-        val devices = BrowserRtcMediaDevices(FailingMediaDevices { throwMissingDevice() })
-        val failure = assertFailsWith<WebRtcMedia.DeviceException> { devices.createVideoTrack() }
-        assertTrue(failure.cause?.message.orEmpty().contains("No capture device"))
-        assertTrue(failure.stackTraceToString().contains("DeviceException"))
-    }
+            val devices = BrowserRtcMediaDevices(FailingMediaDevices { throwMissingDevice() })
+            val failure = assertFailsWith<WebRtcMedia.DeviceException> { devices.createVideoTrack() }
+            assertTrue(failure.cause?.message.orEmpty().contains("No capture device"))
+            assertTrue(failure.stackTraceToString().contains("DeviceException"))
+        }
 
     @Test
     fun navigatorAudioConstraintsAreLinked() =
         runTest {
-        val original = rejectBrowserCapture()
-        try {
-            val constraints = WebRtcMedia.AudioTrackConstraints().apply { echoCancellation = true }
-            val failure =
-                assertFailsWith<WebRtcMedia.DeviceException> {
-                    BrowserRtcMediaDevices().createAudioTrack(constraints)
-                }
-            assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
-        } finally {
-            restoreBrowserCapture(original)
+            val original = rejectBrowserCapture()
+            try {
+                val constraints = WebRtcMedia.AudioTrackConstraints().apply { echoCancellation = true }
+                val failure =
+                    assertFailsWith<WebRtcMedia.DeviceException> {
+                        BrowserRtcMediaDevices().createAudioTrack(constraints)
+                    }
+                assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
+            } finally {
+                restoreBrowserCapture(original)
+            }
         }
-    }
 
     @Test
     fun navigatorVideoConstraintsAreLinked() =
         runTest {
-        val original = rejectBrowserCapture()
-        try {
-            val constraints =
-                WebRtcMedia.VideoTrackConstraints().apply {
-                    width = 640
-                    height = 480
-                }
-            val failure =
-                assertFailsWith<WebRtcMedia.DeviceException> {
-                    BrowserRtcMediaDevices().createVideoTrack(constraints)
-                }
-            assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
-        } finally {
-            restoreBrowserCapture(original)
+            val original = rejectBrowserCapture()
+            try {
+                val constraints =
+                    WebRtcMedia.VideoTrackConstraints().apply {
+                        width = 640
+                        height = 480
+                    }
+                val failure =
+                    assertFailsWith<WebRtcMedia.DeviceException> {
+                        BrowserRtcMediaDevices().createVideoTrack(constraints)
+                    }
+                assertTrue(failure.cause?.message.orEmpty().contains("Synthetic capture rejection"))
+            } finally {
+                restoreBrowserCapture(original)
+            }
         }
-    }
 
     @Test
     fun availableTracksKeepTheirIdentity() =
         runTest {
-        val audio =
-            object : WebRtcMedia.AudioTrack {
-                override val id = "audio"
-                override val kind = WebRtcMedia.TrackType.AUDIO
-                override val enabled = true
-                override fun enable(enabled: Boolean) = Unit
-                override fun close() = Unit
-            }
-        val video =
-            object : WebRtcMedia.VideoTrack {
-                override val id = "video"
-                override val kind = WebRtcMedia.TrackType.VIDEO
-                override val enabled = true
-                override fun enable(enabled: Boolean) = Unit
-                override fun close() = Unit
-            }
-        val devices =
-            BrowserRtcMediaDevices(
-                object : MediaTrackFactory {
-                    override suspend fun createAudioTrack(constraints: WebRtcMedia.AudioTrackConstraints) = audio
-                    override suspend fun createVideoTrack(constraints: WebRtcMedia.VideoTrackConstraints) = video
-                },
-            )
-        assertSame(audio, devices.createAudioTrack())
-        assertSame(video, devices.createVideoTrack())
-    }
+            val audio =
+                object : WebRtcMedia.AudioTrack {
+                    override val id = "audio"
+                    override val kind = WebRtcMedia.TrackType.AUDIO
+                    override val enabled = true
+                    override fun enable(enabled: Boolean) = Unit
+                    override fun close() = Unit
+                }
+            val video =
+                object : WebRtcMedia.VideoTrack {
+                    override val id = "video"
+                    override val kind = WebRtcMedia.TrackType.VIDEO
+                    override val enabled = true
+                    override fun enable(enabled: Boolean) = Unit
+                    override fun close() = Unit
+                }
+            val devices =
+                BrowserRtcMediaDevices(
+                    object : MediaTrackFactory {
+                        override suspend fun createAudioTrack(constraints: WebRtcMedia.AudioTrackConstraints) = audio
+                        override suspend fun createVideoTrack(constraints: WebRtcMedia.VideoTrackConstraints) = video
+                    },
+                )
+            assertSame(audio, devices.createAudioTrack())
+            assertSame(video, devices.createVideoTrack())
+        }
 
     @Test
     fun cancellationRemainsCancellation() =
         runTest {
-        val cancelled = CancellationException("Capture cancelled")
-        val devices = BrowserRtcMediaDevices(FailingMediaDevices { throw cancelled })
-        assertSame(cancelled, assertFailsWith<CancellationException> { devices.createAudioTrack() })
-        assertSame(cancelled, assertFailsWith<CancellationException> { devices.createVideoTrack() })
-    }
+            val cancelled = CancellationException("Capture cancelled")
+            val devices = BrowserRtcMediaDevices(FailingMediaDevices { throw cancelled })
+            assertSame(cancelled, assertFailsWith<CancellationException> { devices.createAudioTrack() })
+            assertSame(cancelled, assertFailsWith<CancellationException> { devices.createVideoTrack() })
+        }
 }
 
 private class FailingMediaDevices(private val fail: () -> Unit) : MediaTrackFactory {

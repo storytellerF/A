@@ -76,14 +76,14 @@ private fun PanelScreenshotTheme(content: @Composable () -> Unit) {
 
 private fun samplePanelTopic() =
     TopicInfo.EMPTY.copy(
-    id = 501,
-    content = TopicContent.Plain("Panel topic row rendered from screenshotTest."),
-    createdTime = fixedTime(),
-    commentCount = 2,
-    reactionCount = 3,
-    isEncrypted = true,
-    lastModifiedTime = fixedTime(),
-)
+        id = 501,
+        content = TopicContent.Plain("Panel topic row rendered from screenshotTest."),
+        createdTime = fixedTime(),
+        commentCount = 2,
+        reactionCount = 3,
+        isEncrypted = true,
+        lastModifiedTime = fixedTime(),
+    )
 
 private object PreviewPanelNav : PanelNav {
     override val drawerState: DrawerState

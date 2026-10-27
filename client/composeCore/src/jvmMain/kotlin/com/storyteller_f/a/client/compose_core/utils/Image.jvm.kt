@@ -21,8 +21,8 @@ import org.jetbrains.skia.EncodedImageFormat
 
 actual fun Image.coilImageToImageBitmap(): CustomResult<ImageBitmap, ImageError> =
     captureFailure(ImageError::from) {
-    toBitmap().asComposeImageBitmap()
-}
+        toBitmap().asComposeImageBitmap()
+    }
 
 actual fun saveImageBitmap(
     imageBitmap: ImageBitmap,
@@ -31,9 +31,9 @@ actual fun saveImageBitmap(
     quality: Int,
 ): CustomResult<Path, ImageError> =
     captureFailure(ImageError::from) {
-    val data = imageBitmapToByteArray(imageBitmap, format, quality)
-    writeImageFile(path, data)
-}
+        val data = imageBitmapToByteArray(imageBitmap, format, quality)
+        writeImageFile(path, data)
+    }
 
 fun imageBitmapToByteArray(imageBitmap: ImageBitmap, format: ImageFormat = PNG, quality: Int = 100): ByteArray {
     // format.skiaEncodedFormat

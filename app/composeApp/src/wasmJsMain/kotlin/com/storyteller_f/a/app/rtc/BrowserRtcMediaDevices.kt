@@ -22,11 +22,11 @@ internal class BrowserRtcMediaDevices(private val devices: MediaTrackFactory = N
 
 private suspend fun <T> acquireBrowserMedia(acquire: suspend () -> T): T =
     try {
-    acquire()
-} catch (failure: JsException) {
-    // JsException is a Throwable, not an Exception. DOMException can also lack Error.stack,
-    // so retaining it as a cause makes Kotlin/Wasm stack formatting fail a second time.
-    throw WebRtcMedia.DeviceException("Browser media request failed", BrowserCaptureFailure(failure))
-}
+        acquire()
+    } catch (failure: JsException) {
+        // JsException is a Throwable, not an Exception. DOMException can also lack Error.stack,
+        // so retaining it as a cause makes Kotlin/Wasm stack formatting fail a second time.
+        throw WebRtcMedia.DeviceException("Browser media request failed", BrowserCaptureFailure(failure))
+    }
 
 private class BrowserCaptureFailure(failure: JsException) : RuntimeException(failure.message)

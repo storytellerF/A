@@ -126,64 +126,64 @@ private class KtorRtcMedia(
 
     suspend fun attach(connection: WebRtcPeerConnection): List<WebRtc.RtpSender> =
         access.withLock {
-        val audioSender = connection.addTrack(audio)
-        var attached = false
-        try {
-            val videoSender = camera?.let { connection.addTrack(it) }
-            if (videoSender != null) cameraSenders.add(videoSender)
-            val senders = listOfNotNull(audioSender, videoSender)
-            attached = true
-            senders
-        } finally {
-            if (!attached) withContext(NonCancellable) { audioSender.replaceTrack(null) }
+            val audioSender = connection.addTrack(audio)
+            var attached = false
+            try {
+                val videoSender = camera?.let { connection.addTrack(it) }
+                if (videoSender != null) cameraSenders.add(videoSender)
+                val senders = listOfNotNull(audioSender, videoSender)
+                attached = true
+                senders
+            } finally {
+                if (!attached) withContext(NonCancellable) { audioSender.replaceTrack(null) }
+            }
         }
-    }
 
     suspend fun detach(senders: List<WebRtc.RtpSender>) =
         access.withLock {
-        senders.forEach { it.replaceTrack(null) }
-        cameraSenders.removeAll(senders.toSet())
-    }
+            senders.forEach { it.replaceTrack(null) }
+            cameraSenders.removeAll(senders.toSet())
+        }
 
     override suspend fun mute(audioMuted: Boolean, videoMuted: Boolean) =
         withContext(worker) {
-        audio.enable(!audioMuted)
-        camera?.enable(!videoMuted)
-        cameraMuted = videoMuted
-    }
+            audio.enable(!audioMuted)
+            camera?.enable(!videoMuted)
+            cameraMuted = videoMuted
+        }
 
     override suspend fun switchCamera() =
         withContext(worker) {
-        access.withLock {
-            if (!runtime.switchCamera || camera == null) return@withLock
-            cameraSenders.forEach { it.replaceTrack(null) }
-            video?.close()
-            camera?.close()
-            camera = null
-            video = null
-            environmentCamera = !environmentCamera
-            val replacement =
-                runtime.client.createVideoTrack {
-                    width = 640
-                    height = 480
-                    facingMode =
-                        if (environmentCamera) WebRtcMedia.FacingMode.ENVIRONMENT else WebRtcMedia.FacingMode.USER
-                }
-            replacement.enable(!cameraMuted)
-            camera = replacement
-            video = wrapRtcVideo(replacement)
-            cameraSenders.forEach { it.replaceTrack(replacement) }
+            access.withLock {
+                if (!runtime.switchCamera || camera == null) return@withLock
+                cameraSenders.forEach { it.replaceTrack(null) }
+                video?.close()
+                camera?.close()
+                camera = null
+                video = null
+                environmentCamera = !environmentCamera
+                val replacement =
+                    runtime.client.createVideoTrack {
+                        width = 640
+                        height = 480
+                        facingMode =
+                            if (environmentCamera) WebRtcMedia.FacingMode.ENVIRONMENT else WebRtcMedia.FacingMode.USER
+                    }
+                replacement.enable(!cameraMuted)
+                camera = replacement
+                video = wrapRtcVideo(replacement)
+                cameraSenders.forEach { it.replaceTrack(replacement) }
+            }
         }
-    }
 
     override suspend fun close() =
         withContext(worker) {
-        video?.close()
-        camera?.close()
-        runtime.closeAudio(audio)
-        runtime.client.close()
-        runtime.closeResources()
-    }
+            video?.close()
+            camera?.close()
+            runtime.closeAudio(audio)
+            runtime.client.close()
+            runtime.closeResources()
+        }
 }
 
 private class KtorRtcPeer(
@@ -265,12 +265,12 @@ private class KtorRtcPeer(
 
     override suspend fun close() =
         withContext(worker) {
-        observerJob.cancelAndJoin()
-        media.detach(senders)
-        remoteVideos.forEach { it.close() }
-        remoteAudio.forEach(RtcAudioPlayback::close)
-        remoteTracks.forEach(media.runtime.closeRemoteTrack)
-        connection.close()
-        releaseRtcConnection(connection)
-    }
+            observerJob.cancelAndJoin()
+            media.detach(senders)
+            remoteVideos.forEach { it.close() }
+            remoteAudio.forEach(RtcAudioPlayback::close)
+            remoteTracks.forEach(media.runtime.closeRemoteTrack)
+            connection.close()
+            releaseRtcConnection(connection)
+        }
 }

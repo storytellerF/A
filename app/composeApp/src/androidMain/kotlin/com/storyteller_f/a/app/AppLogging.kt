@@ -39,14 +39,14 @@ private fun installCrashHandler() {
 
 private fun ensureAppLogFile(application: Application): File =
     File(
-    application.filesDir,
-    "$LOG_DIR_NAME/$LOG_FILE_NAME",
-).apply {
-    parentFile?.mkdirs()
-    if (!exists()) {
-        createNewFile()
+        application.filesDir,
+        "$LOG_DIR_NAME/$LOG_FILE_NAME",
+    ).apply {
+        parentFile?.mkdirs()
+        if (!exists()) {
+            createNewFile()
+        }
     }
-}
 
 private class AppAntilog(private val logFile: File) : Antilog() {
     private val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
@@ -102,10 +102,10 @@ private class AppAntilog(private val logFile: File) : Antilog() {
 
 private fun LogLevel.toAndroidPriority(): Int =
     when (this) {
-    LogLevel.VERBOSE -> Log.VERBOSE
-    LogLevel.DEBUG -> Log.DEBUG
-    LogLevel.INFO -> Log.INFO
-    LogLevel.WARNING -> Log.WARN
-    LogLevel.ERROR -> Log.ERROR
-    LogLevel.ASSERT -> Log.ASSERT
-}
+        LogLevel.VERBOSE -> Log.VERBOSE
+        LogLevel.DEBUG -> Log.DEBUG
+        LogLevel.INFO -> Log.INFO
+        LogLevel.WARNING -> Log.WARN
+        LogLevel.ERROR -> Log.ERROR
+        LogLevel.ASSERT -> Log.ASSERT
+    }

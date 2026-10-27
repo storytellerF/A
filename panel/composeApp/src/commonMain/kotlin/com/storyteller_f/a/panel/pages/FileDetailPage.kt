@@ -200,18 +200,18 @@ private fun FileBasicInfoSection(id: PrimaryKey) {
 
 private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): List<Pair<String, String>> =
     buildList {
-    add("id" to info.id.toString())
-    add("name" to info.name)
-    add("fullName" to info.fullName)
-    add("url" to info.url)
-    add("contentType" to info.contentType)
-    add("size" to info.size.toString())
-    add("owner" to info.owner.toString())
-    add("ownerType" to info.ownerType.name)
-    add("lastModified" to info.lastModified.toString())
-    add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null"))
-    add("readOnly" to info.readOnly.toString())
-}
+        add("id" to info.id.toString())
+        add("name" to info.name)
+        add("fullName" to info.fullName)
+        add("url" to info.url)
+        add("contentType" to info.contentType)
+        add("size" to info.size.toString())
+        add("owner" to info.owner.toString())
+        add("ownerType" to info.ownerType.name)
+        add("lastModified" to info.lastModified.toString())
+        add("dimension" to (info.dimension?.let { "${it.width}x${it.height}" } ?: "null"))
+        add("readOnly" to info.readOnly.toString())
+    }
 
 @Composable
 private fun FileReadOnlyToggleButton(readOnly: Boolean, onToggle: (Boolean) -> Unit) {

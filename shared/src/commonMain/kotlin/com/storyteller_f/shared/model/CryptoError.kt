@@ -29,9 +29,9 @@ sealed interface CryptoError : FailureDetails {
 /** Captures provider failures without converting coroutine cancellation into a crypto error. */
 inline fun <T> captureCrypto(block: () -> T): CustomResult<T, CryptoError> =
     try {
-    CustomResult.Success(block())
-} catch (cancellation: CancellationException) {
-    throw cancellation
-} catch (expected: Exception) {
-    CustomResult.Failure(CryptoError.from(expected))
-}
+        CustomResult.Success(block())
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (expected: Exception) {
+        CustomResult.Failure(CryptoError.from(expected))
+    }

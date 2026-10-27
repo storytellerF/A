@@ -30,8 +30,8 @@ class ElasticUserSearchService(connection: ElasticConnection) :
 
     override suspend fun clean(): CustomResult<Unit, SearchError> =
         useElasticClient {
-        cleanAll(INDEX_NAME)
-    }
+            cleanAll(INDEX_NAME)
+        }
 
     override suspend fun searchDocument(
         userDocumentSearch: UserDocumentSearch,
@@ -50,23 +50,23 @@ class ElasticUserSearchService(connection: ElasticConnection) :
 
     private fun buildSearchRequest(userDocumentSearch: UserDocumentSearch): SearchRequest =
         SearchRequest.of { s ->
-        s.index(INDEX_NAME).apply {
-            when (userDocumentSearch) {
-                is UserDocumentSearch.Keyword -> {
-                    val fetch = userDocumentSearch.fetch
-                    from(fetch.cursor?.value ?: 0)
-                    size(fetch.size)
-                    val word = userDocumentSearch.word
-                    query { q ->
-                        q.bool { b ->
-                            val keyword = preprocessUserInputKeyword(word)
-                            b.prioritizedFields(keyword, "aid", "nickname")
+            s.index(INDEX_NAME).apply {
+                when (userDocumentSearch) {
+                    is UserDocumentSearch.Keyword -> {
+                        val fetch = userDocumentSearch.fetch
+                        from(fetch.cursor?.value ?: 0)
+                        size(fetch.size)
+                        val word = userDocumentSearch.word
+                        query { q ->
+                            q.bool { b ->
+                                val keyword = preprocessUserInputKeyword(word)
+                                b.prioritizedFields(keyword, "aid", "nickname")
+                            }
                         }
                     }
                 }
             }
         }
-    }
 }
 
 class ElasticUserSearchServiceFactory : UserSearchServiceFactory {
@@ -74,6 +74,6 @@ class ElasticUserSearchServiceFactory : UserSearchServiceFactory {
 
     override fun build(env: MergedEnv): UserSearchService =
         buildElasticSearchService(env) {
-        ElasticUserSearchService(it)
-    }
+            ElasticUserSearchService(it)
+        }
 }

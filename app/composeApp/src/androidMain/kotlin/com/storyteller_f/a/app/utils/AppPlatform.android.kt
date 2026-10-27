@@ -35,8 +35,8 @@ actual fun initEnvironment(context: Any) {
 
 actual fun createConnectivity(): Connectivity =
     Connectivity {
-    autoStart = true
-}
+        autoStart = true
+    }
 
 actual fun getClientFile(path: String): ClientFile? =
     getClipFile(checkNotNull(getAppContextRefValue()) { "Application context is not initialized" }, path.toUri())

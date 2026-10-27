@@ -27,23 +27,23 @@ sealed interface RequestError : FailureDetails {
 
         fun from(cause: Throwable): RequestError =
             when (cause) {
-            is CancellationException -> throw cause
+                is CancellationException -> throw cause
 
-            is SessionIdentityChangedException -> SessionIdentityChanged(cause)
+                is SessionIdentityChangedException -> SessionIdentityChanged(cause)
 
-            is ServerErrorException ->
-                ServerRejected(
-                    cause.status.value,
-                    cause.text,
-                    cause.isSessionAuthenticationFailure,
-                    cause,
-                )
+                is ServerErrorException ->
+                    ServerRejected(
+                        cause.status.value,
+                        cause.text,
+                        cause.isSessionAuthenticationFailure,
+                        cause,
+                    )
 
-            is HttpRequestTimeoutException -> Timeout(cause)
+                is HttpRequestTimeoutException -> Timeout(cause)
 
-            is SerializationException -> InvalidResponse(cause)
+                is SerializationException -> InvalidResponse(cause)
 
-            else -> TransportFailure(cause)
-        }
+                else -> TransportFailure(cause)
+            }
     }
 }

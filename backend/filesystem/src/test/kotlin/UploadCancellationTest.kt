@@ -89,12 +89,12 @@ private class UploadRpc(private val abortFailure: Exception?, private val pauseD
     override suspend fun list(bucketName: String, prefix: String): List<ObjectStorageRecord> = error("Unused")
     override suspend fun copy(bucketName: String, copyPacks: List<CopyPack>): List<ObjectStorageRecord> =
         error(
-        "Unused",
-    )
+            "Unused",
+        )
     override suspend fun getChunk(bucketName: String, name: String, offset: Long, size: Int): ByteArray =
         error(
-        "Unused",
-    )
+            "Unused",
+        )
     override suspend fun compose(
         bucketName: String,
         targetFullName: String,

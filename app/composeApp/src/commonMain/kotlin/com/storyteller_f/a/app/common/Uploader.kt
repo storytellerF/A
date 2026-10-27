@@ -289,57 +289,57 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         status: CustomApi.Files.Chunks.StatusResponse,
     ): CustomResult<PrimaryKey, UploadError> =
         captureFailure(UploadError::from) {
-        val collection = UploadCollection.fromInfo(uploadInfo)
-        val pathHash = uploadInfo.pathHash
-        val chunkSize = uploadInfo.chunkSize
-        val uploadedIndices = status.uploaded.toSet()
-        val totalSent =
-            uploadedIndices.sumOf { idx ->
-                val chunkCount = ((clipFile.size + chunkSize - 1) / chunkSize).toInt()
-                val isLast = idx == chunkCount - 1
-                if (isLast) {
-                    clipFile.size - chunkSize * (chunkCount - 1)
-                } else {
-                    chunkSize
-                }
-            }
-        updateUploadInfo(modelStorage, collection, pathHash) {
-            it.copy(progress = totalSent)
-        }
-
-        var index = 0
-        var currentSent = totalSent
-        clipFile.source().use { raw ->
-            while (true) {
-                val buf = Buffer()
-                var count = 0L
-                while (count < chunkSize) {
-                    val read = raw.readAtMostTo(buf, minOf(1024, chunkSize - count))
-                    if (read == -1L) break
-                    count += read
-                }
-                Napier.i(tag = "upload") {
-                    "upload chunk $index, size $count"
-                }
-                if (count == 0L) break
-                // skip already uploaded chunks by index
-                if (!uploadedIndices.contains(index)) {
-                    val hash = sha256(buf.peek())
-                    userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ ->
-                        updateUploadInfo(modelStorage, collection, pathHash) {
-                            it.copy(progress = currentSent + p)
-                        }
-                    }.getOrThrow()
-                    currentSent += count
-                    updateUploadInfo(modelStorage, collection, pathHash) {
-                        it.copy(progress = currentSent)
+            val collection = UploadCollection.fromInfo(uploadInfo)
+            val pathHash = uploadInfo.pathHash
+            val chunkSize = uploadInfo.chunkSize
+            val uploadedIndices = status.uploaded.toSet()
+            val totalSent =
+                uploadedIndices.sumOf { idx ->
+                    val chunkCount = ((clipFile.size + chunkSize - 1) / chunkSize).toInt()
+                    val isLast = idx == chunkCount - 1
+                    if (isLast) {
+                        clipFile.size - chunkSize * (chunkCount - 1)
+                    } else {
+                        chunkSize
                     }
                 }
-                index++
+            updateUploadInfo(modelStorage, collection, pathHash) {
+                it.copy(progress = totalSent)
             }
-        }
-        uploadRecordId
-    }.mapError(UploadError::fromError)
+
+            var index = 0
+            var currentSent = totalSent
+            clipFile.source().use { raw ->
+                while (true) {
+                    val buf = Buffer()
+                    var count = 0L
+                    while (count < chunkSize) {
+                        val read = raw.readAtMostTo(buf, minOf(1024, chunkSize - count))
+                        if (read == -1L) break
+                        count += read
+                    }
+                    Napier.i(tag = "upload") {
+                        "upload chunk $index, size $count"
+                    }
+                    if (count == 0L) break
+                    // skip already uploaded chunks by index
+                    if (!uploadedIndices.contains(index)) {
+                        val hash = sha256(buf.peek())
+                        userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ ->
+                            updateUploadInfo(modelStorage, collection, pathHash) {
+                                it.copy(progress = currentSent + p)
+                            }
+                        }.getOrThrow()
+                        currentSent += count
+                        updateUploadInfo(modelStorage, collection, pathHash) {
+                            it.copy(progress = currentSent)
+                        }
+                    }
+                    index++
+                }
+            }
+            uploadRecordId
+        }.mapError(UploadError::fromError)
 
     private suspend fun getUploadRecordId(
         userSession: SimpleUserSessionManager,

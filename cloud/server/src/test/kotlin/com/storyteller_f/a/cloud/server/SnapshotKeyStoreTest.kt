@@ -19,71 +19,71 @@ class SnapshotKeyStoreTest {
     @Test
     fun loadsBase64WithoutUsingConfiguredPath() =
         withKeyStore { file, password ->
-        val encoded = Base64.getEncoder().encodeToString(file.readBytes())
-        val unusedPath = File(file.parentFile, "unused/keystore.p12")
-        val config =
-            requireNotNull(
-                loadConfiguredKeyStore(
-                    mapOf(
-                        "SNAPSHOT_KEYSTORE_BASE64" to encoded,
-                        "SNAPSHOT_KEYSTORE_PATH" to unusedPath.path,
-                        "SNAPSHOT_KEYSTORE_PASS" to password,
+            val encoded = Base64.getEncoder().encodeToString(file.readBytes())
+            val unusedPath = File(file.parentFile, "unused/keystore.p12")
+            val config =
+                requireNotNull(
+                    loadConfiguredKeyStore(
+                        mapOf(
+                            "SNAPSHOT_KEYSTORE_BASE64" to encoded,
+                            "SNAPSHOT_KEYSTORE_PATH" to unusedPath.path,
+                            "SNAPSHOT_KEYSTORE_PASS" to password,
+                        ),
                     ),
-                ),
-            )
-        assertContentEquals(file.readBytes(), Base64.getDecoder().decode(config.base64))
-        assertEquals(password, config.pass)
-        assertEquals(false, unusedPath.exists())
-        assertEquals("CustomKeyStore(<redacted>)", config.toString())
-    }
+                )
+            assertContentEquals(file.readBytes(), Base64.getDecoder().decode(config.base64))
+            assertEquals(password, config.pass)
+            assertEquals(false, unusedPath.exists())
+            assertEquals("CustomKeyStore(<redacted>)", config.toString())
+        }
 
     @Test
     fun retainsExistingFileConfiguration() =
         withKeyStore { file, password ->
-        val config =
-            requireNotNull(
-                loadConfiguredKeyStore(
-                    mapOf(
-                        "SNAPSHOT_KEYSTORE_PATH" to file.path,
-                        "SNAPSHOT_KEYSTORE_PASS" to password,
+            val config =
+                requireNotNull(
+                    loadConfiguredKeyStore(
+                        mapOf(
+                            "SNAPSHOT_KEYSTORE_PATH" to file.path,
+                            "SNAPSHOT_KEYSTORE_PASS" to password,
+                        ),
                     ),
-                ),
-            )
-        assertContentEquals(file.readBytes(), Base64.getDecoder().decode(config.base64))
-    }
+                )
+            assertContentEquals(file.readBytes(), Base64.getDecoder().decode(config.base64))
+        }
 
     @Test
     fun rejectsInvalidBase64WithoutFileFallback() =
         withKeyStore { file, password ->
-        val original = file.readBytes()
-        assertFails {
-            loadConfiguredKeyStore(
-                mapOf(
-                    "SNAPSHOT_KEYSTORE_BASE64" to "invalid!",
-                    "SNAPSHOT_KEYSTORE_PATH" to file.path,
-                    "SNAPSHOT_KEYSTORE_PASS" to password,
-                ),
-            )
+            val original = file.readBytes()
+            assertFails {
+                loadConfiguredKeyStore(
+                    mapOf(
+                        "SNAPSHOT_KEYSTORE_BASE64" to "invalid!",
+                        "SNAPSHOT_KEYSTORE_PATH" to file.path,
+                        "SNAPSHOT_KEYSTORE_PASS" to password,
+                    ),
+                )
+            }
+            assertContentEquals(original, file.readBytes())
         }
-        assertContentEquals(original, file.readBytes())
-    }
 
     @Test
     fun rejectsIncorrectOrMissingPassword() =
         withKeyStore { file, password ->
-        val encoded = Base64.getEncoder().encodeToString(file.readBytes())
-        assertFails {
-            loadConfiguredKeyStore(mapOf("SNAPSHOT_KEYSTORE_BASE64" to encoded))
+            val encoded = Base64.getEncoder().encodeToString(file.readBytes())
+            assertFails {
+                loadConfiguredKeyStore(mapOf("SNAPSHOT_KEYSTORE_BASE64" to encoded))
+            }
+            assertFails {
+                loadConfiguredKeyStore(
+                    mapOf(
+                        "SNAPSHOT_KEYSTORE_BASE64" to encoded,
+                        "SNAPSHOT_KEYSTORE_PASS" to "$password-wrong",
+                    ),
+                )
+            }
         }
-        assertFails {
-            loadConfiguredKeyStore(
-                mapOf(
-                    "SNAPSHOT_KEYSTORE_BASE64" to encoded,
-                    "SNAPSHOT_KEYSTORE_PASS" to "$password-wrong",
-                ),
-            )
-        }
-    }
 
     @Test
     fun disablesSigningWithoutConfiguredKeyStore() {

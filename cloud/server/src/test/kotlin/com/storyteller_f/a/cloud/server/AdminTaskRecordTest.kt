@@ -64,78 +64,78 @@ class AdminTaskRecordTest {
     @Test
     fun `admin paginates worker task records`() =
         test {
-        val outer = attachPanelSession()
-        prepareTaskRecords()
-        loginPanelSession(outer) {
-            val firstPage = getTaskRecords(null, PaginationQuery(size = 2)).getOrThrow()
-            assertEquals(listOf(104L, 103L), firstPage.data.map { it.id })
-            assertEquals(4, firstPage.pagination?.total)
+            val outer = attachPanelSession()
+            prepareTaskRecords()
+            loginPanelSession(outer) {
+                val firstPage = getTaskRecords(null, PaginationQuery(size = 2)).getOrThrow()
+                assertEquals(listOf(104L, 103L), firstPage.data.map { it.id })
+                assertEquals(4, firstPage.pagination?.total)
 
-            val secondPage =
-                getTaskRecords(
-                    null,
-                    PaginationQuery(nextPageToken = firstPage.pagination?.nextPageToken, size = 2),
-                ).getOrThrow()
-            assertEquals(listOf(102L, 101L), secondPage.data.map { it.id })
+                val secondPage =
+                    getTaskRecords(
+                        null,
+                        PaginationQuery(nextPageToken = firstPage.pagination?.nextPageToken, size = 2),
+                    ).getOrThrow()
+                assertEquals(listOf(102L, 101L), secondPage.data.map { it.id })
+            }
         }
-    }
 
     @Test
     fun `admin filters task records by type`() =
         test {
-        val outer = attachPanelSession()
-        prepareTaskRecords()
-        loginPanelSession(outer) {
-            val filtered = getTaskRecords(TaskRecordType.TITLE, PaginationQuery()).getOrThrow()
-            assertEquals(listOf(TaskRecordType.TITLE), filtered.data.map { it.type })
+            val outer = attachPanelSession()
+            prepareTaskRecords()
+            loginPanelSession(outer) {
+                val filtered = getTaskRecords(TaskRecordType.TITLE, PaginationQuery()).getOrThrow()
+                assertEquals(listOf(TaskRecordType.TITLE), filtered.data.map { it.type })
+            }
         }
-    }
 
     @Test
     fun `admin filters failed task records`() =
         test {
-        val outer = attachPanelSession()
-        prepareTaskRecords()
-        loginPanelSession(outer) {
-            val failed =
-                getTaskRecords(
-                    type = TaskRecordType.TOPIC_MODERATION,
-                    query = PaginationQuery(),
-                    isSuccess = false,
-                    failureType = TaskRecordType.MODEL_RESPONSE_FAILURE,
-                ).getOrThrow()
-            assertEquals(listOf(104L), failed.data.map { it.id })
+            val outer = attachPanelSession()
+            prepareTaskRecords()
+            loginPanelSession(outer) {
+                val failed =
+                    getTaskRecords(
+                        type = TaskRecordType.TOPIC_MODERATION,
+                        query = PaginationQuery(),
+                        isSuccess = false,
+                        failureType = TaskRecordType.MODEL_RESPONSE_FAILURE,
+                    ).getOrThrow()
+                assertEquals(listOf(104L), failed.data.map { it.id })
+            }
         }
-    }
 
     @Test
     fun `admin summarizes task records`() =
         test {
-        val outer = attachPanelSession()
-        prepareTaskRecords()
-        loginPanelSession(outer) {
-            val summaries = getTaskRecordSummaries().getOrThrow().data.associateBy { it.type }
-            assertEquals(1, summaries[TaskRecordType.TOPIC_MODERATION]?.failureCount)
-            assertEquals(1, summaries[TaskRecordType.TITLE]?.successCount)
+            val outer = attachPanelSession()
+            prepareTaskRecords()
+            loginPanelSession(outer) {
+                val summaries = getTaskRecordSummaries().getOrThrow().data.associateBy { it.type }
+                assertEquals(1, summaries[TaskRecordType.TOPIC_MODERATION]?.failureCount)
+                assertEquals(1, summaries[TaskRecordType.TITLE]?.successCount)
+            }
         }
-    }
 
     @Test
     fun `admin requests failed task retry`() =
         test {
-        val outer = attachPanelSession()
-        prepareTaskRecords()
-        loginPanelSession(outer) {
-            markTaskRecordForRetry(104).getOrThrow()
-            val retryRequested =
-                getTaskRecords(
-                    TaskRecordType.TOPIC_MODERATION,
-                    PaginationQuery(),
-                    isSuccess = false,
-                ).getOrThrow()
-            assertEquals(true, retryRequested.data.single().isRetryRequested)
+            val outer = attachPanelSession()
+            prepareTaskRecords()
+            loginPanelSession(outer) {
+                markTaskRecordForRetry(104).getOrThrow()
+                val retryRequested =
+                    getTaskRecords(
+                        TaskRecordType.TOPIC_MODERATION,
+                        PaginationQuery(),
+                        isSuccess = false,
+                    ).getOrThrow()
+                assertEquals(true, retryRequested.data.single().isRetryRequested)
+            }
         }
-    }
 
     private suspend fun TestMate.prepareTaskRecords() {
         withWorkerBackend { backend ->

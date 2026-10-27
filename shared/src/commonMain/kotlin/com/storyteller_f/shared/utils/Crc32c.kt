@@ -49,5 +49,5 @@ private fun squareMatrix(matrix: IntArray): IntArray = IntArray(CRC_BITS) { appl
 
 private fun applyMatrix(matrix: IntArray, value: Int): Int =
     (0 until CRC_BITS).fold(0) { result, bit ->
-    if (value ushr bit and 1 != 0) result xor matrix[bit] else result
-}
+        if (value ushr bit and 1 != 0) result xor matrix[bit] else result
+    }

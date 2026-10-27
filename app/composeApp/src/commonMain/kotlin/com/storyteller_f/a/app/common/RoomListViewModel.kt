@@ -71,9 +71,9 @@ internal class RoomListPreviewHost(
     }
     suspend fun publish() =
         withContext(coordination) {
-        stagedRows?.let { mutableRows.value = it }
-        stagedRows = null
-    }
+            stagedRows?.let { mutableRows.value = it }
+            stagedRows = null
+        }
 }
 
 @OptIn(ExperimentalPagingApi::class)

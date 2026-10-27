@@ -30,30 +30,30 @@ class SigninActivity(private val coordination: CoroutineDispatcher = Dispatchers
 
     suspend fun observeInput(manager: SessionManager<*>, panel: Boolean) =
         withContext(coordination) {
-        var last = TimeSource.Monotonic.markNow() - kotlin.time.Duration.parse("5m")
-        while (true) {
-            events.receive()
-            if (manager.model.userHandler.data.value == null || last.elapsedNow().inWholeSeconds < 300) continue
-            manager.recordSigninActivity(panel).onSuccess { last = TimeSource.Monotonic.markNow() }
+            var last = TimeSource.Monotonic.markNow() - kotlin.time.Duration.parse("5m")
+            while (true) {
+                events.receive()
+                if (manager.model.userHandler.data.value == null || last.elapsedNow().inWholeSeconds < 300) continue
+                manager.recordSigninActivity(panel).onSuccess { last = TimeSource.Monotonic.markNow() }
+            }
         }
-    }
 }
 
 fun Modifier.signinActivity(manager: SessionManager<*>, panel: Boolean = false): Modifier =
     composed {
-    val activity = remember(manager, panel) { SigninActivity() }
-    onPreviewKeyEvent {
-        activity.recordInput()
-        false
-    }.pointerInput(manager) {
-        coroutineScope {
-            launch { activity.observeInput(manager, panel) }
-            awaitPointerEventScope {
-                while (true) {
-                    val event = awaitPointerEvent()
-                    if (event.changes.any { it.pressed }) activity.recordInput()
+        val activity = remember(manager, panel) { SigninActivity() }
+        onPreviewKeyEvent {
+            activity.recordInput()
+            false
+        }.pointerInput(manager) {
+            coroutineScope {
+                launch { activity.observeInput(manager, panel) }
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.changes.any { it.pressed }) activity.recordInput()
+                    }
                 }
             }
         }
     }
-}

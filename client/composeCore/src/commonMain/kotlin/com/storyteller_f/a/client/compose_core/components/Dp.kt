@@ -41,9 +41,9 @@ fun textUnitToPx(textUnit: TextUnit): Float {
 
 fun textUnitToPx(textUnit: TextUnit, density: Density): Float =
     if (textUnit.isSp) {
-    with(density) {
-        textUnit.toPx()
+        with(density) {
+            textUnit.toPx()
+        }
+    } else {
+        0f
     }
-} else {
-    0f
-}

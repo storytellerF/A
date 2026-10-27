@@ -13,15 +13,15 @@ import kotlinx.coroutines.supervisorScope
 /** Gives recipient delivery its own lifetime while retaining caller cancellation. */
 internal suspend fun sendRtcFrame(send: suspend () -> Unit) =
     supervisorScope {
-    ensureActive()
-    val completion = CompletableDeferred<Throwable?>()
-    val delivery = async { send() }
-    delivery.invokeOnCompletion { completion.complete(it) }
-    delivery.join()
-    ensureActive()
-    when (val failure = completion.await()) {
-        null -> Unit
-        is CancellationException -> throw IllegalStateException("RTC recipient connection closed", failure)
-        else -> throw failure
+        ensureActive()
+        val completion = CompletableDeferred<Throwable?>()
+        val delivery = async { send() }
+        delivery.invokeOnCompletion { completion.complete(it) }
+        delivery.join()
+        ensureActive()
+        when (val failure = completion.await()) {
+            null -> Unit
+            is CancellationException -> throw IllegalStateException("RTC recipient connection closed", failure)
+            else -> throw failure
+        }
     }
-}

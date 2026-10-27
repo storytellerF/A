@@ -306,18 +306,18 @@ suspend fun RoutingContext.uploadMedia(
 
 private suspend fun RoutingContext.processFormData(block: suspend (PartData) -> List<FileInfo>) =
     try {
-    val result = mutableListOf<FileInfo>()
-    coroutineScope {
-        call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
-            result.addAll(block(part))
+        val result = mutableListOf<FileInfo>()
+        coroutineScope {
+            call.receiveMultipart(1024 * 1024 * 100).forEachPart { part ->
+                result.addAll(block(part))
+            }
         }
+        CustomResult.success(FileInfoListResponse(result.toImmutableList()))
+    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
+        throw cancellation
+    } catch (e: Exception) {
+        CustomResult.Failure(ServerError.from(e))
     }
-    CustomResult.success(FileInfoListResponse(result.toImmutableList()))
-} catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-    throw cancellation
-} catch (e: Exception) {
-    CustomResult.Failure(ServerError.from(e))
-}
 
 private suspend fun Backend.uploadFilesFromChannel(
     root: File,

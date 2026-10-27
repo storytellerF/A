@@ -13,27 +13,27 @@ import java.util.Properties
 class MergedEnv(val list: List<Map<String, String>>) {
     operator fun get(key: String): String? =
         list.firstNotNullOfOrNull { map ->
-        map[key]
-    }
+            map[key]
+        }
 
     fun getAll(key: String): String =
         list.joinToString {
-        it[key] ?: "empty"
-    }
+            it[key] ?: "empty"
+        }
 }
 
 fun readEnv(envMap: Map<String, String>? = null) =
     MergedEnv(
-    buildList {
-        addAll(
-            listOfNotNull(
-                envMap, // 测试时通过config map手动传递
-                System.getenv(), // 正式部署
-                readResourceEnv("test.env"), // 测试
-            ),
-        )
-    },
-)
+        buildList {
+            addAll(
+                listOfNotNull(
+                    envMap, // 测试时通过config map手动传递
+                    System.getenv(), // 正式部署
+                    readResourceEnv("test.env"), // 测试
+                ),
+            )
+        },
+    )
 
 fun readResourceEnv(resName: String): Map<String, String>? {
     val stream = ClassLoader.getSystemResourceAsStream(resName)

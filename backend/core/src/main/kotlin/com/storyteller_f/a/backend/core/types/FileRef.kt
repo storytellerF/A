@@ -23,10 +23,10 @@ data class FileRef(
 
 fun FileRef.toFileRefInfo() =
     FileRefInfo(
-    id = id,
-    objectId = objectId,
-    objectType = objectType,
-    author = author,
-    mediaName = mediaName,
-    fileId = fileId,
-)
+        id = id,
+        objectId = objectId,
+        objectType = objectType,
+        author = author,
+        mediaName = mediaName,
+        fileId = fileId,
+    )

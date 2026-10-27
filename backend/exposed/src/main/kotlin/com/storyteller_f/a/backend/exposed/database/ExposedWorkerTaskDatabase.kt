@@ -34,11 +34,11 @@ internal class ExposedWorkerTaskDatabase(
 
     override suspend fun getWorkerTasks(): CustomResult<List<WorkerTask>, DatabaseError> =
         databaseSession.dbSearch {
-        search {
-            WorkerTasks.selectAll().orderBy(WorkerTasks.type, SortOrder.ASC)
+            search {
+                WorkerTasks.selectAll().orderBy(WorkerTasks.type, SortOrder.ASC)
+            }
+            map(WorkerTask::wrapRow)
         }
-        map(WorkerTask::wrapRow)
-    }
 
     override suspend fun upsertWorkerTasks(configs: List<WorkerTask>): CustomResult<Unit, DatabaseError> =
         databaseSession.dbQuery {

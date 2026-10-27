@@ -25,17 +25,17 @@ object UploadRecords : BaseTable() {
 
 fun UploadRecord.Companion.wrapRow(resultRow: ResultRow): UploadRecord =
     with(UploadRecords) {
-    UploadRecord(
-        resultRow[id],
-        resultRow[createdTime],
-        resultRow[objectId],
-        resultRow[objectType],
-        resultRow[status],
-        resultRow[total],
-        resultRow[progress],
-        resultRow[name],
-        resultRow[chunkSize],
-        resultRow[sha256],
-        resultRow[crc32c],
-    )
-}
+        UploadRecord(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[status],
+            resultRow[total],
+            resultRow[progress],
+            resultRow[name],
+            resultRow[chunkSize],
+            resultRow[sha256],
+            resultRow[crc32c],
+        )
+    }

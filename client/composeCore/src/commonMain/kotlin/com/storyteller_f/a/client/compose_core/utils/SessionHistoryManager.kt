@@ -48,53 +48,53 @@ internal class ProtectedSessionHistoryManager(
 ) : SessionHistoryManager {
     override suspend fun getSavedSession(): SavedSession =
         gate.withLock {
-        val saved = loadHistory()
-        SavedSession(saved.accounts.map { it.address }, saved.history)
-    }
+            val saved = loadHistory()
+            SavedSession(saved.accounts.map { it.address }, saved.history)
+        }
 
     override suspend fun addSession(userPassInfo: RawUserPassInfo): UserPass =
         gate.withLock {
-        val saved = loadHistory()
-        val address = userPassInfo.address
-        saveHistory(
-            saved.copy(
-                accounts = saved.accounts.filter { it.address != address } + userPassInfo.toConverted(),
-                history = SessionHistory(address, address),
-            ),
-        )
-        RawUserPass(userPassInfo)
-    }
+            val saved = loadHistory()
+            val address = userPassInfo.address
+            saveHistory(
+                saved.copy(
+                    accounts = saved.accounts.filter { it.address != address } + userPassInfo.toConverted(),
+                    history = SessionHistory(address, address),
+                ),
+            )
+            RawUserPass(userPassInfo)
+        }
 
     override suspend fun buildSession(alias: String): UserPass? =
         gate.withLock {
-        loadHistory().accounts.firstOrNull { it.address == alias }?.let { RawUserPass(it.toRawUserPassInfo()) }
-    }
+            loadHistory().accounts.firstOrNull { it.address == alias }?.let { RawUserPass(it.toRawUserPassInfo()) }
+        }
 
     override suspend fun removeSession(alias: String) =
         gate.withLock {
-        val saved = loadHistory()
-        val history =
-            saved.history?.let {
-                it.copy(
-                    last = it.last.takeUnless { value -> value == alias },
-                    current = it.current.takeUnless { value -> value == alias },
-                )
-            }
-        saveHistory(saved.copy(accounts = saved.accounts.filter { it.address != alias }, history = history))
-    }
+            val saved = loadHistory()
+            val history =
+                saved.history?.let {
+                    it.copy(
+                        last = it.last.takeUnless { value -> value == alias },
+                        current = it.current.takeUnless { value -> value == alias },
+                    )
+                }
+            saveHistory(saved.copy(accounts = saved.accounts.filter { it.address != alias }, history = history))
+        }
 
     override suspend fun exitSession(alias: String) =
         gate.withLock {
-        val saved = loadHistory()
-        if (saved.history?.current == alias) saveHistory(saved.copy(history = saved.history.copy(current = null)))
-    }
+            val saved = loadHistory()
+            if (saved.history?.current == alias) saveHistory(saved.copy(history = saved.history.copy(current = null)))
+        }
 
     override suspend fun logSession(alias: String) =
         gate.withLock {
-        val saved = loadHistory()
-        require(saved.accounts.any { it.address == alias }) { "Saved account does not exist" }
-        saveHistory(saved.copy(history = SessionHistory(alias, alias)))
-    }
+            val saved = loadHistory()
+            require(saved.accounts.any { it.address == alias }) { "Saved account does not exist" }
+            saveHistory(saved.copy(history = SessionHistory(alias, alias)))
+        }
 
     private suspend fun loadHistory(): ProtectedSessionHistory =
         read(storageKey)?.let { Json.decodeFromString<ProtectedSessionHistory>(it) } ?: ProtectedSessionHistory()
@@ -210,24 +210,24 @@ data class ConvertedRawUserPassInfo(
 
 fun RawUserPassInfo.toConverted(): ConvertedRawUserPassInfo =
     when (val key = authKey) {
-    is AuthKey.Dilithium ->
-        ConvertedRawUserPassInfo(
-            algo = key.algo,
-            address = address,
-            pemPrivateKey = key.pemPrivateKey,
-            derPrivateKey = key.derPrivateKey,
-            derPublicKey = key.derPublicKey,
-            pemEncryptionPrivateKey = key.pemEncryptionPrivateKey,
-            derEncryptionPrivateKey = key.derEncryptionPrivateKey,
-            derEncryptionPublicKey = key.derEncryptionPublicKey,
-        )
+        is AuthKey.Dilithium ->
+            ConvertedRawUserPassInfo(
+                algo = key.algo,
+                address = address,
+                pemPrivateKey = key.pemPrivateKey,
+                derPrivateKey = key.derPrivateKey,
+                derPublicKey = key.derPublicKey,
+                pemEncryptionPrivateKey = key.pemEncryptionPrivateKey,
+                derEncryptionPrivateKey = key.derEncryptionPrivateKey,
+                derEncryptionPublicKey = key.derEncryptionPublicKey,
+            )
 
-    is AuthKey.P256 ->
-        ConvertedRawUserPassInfo(
-            algo = key.algo,
-            address = address,
-            pemPrivateKey = key.pemPrivateKey,
-            derPrivateKey = key.derPrivateKey,
-            derPublicKey = key.derPublicKey,
-        )
-}
+        is AuthKey.P256 ->
+            ConvertedRawUserPassInfo(
+                algo = key.algo,
+                address = address,
+                pemPrivateKey = key.pemPrivateKey,
+                derPrivateKey = key.derPrivateKey,
+                derPublicKey = key.derPublicKey,
+            )
+    }

@@ -30,12 +30,12 @@ actual fun initEnvironment(context: Any) = Unit
 
 actual fun createConnectivity(): Connectivity =
     Connectivity {
-    autoStart = true
-    urls("cloudflare.com")
-    port = 80
-    pollingIntervalMs = 10.minutes
-    timeoutMs = 5.seconds
-}
+        autoStart = true
+        urls("cloudflare.com")
+        port = 80
+        pollingIntervalMs = 10.minutes
+        timeoutMs = 5.seconds
+    }
 
 actual fun getClientFile(path: String): ClientFile? {
     val file = File(path)

@@ -58,13 +58,13 @@ private object AndroidRtcDevices {
 
 internal actual fun createRtcEngine(): RtcEngine =
     KtorRtcEngine(Dispatchers.IO.limitedParallelism(1)) {
-    KtorRtcRuntime(
-        WebRtcClient(AndroidWebRtc) { mediaTrackFactory = AndroidRtcDevices.media },
-        switchCamera = true,
-        // PeerConnection.dispose owns receiver tracks. A separate track close would dispose twice.
-        closeRemoteTrack = {},
-    )
-}
+        KtorRtcRuntime(
+            WebRtcClient(AndroidWebRtc) { mediaTrackFactory = AndroidRtcDevices.media },
+            switchCamera = true,
+            // PeerConnection.dispose owns receiver tracks. A separate track close would dispose twice.
+            closeRemoteTrack = {},
+        )
+    }
 
 private class AndroidRtcVideo(private val track: org.webrtc.VideoTrack) : RtcVideo {
     private val access = Any()
@@ -73,22 +73,22 @@ private class AndroidRtcVideo(private val track: org.webrtc.VideoTrack) : RtcVid
 
     fun attach(sink: org.webrtc.VideoSink) =
         synchronized(access) {
-        if (closed) return@synchronized
-        track.addSink(sink)
-        sinks.add(sink)
-    }
+            if (closed) return@synchronized
+            track.addSink(sink)
+            sinks.add(sink)
+        }
 
     fun detach(sink: org.webrtc.VideoSink) =
         synchronized(access) {
-        if (sinks.remove(sink)) track.removeSink(sink)
-    }
+            if (sinks.remove(sink)) track.removeSink(sink)
+        }
 
     override suspend fun close() =
         synchronized(access) {
-        closed = true
-        sinks.forEach(track::removeSink)
-        sinks.clear()
-    }
+            closed = true
+            sinks.forEach(track::removeSink)
+            sinks.clear()
+        }
 }
 
 internal actual fun wrapRtcVideo(track: WebRtcMedia.VideoTrack): RtcVideo = AndroidRtcVideo(track.getNative())
@@ -99,10 +99,10 @@ internal actual fun releaseRtcConnection(connection: WebRtcPeerConnection) {
 
 internal actual fun playRtcAudio(track: WebRtcMedia.AudioTrack): RtcAudioPlayback =
     object : RtcAudioPlayback {
-    override fun close() {
-        track.enable(false)
+        override fun close() {
+            track.enable(false)
+        }
     }
-}
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable

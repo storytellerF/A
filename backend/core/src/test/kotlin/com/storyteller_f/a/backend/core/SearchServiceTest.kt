@@ -96,35 +96,35 @@ class SearchServiceTest {
     @Test
     fun `test reconnect search after service restart`() =
         runBlocking {
-        System.setProperty("api.version", "1.44")
-        createLuceneContainer().use { first ->
-            first.start()
-            val port = first.getMappedPort(8821)
-            val env =
-                MergedEnv(
-                    listOf(
-                        mapOf(
-                            "SEARCH_SERVICE" to "lucene",
-                            "LUCENE_RPC_URL" to "ws://${first.host}:$port/rpc",
+            System.setProperty("api.version", "1.44")
+            createLuceneContainer().use { first ->
+                first.start()
+                val port = first.getMappedPort(8821)
+                val env =
+                    MergedEnv(
+                        listOf(
+                            mapOf(
+                                "SEARCH_SERVICE" to "lucene",
+                                "LUCENE_RPC_URL" to "ws://${first.host}:$port/rpc",
+                            ),
                         ),
-                    ),
-                )
-            val service = buildTopicSearchService(env)
-            service.saveDocument(listOf(TopicDocument(1, "before restart", 1, "ROOM", 1, "ROOM", 100))).getOrThrow()
-            first.stop()
-            assertTrue(service.getDocuments(listOf(1)).isFailure)
-            createLuceneContainer().apply {
-                setPortBindings(listOf("$port:8821"))
-            }.use { replacement ->
-                replacement.start()
-                val rebuiltService = buildTopicSearchService(env)
-                rebuiltService.saveDocument(
-                    listOf(TopicDocument(2, "after restart", 1, "ROOM", 1, "ROOM", 100)),
-                ).getOrThrow()
-                assertEquals("after restart", rebuiltService.getDocuments(listOf(2)).getOrThrow().single()?.content)
+                    )
+                val service = buildTopicSearchService(env)
+                service.saveDocument(listOf(TopicDocument(1, "before restart", 1, "ROOM", 1, "ROOM", 100))).getOrThrow()
+                first.stop()
+                assertTrue(service.getDocuments(listOf(1)).isFailure)
+                createLuceneContainer().apply {
+                    setPortBindings(listOf("$port:8821"))
+                }.use { replacement ->
+                    replacement.start()
+                    val rebuiltService = buildTopicSearchService(env)
+                    rebuiltService.saveDocument(
+                        listOf(TopicDocument(2, "after restart", 1, "ROOM", 1, "ROOM", 100)),
+                    ).getOrThrow()
+                    assertEquals("after restart", rebuiltService.getDocuments(listOf(2)).getOrThrow().single()?.content)
+                }
             }
         }
-    }
 
     private fun createLuceneContainer(): GenericContainer<*> =
         GenericContainer(DockerImageName.parse("a-lucene:latest")).apply {

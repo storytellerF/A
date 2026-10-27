@@ -38,8 +38,8 @@ class DialogSaveState {
 @Composable
 fun rememberAlertDialogController(): CustomAlertDialogController =
     remember {
-    CustomAlertDialogController()
-}
+        CustomAlertDialogController()
+    }
 
 class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState?> = mutableStateOf(null)) {
     fun showMessage(title: String, message: String, enableCopy: Boolean = false) {
@@ -113,8 +113,8 @@ fun CustomAlertDialogInternal(dialogState: CustomAlertDialogState?, dismiss: () 
 @Composable
 fun rememberCommonDialogController(): CommonDialogController =
     remember {
-    CommonDialogController()
-}
+        CommonDialogController()
+    }
 
 class CommonDialogController(val shown: MutableState<Boolean> = mutableStateOf(false)) {
     fun update(new: Boolean) {

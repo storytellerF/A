@@ -29,7 +29,7 @@ private val protectedStorage = createProtectedStorageFactory().create(createMast
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun createMasterKeyFactory(): JsAny =
     js(
-    """(async (db) => {
+        """(async (db) => {
             const candidate = await crypto.subtle.generateKey({name: 'AES-GCM', length: 256}, false, ['encrypt', 'decrypt']);
             return new Promise((resolve, reject) => {
                 const tx = db.transaction('entries', 'readwrite');
@@ -44,13 +44,13 @@ private fun createMasterKeyFactory(): JsAny =
                 tx.onabort = () => reject(new Error('Protected key unavailable'));
             });
 })""",
-)
+    )
 
 /** Non-extractable keys and ciphertext live in IndexedDB; no plaintext or key bytes enter localStorage. */
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun createProtectedStorageFactory(): BrowserProtectedStorageFactory =
     js(
-    """({create(master) {
+        """({create(master) {
         let opening;
         const open = () => {
             if (!globalThis.isSecureContext || !globalThis.crypto?.subtle) throw new Error('Secure context required');
@@ -94,7 +94,7 @@ private fun createProtectedStorageFactory(): BrowserProtectedStorageFactory =
             }
         };
     }})""",
-)
+    )
 
 @OptIn(ExperimentalWasmJsInterop::class)
 internal actual suspend fun readProtectedValue(key: String): String? =

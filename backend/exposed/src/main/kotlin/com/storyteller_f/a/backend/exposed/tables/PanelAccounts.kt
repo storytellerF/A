@@ -22,10 +22,10 @@ object PanelAccounts : BaseTable() {
 
 fun PanelAccount.Companion.wrapRow(resultRow: ResultRow): PanelAccount =
     PanelAccount(
-    resultRow[PanelAccounts.id],
-    resultRow[PanelAccounts.name],
-    resultRow[PanelAccounts.passType],
-    resultRow[PanelAccounts.algoType],
-    resultRow[PanelAccounts.publicKey],
-    resultRow[PanelAccounts.address],
-)
+        resultRow[PanelAccounts.id],
+        resultRow[PanelAccounts.name],
+        resultRow[PanelAccounts.passType],
+        resultRow[PanelAccounts.algoType],
+        resultRow[PanelAccounts.publicKey],
+        resultRow[PanelAccounts.address],
+    )

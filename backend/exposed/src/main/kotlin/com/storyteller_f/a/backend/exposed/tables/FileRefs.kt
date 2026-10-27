@@ -25,13 +25,13 @@ object FileRefs : BaseTable() {
 
 fun FileRef.Companion.wrapRow(resultRow: ResultRow): FileRef =
     with(FileRefs) {
-    FileRef(
-        resultRow[id],
-        resultRow[createdTime],
-        resultRow[objectId],
-        resultRow[objectType],
-        resultRow[author],
-        resultRow[mediaName],
-        resultRow[fileId],
-    )
-}
+        FileRef(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[objectId],
+            resultRow[objectType],
+            resultRow[author],
+            resultRow[mediaName],
+            resultRow[fileId],
+        )
+    }

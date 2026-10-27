@@ -12,9 +12,9 @@ import platform.Foundation.substringWithRange
 
 actual fun safeFirstUnicode(text: String): String? =
     text.takeIf(String::isNotEmpty)?.let {
-    val value = it as NSString
-    value.substringWithRange(value.rangeOfComposedCharacterSequenceAtIndex(0uL))
-}
+        val value = it as NSString
+        value.substringWithRange(value.rangeOfComposedCharacterSequenceAtIndex(0uL))
+    }
 
 actual fun checkContent(text: String): CustomResult<Unit, ContentValidationError> =
     if (Regex("""^[\p{L}\p{N}\p{P}\p{Z}\p{S}\s]+$""").matches(text)) {

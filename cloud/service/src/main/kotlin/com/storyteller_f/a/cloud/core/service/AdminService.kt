@@ -39,26 +39,26 @@ import com.storyteller_f.shared.utils.now
 
 suspend fun Backend.getOverview() =
     captureFailure(AdminError::from) {
-    val userCount = database.user.getUserCount().getOrThrow()
-    val topicCount = database.topic.getTopicCount().getOrThrow()
-    val communityCount = database.community.getCommunityCount().getOrThrow()
-    val privateRoomCount = database.room.getPrivateRoomCount().getOrThrow()
-    val publicRoomCount = database.room.getPublicRoomCount().getOrThrow()
-    val fileCount = database.file.getFileCount().getOrThrow()
-    val fileVolume = database.file.getFileVolume().getOrThrow()
-    val titleCount = database.title.getTitleCount().getOrThrow()
+        val userCount = database.user.getUserCount().getOrThrow()
+        val topicCount = database.topic.getTopicCount().getOrThrow()
+        val communityCount = database.community.getCommunityCount().getOrThrow()
+        val privateRoomCount = database.room.getPrivateRoomCount().getOrThrow()
+        val publicRoomCount = database.room.getPublicRoomCount().getOrThrow()
+        val fileCount = database.file.getFileCount().getOrThrow()
+        val fileVolume = database.file.getFileVolume().getOrThrow()
+        val titleCount = database.title.getTitleCount().getOrThrow()
 
-    PanelOverview(
-        userCount,
-        topicCount,
-        communityCount,
-        privateRoomCount,
-        publicRoomCount,
-        fileCount,
-        fileVolume,
-        titleCount,
-    )
-}
+        PanelOverview(
+            userCount,
+            topicCount,
+            communityCount,
+            privateRoomCount,
+            publicRoomCount,
+            fileCount,
+            fileVolume,
+            titleCount,
+        )
+    }
 
 suspend fun Backend.addUser(newUser: NewUser): CustomResult<UserInfo, AdminError> {
     val nickname = newUser.nickname

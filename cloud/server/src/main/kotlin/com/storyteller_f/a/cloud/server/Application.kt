@@ -226,15 +226,15 @@ private fun Application.buildBackend(): Backend {
 
 private fun Application.readInjectedEnv() =
     engine.environment.config.toMap().mapNotNull {
-    (it.value as? String)?.let { v ->
-        it.key to v
-    }
-}.associate { it }
+        (it.value as? String)?.let { v ->
+            it.key to v
+        }
+    }.associate { it }
 
 private fun buildDatabaseReader() =
     DatabaseReader.Builder(
-    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
-).build()
+        ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
+    ).build()
 
 private fun buildLog(call: ApplicationCall, reader: DatabaseReader): String {
     val status = call.response.status()

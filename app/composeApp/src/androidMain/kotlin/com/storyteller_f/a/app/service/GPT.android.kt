@@ -75,8 +75,8 @@ class AndroidEdgeGPT : GPT {
 
     override fun models(scope: CoroutineScope): Flow<List<GPTModel>> =
         observeModels(
-        scope,
-        getGPTModelDirectory(),
-        supportList,
-    )
+            scope,
+            getGPTModelDirectory(),
+            supportList,
+        )
 }

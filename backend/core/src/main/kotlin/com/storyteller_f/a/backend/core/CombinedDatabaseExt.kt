@@ -62,13 +62,13 @@ suspend fun CombinedDatabase.processTopicToRawTopic(
     topics: List<Topic>,
 ): CustomResult<List<RawTopic>, DatabaseError> =
     captureFailure(DatabaseError::from) {
-    val topicIds = topics.map { it.id }
-    if (topicIds.isEmpty()) {
-        emptyList()
-    } else {
-        buildRawTopics(uid, topics, topicIds)
+        val topicIds = topics.map { it.id }
+        if (topicIds.isEmpty()) {
+            emptyList()
+        } else {
+            buildRawTopics(uid, topics, topicIds)
+        }
     }
-}
 
 private suspend fun CombinedDatabase.buildRawTopics(
     uid: PrimaryKey?,
@@ -110,38 +110,38 @@ private suspend fun CombinedDatabase.fetchLastReadMap(
     topicIds: List<PrimaryKey>,
 ): Map<PrimaryKey, UserTopicRead> =
     if (uid != null) {
-    container.getTopicReadList(topicIds, uid)
-        .map {
-            it.associateBy { userTopicRead -> userTopicRead.objectId }
-        }
-        .getOrThrow()
-} else {
-    emptyMap()
-}
+        container.getTopicReadList(topicIds, uid)
+            .map {
+                it.associateBy { userTopicRead -> userTopicRead.objectId }
+            }
+            .getOrThrow()
+    } else {
+        emptyMap()
+    }
 
 private suspend fun CombinedDatabase.fetchFavoriteMap(
     uid: PrimaryKey?,
     topicIds: List<PrimaryKey>,
 ): Map<PrimaryKey, UserFavorite> =
     if (uid != null) {
-    favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
-        .getOrThrow()
-        .associateBy { it.objectId }
-} else {
-    emptyMap()
-}
+        favorite.getHasFavorite(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow()
+            .associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
 
 private suspend fun CombinedDatabase.fetchSubscriptionMap(
     uid: PrimaryKey?,
     topicIds: List<PrimaryKey>,
 ): Map<PrimaryKey, UserSubscription> =
     if (uid != null) {
-    subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
-        .getOrThrow()
-        .associateBy { it.objectId }
-} else {
-    emptyMap()
-}
+        subscription.getHasSubscription(ObjectListFetch.IdListFetch(topicIds), uid)
+            .getOrThrow()
+            .associateBy { it.objectId }
+    } else {
+        emptyMap()
+    }
 
 /** Returns a single enriched topic or null when not found. */
 suspend fun CombinedDatabase.getRawTopic(fetch: ObjectFetch, uid: PrimaryKey?): CustomResult<RawTopic?, DatabaseError> =
@@ -163,8 +163,8 @@ suspend fun CombinedDatabase.getRawTopicListByIds(
     ids: List<PrimaryKey>,
 ): CustomResult<List<RawTopic>, DatabaseError> =
     topic.getTopicListByIds(ids).andThen(DatabaseError::fromError) {
-    processTopicToRawTopic(uid, it)
-}
+        processTopicToRawTopic(uid, it)
+    }
 
 /** Returns paginated child topics for a parent, enriched with user state. */
 suspend fun CombinedDatabase.getRawTopicByParentId(
@@ -183,5 +183,5 @@ suspend fun CombinedDatabase.getLatestRawTopic(
     parentId: PrimaryKey,
 ): CustomResult<List<RawTopic>, DatabaseError> =
     topic.getLatestTopic(parentId).andThen(DatabaseError::fromError) {
-    processTopicToRawTopic(uid, it)
-}
+        processTopicToRawTopic(uid, it)
+    }

@@ -39,8 +39,8 @@ import kotlin.coroutines.resume
 
 internal actual fun createRtcEngine(): RtcEngine =
     KtorRtcEngine(Dispatchers.Default.limitedParallelism(1)) {
-    KtorRtcRuntime(WebRtcClient(IosWebRtc), switchCamera = true)
-}
+        KtorRtcRuntime(WebRtcClient(IosWebRtc), switchCamera = true)
+    }
 
 private class IosRtcVideo(private val track: WebRTC.RTCVideoTrack) : RtcVideo {
     private val renderers = mutableSetOf<RTCMTLVideoView>()
@@ -58,10 +58,10 @@ private class IosRtcVideo(private val track: WebRTC.RTCVideoTrack) : RtcVideo {
 
     override suspend fun close() =
         withContext(Dispatchers.Main) {
-        closed = true
-        renderers.forEach(track::removeRenderer)
-        renderers.clear()
-    }
+            closed = true
+            renderers.forEach(track::removeRenderer)
+            renderers.clear()
+        }
 }
 
 internal actual fun wrapRtcVideo(track: WebRtcMedia.VideoTrack): RtcVideo = IosRtcVideo(track.getNative())
@@ -69,10 +69,10 @@ internal actual fun releaseRtcConnection(connection: WebRtcPeerConnection) = Uni
 
 internal actual fun playRtcAudio(track: WebRtcMedia.AudioTrack): RtcAudioPlayback =
     object : RtcAudioPlayback {
-    override fun close() {
-        track.enable(false)
+        override fun close() {
+            track.enable(false)
+        }
     }
-}
 
 @Composable
 internal actual fun RtcJoinButton(video: Boolean, enabled: Boolean, onJoin: () -> Unit) {
@@ -111,7 +111,7 @@ internal actual fun RtcVideoView(video: RtcVideo, modifier: Modifier, local: Boo
 
 private suspend fun requestMediaPermission(type: String?): Boolean =
     suspendCancellableCoroutine { continuation ->
-    AVCaptureDevice.requestAccessForMediaType(type) { granted ->
-        if (continuation.isActive) continuation.resume(granted)
+        AVCaptureDevice.requestAccessForMediaType(type) { granted ->
+            if (continuation.isActive) continuation.resume(granted)
+        }
     }
-}

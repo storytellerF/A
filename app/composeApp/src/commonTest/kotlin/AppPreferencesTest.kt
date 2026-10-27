@@ -19,25 +19,25 @@ class AppPreferencesTest {
     @Test
     fun missingStringUsesDefault() =
         runTest {
-        val preferences = AppPreferences(FakePreferencesDataStore())
-        assertEquals("default", preferences.observeString("key", "default").first())
-    }
+            val preferences = AppPreferences(FakePreferencesDataStore())
+            assertEquals("default", preferences.observeString("key", "default").first())
+        }
 
     @Test
     fun savedStringCanBeObserved() =
         runTest {
-        val preferences = AppPreferences(FakePreferencesDataStore())
-        preferences.setString("key", "saved")
-        assertEquals("saved", preferences.observeString("key", "default").first())
-    }
+            val preferences = AppPreferences(FakePreferencesDataStore())
+            preferences.setString("key", "saved")
+            assertEquals("saved", preferences.observeString("key", "default").first())
+        }
 
     @Test
     fun writingStringPreservesOtherKeyDefault() =
         runTest {
-        val preferences = AppPreferences(FakePreferencesDataStore())
-        preferences.setString("key", "saved")
-        assertEquals("other-default", preferences.observeString("other", "other-default").first())
-    }
+            val preferences = AppPreferences(FakePreferencesDataStore())
+            preferences.setString("key", "saved")
+            assertEquals("other-default", preferences.observeString("other", "other-default").first())
+        }
 }
 
 private class FakePreferencesDataStore(initialValue: Preferences = emptyPreferences()) : DataStore<Preferences> {
@@ -47,8 +47,8 @@ private class FakePreferencesDataStore(initialValue: Preferences = emptyPreferen
 
     override suspend fun updateData(transform: suspend (Preferences) -> Preferences): Preferences =
         transform(
-        state.value,
-    ).also { updatedValue ->
-        state.value = updatedValue
-    }
+            state.value,
+        ).also { updatedValue ->
+            state.value = updatedValue
+        }
 }

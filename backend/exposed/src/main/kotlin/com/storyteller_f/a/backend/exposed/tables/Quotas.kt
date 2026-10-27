@@ -23,10 +23,10 @@ object Quotas : Table() {
 
 fun Quota.Companion.wrapRow(resultRow: ResultRow): Quota =
     Quota(
-    resultRow[Quotas.ownerId],
-    resultRow[Quotas.ownerType],
-    resultRow[Quotas.total],
-    resultRow[Quotas.used],
-    resultRow[Quotas.quotaType],
-    resultRow[Quotas.lockId],
-)
+        resultRow[Quotas.ownerId],
+        resultRow[Quotas.ownerType],
+        resultRow[Quotas.total],
+        resultRow[Quotas.used],
+        resultRow[Quotas.quotaType],
+        resultRow[Quotas.lockId],
+    )

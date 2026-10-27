@@ -505,33 +505,33 @@ internal fun newAppNav(backStack: NavBackStack<NavKey>): AppNav = DefaultAppNav(
 @OptIn(ExperimentalResourceApi::class)
 fun rootEntryProvider(nav: AppNav) =
     entryProvider {
-    handleMainScreen()
-    handleSettingsScreen()
-    handleComposeScreen(nav)
-    handleFileExplorerScreen()
-    entry<AboutScreen> {
-        val libraries by produceLibraries {
-            Res.readBytes("files/aboutlibraries.json").decodeToString()
+        handleMainScreen()
+        handleSettingsScreen()
+        handleComposeScreen(nav)
+        handleFileExplorerScreen()
+        entry<AboutScreen> {
+            val libraries by produceLibraries {
+                Res.readBytes("files/aboutlibraries.json").decodeToString()
+            }
+            Surface {
+                LibrariesContainer(
+                    libraries,
+                    Modifier.fillMaxSize().statusBarsPadding(),
+                    colors = LibraryDefaults.libraryColors(),
+                )
+            }
         }
-        Surface {
-            LibrariesContainer(
-                libraries,
-                Modifier.fillMaxSize().statusBarsPadding(),
-                colors = LibraryDefaults.libraryColors(),
-            )
+        entry<FileInfoScreen> {
+            FileViewPage(FileViewData.Regular(it.fileId))
         }
-    }
-    entry<FileInfoScreen> {
-        FileViewPage(FileViewData.Regular(it.fileId))
-    }
 
-    entry<LocalImageScreen> {
-        FileViewPage(FileViewData.LocalImage(it.url))
+        entry<LocalImageScreen> {
+            FileViewPage(FileViewData.LocalImage(it.url))
+        }
+        entry<FileRefsScreen> {
+            FileRefsPage(it.fileId)
+        }
     }
-    entry<FileRefsScreen> {
-        FileRefsPage(it.fileId)
-    }
-}
 
 private fun EntryProviderScope<NavKey>.handleMainScreen() {
     entry<HomeScreen> {

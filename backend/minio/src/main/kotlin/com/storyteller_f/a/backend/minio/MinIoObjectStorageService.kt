@@ -67,56 +67,56 @@ class MinIoObjectStorageService(private val connection: MinIoConnection, private
         prefix: String,
     ): CustomResult<List<ObjectStorageRecord>, ObjectStorageError> =
         useMinIoClient(
-        connection,
-    ) {
-        val names =
-            try {
-                listObjects(
-                    ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build(),
-                ).map {
-                    it.get().objectName()
+            connection,
+        ) {
+            val names =
+                try {
+                    listObjects(
+                        ListObjectsArgs.builder().bucket(bucketName).prefix(prefix).recursive(false).build(),
+                    ).map {
+                        it.get().objectName()
+                    }
+                } catch (e: ErrorResponseException) {
+                    if (e.errorResponse().code() == "NoSuchBucket") {
+                        emptyList()
+                    } else {
+                        throw e
+                    }
                 }
-            } catch (e: ErrorResponseException) {
-                if (e.errorResponse().code() == "NoSuchBucket") {
-                    emptyList()
-                } else {
-                    throw e
-                }
-            }
-        get(bucketName, names).getOrThrow()
-    }
+            get(bucketName, names).getOrThrow()
+        }
 
     override suspend fun copy(
         bucketName: String,
         copyPacks: List<CopyPack>,
     ): CustomResult<List<ObjectStorageRecord>, ObjectStorageError> =
         useMinIoClient(
-        connection,
-    ) {
-        copyPacks.map { copyPack ->
-            copyObject(
-                CopyObjectArgs.builder()
-                    .bucket(bucketName)
-                    .`object`(copyPack.newFullName)
-                    .metadataDirective(Directive.COPY)
-                    .taggingDirective(Directive.COPY)
-                    .source(SourceObject.builder().bucket(bucketName).`object`(copyPack.originFullName).build())
-                    .build(),
-            ).`object`()
+            connection,
+        ) {
+            copyPacks.map { copyPack ->
+                copyObject(
+                    CopyObjectArgs.builder()
+                        .bucket(bucketName)
+                        .`object`(copyPack.newFullName)
+                        .metadataDirective(Directive.COPY)
+                        .taggingDirective(Directive.COPY)
+                        .source(SourceObject.builder().bucket(bucketName).`object`(copyPack.originFullName).build())
+                        .build(),
+                ).`object`()
+            }
+        }.andThen(ObjectStorageError::fromError) { objectNames ->
+            get(bucketName, objectNames)
         }
-    }.andThen(ObjectStorageError::fromError) { objectNames ->
-        get(bucketName, objectNames)
-    }
 
     override suspend fun getInputStream(
         bucketName: String,
         name: String,
     ): CustomResult<InputStream, ObjectStorageError> =
         useMinIoClient(
-        connection,
-    ) {
-        getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
-    }
+            connection,
+        ) {
+            getObject(GetObjectArgs.builder().bucket(bucketName).`object`(name).build())
+        }
 
     override suspend operator fun get(
         bucketName: String,
@@ -175,33 +175,33 @@ class MinIoObjectStorageService(private val connection: MinIoConnection, private
         expectedCrc32c: String,
     ): CustomResult<ObjectStorageWriteRecord, ObjectStorageError> =
         useMinIoClient(connection) {
-        if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
-            makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
-        }
-        var crc32c = "AAAAAA=="
-        val sources =
-            sourceFullNames.map { name ->
-                val metadata =
-                    statObject(
-                        StatObjectArgs.builder().bucket(bucketName).`object`(name)
-                            .extraHeaders(mapOf("x-amz-checksum-mode" to "ENABLED")).build(),
-                    )
-                check(metadata.headers()["x-amz-checksum-type"] == "FULL_OBJECT") { "full object checksum missing" }
-                val sourceChecksum =
-                    metadata.headers()["x-amz-checksum-crc32c"]
-                        ?: error("source crc32c missing")
-                crc32c = combineCrc32c(crc32c, sourceChecksum, metadata.size())
-                SourceObject.builder().bucket(bucketName).`object`(name).matchETag(metadata.etag()).build()
+            if (!bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
+                makeBucket(MakeBucketArgs.builder().bucket(bucketName).build())
             }
-        check(crc32c == expectedCrc32c) { "file crc32c mismatch" }
-        // MinIO multipart-copy does not feed its checksum reader. Combine verified
-        // source CRCs instead, and pin each source's ETag so the checked bytes cannot change.
-        // https://github.com/minio/minio/blob/master/cmd/object-multipart-handlers.go
-        composeObject(
-            ComposeObjectArgs.builder().bucket(bucketName).`object`(targetFullName).sources(sources).build(),
-        )
-        ObjectStorageWriteRecord(targetFullName)
-    }
+            var crc32c = "AAAAAA=="
+            val sources =
+                sourceFullNames.map { name ->
+                    val metadata =
+                        statObject(
+                            StatObjectArgs.builder().bucket(bucketName).`object`(name)
+                                .extraHeaders(mapOf("x-amz-checksum-mode" to "ENABLED")).build(),
+                        )
+                    check(metadata.headers()["x-amz-checksum-type"] == "FULL_OBJECT") { "full object checksum missing" }
+                    val sourceChecksum =
+                        metadata.headers()["x-amz-checksum-crc32c"]
+                            ?: error("source crc32c missing")
+                    crc32c = combineCrc32c(crc32c, sourceChecksum, metadata.size())
+                    SourceObject.builder().bucket(bucketName).`object`(name).matchETag(metadata.etag()).build()
+                }
+            check(crc32c == expectedCrc32c) { "file crc32c mismatch" }
+            // MinIO multipart-copy does not feed its checksum reader. Combine verified
+            // source CRCs instead, and pin each source's ETag so the checked bytes cannot change.
+            // https://github.com/minio/minio/blob/master/cmd/object-multipart-handlers.go
+            composeObject(
+                ComposeObjectArgs.builder().bucket(bucketName).`object`(targetFullName).sources(sources).build(),
+            )
+            ObjectStorageWriteRecord(targetFullName)
+        }
 
     override suspend fun delete(bucketName: String, names: List<String>): CustomResult<Unit, ObjectStorageError> =
         useMinIoClient(connection) {

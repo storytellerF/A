@@ -41,24 +41,24 @@ class ManagedRpcService<Service : Any>(
 
     override suspend fun acquire(): Service =
         mutex.withLock {
-        currentCoroutineContext().ensureActive()
-        val previous = connection
-        if (previous?.isActive == true) {
-            previous.service
-        } else {
-            previous?.close()
-            connection = null
-            openConnection().also { connection = it }.service
+            currentCoroutineContext().ensureActive()
+            val previous = connection
+            if (previous?.isActive == true) {
+                previous.service
+            } else {
+                previous?.close()
+                connection = null
+                openConnection().also { connection = it }.service
+            }
         }
-    }
 
     suspend fun close() =
         withContext(NonCancellable) {
-        mutex.withLock {
-            connection?.close()
-            connection = null
+            mutex.withLock {
+                connection?.close()
+                connection = null
+            }
         }
-    }
 
     private suspend fun openConnection(): ServiceConnection<Service> {
         val client =

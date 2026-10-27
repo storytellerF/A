@@ -25,77 +25,77 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 class ExposedPanelAccountDatabase(val databaseSession: ExposedDatabaseSession) : PanelAccountDatabase {
     override suspend fun getPanelAccount(id: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            PanelAccounts.selectAll().where {
-                PanelAccounts.id eq id
+            search {
+                PanelAccounts.selectAll().where {
+                    PanelAccounts.id eq id
+                }
             }
+            first(PanelAccount::wrapRow)
         }
-        first(PanelAccount::wrapRow)
-    }
 
     override suspend fun addPanelAccount(panelAccount: PanelAccount) =
         databaseSession.dbQuery {
-        check(
-            PanelAccounts.insert {
-                it[id] = panelAccount.id
-                it[name] = panelAccount.name
-                it[createdTime] = now()
-                it[passType] = panelAccount.passType
-                it[algoType] = panelAccount.algoType
-                it[publicKey] = panelAccount.publicKey
-                it[publicKeyMd5] = md5(panelAccount.publicKey)
-                it[address] = panelAccount.address
-            }.insertedCount > 0,
-        ) {
-            "Failed to add panel account"
+            check(
+                PanelAccounts.insert {
+                    it[id] = panelAccount.id
+                    it[name] = panelAccount.name
+                    it[createdTime] = now()
+                    it[passType] = panelAccount.passType
+                    it[algoType] = panelAccount.algoType
+                    it[publicKey] = panelAccount.publicKey
+                    it[publicKeyMd5] = md5(panelAccount.publicKey)
+                    it[address] = panelAccount.address
+                }.insertedCount > 0,
+            ) {
+                "Failed to add panel account"
+            }
         }
-    }
 
     private suspend fun getUserAuthDataBy(predicate: () -> Op<Boolean>) =
         databaseSession.dbSearch {
-        search {
-            PanelAccounts.select(
-                listOf(PanelAccounts.publicKey, PanelAccounts.id, PanelAccounts.algoType),
-            ).where(predicate)
+            search {
+                PanelAccounts.select(
+                    listOf(PanelAccounts.publicKey, PanelAccounts.id, PanelAccounts.algoType),
+                ).where(predicate)
+            }
+            first {
+                UserAuthData(it[PanelAccounts.publicKey], it[PanelAccounts.id], it[PanelAccounts.algoType])
+            }
         }
-        first {
-            UserAuthData(it[PanelAccounts.publicKey], it[PanelAccounts.id], it[PanelAccounts.algoType])
-        }
-    }
 
     override suspend fun getUserAuthDataById(id: PrimaryKey) =
         getUserAuthDataBy {
-        PanelAccounts.id eq id
-    }
+            PanelAccounts.id eq id
+        }
 
     override suspend fun getUserAuthDataByAddress(address: String) =
         getUserAuthDataBy {
-        PanelAccounts.address eq address
-    }
+            PanelAccounts.address eq address
+        }
 
     override suspend fun getRawUserAndPublicKeyByAddress(ad: String) =
         databaseSession.dbSearch {
-        search {
-            PanelAccounts
-                .selectAll()
-                .where {
-                    PanelAccounts.address eq ad
-                }
+            search {
+                PanelAccounts
+                    .selectAll()
+                    .where {
+                        PanelAccounts.address eq ad
+                    }
+            }
+            first {
+                val value = PanelAccount.wrapRow(it)
+                Pair(RawPanelAccount(value.id, value.name, value.algoType), value.publicKey)
+            }
         }
-        first {
-            val value = PanelAccount.wrapRow(it)
-            Pair(RawPanelAccount(value.id, value.name, value.algoType), value.publicKey)
-        }
-    }
 
     override suspend fun isUserNotExistsByPublicKey(pk: String) =
         databaseSession.dbSearch {
-        search {
-            val publicKeyMd5 = md5(pk)
-            PanelAccounts.selectAll().where {
-                PanelAccounts.publicKeyMd5 eq publicKeyMd5
+            search {
+                val publicKeyMd5 = md5(pk)
+                PanelAccounts.selectAll().where {
+                    PanelAccounts.publicKeyMd5 eq publicKeyMd5
+                }
             }
+            isEmpty()
         }
-        isEmpty()
-    }
 }

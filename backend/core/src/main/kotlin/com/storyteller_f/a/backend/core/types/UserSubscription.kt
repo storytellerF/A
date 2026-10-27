@@ -24,12 +24,12 @@ class UserSubscription(
 
 fun UserSubscription.toUserSubscriptionInfo(): UserSubscriptionInfo =
     UserSubscriptionInfo(
-    id,
-    uid,
-    objectId,
-    objectType,
-    createdTime,
-)
+        id,
+        uid,
+        objectId,
+        objectType,
+        createdTime,
+    )
 
 data class SubscriptionSentLog(
     val id: PrimaryKey,

@@ -90,13 +90,13 @@ suspend fun <R, U> SessionManager<U>.serviceCatching(block: suspend HttpClient.(
 
 suspend fun UserSessionManager.getRoomInfo(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Rooms.Id.get(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), CommonPath(id))
-}
+        CustomApi.Rooms.Id.get(CustomApi.Rooms.Id.RoomIdQuery(currentIsAlreadySignUp), CommonPath(id))
+    }
 
 suspend fun UserSessionManager.getRoomInfoByAid(aid: String) =
     serviceCatching {
-    CustomApi.Rooms.Aid.get(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp))
-}
+        CustomApi.Rooms.Aid.get(CustomApi.Rooms.Aid.RoomAidQuery(aid, currentIsAlreadySignUp))
+    }
 
 suspend fun UserSessionManager.getRoomMembersPublicKeys(id: PrimaryKey, paginationQuery: PaginationQuery) =
     serviceCatching {
@@ -105,15 +105,15 @@ suspend fun UserSessionManager.getRoomMembersPublicKeys(id: PrimaryKey, paginati
 
 suspend fun UserSessionManager.joinRoom(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Rooms.Id.Members.join(CommonPath(id), Unit) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Rooms.Id.Members.join(CommonPath(id), Unit) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.joinCommunity(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Communities.Id.Members.join(CommonPath(id), Unit) {}
-}
+        CustomApi.Communities.Id.Members.join(CommonPath(id), Unit) {}
+    }
 
 suspend fun UserSessionManager.getRoomTopics(
     roomId: PrimaryKey,
@@ -144,13 +144,13 @@ suspend fun UserSessionManager.getUserTopics(
 
 suspend fun UserSessionManager.getCommunityInfo(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Communities.Id.get(CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp), CommonPath(id))
-}
+        CustomApi.Communities.Id.get(CustomApi.Communities.Id.CommunityIdQuery(currentIsAlreadySignUp), CommonPath(id))
+    }
 
 suspend fun UserSessionManager.getCommunityInfoByAid(aid: String) =
     serviceCatching {
-    CustomApi.Communities.Aid.get(CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp))
-}
+        CustomApi.Communities.Aid.get(CustomApi.Communities.Aid.CommunityAidQuery(aid, currentIsAlreadySignUp))
+    }
 
 suspend fun UserSessionManager.searchCommunity(
     size: Int,
@@ -227,8 +227,8 @@ suspend fun UserSessionManager.searchCommunityMembers(
 
 suspend fun UserSessionManager.searchAllMembers(nextUserId: String?, size: Int, word: String) =
     serviceCatching {
-    CustomApi.Users.search(SearchQuery(word, nextUserId, size))
-}
+        CustomApi.Users.search(SearchQuery(word, nextUserId, size))
+    }
 
 suspend fun UserSessionManager.searchRoomMembers(roomId: PrimaryKey, nextToken: String?, size: Int, word: String) =
     serviceCatching {
@@ -247,32 +247,32 @@ suspend fun UserSessionManager.searchRoomMembers(roomId: PrimaryKey, nextToken: 
 
 suspend fun UserSessionManager.getRecommendTopics(paginationQuery: PaginationQuery) =
     serviceCatching {
-    CustomApi.Topics.recommend(
-        CustomApi.Topics.RecommendQuery(
-            currentIsAlreadySignUp,
-            paginationQuery.nextPageToken,
-            paginationQuery.size,
-            paginationQuery.prePageToken,
-        ),
-    )
-}
+        CustomApi.Topics.recommend(
+            CustomApi.Topics.RecommendQuery(
+                currentIsAlreadySignUp,
+                paginationQuery.nextPageToken,
+                paginationQuery.size,
+                paginationQuery.prePageToken,
+            ),
+        )
+    }
 
 suspend fun UserSessionManager.getUserInfo(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Users.Id.get(CommonPath(id))
-}
+        CustomApi.Users.Id.get(CommonPath(id))
+    }
 
 suspend fun UserSessionManager.updateUserInfo(newInfo: UpdateUserBody) =
     serviceCatching {
-    CustomApi.Users.update(newInfo) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.update(newInfo) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getUserInfoByAid(aid: String) =
     serviceCatching {
-    CustomApi.Users.Aid.get(CustomApi.Users.Aid.UserAidQuery(aid))
-}
+        CustomApi.Users.Aid.get(CustomApi.Users.Aid.UserAidQuery(aid))
+    }
 
 suspend fun UserSessionManager.getTopicTopics(
     topicId: PrimaryKey,
@@ -284,27 +284,27 @@ suspend fun UserSessionManager.getTopicTopics(
 
 suspend fun UserSessionManager.getTopicInfo(id: PrimaryKey) =
     serviceCatching {
-    CustomApi.Topics.Id.get(CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp), CommonPath(id))
-}
+        CustomApi.Topics.Id.get(CustomApi.Topics.Id.TopicIdQuery(currentIsAlreadySignUp), CommonPath(id))
+    }
 
 suspend fun UserSessionManager.getTopicInfoByAid(aid: String) =
     serviceCatching {
-    CustomApi.Topics.Aid.get(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp))
-}
+        CustomApi.Topics.Aid.get(CustomApi.Topics.Aid.TopicAidQuery(aid, currentIsAlreadySignUp))
+    }
 
 suspend fun UserSessionManager.getUserRooms(paginationQuery: PaginationQuery) =
     serviceCatching {
-    this@getUserRooms.decryptRoomList(CustomApi.Users.JoinedRooms.get(paginationQuery))
-}
+        this@getUserRooms.decryptRoomList(CustomApi.Users.JoinedRooms.get(paginationQuery))
+    }
 
 suspend fun UserSessionManager.searchCurrentUserRooms(word: String, size: Int, nextRoomId: String?) =
     serviceCatching {
-    this@searchCurrentUserRooms.decryptRoomList(
-        CustomApi.Users.JoinedRooms.search(
-            CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size),
-        ),
-    )
-}
+        this@searchCurrentUserRooms.decryptRoomList(
+            CustomApi.Users.JoinedRooms.search(
+                CustomApi.Users.JoinedRooms.UserRoomsSearchQuery(word, nextRoomId, size),
+            ),
+        )
+    }
 
 suspend fun UserSessionManager.createTopic(objectType: ObjectType, objectId: PrimaryKey, input: String) =
     serviceCatching {
@@ -315,35 +315,35 @@ suspend fun UserSessionManager.createTopic(objectType: ObjectType, objectId: Pri
 
 suspend fun UserSessionManager.signUp(body: SignUpBody) =
     serviceCatching {
-    CustomApi.Accounts.signUp(body) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Accounts.signUp(body) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.signIn(body: SignInBody) =
     serviceCatching {
-    CustomApi.Accounts.signIn(body) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Accounts.signIn(body) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.signInTotp(code: String) =
     serviceCatching {
-    CustomApi.Accounts.signInTotp(TotpCodeBody(code)) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Accounts.signInTotp(TotpCodeBody(code)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getData() =
     serviceCatching {
-    CustomApi.Accounts.getData()
-}
+        CustomApi.Accounts.getData()
+    }
 
 suspend fun UserSessionManager.createTopicSnapshot(topicId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Topics.Id.createSnapshot(CommonPath(topicId), Unit) {
+        CustomApi.Topics.Id.createSnapshot(CommonPath(topicId), Unit) {
+        }
     }
-}
 
 /**
  * 搜索用户主题.
@@ -416,27 +416,27 @@ suspend fun UserSessionManager.searchCommunityTopics(
 
 suspend fun UserSessionManager.exitRoom(roomId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Rooms.Id.Members.leave(CommonPath(roomId), Unit) {}
-}
+        CustomApi.Rooms.Id.Members.leave(CommonPath(roomId), Unit) {}
+    }
 
 suspend fun UserSessionManager.exitCommunity(communityId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Communities.Id.Members.leave(CommonPath(communityId), Unit) {}
-}
+        CustomApi.Communities.Id.Members.leave(CommonPath(communityId), Unit) {}
+    }
 
 suspend fun UserSessionManager.addReaction(topicId: PrimaryKey, emoji: String) =
     serviceCatching {
-    CustomApi.Topics.Id.Reactions.add(CommonPath(topicId), NewReaction(emoji)) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Topics.Id.Reactions.add(CommonPath(topicId), NewReaction(emoji)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.deleteReaction(emoji: String, objectId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Topics.Id.Reactions.delete(CommonPath(objectId), DeleteReaction(emoji)) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Topics.Id.Reactions.delete(CommonPath(objectId), DeleteReaction(emoji)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getReactions(topicId: PrimaryKey, size: Int, nextCursor: String? = null) =
     serviceCatching {
@@ -448,49 +448,49 @@ suspend fun UserSessionManager.getReactions(topicId: PrimaryKey, size: Int, next
 
 suspend fun UserSessionManager.restoreSession() =
     serviceCatching {
-    val user = CustomApi.Accounts.session()
-    val expected = passHolder.currentUserPass?.address()?.getOrThrow()
-    if (expected != null && user.address != expected) throw SessionIdentityChangedException()
-    user
-}
+        val user = CustomApi.Accounts.session()
+        val expected = passHolder.currentUserPass?.address()?.getOrThrow()
+        if (expected != null && user.address != expected) throw SessionIdentityChangedException()
+        user
+    }
 
 suspend fun UserSessionManager.signOut() =
     serviceCatching {
-    CustomApi.Accounts.signOut(Unit) {}
-}
+        CustomApi.Accounts.signOut(Unit) {}
+    }
 
 suspend fun UserSessionManager.getTwoFactorSettings() =
     serviceCatching {
-    CustomApi.Users.TwoFactor.get()
-}
+        CustomApi.Users.TwoFactor.get()
+    }
 
 suspend fun UserSessionManager.setupTotp() =
     serviceCatching {
-    CustomApi.Users.TwoFactor.Totp.setup(Unit) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.TwoFactor.Totp.setup(Unit) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.enableTotp(code: String) =
     serviceCatching {
-    CustomApi.Users.TwoFactor.Totp.enable(TotpCodeBody(code)) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.TwoFactor.Totp.enable(TotpCodeBody(code)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.disableTwoFactor() =
     serviceCatching {
-    CustomApi.Users.TwoFactor.disable(Unit) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.TwoFactor.disable(Unit) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.generateRecoveryCodes() =
     serviceCatching {
-    CustomApi.Users.TwoFactor.recoveryCodes(Unit) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.TwoFactor.recoveryCodes(Unit) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getFileList(objectId: PrimaryKey, objectType: ObjectType, nextId: String?, size: Int) =
     serviceCatching {
@@ -520,8 +520,8 @@ suspend fun UserSessionManager.getMediaByName(word: String, objectId: PrimaryKey
 
 suspend fun UserSessionManager.getFileRefs(fileId: PrimaryKey, query: PaginationQuery) =
     serviceCatching {
-    CustomApi.Files.Id.Refs.get(query, CommonPath(fileId))
-}
+        CustomApi.Files.Id.Refs.get(query, CommonPath(fileId))
+    }
 
 data class UploadData(
     val size: Long,
@@ -614,32 +614,32 @@ suspend fun UserSessionManager.uploadChunk(
 
 suspend fun UserSessionManager.completeChunkUpload(recordId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Chunks.complete(
-        CommonPath(recordId),
-        Unit,
-    ) {
+        CustomApi.Files.Chunks.complete(
+            CommonPath(recordId),
+            Unit,
+        ) {
+        }
     }
-}
 
 suspend fun UserSessionManager.abortChunkUpload(recordId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Chunks.abort(
-        CommonPath(recordId),
-        Unit,
-    ) {
+        CustomApi.Files.Chunks.abort(
+            CommonPath(recordId),
+            Unit,
+        ) {
+        }
     }
-}
 
 suspend fun UserSessionManager.getChunkStatus(recordId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Chunks.status(CommonPath(recordId))
-}
+        CustomApi.Files.Chunks.status(CommonPath(recordId))
+    }
 
 suspend fun UserSessionManager.copy(mediaId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Id.copy(CommonPath(mediaId), Unit) {
+        CustomApi.Files.Id.copy(CommonPath(mediaId), Unit) {
+        }
     }
-}
 
 @OptIn(ExperimentalStdlibApi::class)
 suspend fun DefaultClientWebSocketSession.sendMessage(
@@ -668,59 +668,59 @@ suspend fun UserSessionManager.userTitles(
     scopeId: PrimaryKey? = null,
 ): CustomResult<ListResponse<TitleInfo>, RequestError> =
     serviceCatching {
-    CustomApi.Users.Id.Titles.get(
-        CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
-        CommonPath(uid),
-    )
-}.mapError(RequestError::fromError)
+        CustomApi.Users.Id.Titles.get(
+            CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
+            CommonPath(uid),
+        )
+    }.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.createTitle(newTitle: NewTitle) =
     serviceCatching {
-    CustomApi.Titles.add(newTitle) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Titles.add(newTitle) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.createCommunity(newCommunity: NewCommunity) =
     serviceCatching {
-    CustomApi.Communities.add(newCommunity) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Communities.add(newCommunity) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.createRoom(newRoom: NewRoom) =
     serviceCatching {
-    CustomApi.Rooms.add(newRoom) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Rooms.add(newRoom) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.pinTopic(topicId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Topics.Id.pin(CommonPath(topicId), Unit) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Topics.Id.pin(CommonPath(topicId), Unit) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.unpinTopic(topicId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Topics.Id.unpin(CommonPath(topicId), Unit) {
+        CustomApi.Topics.Id.unpin(CommonPath(topicId), Unit) {
+        }
     }
-}
 
 suspend fun UserSessionManager.updateCommunityInfo(id: PrimaryKey, newInfo: UpdateCommunityBody) =
     serviceCatching {
-    CustomApi.Communities.Id.update(CommonPath(id), newInfo) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Communities.Id.update(CommonPath(id), newInfo) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.updateRoomInfo(id: PrimaryKey, newInfo: UpdateRoomBody) =
     serviceCatching {
-    CustomApi.Rooms.Id.update(CommonPath(id), newInfo) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Rooms.Id.update(CommonPath(id), newInfo) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getTopicList(
     type: ObjectType,
@@ -737,32 +737,32 @@ suspend fun UserSessionManager.getTopicList(
 
 suspend fun UserSessionManager.addReadLog(info: UpdateUserRead): CustomResult<Unit, RequestError> =
     serviceCatching {
-    CustomApi.Users.Read.add(info) {
-        contentType(ContentType.Application.Json)
-    }
-}.mapError(RequestError::fromError)
+        CustomApi.Users.Read.add(info) {
+            contentType(ContentType.Application.Json)
+        }
+    }.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.addDevice(endpointUrl: String) =
     serviceCatching {
-    CustomApi.Users.Devices.add(NewDevice(endpointUrl)) {
-        contentType(ContentType.Application.Json)
+        CustomApi.Users.Devices.add(NewDevice(endpointUrl)) {
+            contentType(ContentType.Application.Json)
+        }
     }
-}
 
 suspend fun UserSessionManager.getReactionRecords(query: PaginationQuery) =
     serviceCatching {
-    CustomApi.Users.ReactionRecords.get(query)
-}
+        CustomApi.Users.ReactionRecords.get(query)
+    }
 
 suspend fun UserSessionManager.getComments(query: PaginationQuery) =
     serviceCatching {
-    CustomApi.Users.Comments.get(query)
-}
+        CustomApi.Users.Comments.get(query)
+    }
 
 suspend fun UserSessionManager.extractAlbum(mediaId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
-}
+        CustomApi.Files.Id.extractAlbum(CommonPath(mediaId), Unit) {}
+    }
 
 suspend fun UserSessionManager.addChildAccount(
     childAlgoType: com.storyteller_f.shared.model.AlgoType = com.storyteller_f.shared.model.AlgoType.P256,
@@ -781,96 +781,96 @@ suspend fun UserSessionManager.addChildAccount(
 
 suspend fun UserSessionManager.getChildAccounts(nextId: String?, size: Int) =
     serviceCatching {
-    CustomApi.Accounts.ChildAccounts.get(CustomApi.Accounts.ChildAccounts.ChildAccountQuery(nextId, size))
-}
+        CustomApi.Accounts.ChildAccounts.get(CustomApi.Accounts.ChildAccounts.ChildAccountQuery(nextId, size))
+    }
 
 suspend fun UserSessionManager.addFavorite(newFavorite: NewFavorite) =
     serviceCatching {
-    val commonPath = CommonPath(newFavorite.objectId)
-    when (newFavorite.objectType) {
-        USER -> CustomApi.Users.Id.Favorite.add(commonPath, Unit) {}
-        TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
-        COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
-        ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
-        ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.add(commonPath, Unit) {}
-        ObjectType.FILE -> CustomApi.Files.Id.Favorite.add(commonPath, Unit) {}
-        else -> throw IllegalArgumentException("Unsupported object type for favorite")
+        val commonPath = CommonPath(newFavorite.objectId)
+        when (newFavorite.objectType) {
+            USER -> CustomApi.Users.Id.Favorite.add(commonPath, Unit) {}
+            TOPIC -> CustomApi.Topics.Id.Favorite.add(commonPath, Unit) {}
+            COMMUNITY -> CustomApi.Communities.Id.Favorite.add(commonPath, Unit) {}
+            ROOM -> CustomApi.Rooms.Id.Favorite.add(commonPath, Unit) {}
+            ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.add(commonPath, Unit) {}
+            ObjectType.FILE -> CustomApi.Files.Id.Favorite.add(commonPath, Unit) {}
+            else -> throw IllegalArgumentException("Unsupported object type for favorite")
+        }
     }
-}
 
 suspend fun UserSessionManager.removeFavorite(objectId: PrimaryKey, objectType: ObjectType) =
     serviceCatching {
-    val commonPath = CommonPath(objectId)
-    when (objectType) {
-        USER -> CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {}
-        TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
-        COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
-        ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
-        ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.delete(commonPath, Unit) {}
-        ObjectType.FILE -> CustomApi.Files.Id.Favorite.delete(commonPath, Unit) {}
-        else -> throw IllegalArgumentException("Unsupported object type for favorite")
+        val commonPath = CommonPath(objectId)
+        when (objectType) {
+            USER -> CustomApi.Users.Id.Favorite.delete(commonPath, Unit) {}
+            TOPIC -> CustomApi.Topics.Id.Favorite.delete(commonPath, Unit) {}
+            COMMUNITY -> CustomApi.Communities.Id.Favorite.delete(commonPath, Unit) {}
+            ROOM -> CustomApi.Rooms.Id.Favorite.delete(commonPath, Unit) {}
+            ObjectType.TITLE -> CustomApi.Titles.Id.Favorite.delete(commonPath, Unit) {}
+            ObjectType.FILE -> CustomApi.Files.Id.Favorite.delete(commonPath, Unit) {}
+            else -> throw IllegalArgumentException("Unsupported object type for favorite")
+        }
     }
-}
 
 suspend fun UserSessionManager.getFavorites(paginationQuery: PaginationQuery) =
     serviceCatching {
-    CustomApi.Users.Favorites.get(paginationQuery)
-}
+        CustomApi.Users.Favorites.get(paginationQuery)
+    }
 
 suspend fun UserSessionManager.addSubscription(newFavorite: NewSubscription) =
     serviceCatching {
-    val commonPath = CommonPath(newFavorite.objectId)
-    when (newFavorite.objectType) {
-        USER -> CustomApi.Users.Id.Subscription.add(commonPath, Unit) {}
-        TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
-        COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
-        ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
-        ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.add(commonPath, Unit) {}
-        ObjectType.FILE -> CustomApi.Files.Id.Subscription.add(commonPath, Unit) {}
-        else -> throw IllegalArgumentException("Unsupported object type for subscription")
+        val commonPath = CommonPath(newFavorite.objectId)
+        when (newFavorite.objectType) {
+            USER -> CustomApi.Users.Id.Subscription.add(commonPath, Unit) {}
+            TOPIC -> CustomApi.Topics.Id.Subscription.add(commonPath, Unit) {}
+            COMMUNITY -> CustomApi.Communities.Id.Subscription.add(commonPath, Unit) {}
+            ROOM -> CustomApi.Rooms.Id.Subscription.add(commonPath, Unit) {}
+            ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.add(commonPath, Unit) {}
+            ObjectType.FILE -> CustomApi.Files.Id.Subscription.add(commonPath, Unit) {}
+            else -> throw IllegalArgumentException("Unsupported object type for subscription")
+        }
     }
-}
 
 suspend fun UserSessionManager.removeSubscription(objectId: PrimaryKey, objectType: ObjectType) =
     serviceCatching {
-    val commonPath = CommonPath(objectId)
-    when (objectType) {
-        USER -> CustomApi.Users.Id.Subscription.delete(commonPath, Unit) {}
-        TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
-        COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
-        ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
-        ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.delete(commonPath, Unit) {}
-        ObjectType.FILE -> CustomApi.Files.Id.Subscription.delete(commonPath, Unit) {}
-        else -> throw IllegalArgumentException("Unsupported object type for subscription")
+        val commonPath = CommonPath(objectId)
+        when (objectType) {
+            USER -> CustomApi.Users.Id.Subscription.delete(commonPath, Unit) {}
+            TOPIC -> CustomApi.Topics.Id.Subscription.delete(commonPath, Unit) {}
+            COMMUNITY -> CustomApi.Communities.Id.Subscription.delete(commonPath, Unit) {}
+            ROOM -> CustomApi.Rooms.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.TITLE -> CustomApi.Titles.Id.Subscription.delete(commonPath, Unit) {}
+            ObjectType.FILE -> CustomApi.Files.Id.Subscription.delete(commonPath, Unit) {}
+            else -> throw IllegalArgumentException("Unsupported object type for subscription")
+        }
     }
-}
 
 suspend fun UserSessionManager.getSubscriptions(paginationQuery: PaginationQuery) =
     serviceCatching {
-    CustomApi.Users.Subscriptions.get(paginationQuery)
-}
+        CustomApi.Users.Subscriptions.get(paginationQuery)
+    }
 
 suspend fun UserSessionManager.getUserOverview() =
     serviceCatching {
-    CustomApi.Users.overview()
-}
+        CustomApi.Users.overview()
+    }
 suspend fun UserSessionManager.getQuotaInfo(
     objectTuple: ObjectTuple,
     quotaType: QuotaType = QuotaType.FILE,
 ): CustomResult<QuotaInfo, RequestError> =
     serviceCatching {
-    CustomApi.Files.quota(CustomApi.Files.QuotaQuery(objectTuple.objectId, objectTuple.objectType, quotaType))
-}.mapError(RequestError::fromError)
+        CustomApi.Files.quota(CustomApi.Files.QuotaQuery(objectTuple.objectId, objectTuple.objectType, quotaType))
+    }.mapError(RequestError::fromError)
 
 suspend fun UserSessionManager.getFileInfo(fileId: PrimaryKey) =
     serviceCatching {
-    CustomApi.Files.Id.get(CommonPath(fileId))
-}
+        CustomApi.Files.Id.get(CommonPath(fileId))
+    }
 
 suspend fun UserSessionManager.hasUnreadRooms(): CustomResult<UnreadRoomsResponse, RequestError> =
     serviceCatching {
-    CustomApi.Users.Unread.hasUnreadRooms()
-}.mapError(RequestError::fromError)
+        CustomApi.Users.Unread.hasUnreadRooms()
+    }.mapError(RequestError::fromError)
 
 internal class SessionIdentityChangedException : Exception("Login identity changed; explicit sign-in is required")
 

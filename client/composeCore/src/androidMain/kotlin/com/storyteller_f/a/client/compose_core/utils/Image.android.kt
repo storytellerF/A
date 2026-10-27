@@ -23,8 +23,8 @@ import kotlinx.io.files.SystemTemporaryDirectory
 
 actual fun Image.coilImageToImageBitmap(): CustomResult<ImageBitmap, ImageError> =
     captureFailure(
-    ImageError::from,
-) { toBitmap().asImageBitmap() }
+        ImageError::from,
+    ) { toBitmap().asImageBitmap() }
 
 actual fun saveImageBitmap(
     imageBitmap: ImageBitmap,
@@ -33,26 +33,26 @@ actual fun saveImageBitmap(
     quality: Int,
 ): CustomResult<Path, ImageError> =
     captureFailure(ImageError::from) {
-    val path = Path(SystemTemporaryDirectory, path)
-    path.safeSink().buffered().asOutputStream().use { outputStream ->
-        imageBitmap.asAndroidBitmap().compress(
-            when (format) {
-                ImageFormat.PNG -> Bitmap.CompressFormat.PNG
+        val path = Path(SystemTemporaryDirectory, path)
+        path.safeSink().buffered().asOutputStream().use { outputStream ->
+            imageBitmap.asAndroidBitmap().compress(
+                when (format) {
+                    ImageFormat.PNG -> Bitmap.CompressFormat.PNG
 
-                ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
+                    ImageFormat.JPEG -> Bitmap.CompressFormat.JPEG
 
-                ImageFormat.WEBP ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        Bitmap.CompressFormat.WEBP_LOSSY
-                    } else {
-                        Bitmap.CompressFormat.PNG
-                    }
-            },
-            quality,
-            outputStream,
-        )
+                    ImageFormat.WEBP ->
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            Bitmap.CompressFormat.WEBP_LOSSY
+                        } else {
+                            Bitmap.CompressFormat.PNG
+                        }
+                },
+                quality,
+                outputStream,
+            )
+        }
+        path
     }
-    path
-}
 
 actual fun ImageRequest.Builder.androidAllowHardware(b: Boolean): ImageRequest.Builder = allowHardware(b)

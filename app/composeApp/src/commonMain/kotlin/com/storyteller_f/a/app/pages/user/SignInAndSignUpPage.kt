@@ -121,43 +121,43 @@ private fun SignInNavDisplay(backStack: NavBackStack<NavKey>, nav: SignInAndSign
 
 private fun buildSignInAndSignUpNav(backStack: NavBackStack<NavKey>) =
     object : SignInAndSignUpNav {
-    override fun gotoPrivateKey(isSignUp: Boolean) {
-        val target = if (isSignUp) SignUpInput else SignInInput
-        val i = backStack.indexOf(target)
-        if (i >= 0) {
-            repeat(backStack.size - i - 1) {
-                backStack.removeLastOrNull()
+        override fun gotoPrivateKey(isSignUp: Boolean) {
+            val target = if (isSignUp) SignUpInput else SignInInput
+            val i = backStack.indexOf(target)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+            if (backStack.last() != target) {
+                backStack.add(target)
             }
         }
-        if (backStack.last() != target) {
-            backStack.add(target)
-        }
-    }
 
-    override fun gotoSignUp() {
-        val i = backStack.indexOf(SignUp)
-        if (i >= 0) {
-            repeat(backStack.size - i - 1) {
-                backStack.removeLastOrNull()
+        override fun gotoSignUp() {
+            val i = backStack.indexOf(SignUp)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+            if (backStack.last() !is SignUp) {
+                backStack.add(SignUp)
             }
         }
-        if (backStack.last() !is SignUp) {
-            backStack.add(SignUp)
-        }
-    }
 
-    override fun gotoSignIn() {
-        val i = backStack.indexOf(SignIn)
-        if (i >= 0) {
-            repeat(backStack.size - i - 1) {
-                backStack.removeLastOrNull()
+        override fun gotoSignIn() {
+            val i = backStack.indexOf(SignIn)
+            if (i >= 0) {
+                repeat(backStack.size - i - 1) {
+                    backStack.removeLastOrNull()
+                }
+            }
+            if (backStack.last() !is SignIn) {
+                backStack.add(SignIn)
             }
         }
-        if (backStack.last() !is SignIn) {
-            backStack.add(SignIn)
-        }
     }
-}
 
 interface SignInAndSignUpNav {
     fun gotoPrivateKey(isSignUp: Boolean)

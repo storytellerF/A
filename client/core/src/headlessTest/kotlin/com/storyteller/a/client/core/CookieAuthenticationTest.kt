@@ -29,12 +29,12 @@ internal class CookieAuthenticationTest {
     @Test
     fun unauthorizedOperationIsNotReplayedOrSigned() =
         runTest {
-        var requests = 0
-        val model = PanelSessionModel()
-        val pass = ConstPassHolder(null)
-        val cookies = AcceptAllCookiesStorage()
-        cookies.addCookie(
-            Url("https://api.example.test/admin"),
+            var requests = 0
+            val model = PanelSessionModel()
+            val pass = ConstPassHolder(null)
+            val cookies = AcceptAllCookiesStorage()
+            cookies.addCookie(
+                Url("https://api.example.test/admin"),
                 Cookie(
                     "panel_session",
                     "opaque-credential",
@@ -42,25 +42,25 @@ internal class CookieAuthenticationTest {
                     path = "/admin",
                     secure = true,
                 ),
-        )
-        val engine =
-            MockEngine { request ->
-                requests++
-                assertNull(request.headers[HttpHeaders.Authorization])
-                assertTrue(request.headers[HttpHeaders.Cookie].orEmpty().contains("panel_session="))
-                respond(
-                    "Unauthorized",
-                    HttpStatusCode.Unauthorized,
-                    headersOf(HttpHeaders.WWWAuthenticate, "Custom challenge"),
-                )
+            )
+            val engine =
+                MockEngine { request ->
+                    requests++
+                    assertNull(request.headers[HttpHeaders.Authorization])
+                    assertTrue(request.headers[HttpHeaders.Cookie].orEmpty().contains("panel_session="))
+                    respond(
+                        "Unauthorized",
+                        HttpStatusCode.Unauthorized,
+                        headersOf(HttpHeaders.WWWAuthenticate, "Custom challenge"),
+                    )
+                }
+            HttpClient(engine) {
+                defaultClientConfigureForPanel(cookies, model, "https://api.example.test")
+            }.use { client ->
+                val manager = SimplePanelSessionManager(client, model, cookies, pass)
+                assertTrue(manager.serviceCatching { post("https://api.example.test/admin/action") }.isFailure)
+                assertEquals(1, requests)
+                assertTrue(model.sessionExpired.value)
             }
-        HttpClient(engine) {
-            defaultClientConfigureForPanel(cookies, model, "https://api.example.test")
-        }.use { client ->
-            val manager = SimplePanelSessionManager(client, model, cookies, pass)
-            assertTrue(manager.serviceCatching { post("https://api.example.test/admin/action") }.isFailure)
-            assertEquals(1, requests)
-            assertTrue(model.sessionExpired.value)
         }
-    }
 }

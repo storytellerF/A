@@ -110,21 +110,21 @@ internal class DesktopVideoHost(
 
     private suspend fun receiveEvents(player: DesktopVideoPlayer, worker: CoroutineDispatcher) =
         coroutineScope {
-        mutableState.value = DesktopVideoState.Ready()
-        launch {
-            for (frame in frames) {
-                val current = mutableState.value
-                if (current is DesktopVideoState.Ready) mutableState.value = current.copy(frame = frame)
+            mutableState.value = DesktopVideoState.Ready()
+            launch {
+                for (frame in frames) {
+                    val current = mutableState.value
+                    if (current is DesktopVideoState.Ready) mutableState.value = current.copy(frame = frame)
+                }
+            }
+            for (event in events) {
+                when (event) {
+                    Event.Play -> withContext(worker) { player.play() }
+                    Event.Pause -> withContext(worker) { player.pause() }
+                    is Event.Playback -> publishPlayback(event.value, player, worker)
+                }
             }
         }
-        for (event in events) {
-            when (event) {
-                Event.Play -> withContext(worker) { player.play() }
-                Event.Pause -> withContext(worker) { player.pause() }
-                is Event.Playback -> publishPlayback(event.value, player, worker)
-            }
-        }
-    }
 
     private suspend fun publishPlayback(
         playback: DesktopPlayback,

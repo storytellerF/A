@@ -81,11 +81,11 @@ internal fun usesDesktopArgumentFile(
 
 internal fun resolveDesktopJava(platform: DesktopTestPlatform): String =
     System.getenv("APP_DESKTOP_TEST_JAVA")
-    ?: File(
-        System.getProperty("java.home"),
-        "bin/${if (platform == DesktopTestPlatform.Windows) "javaw.exe" else "java"}",
-    )
-        .canonicalPath
+        ?: File(
+            System.getProperty("java.home"),
+            "bin/${if (platform == DesktopTestPlatform.Windows) "javaw.exe" else "java"}",
+        )
+            .canonicalPath
 
 internal fun buildJavaArgumentFile(arguments: List<String>): String =
     arguments.joinToString("\n", postfix = "\n") { argument ->
@@ -146,20 +146,20 @@ internal fun buildMacLauncherConfig(arguments: List<String>, javaHome: String): 
 /** Ad-hoc signing seals the generated bundle; it packages existing native code without compiling it. */
 internal suspend fun signDesktopMacBundle(bundle: File) =
     withContext(Dispatchers.IO) {
-    val log = File(bundle.parentFile, "${bundle.nameWithoutExtension}.codesign.log")
-    val process =
-        ProcessBuilder("/usr/bin/codesign", "--force", "--sign", "-", bundle.canonicalPath)
-            .redirectErrorStream(true)
-            .redirectOutput(log)
-            .start()
-    try {
-        check(withTimeout(30_000L) { process.onExit().await().exitValue() } == 0) {
-            "Desktop bundle signing failed: ${log.readText()}"
+        val log = File(bundle.parentFile, "${bundle.nameWithoutExtension}.codesign.log")
+        val process =
+            ProcessBuilder("/usr/bin/codesign", "--force", "--sign", "-", bundle.canonicalPath)
+                .redirectErrorStream(true)
+                .redirectOutput(log)
+                .start()
+        try {
+            check(withTimeout(30_000L) { process.onExit().await().exitValue() } == 0) {
+                "Desktop bundle signing failed: ${log.readText()}"
+            }
+        } finally {
+            if (process.isAlive) {
+                withContext(NonCancellable) { process.destroyForcibly().onExit().await() }
+            }
+            log.delete()
         }
-    } finally {
-        if (process.isAlive) {
-            withContext(NonCancellable) { process.destroyForcibly().onExit().await() }
-        }
-        log.delete()
     }
-}

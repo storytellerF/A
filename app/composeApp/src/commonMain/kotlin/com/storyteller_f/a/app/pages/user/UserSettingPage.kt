@@ -240,11 +240,11 @@ private fun getRatio(currentOption: SettingOption?): AspectRatio {
 
 private fun showFilePicker(currentOption: SettingOption?): Boolean =
     currentOption is SettingOption.Icon ||
-    currentOption is SettingOption.Poster ||
-    currentOption is SettingOption.RoomIcon ||
-    currentOption is SettingOption.ContentFont ||
-    currentOption is SettingOption.CodeFont ||
-    currentOption is SettingOption.FallbackFont
+        currentOption is SettingOption.Poster ||
+        currentOption is SettingOption.RoomIcon ||
+        currentOption is SettingOption.ContentFont ||
+        currentOption is SettingOption.CodeFont ||
+        currentOption is SettingOption.FallbackFont
 
 private fun processSelectedMedia(mediaList: List<FileInfo>, ratio: AspectRatio, context: SelectedMediaContext) {
     val info = mediaList.first()

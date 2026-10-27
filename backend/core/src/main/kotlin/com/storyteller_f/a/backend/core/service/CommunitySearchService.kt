@@ -18,11 +18,11 @@ data class CommunityDocument(override val id: PrimaryKey, val name: String, val 
     companion object {
         fun fromCommunity(community: Community): CommunityDocument =
             CommunityDocument(
-            community.id,
-            community.name,
-            community.aid,
-            community.owner,
-        )
+                community.id,
+                community.name,
+                community.aid,
+                community.owner,
+            )
     }
 }
 

@@ -67,367 +67,367 @@ class RoomTest {
     @Test
     fun `anonymous joined room detail requires login`() =
         test(mapOf("DISABLE_TEST_WS" to "true")) {
-        val objectId =
-            attachSession {
-                createPublicRoomForTest(
-                    createCommunityForTest().id,
-                    "room",
-                    "Room",
-                ).id
-            }.custom
-        noneSession {
-            val failure =
-                assertFailsWith<ServerErrorException> {
-                    client.get("/rooms/$objectId?fillJoinInfo=true").body<RoomInfo>()
-                }
-            assertEquals(HttpStatusCode.Unauthorized, failure.status)
+            val objectId =
+                attachSession {
+                    createPublicRoomForTest(
+                        createCommunityForTest().id,
+                        "room",
+                        "Room",
+                    ).id
+                }.custom
+            noneSession {
+                val failure =
+                    assertFailsWith<ServerErrorException> {
+                        client.get("/rooms/$objectId?fillJoinInfo=true").body<RoomInfo>()
+                    }
+                assertEquals(HttpStatusCode.Unauthorized, failure.status)
+            }
         }
-    }
 
     @Test
     fun `test notification room is readable but cannot send`() =
         test(mapOf("DISABLE_TEST_WS" to "true")) {
-        val sender = attachSession()
-        val recipient =
-            attachSession {
-                val user =
-                    requireNotNull(
-                        workerBackend.database.user.getRawUser(ObjectFetch.IdFetch(it.uid)).getOrThrow(),
-                    ).user
-                val room =
-                    workerBackend.database.room.createRoom(
-                        buildUserNotificationRoom(user, sender.uid),
-                        buildMemberForNotificationRoom(user, sender.uid),
-                    ).getOrThrow()
-                val info = getRoomInfo(room.id).getOrThrow()
-                assertTrue(!info.isJoined)
-                assertFails {
-                    createTopic(ObjectType.ROOM, room.id, "Notification reply").getOrThrow()
+            val sender = attachSession()
+            val recipient =
+                attachSession {
+                    val user =
+                        requireNotNull(
+                            workerBackend.database.user.getRawUser(ObjectFetch.IdFetch(it.uid)).getOrThrow(),
+                        ).user
+                    val room =
+                        workerBackend.database.room.createRoom(
+                            buildUserNotificationRoom(user, sender.uid),
+                            buildMemberForNotificationRoom(user, sender.uid),
+                        ).getOrThrow()
+                    val info = getRoomInfo(room.id).getOrThrow()
+                    assertTrue(!info.isJoined)
+                    assertFails {
+                        createTopic(ObjectType.ROOM, room.id, "Notification reply").getOrThrow()
+                    }
+                    room.id
                 }
-                room.id
-            }
-        assertNotNull(workerBackend.checkRoomWritePermission(recipient.custom, sender.uid).getOrThrow())
-    }
+            assertNotNull(workerBackend.checkRoomWritePermission(recipient.custom, sender.uid).getOrThrow())
+        }
 
     @Test
     fun `get room by id`() =
         test {
-        val roomId =
-            attachSession {
-                val id = createCommunityForTest().id
-                createPublicRoomForTest(id, "r1", "name1").id
-            }.custom
-        noneSession {
-            assertEquals(1, getRoomInfo(roomId).getOrThrow().memberCount)
+            val roomId =
+                attachSession {
+                    val id = createCommunityForTest().id
+                    createPublicRoomForTest(id, "r1", "name1").id
+                }.custom
+            noneSession {
+                assertEquals(1, getRoomInfo(roomId).getOrThrow().memberCount)
+            }
         }
-    }
 
     @Test
     fun `get room by aid`() =
         test {
-        val roomId =
-            attachSession {
-                val id = createCommunityForTest().id
-                createPublicRoomForTest(id, "r1", "name1").id
-            }.custom
-        noneSession {
-            assertEquals(roomId, getRoomInfoByAid("r1").getOrThrow().id)
+            val roomId =
+                attachSession {
+                    val id = createCommunityForTest().id
+                    createPublicRoomForTest(id, "r1", "name1").id
+                }.custom
+            noneSession {
+                assertEquals(roomId, getRoomInfoByAid("r1").getOrThrow().id)
+            }
         }
-    }
 
     @Test
     fun `test joined private room count`() =
         test {
-        val firstTuple =
-            attachSession {
-                createPrivateRoomForTest().id
-            }
-        val privateRoomId = firstTuple.custom
-        val secondTuple =
-            attachSession {
-                assertFails {
-                    joinRoom(privateRoomId).getOrThrow()
+            val firstTuple =
+                attachSession {
+                    createPrivateRoomForTest().id
                 }
+            val privateRoomId = firstTuple.custom
+            val secondTuple =
+                attachSession {
+                    assertFails {
+                        joinRoom(privateRoomId).getOrThrow()
+                    }
+                }
+            loginSession(firstTuple) {
+                createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
             }
-        loginSession(firstTuple) {
-            createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
+            loginSession(secondTuple) {
+                joinRoom(privateRoomId).getOrThrow()
+                expectedRoomCountForJoinedRoomList(1)
+            }
         }
-        loginSession(secondTuple) {
-            joinRoom(privateRoomId).getOrThrow()
-            expectedRoomCountForJoinedRoomList(1)
-        }
-    }
 
     @Test
     fun `joining public room updates joined list`() =
         test {
-        val (communityId, rooms) = createCommunityRooms()
-        val (publicRoom1Id, _) = rooms
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCountForJoinedRoomList(1)
+            val (communityId, rooms) = createCommunityRooms()
+            val (publicRoom1Id, _) = rooms
+            attachSession {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoom1Id).getOrThrow()
+                expectedRoomCountForJoinedRoomList(1)
+            }
         }
-    }
 
     @Test
     fun `joining room preserves community room list`() =
         test {
-        val (communityId, rooms) = createCommunityRooms()
-        val (publicRoom1Id, _) = rooms
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
+            val (communityId, rooms) = createCommunityRooms()
+            val (publicRoom1Id, _) = rooms
+            attachSession {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoom1Id).getOrThrow()
+                expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
+            }
         }
-    }
 
     @Test
     fun `exiting room removes only its membership`() =
         test {
-        val (communityId, rooms) = createCommunityRooms()
-        val (publicRoom1Id, publicRoom2Id) = rooms
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoom1Id).getOrThrow()
-            joinRoom(publicRoom2Id).getOrThrow()
-            exitRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCountForJoinedRoomList(1)
-            expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
+            val (communityId, rooms) = createCommunityRooms()
+            val (publicRoom1Id, publicRoom2Id) = rooms
+            attachSession {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoom1Id).getOrThrow()
+                joinRoom(publicRoom2Id).getOrThrow()
+                exitRoom(publicRoom1Id).getOrThrow()
+                expectedRoomCountForJoinedRoomList(1)
+                expectedRoomCountForCommunityRoomList(2, communityId, JoinStatusSearch.UNSPECIFIED)
+            }
         }
-    }
 
     @Test
     fun `exiting room twice is idempotent`() =
         test {
-        val (communityId, rooms) = createCommunityRooms()
-        val (publicRoom1Id, publicRoom2Id) = rooms
-        attachSession {
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoom1Id).getOrThrow()
-            joinRoom(publicRoom2Id).getOrThrow()
-            exitRoom(publicRoom1Id).getOrThrow()
-            exitRoom(publicRoom1Id).getOrThrow()
-            expectedRoomCountForJoinedRoomList(1)
+            val (communityId, rooms) = createCommunityRooms()
+            val (publicRoom1Id, publicRoom2Id) = rooms
+            attachSession {
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoom1Id).getOrThrow()
+                joinRoom(publicRoom2Id).getOrThrow()
+                exitRoom(publicRoom1Id).getOrThrow()
+                exitRoom(publicRoom1Id).getOrThrow()
+                expectedRoomCountForJoinedRoomList(1)
+            }
         }
-    }
 
     private suspend fun TestMate.createCommunityRooms(): Pair<PrimaryKey, List<PrimaryKey>> =
         attachSession {
-        val communityId = createCommunityForTest().id
-        val first = createPublicRoomForTest(communityId, "r1", "name1").id
-        val second = createPublicRoomForTest(communityId, "r2", "name2").id
-        communityId to listOf(first, second)
-    }.custom
+            val communityId = createCommunityForTest().id
+            val first = createPublicRoomForTest(communityId, "r1", "name1").id
+            val second = createPublicRoomForTest(communityId, "r2", "name2").id
+            communityId to listOf(first, second)
+        }.custom
 
     @Test
     fun `test private room join`() =
         test {
-        val sessionOuterTuple =
-            attachSession {
-                createPrivateRoomForTest().id
-            }
-        val privateRoomId = sessionOuterTuple.custom
-        val secondTuple =
-            attachSession {
-                assertFails {
-                    joinRoom(privateRoomId).getOrThrow()
+            val sessionOuterTuple =
+                attachSession {
+                    createPrivateRoomForTest().id
                 }
+            val privateRoomId = sessionOuterTuple.custom
+            val secondTuple =
+                attachSession {
+                    assertFails {
+                        joinRoom(privateRoomId).getOrThrow()
+                    }
+                }
+            loginSession(sessionOuterTuple) {
+                createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
             }
-        loginSession(sessionOuterTuple) {
-            createJoinRoomTitleForTest(privateRoomId, secondTuple.uid)
+            loginSession(secondTuple) {
+                joinRoom(privateRoomId).getOrThrow()
+                assertListSize(2, searchRoomMembers(privateRoomId, null, 10, ""))
+            }
         }
-        loginSession(secondTuple) {
-            joinRoom(privateRoomId).getOrThrow()
-            assertListSize(2, searchRoomMembers(privateRoomId, null, 10, ""))
-        }
-    }
 
     @Test
     fun `test expired private room join title cannot join`() =
         test {
-        val user1 =
-            attachSession {
-                createPrivateRoomForTest().id
-            }
-        val privateRoomId = user1.custom
+            val user1 =
+                attachSession {
+                    createPrivateRoomForTest().id
+                }
+            val privateRoomId = user1.custom
 
-        val user2 =
-            attachSession {
+            val user2 =
+                attachSession {
+                    assertFails {
+                        joinRoom(privateRoomId).getOrThrow()
+                    }
+                }
+            loginSession(user1) {
+                createTitle(
+                    NewTitle(
+                        "join-expired",
+                        TitleType.JOIN,
+                        user2.uid,
+                        privateRoomId,
+                        ObjectType.ROOM,
+                        "expired invite",
+                        LocalDateTime.parse("2000-01-01T00:00:00"),
+                    ),
+                ).getOrThrow()
+            }
+            loginSession(user2) {
                 assertFails {
                     joinRoom(privateRoomId).getOrThrow()
                 }
             }
-        loginSession(user1) {
-            createTitle(
-                NewTitle(
-                    "join-expired",
-                    TitleType.JOIN,
-                    user2.uid,
-                    privateRoomId,
-                    ObjectType.ROOM,
-                    "expired invite",
-                    LocalDateTime.parse("2000-01-01T00:00:00"),
-                ),
-            ).getOrThrow()
         }
-        loginSession(user2) {
-            assertFails {
-                joinRoom(privateRoomId).getOrThrow()
-            }
-        }
-    }
 
     @Test
     fun `test public room join`() =
         test {
-        val sessionOuterTuple =
+            val sessionOuterTuple =
+                attachSession {
+                    val communityId = createCommunityForTest().id
+                    val publicRoomId = createPublicRoomForTest(communityId, "r1", "name1").id
+                    communityId to publicRoomId
+                }
+            val communityId = sessionOuterTuple.custom.first
+            val publicRoomId = sessionOuterTuple.custom.second
             attachSession {
-                val communityId = createCommunityForTest().id
-                val publicRoomId = createPublicRoomForTest(communityId, "r1", "name1").id
-                communityId to publicRoomId
-            }
-        val communityId = sessionOuterTuple.custom.first
-        val publicRoomId = sessionOuterTuple.custom.second
-        attachSession {
-            assertFails {
+                assertFails {
+                    joinRoom(publicRoomId).getOrThrow()
+                }
+                joinCommunity(communityId).getOrThrow()
+                joinRoom(publicRoomId).getOrThrow()
+                // 检查幂等
                 joinRoom(publicRoomId).getOrThrow()
             }
-            joinCommunity(communityId).getOrThrow()
-            joinRoom(publicRoomId).getOrThrow()
-            // 检查幂等
-            joinRoom(publicRoomId).getOrThrow()
         }
-    }
 
     @Test
     fun `test update room`() =
         test {
-        attachSession {
-            val id = createCommunityForTest().id
-            val roomId = createPublicRoomForTest(id, "r1", "name1").id
-            updateRoomInfo(roomId, UpdateRoomBody("new-name")).getOrThrow()
-            assertEquals("new-name", getRoomInfo(roomId).getOrThrow().name)
+            attachSession {
+                val id = createCommunityForTest().id
+                val roomId = createPublicRoomForTest(id, "r1", "name1").id
+                updateRoomInfo(roomId, UpdateRoomBody("new-name")).getOrThrow()
+                assertEquals("new-name", getRoomInfo(roomId).getOrThrow().name)
+            }
         }
-    }
 
     @Test
     fun `test rtc`() =
         test {
-        val firstUser = attachSession()
-        val secondUser =
-            attachSession {
-                val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
-                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-                roomInfo
+            val firstUser = attachSession()
+            val secondUser =
+                attachSession {
+                    val roomInfo = createRoom(NewRoom("test-rtc", "rtc")).getOrThrow()
+                    createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                    roomInfo
+                }
+            loginSession(firstUser) {
+                joinRoom(secondUser.custom.id).getOrThrow()
             }
-        loginSession(firstUser) {
-            joinRoom(secondUser.custom.id).getOrThrow()
-        }
-        val list = CopyOnWriteArrayList<RoomFrame>()
-        coroutineScope {
-            launch {
-                loginSession(secondUser, { frame, _, session ->
-                    list.add(frame)
-                    processRTCMessage(frame, session)
-                }) {
-                    waitAndSend {
-                        sendFrame(RoomFrame.StartCall(secondUser.custom.id))
+            val list = CopyOnWriteArrayList<RoomFrame>()
+            coroutineScope {
+                launch {
+                    loginSession(secondUser, { frame, _, session ->
+                        list.add(frame)
+                        processRTCMessage(frame, session)
+                    }) {
+                        waitAndSend {
+                            sendFrame(RoomFrame.StartCall(secondUser.custom.id))
+                        }
+                        waitRTCAnswer(list)
                     }
-                    waitRTCAnswer(list)
+                }
+                launch {
+                    loginSession(firstUser, { frame, _, session ->
+                        list.add(frame)
+                        processRTCMessage(frame, session)
+                    }) {
+                        waitAndSend {
+                            sendFrame(RoomFrame.StartCall(secondUser.custom.id))
+                        }
+                        waitRTCAnswer(list)
+                    }
                 }
             }
-            launch {
-                loginSession(firstUser, { frame, _, session ->
-                    list.add(frame)
-                    processRTCMessage(frame, session)
-                }) {
-                    waitAndSend {
-                        sendFrame(RoomFrame.StartCall(secondUser.custom.id))
-                    }
-                    waitRTCAnswer(list)
-                }
-            }
         }
-    }
 
     @Test
     fun `test rtc multi user`() =
         test {
-        rtcSession.clear()
-        val firstUser = attachSession()
-        val thirdUser = attachSession()
-        val secondUser =
-            attachSession {
-                val roomInfo = createRoom(NewRoom("test-rtc-multi", "rtc-multi")).getOrThrow()
-                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-                createJoinRoomTitleForTest(roomInfo.id, thirdUser.uid)
-                roomInfo
+            rtcSession.clear()
+            val firstUser = attachSession()
+            val thirdUser = attachSession()
+            val secondUser =
+                attachSession {
+                    val roomInfo = createRoom(NewRoom("test-rtc-multi", "rtc-multi")).getOrThrow()
+                    createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                    createJoinRoomTitleForTest(roomInfo.id, thirdUser.uid)
+                    roomInfo
+                }
+            loginSession(firstUser) {
+                joinRoom(secondUser.custom.id).getOrThrow()
             }
-        loginSession(firstUser) {
-            joinRoom(secondUser.custom.id).getOrThrow()
-        }
-        loginSession(thirdUser) {
-            joinRoom(secondUser.custom.id).getOrThrow()
-        }
+            loginSession(thirdUser) {
+                joinRoom(secondUser.custom.id).getOrThrow()
+            }
 
-        val roomId = secondUser.custom.id
-        val list = runRtcCalls(roomId, secondUser, firstUser, thirdUser)
+            val roomId = secondUser.custom.id
+            val list = runRtcCalls(roomId, secondUser, firstUser, thirdUser)
 
-        assertTrue(list.count { it is RoomFrame.CreateAnswer } >= 3)
-        assertTrue(list.count { it is RoomFrame.RespondAnswer } >= 3)
-    }
+            assertTrue(list.count { it is RoomFrame.CreateAnswer } >= 3)
+            assertTrue(list.count { it is RoomFrame.RespondAnswer } >= 3)
+        }
 
     @Test
     fun `test rtc mute state sync`() =
         test {
-        rtcSession.clear()
-        val firstUser = attachSession()
-        val secondUser =
-            attachSession {
-                val roomInfo = createRoom(NewRoom("test-rtc-mute", "rtc-mute")).getOrThrow()
-                createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
-                roomInfo
+            rtcSession.clear()
+            val firstUser = attachSession()
+            val secondUser =
+                attachSession {
+                    val roomInfo = createRoom(NewRoom("test-rtc-mute", "rtc-mute")).getOrThrow()
+                    createJoinRoomTitleForTest(roomInfo.id, firstUser.uid)
+                    roomInfo
+                }
+            loginSession(firstUser) {
+                joinRoom(secondUser.custom.id).getOrThrow()
             }
-        loginSession(firstUser) {
-            joinRoom(secondUser.custom.id).getOrThrow()
-        }
 
-        val roomId = secondUser.custom.id
-        val list = CopyOnWriteArrayList<RoomFrame>()
-        coroutineScope {
-            launch {
-                loginSession(secondUser, { frame, _, session ->
-                    list.add(frame)
-                    processRTCMessage(frame, session)
-                }) {
-                    waitAndSend {
-                        sendFrame(RoomFrame.StartCall(roomId))
-                    }
-                    waitRTCAnswer(list)
-                    waitAndSend {
-                        sendFrame(RoomFrame.UpdateCallMediaState(roomId, audioMuted = true, videoMuted = false))
-                    }
-                    waitForRtcFrame(list) { frame ->
-                        frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+            val roomId = secondUser.custom.id
+            val list = CopyOnWriteArrayList<RoomFrame>()
+            coroutineScope {
+                launch {
+                    loginSession(secondUser, { frame, _, session ->
+                        list.add(frame)
+                        processRTCMessage(frame, session)
+                    }) {
+                        waitAndSend {
+                            sendFrame(RoomFrame.StartCall(roomId))
+                        }
+                        waitRTCAnswer(list)
+                        waitAndSend {
+                            sendFrame(RoomFrame.UpdateCallMediaState(roomId, audioMuted = true, videoMuted = false))
+                        }
+                        waitForRtcFrame(list) { frame ->
+                            frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+                        }
                     }
                 }
-            }
-            launch {
-                loginSession(firstUser, { frame, _, session ->
-                    list.add(frame)
-                    processRTCMessage(frame, session)
-                }) {
-                    waitAndSend {
-                        sendFrame(RoomFrame.StartCall(roomId))
-                    }
-                    waitForRtcFrame(list) { frame ->
-                        frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+                launch {
+                    loginSession(firstUser, { frame, _, session ->
+                        list.add(frame)
+                        processRTCMessage(frame, session)
+                    }) {
+                        waitAndSend {
+                            sendFrame(RoomFrame.StartCall(roomId))
+                        }
+                        waitForRtcFrame(list) { frame ->
+                            frame is RoomFrame.PeerMediaState && frame.uid == secondUser.uid && frame.audioMuted
+                        }
                     }
                 }
             }
         }
-    }
 }
 
 private suspend fun TestMate.runRtcCalls(

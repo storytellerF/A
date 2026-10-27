@@ -128,18 +128,18 @@ class OpenPdfFontTest {
 
     private fun createBundle(kind: String): OpenPdfFontBundle =
         OpenPdfFontProvider.createBundle(
-        if (kind != "static") {
-            val source = if (kind == "cff2") "cff2-variable.otf" else "variable.ttf"
-            PdfFontFamily(null, null, fontBytes(source))
-        } else {
-            PdfFontFamily(
-                fontBytes("serif-regular.ttf"),
-                fontBytes("serif-bold.ttf"),
-                null,
-            )
-        },
-        PdfFontFamily(fontBytes("mono-regular.ttf"), fontBytes("mono-bold.ttf"), null),
-    ).getOrThrow()
+            if (kind != "static") {
+                val source = if (kind == "cff2") "cff2-variable.otf" else "variable.ttf"
+                PdfFontFamily(null, null, fontBytes(source))
+            } else {
+                PdfFontFamily(
+                    fontBytes("serif-regular.ttf"),
+                    fontBytes("serif-bold.ttf"),
+                    null,
+                )
+            },
+            PdfFontFamily(fontBytes("mono-regular.ttf"), fontBytes("mono-bold.ttf"), null),
+        ).getOrThrow()
 
     private fun output(name: String): File = File("build/test-output/fonts", name).apply { parentFile.mkdirs() }
 }

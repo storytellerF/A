@@ -34,19 +34,19 @@ object FileRecords : BaseTable() {
 
 fun FileRecord.Companion.wrapRow(resultRow: ResultRow): FileRecord =
     with(FileRecords) {
-    FileRecord(
-        resultRow[id],
-        resultRow[createdTime],
-        resultRow[name],
-        resultRow[duration],
-        resultRow[width],
-        resultRow[height],
-        resultRow[owner],
-        resultRow[ownerType],
-        resultRow[contentType],
-        resultRow[size],
-        resultRow[fullName],
-        resultRow[sha256],
-        resultRow[status],
-    )
-}
+        FileRecord(
+            resultRow[id],
+            resultRow[createdTime],
+            resultRow[name],
+            resultRow[duration],
+            resultRow[width],
+            resultRow[height],
+            resultRow[owner],
+            resultRow[ownerType],
+            resultRow[contentType],
+            resultRow[size],
+            resultRow[fullName],
+            resultRow[sha256],
+            resultRow[status],
+        )
+    }

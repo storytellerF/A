@@ -88,9 +88,9 @@ fun imageInlineContent(
 @Composable
 fun customMarkdownTypography(colors: MarkdownColors): MarkdownTypography =
     markdownTypography(
-    code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
-    inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text),
-)
+        code = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace, color = colors.text),
+        inlineCode = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, color = colors.text),
+    )
 
 @Composable
 fun LatexInlineContent(tex: String, style: TextStyle, backgroundColor: Color? = null) {

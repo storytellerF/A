@@ -38,5 +38,5 @@ suspend fun getRemoteImageBitmap(
 @OptIn(ExperimentalCoilApi::class)
 fun imageRequest(context: PlatformContext, client: HttpClient, info: FileInfo?) =
     ImageRequest.Builder(context)
-    .fetcherFactory(KtorNetworkFetcherFactory(client))
-    .data(info?.url)
+        .fetcherFactory(KtorNetworkFetcherFactory(client))
+        .data(info?.url)

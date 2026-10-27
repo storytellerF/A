@@ -31,63 +31,63 @@ import org.jetbrains.exposed.v1.r2dbc.selectAll
 class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSession) : SubscriptionDatabase {
     override suspend fun getUserSubscriptions(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
         paginationFromResults(
-        getSubscriptionListByPredicate {
-            where { UserSubscriptions.uid eq uid }
-                .bindPaginationQuery(UserSubscriptions, fetch)
-        },
-        getSubscriptionCountByPredicate { where { UserSubscriptions.uid eq uid } },
-    )
+            getSubscriptionListByPredicate {
+                where { UserSubscriptions.uid eq uid }
+                    .bindPaginationQuery(UserSubscriptions, fetch)
+            },
+            getSubscriptionCountByPredicate { where { UserSubscriptions.uid eq uid } },
+        )
 
     override suspend fun addSubscription(userSubscription: UserSubscription) =
         databaseSession.dbQuery {
-        check(
-            UserSubscriptions.insert {
-                it[UserSubscriptions.id] = userSubscription.id
-                it[UserSubscriptions.uid] = userSubscription.uid
-                it[UserSubscriptions.objectId] = userSubscription.objectId
-                it[UserSubscriptions.objectType] = userSubscription.objectType
-                it[UserSubscriptions.createdTime] = userSubscription.createdTime
-            }.insertedCount > 0,
-        ) {
-            "Insert subscription failed"
+            check(
+                UserSubscriptions.insert {
+                    it[UserSubscriptions.id] = userSubscription.id
+                    it[UserSubscriptions.uid] = userSubscription.uid
+                    it[UserSubscriptions.objectId] = userSubscription.objectId
+                    it[UserSubscriptions.objectType] = userSubscription.objectType
+                    it[UserSubscriptions.createdTime] = userSubscription.createdTime
+                }.insertedCount > 0,
+            ) {
+                "Insert subscription failed"
+            }
+            userSubscription
         }
-        userSubscription
-    }
 
     override suspend fun removeSubscription(id: PrimaryKey) =
         databaseSession.dbQuery {
-        check(
-            UserSubscriptions.deleteWhere {
-                UserSubscriptions.id eq id
-            } > 0,
-        ) {
-            "Remove subscription failed"
+            check(
+                UserSubscriptions.deleteWhere {
+                    UserSubscriptions.id eq id
+                } > 0,
+            ) {
+                "Remove subscription failed"
+            }
         }
-    }
 
     override suspend fun getSubscription(id: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.id eq id
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.id eq id
+                }
+            }
+            first {
+                UserSubscription.wrapRow(it)
             }
         }
-        first {
-            UserSubscription.wrapRow(it)
-        }
-    }
 
     override suspend fun getSubscription(uid: PrimaryKey, objectId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.uid eq uid and (UserSubscriptions.objectId eq objectId)
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.uid eq uid and (UserSubscriptions.objectId eq objectId)
+                }
+            }
+            first {
+                UserSubscription.wrapRow(it)
             }
         }
-        first {
-            UserSubscription.wrapRow(it)
-        }
-    }
 
     override suspend fun getSubscriptionsByObjectId(objectId: PrimaryKey, primaryKeyFetch: PrimaryKeyFetch) =
         getSubscriptionListByPredicate {
@@ -97,32 +97,32 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
 
     override suspend fun insertSubscriptionSentLog(log: SubscriptionSentLog) =
         databaseSession.dbQuery {
-        check(
-            SubscriptionSentLogs.insert {
-                it[SubscriptionSentLogs.id] = log.id
-                it[SubscriptionSentLogs.uid] = log.uid
-                it[SubscriptionSentLogs.objectId] = log.objectId
-                it[SubscriptionSentLogs.objectType] = log.objectType
-                it[SubscriptionSentLogs.createdTime] = log.createdTime
-                it[SubscriptionSentLogs.subscriptionId] = log.subscriptionId
-            }.insertedCount > 0,
-        ) {
-            "Insert subscription sent log failed"
+            check(
+                SubscriptionSentLogs.insert {
+                    it[SubscriptionSentLogs.id] = log.id
+                    it[SubscriptionSentLogs.uid] = log.uid
+                    it[SubscriptionSentLogs.objectId] = log.objectId
+                    it[SubscriptionSentLogs.objectType] = log.objectType
+                    it[SubscriptionSentLogs.createdTime] = log.createdTime
+                    it[SubscriptionSentLogs.subscriptionId] = log.subscriptionId
+                }.insertedCount > 0,
+            ) {
+                "Insert subscription sent log failed"
+            }
+            log
         }
-        log
-    }
 
     override suspend fun getLatestSubscriptionSentLog(objectId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            SubscriptionSentLogs.selectAll().where {
-                SubscriptionSentLogs.objectId eq objectId
-            }.orderBy(SubscriptionSentLogs.subscriptionId to SortOrder.DESC)
+            search {
+                SubscriptionSentLogs.selectAll().where {
+                    SubscriptionSentLogs.objectId eq objectId
+                }.orderBy(SubscriptionSentLogs.subscriptionId to SortOrder.DESC)
+            }
+            first {
+                SubscriptionSentLog.wrapRow(it)
+            }
         }
-        first {
-            SubscriptionSentLog.wrapRow(it)
-        }
-    }
 
     override suspend fun getHasSubscription(idList: ObjectListFetch.IdListFetch, uid: PrimaryKey) =
         databaseSession.dbSearch {
@@ -138,13 +138,13 @@ class ExposedSubscriptionDatabase(private val databaseSession: ExposedDatabaseSe
 
     override suspend fun getUserSubscriptionCount(uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserSubscriptions.selectAll().where {
-                UserSubscriptions.uid eq uid
+            search {
+                UserSubscriptions.selectAll().where {
+                    UserSubscriptions.uid eq uid
+                }
             }
+            count()
         }
-        count()
-    }
 
     private suspend fun getSubscriptionListByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {

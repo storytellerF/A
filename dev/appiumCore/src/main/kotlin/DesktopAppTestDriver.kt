@@ -212,22 +212,22 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
 
     private fun findMacValueContaining(text: String): org.openqa.selenium.WebElement? =
         listOf(
-        "XCUIElementTypeStaticText",
-        "XCUIElementTypeTextField",
-        "XCUIElementTypeSecureTextField",
-        "XCUIElementTypeTextView",
-    )
-        .flatMap { driver.findElements(By.className(it)) }
-        .lastOrNull { it.getAttribute("value").orEmpty().contains(text) }
+            "XCUIElementTypeStaticText",
+            "XCUIElementTypeTextField",
+            "XCUIElementTypeSecureTextField",
+            "XCUIElementTypeTextView",
+        )
+            .flatMap { driver.findElements(By.className(it)) }
+            .lastOrNull { it.getAttribute("value").orEmpty().contains(text) }
 
     private fun namePredicate(value: String): String =
         if (platform == DesktopTestPlatform.Windows) {
-        "contains(concat(', ', @Name, ', '), ', $value, ')"
-    } else if (platform == DesktopTestPlatform.Mac) {
-        "@title='$value' or contains(concat(', ', @label, ', '), ', $value, ') or @value='$value'"
-    } else {
-        "@name='$value'"
-    }
+            "contains(concat(', ', @Name, ', '), ', $value, ')"
+        } else if (platform == DesktopTestPlatform.Mac) {
+            "@title='$value' or contains(concat(', ', @label, ', '), ', $value, ') or @value='$value'"
+        } else {
+            "@name='$value'"
+        }
 
     override suspend fun assertNotVisibleByText(text: String, timeoutSeconds: Long) {
         val locator =
@@ -291,11 +291,11 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
 
 internal fun buildWindowsTextActions(text: String): List<Map<String, Any>> =
     buildList {
-    text.replace("\r\n", "\n").split("\n").forEachIndexed { index, line ->
-        if (index > 0) add(mapOf("virtualKeyCode" to 0x0D))
-        if (line.isNotEmpty()) add(mapOf("text" to line))
+        text.replace("\r\n", "\n").split("\n").forEachIndexed { index, line ->
+            if (index > 0) add(mapOf("virtualKeyCode" to 0x0D))
+            if (line.isNotEmpty()) add(mapOf("text" to line))
+        }
     }
-}
 
 /** AT-SPI may append comma-separated suffix labels, including an empty badge suffix. */
 internal fun matchesDesktopLabel(name: String, label: String): Boolean =

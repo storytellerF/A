@@ -22,25 +22,25 @@ internal class PanelInputHostTest {
     @Test
     internal fun p256AccountProducesMatchingAddress() =
         runTest {
-        verifyAlgorithm(AlgoType.P256)
-    }
+            verifyAlgorithm(AlgoType.P256)
+        }
 
     @Test
     internal fun mlDsaAccountProducesMatchingAddress() =
         runTest {
-        verifyAlgorithm(AlgoType.DILITHIUM)
-    }
+            verifyAlgorithm(AlgoType.DILITHIUM)
+        }
 
     @Test
     internal fun closeCancelsPendingInputChanges() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val host = PanelInputHost(backgroundScope, dispatcher, dispatcher)
-        host.updatePrivateKey("pending input")
-        host.close()
-        runCurrent()
-        assertEquals("", host.privateKey.value)
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val host = PanelInputHost(backgroundScope, dispatcher, dispatcher)
+            host.updatePrivateKey("pending input")
+            host.close()
+            runCurrent()
+            assertEquals("", host.privateKey.value)
+        }
 
     private suspend fun TestScope.verifyAlgorithm(algo: AlgoType) {
         loadCryptoLibIfNeed()

@@ -139,23 +139,23 @@ fun ActivityMessageContent(message: MessagePreview?, modifier: Modifier = Modifi
 @Composable
 internal fun roomActivityDescription(roomName: String, activity: RoomActivityPreview?): String =
     if (activity == null) {
-    roomName
-} else {
-    listOfNotNull(
-        roomName,
-        activityMessageSummary(activity.message),
-        activity.message?.author,
-        activity.message?.time,
-        activity.unreadCount.takeIf { it > 0 }?.toString(),
-    ).joinToString(", ")
-}
+        roomName
+    } else {
+        listOfNotNull(
+            roomName,
+            activityMessageSummary(activity.message),
+            activity.message?.author,
+            activity.message?.time,
+            activity.unreadCount.takeIf { it > 0 }?.toString(),
+        ).joinToString(", ")
+    }
 
 @Composable
 private fun activityMessageSummary(message: MessagePreview?): String =
     when (val summary = message?.summary) {
-    is MessageSummary.Text -> summary.value
-    MessageSummary.Unavailable -> stringResource(Res.string.activity_unavailable)
-    MessageSummary.Attachment -> stringResource(Res.string.activity_attachments)
-    MessageSummary.Empty -> stringResource(Res.string.activity_empty_message)
-    null -> stringResource(Res.string.activity_no_messages)
-}
+        is MessageSummary.Text -> summary.value
+        MessageSummary.Unavailable -> stringResource(Res.string.activity_unavailable)
+        MessageSummary.Attachment -> stringResource(Res.string.activity_attachments)
+        MessageSummary.Empty -> stringResource(Res.string.activity_empty_message)
+        null -> stringResource(Res.string.activity_no_messages)
+    }

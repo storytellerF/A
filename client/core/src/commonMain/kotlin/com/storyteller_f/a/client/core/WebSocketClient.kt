@@ -184,7 +184,7 @@ class WebSocketClientImpl(
 
     private fun canConnectWebSocket(userInfo: UserInfo): Boolean =
         passHolder.currentUserPass != null &&
-        sessionModel.userHandler.data.value == userInfo
+            sessionModel.userHandler.data.value == userInfo
 
     private suspend fun startListenerWebSocket(session: DefaultClientWebSocketSession, userInfo: UserInfo) {
         CoroutineScope(currentCoroutineContext()).launch {

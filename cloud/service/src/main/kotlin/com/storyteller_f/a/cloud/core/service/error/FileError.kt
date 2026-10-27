@@ -31,13 +31,13 @@ sealed interface FileError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): FileError =
             when (error) {
-            is FileError -> error
-            is ConstraintFailure -> Conflict(error.cause)
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is FileError -> error
+                is ConstraintFailure -> Conflict(error.cause)
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): FileError {
             if (cause is CancellationException) throw cause

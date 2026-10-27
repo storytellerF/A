@@ -40,114 +40,114 @@ class ActivityPreviewHostTest {
     @Test
     fun listPagesRetainActivityAcrossHundredRoomBoundary() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val host = RoomListPreviewHost(dispatcher, dispatcher)
-        host.acceptPage(null, roomPage(1L..100L))
-        host.acceptPage("next-page", roomPage(101L..120L))
-        host.publish()
-        assertEquals((1L..120L).toSet(), host.rows.value.keys)
-        for (id in 95L..105L) assertEquals(id, host.rows.value.getValue(id).unreadCount)
-        host.acceptPage(null, roomPage(101L..105L))
-        assertEquals((1L..120L).toSet(), host.rows.value.keys)
-        host.publish()
-        assertEquals((101L..105L).toSet(), host.rows.value.keys)
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val host = RoomListPreviewHost(dispatcher, dispatcher)
+            host.acceptPage(null, roomPage(1L..100L))
+            host.acceptPage("next-page", roomPage(101L..120L))
+            host.publish()
+            assertEquals((1L..120L).toSet(), host.rows.value.keys)
+            for (id in 95L..105L) assertEquals(id, host.rows.value.getValue(id).unreadCount)
+            host.acceptPage(null, roomPage(101L..105L))
+            assertEquals((1L..120L).toSet(), host.rows.value.keys)
+            host.publish()
+            assertEquals((101L..105L).toSet(), host.rows.value.keys)
+        }
 
     @Test
     fun cancelledPageCannotPublishPrivatePreview() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val host = RoomListPreviewHost(dispatcher, dispatcher)
-        val job =
-            launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
-                host.acceptPage(null, roomPage(1L..1L))
-            }
-        job.cancel()
-        runCurrent()
-        host.publish()
-        assertTrue(host.rows.value.isEmpty())
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val host = RoomListPreviewHost(dispatcher, dispatcher)
+            val job =
+                launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) {
+                    host.acceptPage(null, roomPage(1L..1L))
+                }
+            job.cancel()
+            runCurrent()
+            host.publish()
+            assertTrue(host.rows.value.isEmpty())
+        }
 
     @Test
     fun contextStatesFailAndRetryIndependently() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        var failUnread = true
-        val host =
-            ActivityPreviewHost(this, dispatcher, dispatcher, {
-                if (failUnread) error("Synthetic failure")
-                CustomResult.success(
-                    RoomActivityListResponse(persistentListOf(activity(1)), Pagination(null, null, 9)),
-                )
-            }, {
-                CustomResult.success(
-                    TopicInfoListResponse(
-                        persistentListOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin"))),
-                    ),
-                )
-            })
-        host.refreshUnread()
-        host.refreshPinned()
-        runCurrent()
-        assertIs<PreviewState.Failed>(host.unread.value)
-        assertEquals(1, assertIs<PreviewState.Ready<PinnedTopicPreview>>(host.pinned.value).items.size)
-        failUnread = false
-        host.refreshUnread()
-        runCurrent()
-        assertEquals(9L, assertIs<PreviewState.Ready<RoomActivityPreview>>(host.unread.value).total)
-        host.pause()
-        runCurrent()
-        assertIs<PreviewState.Idle>(host.unread.value)
-        assertIs<PreviewState.Idle>(host.pinned.value)
-        host.close()
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            var failUnread = true
+            val host =
+                ActivityPreviewHost(this, dispatcher, dispatcher, {
+                    if (failUnread) error("Synthetic failure")
+                    CustomResult.success(
+                        RoomActivityListResponse(persistentListOf(activity(1)), Pagination(null, null, 9)),
+                    )
+                }, {
+                    CustomResult.success(
+                        TopicInfoListResponse(
+                            persistentListOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin"))),
+                        ),
+                    )
+                })
+            host.refreshUnread()
+            host.refreshPinned()
+            runCurrent()
+            assertIs<PreviewState.Failed>(host.unread.value)
+            assertEquals(1, assertIs<PreviewState.Ready<PinnedTopicPreview>>(host.pinned.value).items.size)
+            failUnread = false
+            host.refreshUnread()
+            runCurrent()
+            assertEquals(9L, assertIs<PreviewState.Ready<RoomActivityPreview>>(host.unread.value).total)
+            host.pause()
+            runCurrent()
+            assertIs<PreviewState.Idle>(host.unread.value)
+            assertIs<PreviewState.Idle>(host.pinned.value)
+            host.close()
+        }
 
     @Test
     fun pauseCancelsLoadingWithoutPublishingFailure() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        val pending = CompletableDeferred<RoomActivityListResponse>()
-        val host =
-            ActivityPreviewHost(this, dispatcher, dispatcher, {
-                CustomResult.success(pending.await())
-            }, {
-                CustomResult.success(TopicInfoListResponse(persistentListOf()))
-            })
-        host.refreshUnread()
-        runCurrent()
-        assertIs<PreviewState.Loading>(host.unread.value)
-        host.pause()
-        runCurrent()
-        pending.complete(RoomActivityListResponse(persistentListOf(activity(1))))
-        runCurrent()
-        assertIs<PreviewState.Idle>(host.unread.value)
-        host.close()
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            val pending = CompletableDeferred<RoomActivityListResponse>()
+            val host =
+                ActivityPreviewHost(this, dispatcher, dispatcher, {
+                    CustomResult.success(pending.await())
+                }, {
+                    CustomResult.success(TopicInfoListResponse(persistentListOf()))
+                })
+            host.refreshUnread()
+            runCurrent()
+            assertIs<PreviewState.Loading>(host.unread.value)
+            host.pause()
+            runCurrent()
+            pending.complete(RoomActivityListResponse(persistentListOf(activity(1))))
+            runCurrent()
+            assertIs<PreviewState.Idle>(host.unread.value)
+            host.close()
+        }
 
     @Test
     fun roomEventsDoNotReloadPinnedTopics() =
         runTest {
-        val dispatcher = StandardTestDispatcher(testScheduler)
-        var unreadLoads = 0
-        var pinLoads = 0
-        val host =
-            ActivityPreviewHost(this, dispatcher, dispatcher, {
-                unreadLoads++
-                CustomResult.success(RoomActivityListResponse(persistentListOf()))
-            }, {
-                pinLoads++
-                CustomResult.success(TopicInfoListResponse(persistentListOf()))
-            })
-        host.onEvent(OnRoomRead(1), true)
-        runCurrent()
-        assertEquals(1, unreadLoads)
-        assertEquals(0, pinLoads)
-        host.onEvent(OnTopicChanged(TopicInfo.EMPTY.copy(rootType = ObjectType.COMMUNITY)), true)
-        runCurrent()
-        assertEquals(1, unreadLoads)
-        assertEquals(1, pinLoads)
-        host.close()
-    }
+            val dispatcher = StandardTestDispatcher(testScheduler)
+            var unreadLoads = 0
+            var pinLoads = 0
+            val host =
+                ActivityPreviewHost(this, dispatcher, dispatcher, {
+                    unreadLoads++
+                    CustomResult.success(RoomActivityListResponse(persistentListOf()))
+                }, {
+                    pinLoads++
+                    CustomResult.success(TopicInfoListResponse(persistentListOf()))
+                })
+            host.onEvent(OnRoomRead(1), true)
+            runCurrent()
+            assertEquals(1, unreadLoads)
+            assertEquals(0, pinLoads)
+            host.onEvent(OnTopicChanged(TopicInfo.EMPTY.copy(rootType = ObjectType.COMMUNITY)), true)
+            runCurrent()
+            assertEquals(1, unreadLoads)
+            assertEquals(1, pinLoads)
+            host.close()
+        }
 
     @Test
     fun unavailableAndEmptyMessagesAreDistinct() {
@@ -174,6 +174,6 @@ private fun activity(id: Long) = RoomActivityInfo(RoomInfo.EMPTY.copy(id = id), 
 
 private fun roomPage(ids: LongRange) =
     RoomInfoListResponse(
-    ids.map { RoomInfo.EMPTY.copy(id = it) }.toImmutableList(),
-    activities = ids.map { activity(it).copy(unreadMessageCount = it) }.toImmutableList(),
-)
+        ids.map { RoomInfo.EMPTY.copy(id = it) }.toImmutableList(),
+        activities = ids.map { activity(it).copy(unreadMessageCount = it) }.toImmutableList(),
+    )

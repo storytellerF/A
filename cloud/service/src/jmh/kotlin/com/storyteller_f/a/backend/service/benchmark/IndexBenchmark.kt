@@ -46,18 +46,18 @@ open class IndexBenchmark {
     @Benchmark
     fun saveDocumentBenchmark(bh: Blackhole) =
         runBlocking {
-        val topics =
-            listOf(
-                TopicDocument(
-                    SnowflakeFactory.nextId(),
-                    "test",
-                    SnowflakeFactory.nextId(),
-                    "ROOM",
-                    SnowflakeFactory.nextId(),
-                    "ROOM",
-                    SnowflakeFactory.nextId(),
-                ),
-            )
-        bh.consume(service.saveDocument(topics))
-    }
+            val topics =
+                listOf(
+                    TopicDocument(
+                        SnowflakeFactory.nextId(),
+                        "test",
+                        SnowflakeFactory.nextId(),
+                        "ROOM",
+                        SnowflakeFactory.nextId(),
+                        "ROOM",
+                        SnowflakeFactory.nextId(),
+                    ),
+                )
+            bh.consume(service.saveDocument(topics))
+        }
 }

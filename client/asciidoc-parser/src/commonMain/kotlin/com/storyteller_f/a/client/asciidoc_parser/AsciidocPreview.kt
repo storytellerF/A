@@ -44,20 +44,20 @@ expect suspend fun convertAsciidoc(source: String): String
 
 internal fun String.toJsStringLiteral(): String =
     buildString {
-    append('"')
-    for (char in this@toJsStringLiteral) {
-        when (char) {
-            '\\' -> append("\\\\")
-            '"' -> append("\\\"")
-            '\b' -> append("\\b")
-            '\u000C' -> append("\\f")
-            '\n' -> append("\\n")
-            '\r' -> append("\\r")
-            '\t' -> append("\\t")
-            '\u2028' -> append("\\u2028")
-            '\u2029' -> append("\\u2029")
-            else -> append(char)
+        append('"')
+        for (char in this@toJsStringLiteral) {
+            when (char) {
+                '\\' -> append("\\\\")
+                '"' -> append("\\\"")
+                '\b' -> append("\\b")
+                '\u000C' -> append("\\f")
+                '\n' -> append("\\n")
+                '\r' -> append("\\r")
+                '\t' -> append("\\t")
+                '\u2028' -> append("\\u2028")
+                '\u2029' -> append("\\u2029")
+                else -> append(char)
+            }
         }
+        append('"')
     }
-    append('"')
-}

@@ -102,57 +102,57 @@ class WorkerTest {
     @Test
     fun `acg retry fails for missing topic`() =
         test {
-        attachSession()
-        withWorkerBackend { backend ->
-            val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, -1L)
-            backend.database.admin.createTaskRecord(retry).getOrThrow()
+            attachSession()
+            withWorkerBackend { backend ->
+                val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, -1L)
+                backend.database.admin.createTaskRecord(retry).getOrThrow()
 
-            backend.doAcgTask()
+                backend.doAcgTask()
 
-            val records =
-                backend.database.admin.getTaskRecords(
-                    type = TaskRecordType.TOPIC_ACG,
-                    isSuccess = null,
-                    failureType = null,
-                    fetch = PrimaryKeyFetch(cursor = null, size = 20),
-                ).getOrThrow().list
-            assertTrue(records.any { it.objectId == -1L && !it.isSuccess })
-            assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
+                val records =
+                    backend.database.admin.getTaskRecords(
+                        type = TaskRecordType.TOPIC_ACG,
+                        isSuccess = null,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                    ).getOrThrow().list
+                assertTrue(records.any { it.objectId == -1L && !it.isSuccess })
+                assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
+            }
         }
-    }
 
     @Test
     fun `acg retry awards existing topic`() =
         test {
-        val owner =
-            attachSession {
-                val community = createCommunityForTest()
-                createTopic(ObjectType.COMMUNITY, community.id, "Retry topic").getOrThrow().id
+            val owner =
+                attachSession {
+                    val community = createCommunityForTest()
+                    createTopic(ObjectType.COMMUNITY, community.id, "Retry topic").getOrThrow().id
+                }
+            withWorkerBackend { backend ->
+                backend.createSystemUser(1L)
+                backend.doAcgTask()
+                val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, owner.custom)
+                backend.database.admin.createTaskRecord(retry).getOrThrow()
+
+                backend.doAcgTask()
+
+                val records =
+                    backend.database.admin.getTaskRecords(
+                        type = TaskRecordType.TOPIC_ACG,
+                        isSuccess = null,
+                        failureType = null,
+                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                    ).getOrThrow().list
+                assertTrue(records.any { it.objectId == owner.custom && it.isSuccess })
+                assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
+                val acg =
+                    backend.database.user.getUserAcgByIds(
+                        com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(owner.uid)),
+                    ).getOrThrow().single { it.first == owner.uid }.second
+                assertEquals(2L, acg)
             }
-        withWorkerBackend { backend ->
-            backend.createSystemUser(1L)
-            backend.doAcgTask()
-            val retry = buildRetryTaskRecord(TaskRecordType.TOPIC_ACG, owner.custom)
-            backend.database.admin.createTaskRecord(retry).getOrThrow()
-
-            backend.doAcgTask()
-
-            val records =
-                backend.database.admin.getTaskRecords(
-                    type = TaskRecordType.TOPIC_ACG,
-                    isSuccess = null,
-                    failureType = null,
-                    fetch = PrimaryKeyFetch(cursor = null, size = 20),
-                ).getOrThrow().list
-            assertTrue(records.any { it.objectId == owner.custom && it.isSuccess })
-            assertEquals(false, records.single { it.id == retry.id }.isRetryRequested)
-            val acg =
-                backend.database.user.getUserAcgByIds(
-                    com.storyteller_f.a.backend.core.ObjectListFetch.IdListFetch(listOf(owner.uid)),
-                ).getOrThrow().single { it.first == owner.uid }.second
-            assertEquals(2L, acg)
         }
-    }
 
     @Test
     fun `intro task records each processed user`() {
@@ -271,49 +271,49 @@ class WorkerTest {
     @Test
     fun `worker tasks persist results on shared backend`() =
         test {
-        val owner =
-            attachSession {
-                val community = createCommunityForTest()
-                val topic = createTopic(ObjectType.COMMUNITY, community.id, "Worker topic").getOrThrow()
-                val title =
-                    createTitle(
-                        com.storyteller_f.a.api.NewTitle(
-                            "Worker title",
-                            com.storyteller_f.shared.model.TitleType.REGULAR,
-                            it.uid,
-                            community.id,
-                            ObjectType.COMMUNITY,
-                            "Worker title notification",
-                        ),
-                    ).getOrThrow()
-                topic.id to title.id
-            }
-        withWorkerBackend { backend ->
-            backend.createSystemUser(1L)
-            backend.doAcgTask()
-            backend.doIntroTask()
-            backend.doSubscriptionTask()
-            backend.doTitleTask()
+            val owner =
+                attachSession {
+                    val community = createCommunityForTest()
+                    val topic = createTopic(ObjectType.COMMUNITY, community.id, "Worker topic").getOrThrow()
+                    val title =
+                        createTitle(
+                            com.storyteller_f.a.api.NewTitle(
+                                "Worker title",
+                                com.storyteller_f.shared.model.TitleType.REGULAR,
+                                it.uid,
+                                community.id,
+                                ObjectType.COMMUNITY,
+                                "Worker title notification",
+                            ),
+                        ).getOrThrow()
+                    topic.id to title.id
+                }
+            withWorkerBackend { backend ->
+                backend.createSystemUser(1L)
+                backend.doAcgTask()
+                backend.doIntroTask()
+                backend.doSubscriptionTask()
+                backend.doTitleTask()
 
-            val expected =
-                mapOf(
-                    TaskRecordType.TOPIC_ACG to owner.custom.first,
-                    TaskRecordType.INTRO to owner.uid,
-                    TaskRecordType.SUBSCRIPTION to owner.custom.first,
-                    TaskRecordType.TITLE to owner.custom.second,
-                )
-            expected.forEach { (type, objectId) ->
-                val records =
-                    backend.database.admin.getTaskRecords(
-                        type = type,
-                        isSuccess = true,
-                        failureType = null,
-                        fetch = PrimaryKeyFetch(cursor = null, size = 20),
-                    ).getOrThrow().list
-                assertTrue(records.any { it.objectId == objectId }, "Missing successful $type result")
+                val expected =
+                    mapOf(
+                        TaskRecordType.TOPIC_ACG to owner.custom.first,
+                        TaskRecordType.INTRO to owner.uid,
+                        TaskRecordType.SUBSCRIPTION to owner.custom.first,
+                        TaskRecordType.TITLE to owner.custom.second,
+                    )
+                expected.forEach { (type, objectId) ->
+                    val records =
+                        backend.database.admin.getTaskRecords(
+                            type = type,
+                            isSuccess = true,
+                            failureType = null,
+                            fetch = PrimaryKeyFetch(cursor = null, size = 20),
+                        ).getOrThrow().list
+                    assertTrue(records.any { it.objectId == objectId }, "Missing successful $type result")
+                }
             }
         }
-    }
 }
 
 private suspend fun Backend.assertAcgNotificationCount(userId: Long, expectedCount: Int) {

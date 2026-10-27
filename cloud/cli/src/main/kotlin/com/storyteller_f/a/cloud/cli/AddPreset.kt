@@ -752,30 +752,30 @@ class AddPreset : Subcommand("add", "add entry") {
         userMap: Map<String, User>,
     ): List<TopicDocument> =
         tuples.mapIndexed { index, topicTuple ->
-        val level = topicTuple.level
-        TopicDocument(
-            topicTuple.id,
-            topicTuple.content.decodeToString(),
-            topicTuple.rootId,
-            objectType.name,
-            when (level) {
-                0 -> topicTuple.rootId
+            val level = topicTuple.level
+            TopicDocument(
+                topicTuple.id,
+                topicTuple.content.decodeToString(),
+                topicTuple.rootId,
+                objectType.name,
+                when (level) {
+                    0 -> topicTuple.rootId
 
-                else ->
-                    tuples[
-                        index -
-                            checkNotNull(
-                                topicTuple.topic.parent,
-                            ) { "Nested topic parent is missing" },
-                    ].id
-            },
-            when (level) {
-                0 -> objectType
-                else -> ObjectType.TOPIC
-            }.name,
-            userMap.getValue(topicTuple.topic.author).id,
-        )
-    }
+                    else ->
+                        tuples[
+                            index -
+                                checkNotNull(
+                                    topicTuple.topic.parent,
+                                ) { "Nested topic parent is missing" },
+                        ].id
+                },
+                when (level) {
+                    0 -> objectType
+                    else -> ObjectType.TOPIC
+                }.name,
+                userMap.getValue(topicTuple.topic.author).id,
+            )
+        }
 
     private suspend fun getTopicTuples(
         list: List<PresetTopic>,
@@ -785,30 +785,30 @@ class AddPreset : Subcommand("add", "add entry") {
         communityMap: Map<String, PrimaryKey>,
     ): List<InsertTopicTuple> =
         list.mapIndexed { index, addTopic ->
-        val id = SnowflakeFactory.nextId()
-        val level = addTopic.level
-        val parent = addTopic.parent
-        val content = getTopicContent(addTopic, parentDir).encodeToByteArray()
-        val rootId =
-            if (objectType == ObjectType.USER) {
-                userMap.getValue(addTopic.author).id
-            } else {
-                communityMap.getValue(checkNotNull(addTopic.community) { "Topic community is missing" })
-            }
-        InsertTopicTuple(
-            addTopic,
-            index,
-            if (parent == null || parent == 0 || level == null || level == 0) {
-                0
-            } else {
-                level
-            },
-            id,
-            content,
-            false,
-            rootId,
-        )
-    }
+            val id = SnowflakeFactory.nextId()
+            val level = addTopic.level
+            val parent = addTopic.parent
+            val content = getTopicContent(addTopic, parentDir).encodeToByteArray()
+            val rootId =
+                if (objectType == ObjectType.USER) {
+                    userMap.getValue(addTopic.author).id
+                } else {
+                    communityMap.getValue(checkNotNull(addTopic.community) { "Topic community is missing" })
+                }
+            InsertTopicTuple(
+                addTopic,
+                index,
+                if (parent == null || parent == 0 || level == null || level == 0) {
+                    0
+                } else {
+                    level
+                },
+                id,
+                content,
+                false,
+                rootId,
+            )
+        }
 
     private suspend fun Backend.getUserData(
         userList: List<PresetUser>,
@@ -838,13 +838,13 @@ class AddPreset : Subcommand("add", "add entry") {
         algoType: AlgoType,
     ): Pair<String, String> =
         getAlgo(algoType).run {
-        val derPublicKey =
-            getDerPublicKeyFromPrivateKey(
-                File(parentDir, privatePath).readText().replace("\r\n", "\n"),
-            ).getOrThrow()
-        val ad = calcAddress(derPublicKey).getOrThrow()
-        Pair(derPublicKey, ad)
-    }
+            val derPublicKey =
+                getDerPublicKeyFromPrivateKey(
+                    File(parentDir, privatePath).readText().replace("\r\n", "\n"),
+                ).getOrThrow()
+            val ad = calcAddress(derPublicKey).getOrThrow()
+            Pair(derPublicKey, ad)
+        }
 
     private suspend fun Backend.addTopicsIntoRoom(
         list: List<PresetTopic>,
@@ -993,12 +993,12 @@ class AddPreset : Subcommand("add", "add entry") {
         parentDir: File,
     ): List<EncryptedTopicTuple> =
         topicList.map { presetTopic ->
-        val (encryptedContent, aesBytes) =
-            encryptDataByAES(
-                getTopicContent(presetTopic, parentDir),
-            ).getOrThrow()
-        EncryptedTopicTuple(encryptedContent, aesBytes, SnowflakeFactory.nextId(), presetTopic)
-    }
+            val (encryptedContent, aesBytes) =
+                encryptDataByAES(
+                    getTopicContent(presetTopic, parentDir),
+                ).getOrThrow()
+            EncryptedTopicTuple(encryptedContent, aesBytes, SnowflakeFactory.nextId(), presetTopic)
+        }
 
     private suspend fun buildEncryptedTopicKeys(
         encryptedContents: List<EncryptedTopicTuple>,
@@ -1208,16 +1208,16 @@ suspend fun downloadWithResume(url: String, file: File, client: HttpClient) {
 
 private fun formatDownloadSize(size: Long): String =
     when {
-    size < 1024L -> "${size}B"
-    size < 1024L * 1024L -> "${size / 1024L}KiB"
-    size < 1024L * 1024L * 1024L -> "${size / (1024L * 1024L)}MiB"
-    else -> "${size / (1024L * 1024L * 1024L)}GiB"
-}
+        size < 1024L -> "${size}B"
+        size < 1024L * 1024L -> "${size / 1024L}KiB"
+        size < 1024L * 1024L * 1024L -> "${size / (1024L * 1024L)}MiB"
+        else -> "${size / (1024L * 1024L * 1024L)}GiB"
+    }
 
 internal fun isDownloadConfigPath(path: String): Boolean =
     path.endsWith(
-    "download",
-) || path.endsWith(".download.yaml") || path.endsWith(".download.yml")
+        "download",
+    ) || path.endsWith(".download.yaml") || path.endsWith(".download.yml")
 
 internal fun parseDownloadConfig(path: File): DownloadConfig? {
     val text = path.readText()

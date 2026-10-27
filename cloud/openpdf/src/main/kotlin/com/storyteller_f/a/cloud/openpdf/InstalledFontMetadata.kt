@@ -13,17 +13,17 @@ import java.nio.ByteOrder
 internal object InstalledFontMetadata {
     fun read(file: File): List<InstalledFontFace> =
         RandomAccessFile(file, "r").use { input ->
-        val offsets =
-            if (input.readInt() == encodeTag("ttcf")) {
-                input.seek(8)
-                val count = input.readInt()
-                require(count in 1..4096 && 12L + count * 4L <= input.length()) { "Invalid font collection" }
-                List(count) { input.readInt().toLong() }
-            } else {
-                listOf(0L)
-            }
-        offsets.mapIndexed { index, offset -> readFace(input, FontFileSource(file, index), offset) }
-    }
+            val offsets =
+                if (input.readInt() == encodeTag("ttcf")) {
+                    input.seek(8)
+                    val count = input.readInt()
+                    require(count in 1..4096 && 12L + count * 4L <= input.length()) { "Invalid font collection" }
+                    List(count) { input.readInt().toLong() }
+                } else {
+                    listOf(0L)
+                }
+            offsets.mapIndexed { index, offset -> readFace(input, FontFileSource(file, index), offset) }
+        }
 
     private fun readFace(input: RandomAccessFile, source: FontFileSource, offset: Long): InstalledFontFace {
         input.seek(offset)

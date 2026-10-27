@@ -38,22 +38,22 @@ object Users : BaseTable() {
 
 fun User.Companion.wrapRow(row: ResultRow): User =
     with(Users) {
-    User(
-        row[Aids.value],
-        row[encryptionPublicKey],
-        row[publicKey],
-        row[address],
-        row[icon],
-        row[nickname],
-        row[id],
-        row[createdTime],
-        row[acgAmount],
-        row[passType],
-        row[algoType],
-        row[notificationId],
-        row[status],
-    )
-}
+        User(
+            row[Aids.value],
+            row[encryptionPublicKey],
+            row[publicKey],
+            row[address],
+            row[icon],
+            row[nickname],
+            row[id],
+            row[createdTime],
+            row[acgAmount],
+            row[passType],
+            row[algoType],
+            row[notificationId],
+            row[status],
+        )
+    }
 
 fun User.Companion.find(function: () -> Op<Boolean>): Query = Users.selectAll().where(function)
 
@@ -76,12 +76,12 @@ object ChildAccounts : Table() {
 
 fun ChildAccount.Companion.wrapRow(row: ResultRow): ChildAccount =
     with(ChildAccounts) {
-    ChildAccount(
-        row[uid],
-        row[encryptedPrivateKey],
-        row[encryptedAesKey],
-        row[hostId],
-        row[remark],
-        row[encryptedEncryptionPrivateKey],
-    )
-}
+        ChildAccount(
+            row[uid],
+            row[encryptedPrivateKey],
+            row[encryptedAesKey],
+            row[hostId],
+            row[remark],
+            row[encryptedEncryptionPrivateKey],
+        )
+    }

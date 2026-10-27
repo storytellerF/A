@@ -37,7 +37,7 @@ fun <T> BufferedInputStream.readFlacAlbumFromAudioStream(saveAlbum: (ByteArray, 
             return pictureData.inputStream().buffered().use { dataInput ->
                 fun readInt(): Int =
                     dataInput.read() shl 24 or (dataInput.read() shl 16) or
-                    (dataInput.read() shl 8) or dataInput.read()
+                        (dataInput.read() shl 8) or dataInput.read()
 
                 readInt() // picture type
                 val mimeLength = readInt()
@@ -143,6 +143,6 @@ fun <T> BufferedInputStream.readMp3AlbumFromAudioStream(saveAlbum: (ByteArray, S
 
 private fun syncSafeInt(bytes: ByteArray): Int =
     bytes[0].toInt() and 0x7F shl 21 or
-    (bytes[1].toInt() and 0x7F shl 14) or
-    (bytes[2].toInt() and 0x7F shl 7) or
-    (bytes[3].toInt() and 0x7F)
+        (bytes[1].toInt() and 0x7F shl 14) or
+        (bytes[2].toInt() and 0x7F shl 7) or
+        (bytes[3].toInt() and 0x7F)

@@ -25,8 +25,8 @@ actual fun initEnvironment(context: Any) = Unit
 
 actual fun createConnectivity(): Connectivity =
     Connectivity(
-    ConnectivityProvider(flowOf(Connectivity.Status.Connected(metered = false))),
-)
+        ConnectivityProvider(flowOf(Connectivity.Status.Connected(metered = false))),
+    )
 
 actual fun getClientFile(path: String): ClientFile? = null
 

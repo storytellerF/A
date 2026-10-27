@@ -24,12 +24,12 @@ object PanelLogs : BaseTable() {
 
 fun PanelLog.Companion.wrapRow(row: ResultRow): PanelLog =
     with(PanelLogs) {
-    PanelLog(
-        row[id],
-        row[adminId],
-        row[targetId],
-        row[objectType],
-        row[action],
-        row[createdTime],
-    )
-}
+        PanelLog(
+            row[id],
+            row[adminId],
+            row[targetId],
+            row[objectType],
+            row[action],
+            row[createdTime],
+        )
+    }

@@ -269,32 +269,32 @@ suspend fun <R> TestMate.getAppSession(
     getUserInfo: suspend UserSessionManager.(SimplePassHolder) -> UserInfo,
 ): SessionOuterTuple<R> =
     coroutineScope {
-    val passHolder = SimplePassHolder()
-    val sessionManager =
-        createSimpleUserSessionManager(
-            TEST_WS_URL,
-            AcceptAllCookiesStorage(),
-            passHolder,
-            { model, cookiesStorage ->
-                createClient {
-                    defaultClientConfigure(cookiesStorage, model)
-                }
-            },
-            onReceive,
-        )
-    sessionManager.onBackgroundTask {
-        try {
-            val sessionModel = sessionManager.model
-            val userInfo = sessionManager.getUserInfo(passHolder)
-            val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
-            sessionManager.signOut().getOrThrow()
-            sessionModel.clear()
-            SessionOuterTuple(authKey, userInfo.id, custom)
-        } finally {
-            sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
+        val passHolder = SimplePassHolder()
+        val sessionManager =
+            createSimpleUserSessionManager(
+                TEST_WS_URL,
+                AcceptAllCookiesStorage(),
+                passHolder,
+                { model, cookiesStorage ->
+                    createClient {
+                        defaultClientConfigure(cookiesStorage, model)
+                    }
+                },
+                onReceive,
+            )
+        sessionManager.onBackgroundTask {
+            try {
+                val sessionModel = sessionManager.model
+                val userInfo = sessionManager.getUserInfo(passHolder)
+                val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+                sessionManager.signOut().getOrThrow()
+                sessionModel.clear()
+                SessionOuterTuple(authKey, userInfo.id, custom)
+            } finally {
+                sessionManager.client.coroutineContext[Job]?.cancelAndJoin()
+            }
         }
     }
-}
 
 suspend fun <R> TestMate.getAppSignUpSession(
     authKey: AuthKey,
@@ -302,8 +302,8 @@ suspend fun <R> TestMate.getAppSignUpSession(
     block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> =
     getAppSession(authKey, onReceive, block) {
-    this.userSignUp(authKey, it)
-}
+        this.userSignUp(authKey, it)
+    }
 
 suspend fun <R> TestMate.getAppSignInSession(
     authKey: AuthKey,
@@ -311,8 +311,8 @@ suspend fun <R> TestMate.getAppSignInSession(
     block: suspend UserSessionManager.(SessionTuple) -> R,
 ): SessionOuterTuple<R> =
     getAppSession(authKey, onReceive, block) {
-    this.userSignIn(authKey, it)
-}
+        this.userSignIn(authKey, it)
+    }
 
 suspend fun <R1, R2> TestMate.loginSession(
     tuple: SessionOuterTuple<R1>,
@@ -322,22 +322,22 @@ suspend fun <R1, R2> TestMate.loginSession(
 
 suspend fun <R2> TestMate.noneSession(block: suspend UserSessionManager.() -> R2): R2 =
     coroutineScope {
-    val passHolder = ConstPassHolder(null)
-    val sessionManager =
-        createSimpleUserSessionManager(
-            TEST_WS_URL,
-            AcceptAllCookiesStorage(),
-            passHolder,
-            { model, cookiesStorage ->
-                createClient {
-                    defaultClientConfigure(cookiesStorage, model)
-                }
-            },
-        ) { _, _, _ -> }
-    sessionManager.onBackgroundTask {
-        block()
+        val passHolder = ConstPassHolder(null)
+        val sessionManager =
+            createSimpleUserSessionManager(
+                TEST_WS_URL,
+                AcceptAllCookiesStorage(),
+                passHolder,
+                { model, cookiesStorage ->
+                    createClient {
+                        defaultClientConfigure(cookiesStorage, model)
+                    }
+                },
+            ) { _, _, _ -> }
+        sessionManager.onBackgroundTask {
+            block()
+        }
     }
-}
 
 fun <T, E : FailureDetails> assertListSize(count: Int, result: CustomResult<ListResponse<T>, E>) {
     assertEquals(count, result.getOrThrow().data.size)
@@ -385,28 +385,28 @@ private suspend fun <R> TestMate.getPanelSession(
     getUserInfo: suspend PanelSessionManager.(SimplePassHolder) -> PanelAccountInfo,
 ): SessionOuterTuple<R> =
     coroutineScope {
-    val passHolder = SimplePassHolder()
-    val sessionManager =
-        createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
-            createClient {
-                defaultClientConfigureForPanel(cookiesStorage, model)
+        val passHolder = SimplePassHolder()
+        val sessionManager =
+            createSimplePanelSessionManager(passHolder) { model, cookiesStorage ->
+                createClient {
+                    defaultClientConfigureForPanel(cookiesStorage, model)
+                }
             }
-        }
-    val sessionModel = sessionManager.model
-    val userInfo = getUserInfo(sessionManager, passHolder)
-    val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
-    sessionManager.signOut().getOrThrow()
-    sessionModel.clear()
-    SessionOuterTuple(authKey, userInfo.id, custom)
-}
+        val sessionModel = sessionManager.model
+        val userInfo = getUserInfo(sessionManager, passHolder)
+        val custom = sessionManager.block(SessionTuple(authKey, userInfo.id))
+        sessionManager.signOut().getOrThrow()
+        sessionModel.clear()
+        SessionOuterTuple(authKey, userInfo.id, custom)
+    }
 
 suspend fun <R1, R2> TestMate.loginPanelSession(
     tuple: SessionOuterTuple<R1>,
     block: suspend PanelSessionManager.(SessionTuple) -> R2,
 ): SessionOuterTuple<R2> =
     getPanelSession(tuple.authKey, block = block) {
-    this.panelSignIn(tuple.authKey, it)
-}
+        this.panelSignIn(tuple.authKey, it)
+    }
 
 suspend fun <R> TestMate.withWorkerBackend(block: suspend (WorkerBackend) -> R): R = block(workerBackend)
 

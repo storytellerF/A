@@ -82,8 +82,8 @@ object SnowflakeFactory {
 
     suspend fun nextId(): PrimaryKey =
         lock.withLock {
-        nextIdInternal()
-    }
+            nextIdInternal()
+        }
 
     /**
      * Generates the next unique Snowflake ID.

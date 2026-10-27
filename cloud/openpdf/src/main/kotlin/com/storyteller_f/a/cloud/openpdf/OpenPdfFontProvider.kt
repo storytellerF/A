@@ -19,21 +19,21 @@ internal object OpenPdfFontProvider {
 
     fun createBundle(): CustomResult<OpenPdfFontBundle, FontError> =
         captureFontFailure {
-        createBundle(serif, mono).getOrThrow()
-    }
+            createBundle(serif, mono).getOrThrow()
+        }
 
     fun createBundle(
         serifSource: PdfFontFamily,
         monoSource: PdfFontFamily,
     ): CustomResult<OpenPdfFontBundle, FontError> =
         captureFontFailure {
-        OpenPdfFontBundle(
-            createFont(serifSource, 400),
-            createFont(serifSource, 700),
-            createFont(monoSource, 400),
-            createFont(monoSource, 700),
-        )
-    }
+            OpenPdfFontBundle(
+                createFont(serifSource, 400),
+                createFont(serifSource, 700),
+                createFont(monoSource, 400),
+                createFont(monoSource, 700),
+            )
+        }
 
     private fun createFont(source: PdfFontFamily, weight: Int): BaseFont {
         val bytes = source.getInstance(repository, weight).getOrThrow().copyBytes()

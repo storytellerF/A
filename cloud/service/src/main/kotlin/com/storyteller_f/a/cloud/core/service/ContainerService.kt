@@ -88,23 +88,23 @@ suspend fun Backend.checkRootReadPermission(
     uid: PrimaryKey?,
 ): CustomResult<RootReadPermission?, ContainerError> =
     when (parentType) {
-    ObjectType.TOPIC -> checkTopicReadPermission(parentId, uid)
+        ObjectType.TOPIC -> checkTopicReadPermission(parentId, uid)
 
-    ObjectType.ROOM -> checkRoomReadPermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomReadPermission(parentId, uid)
 
-    ObjectType.COMMUNITY -> checkCommunityReadPermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityReadPermission(parentId, uid)
 
-    ObjectType.USER -> checkUserReadPermission(parentId)
+        ObjectType.USER -> checkUserReadPermission(parentId)
 
-    ObjectType.TITLE ->
-        CustomResult.success(
-            RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false),
-        )
+        ObjectType.TITLE ->
+            CustomResult.success(
+                RootReadPermission(hasRead = true, hasJoined = false, isPrivate = false),
+            )
 
-    ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+        ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
 
-    ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-}.mapError(ContainerError::fromError)
+        ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+    }.mapError(ContainerError::fromError)
 
 suspend fun Backend.checkTopicWritePermission(
     topicId: PrimaryKey,
@@ -157,14 +157,14 @@ suspend fun Backend.checkUserWritePermission(
     uid: PrimaryKey,
 ): CustomResult<RootWritePermission?, ContainerError> =
     (
-    if (uid == userId) {
-        database.user.getRawUser(IdFetch(userId)).mapPresent {
-            RootWritePermission(ObjectType.USER, userId)
+        if (uid == userId) {
+            database.user.getRawUser(IdFetch(userId)).mapPresent {
+                RootWritePermission(ObjectType.USER, userId)
+            }
+        } else {
+            CustomResult.Failure(ContainerError.from(ForbiddenException()))
         }
-    } else {
-        CustomResult.Failure(ContainerError.from(ForbiddenException()))
-    }
-    ).mapError(ContainerError::fromError)
+        ).mapError(ContainerError::fromError)
 
 suspend fun Backend.checkRootWritePermission(
     parentType: ObjectType,
@@ -185,14 +185,14 @@ private suspend fun Backend.checkRootWritePermissionForUser(
     uid: PrimaryKey,
 ): CustomResult<RootWritePermission?, ContainerError> =
     when (parentType) {
-    ObjectType.TOPIC -> checkTopicWritePermission(parentId, uid)
-    ObjectType.ROOM -> checkRoomWritePermission(parentId, uid)
-    ObjectType.COMMUNITY -> checkCommunityWritePermission(parentId, uid)
-    ObjectType.USER -> checkUserWritePermission(parentId, uid)
-    ObjectType.TITLE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-    ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-    ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-}.mapError(ContainerError::fromError)
+        ObjectType.TOPIC -> checkTopicWritePermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomWritePermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityWritePermission(parentId, uid)
+        ObjectType.USER -> checkUserWritePermission(parentId, uid)
+        ObjectType.TITLE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+        ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+        ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+    }.mapError(ContainerError::fromError)
 
 suspend fun Backend.checkTopicAdminPermission(
     topicId: PrimaryKey,
@@ -211,44 +211,44 @@ suspend fun Backend.checkRoomAdminPermission(
     uid: PrimaryKey,
 ): CustomResult<RootAdminPermission?, ContainerError> =
     database.room.getRawRoom(IdFetch(roomId), true, uid)
-    .andThenPresent(ContainerError::fromError) {
-        if (it.room.readOnly) {
-            CustomResult.Failure(ContainerError.from(ForbiddenException("room is read only")))
-        } else if (it.room.creator == uid) {
-            CustomResult.success(RootAdminPermission(ObjectType.ROOM, roomId))
-        } else {
-            CustomResult.Failure(ContainerError.from(ForbiddenException()))
-        }
-    }.mapError(ContainerError::fromError)
+        .andThenPresent(ContainerError::fromError) {
+            if (it.room.readOnly) {
+                CustomResult.Failure(ContainerError.from(ForbiddenException("room is read only")))
+            } else if (it.room.creator == uid) {
+                CustomResult.success(RootAdminPermission(ObjectType.ROOM, roomId))
+            } else {
+                CustomResult.Failure(ContainerError.from(ForbiddenException()))
+            }
+        }.mapError(ContainerError::fromError)
 
 suspend fun Backend.checkCommunityAdminPermission(
     communityId: PrimaryKey,
     uid: PrimaryKey,
 ): CustomResult<RootAdminPermission?, ContainerError> =
     database.community.getRawCommunity(IdFetch(communityId))
-    .andThenPresent(ContainerError::fromError) {
-        if (it.community.readOnly) {
-            CustomResult.Failure(ContainerError.from(ForbiddenException("community is read only")))
-        } else if (it.community.owner == uid) {
-            CustomResult.success(RootAdminPermission(ObjectType.COMMUNITY, communityId))
-        } else {
-            CustomResult.Failure(ContainerError.from(ForbiddenException()))
-        }
-    }.mapError(ContainerError::fromError)
+        .andThenPresent(ContainerError::fromError) {
+            if (it.community.readOnly) {
+                CustomResult.Failure(ContainerError.from(ForbiddenException("community is read only")))
+            } else if (it.community.owner == uid) {
+                CustomResult.success(RootAdminPermission(ObjectType.COMMUNITY, communityId))
+            } else {
+                CustomResult.Failure(ContainerError.from(ForbiddenException()))
+            }
+        }.mapError(ContainerError::fromError)
 
 suspend fun Backend.checkUserAdminPermission(
     userId: PrimaryKey,
     uid: PrimaryKey,
 ): CustomResult<RootAdminPermission?, ContainerError> =
     (
-    if (userId == uid) {
-        database.user.getRawUser(IdFetch(userId)).mapPresent {
-            RootAdminPermission(ObjectType.USER, userId)
+        if (userId == uid) {
+            database.user.getRawUser(IdFetch(userId)).mapPresent {
+                RootAdminPermission(ObjectType.USER, userId)
+            }
+        } else {
+            CustomResult.Failure(ContainerError.from(ForbiddenException()))
         }
-    } else {
-        CustomResult.Failure(ContainerError.from(ForbiddenException()))
-    }
-    ).mapError(ContainerError::fromError)
+        ).mapError(ContainerError::fromError)
 
 suspend fun Backend.checkRootAdminPermission(
     parentType: ObjectType,
@@ -256,47 +256,47 @@ suspend fun Backend.checkRootAdminPermission(
     uid: PrimaryKey,
 ): CustomResult<RootAdminPermission?, ContainerError> =
     when (parentType) {
-    ObjectType.TOPIC -> checkTopicAdminPermission(parentId, uid)
-    ObjectType.ROOM -> checkRoomAdminPermission(parentId, uid)
-    ObjectType.COMMUNITY -> checkCommunityAdminPermission(parentId, uid)
-    ObjectType.USER -> checkUserAdminPermission(parentId, uid)
-    ObjectType.TITLE -> CustomResult.success(RootAdminPermission(parentType, parentId))
-    ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-    ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
-}.mapError(ContainerError::fromError)
+        ObjectType.TOPIC -> checkTopicAdminPermission(parentId, uid)
+        ObjectType.ROOM -> checkRoomAdminPermission(parentId, uid)
+        ObjectType.COMMUNITY -> checkCommunityAdminPermission(parentId, uid)
+        ObjectType.USER -> checkUserAdminPermission(parentId, uid)
+        ObjectType.TITLE -> CustomResult.success(RootAdminPermission(parentType, parentId))
+        ObjectType.FILE -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+        ObjectType.PANEL_ACCOUNT -> CustomResult.Failure(ContainerError.from(ForbiddenException()))
+    }.mapError(ContainerError::fromError)
 
 suspend fun Backend.checkObjectWritable(
     objectType: ObjectType,
     objectId: PrimaryKey,
 ): CustomResult<Unit, ContainerError> =
     when (objectType) {
-    ObjectType.COMMUNITY ->
-        database.community.getRawCommunity(IdFetch(objectId)).andThen(ContainerError::fromError) {
-            checkWritableFlag(it?.community?.readOnly, "community")
-        }
+        ObjectType.COMMUNITY ->
+            database.community.getRawCommunity(IdFetch(objectId)).andThen(ContainerError::fromError) {
+                checkWritableFlag(it?.community?.readOnly, "community")
+            }
 
-    ObjectType.ROOM ->
-        database.room.getRawRoom(IdFetch(objectId)).andThen(ContainerError::fromError) {
-            checkWritableFlag(it?.room?.readOnly, "room")
-        }
+        ObjectType.ROOM ->
+            database.room.getRawRoom(IdFetch(objectId)).andThen(ContainerError::fromError) {
+                checkWritableFlag(it?.room?.readOnly, "room")
+            }
 
-    ObjectType.TOPIC ->
-        database.topic.getTopic(IdFetch(objectId)).andThen(ContainerError::fromError) {
-            checkWritableFlag(it?.readOnly, "topic")
-        }
+        ObjectType.TOPIC ->
+            database.topic.getTopic(IdFetch(objectId)).andThen(ContainerError::fromError) {
+                checkWritableFlag(it?.readOnly, "topic")
+            }
 
-    ObjectType.TITLE ->
-        database.title.getTitle(objectId).andThen(ContainerError::fromError) {
-            checkWritableFlag(it?.title?.readOnly, "title")
-        }
+        ObjectType.TITLE ->
+            database.title.getTitle(objectId).andThen(ContainerError::fromError) {
+                checkWritableFlag(it?.title?.readOnly, "title")
+            }
 
-    ObjectType.FILE ->
-        database.file.getFileRecordByIds(listOf(objectId)).andThen(ContainerError::fromError) {
-            checkWritableFlag(it.firstOrNull()?.readOnly, "file")
-        }
+        ObjectType.FILE ->
+            database.file.getFileRecordByIds(listOf(objectId)).andThen(ContainerError::fromError) {
+                checkWritableFlag(it.firstOrNull()?.readOnly, "file")
+            }
 
-    ObjectType.USER, ObjectType.PANEL_ACCOUNT -> CustomResult.success(Unit)
-}
+        ObjectType.USER, ObjectType.PANEL_ACCOUNT -> CustomResult.success(Unit)
+    }
 
 private fun checkWritableFlag(readOnly: Boolean?, kind: String): CustomResult<Unit, ContainerError> =
     if (readOnly == true) {
@@ -366,14 +366,14 @@ suspend fun Backend.checkQuotaStatus(
     quotaType: QuotaType,
 ): CustomResult<QuotaInfo, ContainerError> =
     getQuotaInfo(quotaType, tuple).andThen(ContainerError::fromError) {
-    if (it.lockId != null) {
-        CustomResult.Failure(ContainerError.from(CustomBadRequestException("quota is locking")))
-    } else if (it.used + size > it.total) {
-        CustomResult.Failure(ContainerError.from(CustomBadRequestException("quota is not enough")))
-    } else {
-        CustomResult.success(it)
-    }
-}.mapError(ContainerError::fromError)
+        if (it.lockId != null) {
+            CustomResult.Failure(ContainerError.from(CustomBadRequestException("quota is locking")))
+        } else if (it.used + size > it.total) {
+            CustomResult.Failure(ContainerError.from(CustomBadRequestException("quota is not enough")))
+        } else {
+            CustomResult.success(it)
+        }
+    }.mapError(ContainerError::fromError)
 
 private suspend fun Backend.insertQuotaAndGet(
     quotaType: QuotaType,

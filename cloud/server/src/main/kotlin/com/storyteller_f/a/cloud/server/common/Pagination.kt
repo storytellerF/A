@@ -39,25 +39,25 @@ interface PagingGenerator<in T, F : Any> {
 open class PrimaryKeyPagingGenerator<T>(val block: (T) -> PrimaryKey) : PagingGenerator<T, PrimaryKeyFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): PrimaryKeyFetch =
         PrimaryKeyFetch(
-        when {
-            !nextPageToken.isNullOrBlank() ->
-                getPageToken(
-                    PrimaryKey::class,
-                    nextPageToken,
-                )?.let { Cursor.DescCursor(it) }
+            when {
+                !nextPageToken.isNullOrBlank() ->
+                    getPageToken(
+                        PrimaryKey::class,
+                        nextPageToken,
+                    )?.let { Cursor.DescCursor(it) }
 
-            !prePageToken.isNullOrBlank() ->
-                getPageToken(
-                    PrimaryKey::class,
-                    prePageToken,
-                )?.let {
-                    Cursor.AscCursor(it)
-                }
+                !prePageToken.isNullOrBlank() ->
+                    getPageToken(
+                        PrimaryKey::class,
+                        prePageToken,
+                    )?.let {
+                        Cursor.AscCursor(it)
+                    }
 
-            else -> null
-        },
-        size,
-    )
+                else -> null
+            },
+            size,
+        )
 
     override fun generate(list: List<T>, fetch: PrimaryKeyFetch): Pair<String?, String?> {
         val size = fetch.size
@@ -120,53 +120,53 @@ suspend fun <T, F : Fetch, Response : ListResponse<T>> PageableQuery.pagination(
     block: suspend (F) -> CustomResult<PaginationResult<T>?, FailureDetails>,
 ): CustomResult<Response?, ServerError> =
     captureFailure(ServerError::from) {
-    val size = size
-    require(size > 0) {
-        "Invalid query size"
-    }
-    val nextPageToken = nextPageToken
-    val prePageToken = prePageToken
+        val size = size
+        require(size > 0) {
+            "Invalid query size"
+        }
+        val nextPageToken = nextPageToken
+        val prePageToken = prePageToken
 
-    require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
-        "Invalid query"
-    }
-    generator.parse(prePageToken, nextPageToken, size)
-}.andThen(ServerError::fromError) { f ->
-    block(f).andThenPresent(ServerError::fromError) { page ->
-        captureFailure(ServerError::from) {
-            val (list, count) = page
-            val (pre, next) = generator.generate(list, f)
-            responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
+        require(nextPageToken.isNullOrBlank() || prePageToken.isNullOrBlank()) {
+            "Invalid query"
+        }
+        generator.parse(prePageToken, nextPageToken, size)
+    }.andThen(ServerError::fromError) { f ->
+        block(f).andThenPresent(ServerError::fromError) { page ->
+            captureFailure(ServerError::from) {
+                val (list, count) = page
+                val (pre, next) = generator.generate(list, f)
+                responseBuilder(list.toImmutableList(), Pagination(next, pre, count))
+            }
         }
     }
-}
 
 @Suppress("UNCHECKED_CAST")
 fun <R : Any> getPageToken(pageTokenType: KClass<R>, pageToken: String): R? =
     if (pageTokenType == ULong::class) {
-    pageToken.toULongOrNull() as? R
-} else {
-    DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
-}
+        pageToken.toULongOrNull() as? R
+    } else {
+        DefaultConversionService.fromValue(pageToken, pageTokenType) as? R
+    }
 
 class ReactionPaginationGenerator(val backend: Backend) : PagingGenerator<ReactionInfo, ReactionFetch> {
     override fun parse(prePageToken: String?, nextPageToken: String?, size: Int): ReactionFetch =
         ReactionFetch(
-        when {
-            !nextPageToken.isNullOrBlank() ->
-                Cursor.DescCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(nextPageToken),
-                )
+            when {
+                !nextPageToken.isNullOrBlank() ->
+                    Cursor.DescCursor(
+                        commonJson.decodeFromString<ReactionCursorKey>(nextPageToken),
+                    )
 
-            !prePageToken.isNullOrBlank() ->
-                Cursor.AscCursor(
-                    commonJson.decodeFromString<ReactionCursorKey>(prePageToken),
-                )
+                !prePageToken.isNullOrBlank() ->
+                    Cursor.AscCursor(
+                        commonJson.decodeFromString<ReactionCursorKey>(prePageToken),
+                    )
 
-            else -> null
-        },
-        size,
-    )
+                else -> null
+            },
+            size,
+        )
 
     override fun generate(list: List<ReactionInfo>, fetch: ReactionFetch): Pair<String?, String?> {
         val size = fetch.size

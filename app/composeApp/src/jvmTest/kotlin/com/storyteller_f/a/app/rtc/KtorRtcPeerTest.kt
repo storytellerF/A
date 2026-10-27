@@ -47,52 +47,52 @@ class KtorRtcPeerTest {
     @Test
     fun nativePeersNegotiateAudioAndVideo() =
         runTest {
-        // Native ICE and shutdown must use real time rather than runTest's virtual scheduler.
-        withContext(Dispatchers.IO) {
-            coroutineScope {
-                val first = NativeCallFixture()
-                val second = NativeCallFixture()
-                val firstMedia = first.engine.openMedia(true)
-                val secondMedia = second.engine.openMedia(true)
-                val firstPeer = first.engine.createPeer(firstMedia, first.events, this)
-                val secondPeer = second.engine.createPeer(secondMedia, second.events, this)
-                try {
-                    val answer = secondPeer.createAnswer(firstPeer.createOffer())
-                    firstPeer.acceptAnswer(answer)
-                    val forward = launch { for (candidate in first.candidates) secondPeer.addCandidate(candidate) }
-                    val backward = launch { for (candidate in second.candidates) firstPeer.addCandidate(candidate) }
+            // Native ICE and shutdown must use real time rather than runTest's virtual scheduler.
+            withContext(Dispatchers.IO) {
+                coroutineScope {
+                    val first = NativeCallFixture()
+                    val second = NativeCallFixture()
+                    val firstMedia = first.engine.openMedia(true)
+                    val secondMedia = second.engine.openMedia(true)
+                    val firstPeer = first.engine.createPeer(firstMedia, first.events, this)
+                    val secondPeer = second.engine.createPeer(secondMedia, second.events, this)
                     try {
-                        withTimeout(30.seconds) {
-                            combine(first.connection, second.connection) { a, b ->
-                                a == RtcConnectionState.Connected && b == RtcConnectionState.Connected
-                            }.first { it }
-                            firstPeer.addCandidate(CustomCandidate("0", 0, ""))
-                            secondPeer.addCandidate(CustomCandidate("0", 0, ""))
-                            val firstVideo = assertNotNull(first.video.first { it != null })
-                            val secondVideo = assertNotNull(second.video.first { it != null })
-                            receiveSyntheticFrames(firstVideo as DesktopRtcVideo, second)
-                            receiveSyntheticFrames(secondVideo as DesktopRtcVideo, first)
-                            assertFailsWith<WebRtc.IceException> {
-                                firstPeer.addCandidate(CustomCandidate("0", 0, "invalid-candidate"))
+                        val answer = secondPeer.createAnswer(firstPeer.createOffer())
+                        firstPeer.acceptAnswer(answer)
+                        val forward = launch { for (candidate in first.candidates) secondPeer.addCandidate(candidate) }
+                        val backward = launch { for (candidate in second.candidates) firstPeer.addCandidate(candidate) }
+                        try {
+                            withTimeout(30.seconds) {
+                                combine(first.connection, second.connection) { a, b ->
+                                    a == RtcConnectionState.Connected && b == RtcConnectionState.Connected
+                                }.first { it }
+                                firstPeer.addCandidate(CustomCandidate("0", 0, ""))
+                                secondPeer.addCandidate(CustomCandidate("0", 0, ""))
+                                val firstVideo = assertNotNull(first.video.first { it != null })
+                                val secondVideo = assertNotNull(second.video.first { it != null })
+                                receiveSyntheticFrames(firstVideo as DesktopRtcVideo, second)
+                                receiveSyntheticFrames(secondVideo as DesktopRtcVideo, first)
+                                assertFailsWith<WebRtc.IceException> {
+                                    firstPeer.addCandidate(CustomCandidate("0", 0, "invalid-candidate"))
+                                }
                             }
+                        } finally {
+                            forward.cancel()
+                            backward.cancel()
                         }
                     } finally {
-                        forward.cancel()
-                        backward.cancel()
-                    }
-                } finally {
-                    withContext(NonCancellable) {
-                        firstPeer.close()
-                        secondPeer.close()
-                        firstMedia.close()
-                        secondMedia.close()
-                        first.candidates.cancel()
-                        second.candidates.cancel()
+                        withContext(NonCancellable) {
+                            firstPeer.close()
+                            secondPeer.close()
+                            firstMedia.close()
+                            secondMedia.close()
+                            first.candidates.cancel()
+                            second.candidates.cancel()
+                        }
                     }
                 }
             }
         }
-    }
 }
 
 private suspend fun receiveSyntheticFrames(video: DesktopRtcVideo, source: NativeCallFixture) =

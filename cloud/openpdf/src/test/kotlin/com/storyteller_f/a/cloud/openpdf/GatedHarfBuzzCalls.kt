@@ -31,19 +31,19 @@ internal class GatedHarfBuzzCalls(private val native: HarfBuzzCalls = HarfBuzzNa
 
     override fun createHandle(name: String, destroy: String, vararg args: Any?): FontNativeHandle =
         when (name) {
-        "hb_face_create" -> createTableFace(destroy, args)
+            "hb_face_create" -> createTableFace(destroy, args)
 
-        "hb_subset_or_fail" -> {
-            inSubset.value = true
-            try {
-                track(name, native.createHandle(name, destroy, *args))
-            } finally {
-                inSubset.value = false
+            "hb_subset_or_fail" -> {
+                inSubset.value = true
+                try {
+                    track(name, native.createHandle(name, destroy, *args))
+                } finally {
+                    inSubset.value = false
+                }
             }
-        }
 
-        else -> track(name, native.createHandle(name, destroy, *args))
-    }
+            else -> track(name, native.createHandle(name, destroy, *args))
+        }
 
     private fun createTableFace(destroy: String, args: Array<out Any?>): FontNativeHandle {
         val base = track("base face", native.createHandle("hb_face_create", destroy, *args))

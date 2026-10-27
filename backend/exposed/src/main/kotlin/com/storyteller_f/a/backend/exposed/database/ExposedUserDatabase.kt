@@ -76,57 +76,57 @@ class ExposedUserDatabase(
 ) : UserDatabase {
     override suspend fun getUserAid(id: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            Aids.selectAll().where {
-                Aids.objectId eq id
+            search {
+                Aids.selectAll().where {
+                    Aids.objectId eq id
+                }
+            }
+            first {
+                it[Aids.value]
             }
         }
-        first {
-            it[Aids.value]
-        }
-    }
 
     override suspend fun getRawUser(objectFetch: ObjectFetch, uid: PrimaryKey?) =
         getUserByPredicate(User::wrapRow) {
-        where {
-            when (objectFetch) {
-                is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
-                is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
+            where {
+                when (objectFetch) {
+                    is ObjectFetch.AidFetch -> Aids.value eq objectFetch.aid
+                    is ObjectFetch.IdFetch -> Users.id eq objectFetch.id
+                }
             }
+        }.andThenPresent(DatabaseError::fromError) { user ->
+            processUserToRawUser(uid, listOf(user))
+        }.mapPresent {
+            it.first()
         }
-    }.andThenPresent(DatabaseError::fromError) { user ->
-        processUserToRawUser(uid, listOf(user))
-    }.mapPresent {
-        it.first()
-    }
 
     override suspend fun getRawUserAndPublicKeyByAddress(ad: String) =
         getUserByPredicate({
-        val value = User.wrapRow(it)
-        Pair(RawUser(value), value.publicKey)
-    }) {
-        where {
-            Users.address eq ad
+            val value = User.wrapRow(it)
+            Pair(RawUser(value), value.publicKey)
+        }) {
+            where {
+                Users.address eq ad
+            }
         }
-    }
 
     override suspend fun createUser(user: User): CustomResult<User, DatabaseError> =
         databaseSession.dbQuery {
-        createUserRaw(user)
-        val aid = user.aid
-        if (!aid.isNullOrBlank()) {
-            check(
-                Aids.insert {
-                    it[objectId] = user.id
-                    it[value] = aid
-                    it[objectType] = ObjectType.USER
-                }.insertedCount > 0,
-            ) {
-                "insert aid failed"
+            createUserRaw(user)
+            val aid = user.aid
+            if (!aid.isNullOrBlank()) {
+                check(
+                    Aids.insert {
+                        it[objectId] = user.id
+                        it[value] = aid
+                        it[objectType] = ObjectType.USER
+                    }.insertedCount > 0,
+                ) {
+                    "insert aid failed"
+                }
             }
+            user
         }
-        user
-    }
 
     private suspend fun createUserRaw(user: User) {
         check(
@@ -149,14 +149,14 @@ class ExposedUserDatabase(
 
     override suspend fun isUserNotExistsByPublicKey(pk: String) =
         databaseSession.dbSearch {
-        search {
-            val md5 = md5(pk)
-            User.find {
-                Users.publicKeyMd5 eq md5 and (Users.publicKey eq pk)
+            search {
+                val md5 = md5(pk)
+                User.find {
+                    Users.publicKeyMd5 eq md5 and (Users.publicKey eq pk)
+                }
             }
+            isEmpty()
         }
-        isEmpty()
-    }
 
     override suspend fun updateUserStatus(id: PrimaryKey, status: com.storyteller_f.shared.type.UserStatus) =
         databaseSession.dbQuery {
@@ -169,8 +169,8 @@ class ExposedUserDatabase(
 
     override suspend fun updateUserInfo(id: PrimaryKey, newUser: UpdateUserBody) =
         databaseSession.dbQuery {
-        updateUser(newUser, id) && updateAid(newUser, id)
-    }
+            updateUser(newUser, id) && updateAid(newUser, id)
+        }
 
     private suspend fun updateAid(newUser: UpdateUserBody, id: PrimaryKey): Boolean {
         val aid = newUser.aid
@@ -204,32 +204,32 @@ class ExposedUserDatabase(
 
     private suspend fun getUserAuthDataBy(predicate: () -> Op<Boolean>) =
         databaseSession.dbSearch {
-        search {
-            Users.select(listOf(Users.publicKey, Users.id, Users.algoType)).where(predicate)
+            search {
+                Users.select(listOf(Users.publicKey, Users.id, Users.algoType)).where(predicate)
+            }
+            first {
+                UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
+            }
         }
-        first {
-            UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
-        }
-    }
 
     override suspend fun getUserAuthDataById(id: PrimaryKey) =
         getUserAuthDataBy {
-        Users.id eq id
-    }
+            Users.id eq id
+        }
 
     override suspend fun getUserAuthDataByAid(aid: String) =
         getUserByPredicate({
-        UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
-    }) {
-        where {
-            Aids.value eq aid
+            UserAuthData(it[Users.publicKey], it[Users.id], it[Users.algoType])
+        }) {
+            where {
+                Aids.value eq aid
+            }
         }
-    }
 
     override suspend fun getUserAuthDataByAddress(address: String) =
         getUserAuthDataBy {
-        Users.address eq address
-    }
+            Users.address eq address
+        }
 
     override suspend fun getRawUsers(
         objectListFetch: ObjectListFetch,
@@ -255,86 +255,86 @@ class ExposedUserDatabase(
 
     override suspend fun getUserAcgByIds(objectListFetch: ObjectListFetch) =
         getUserListByPredicate(
-        {
-            where {
-                when (objectListFetch) {
-                    is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
-                    is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+            {
+                where {
+                    when (objectListFetch) {
+                        is ObjectListFetch.AidListFetch -> Aids.value inList objectListFetch.aidList
+                        is ObjectListFetch.IdListFetch -> Users.id inList objectListFetch.idList
+                    }
                 }
-            }
-        },
-    ) {
-        it[Users.id] to it[Users.acgAmount]
-    }
+            },
+        ) {
+            it[Users.id] to it[Users.acgAmount]
+        }
 
     override suspend fun addReadLog(userTopicRead: UserTopicRead) =
         databaseSession.dbQuery {
-        check(
-            UserTopicReads.upsert(onUpdate = {
-                it[UserTopicReads.updatedAt] = userTopicRead.updatedAt
-                it[UserTopicReads.topicId] =
-                    CustomFunction(
-                        "GREATEST",
-                        UserTopicReads.topicId.columnType,
-                        UserTopicReads.topicId,
-                        longLiteral(userTopicRead.topicId),
-                    )
-            }) {
-                it[uid] = userTopicRead.uid
-                it[updatedAt] = userTopicRead.updatedAt
-                it[objectId] = userTopicRead.objectId
-                it[objectType] = userTopicRead.objectType
-                it[topicId] = userTopicRead.topicId
-            }.insertedCount > 0,
-        ) {
-            "log failed"
+            check(
+                UserTopicReads.upsert(onUpdate = {
+                    it[UserTopicReads.updatedAt] = userTopicRead.updatedAt
+                    it[UserTopicReads.topicId] =
+                        CustomFunction(
+                            "GREATEST",
+                            UserTopicReads.topicId.columnType,
+                            UserTopicReads.topicId,
+                            longLiteral(userTopicRead.topicId),
+                        )
+                }) {
+                    it[uid] = userTopicRead.uid
+                    it[updatedAt] = userTopicRead.updatedAt
+                    it[objectId] = userTopicRead.objectId
+                    it[objectType] = userTopicRead.objectType
+                    it[topicId] = userTopicRead.topicId
+                }.insertedCount > 0,
+            ) {
+                "log failed"
+            }
         }
-    }
 
     override suspend fun insertUserLog(log: UserLog) =
         databaseSession.dbQuery {
-        check(
-            UserLogs.insert {
-                it[UserLogs.id] = log.id
-                it[uid] = log.uid
-                it[type] = log.type
-                it[objectId] = log.objectId
-                it[objectType] = log.objectType
-                it[UserLogs.createdTime] = log.createdTime
-            }.insertedCount > 0,
-        ) {
-            "Insert user log failed"
+            check(
+                UserLogs.insert {
+                    it[UserLogs.id] = log.id
+                    it[uid] = log.uid
+                    it[type] = log.type
+                    it[objectId] = log.objectId
+                    it[objectType] = log.objectType
+                    it[UserLogs.createdTime] = log.createdTime
+                }.insertedCount > 0,
+            ) {
+                "Insert user log failed"
+            }
         }
-    }
 
     override suspend fun addDevice(uid: PrimaryKey, endpointUrl: String) =
         databaseSession.dbQuery {
-        check(
-            UserDevices.insert {
-                it[UserDevices.uid] = uid
-                it[UserDevices.endpointUrl] = endpointUrl
-            }.insertedCount > 0,
-        ) {
-            "Insert device failed"
+            check(
+                UserDevices.insert {
+                    it[UserDevices.uid] = uid
+                    it[UserDevices.endpointUrl] = endpointUrl
+                }.insertedCount > 0,
+            ) {
+                "Insert device failed"
+            }
         }
-    }
 
     override suspend fun removeDevice(uid: PrimaryKey, endpointUrl: String) =
         databaseSession.dbQuery {
-        UserDevices.deleteWhere {
-            UserDevices.uid eq uid and (UserDevices.endpointUrl eq endpointUrl)
+            UserDevices.deleteWhere {
+                UserDevices.uid eq uid and (UserDevices.endpointUrl eq endpointUrl)
+            }
         }
-    }
 
     override suspend fun getUserDevices(uid: List<PrimaryKey>) =
         databaseSession.dbSearch {
-        search {
-            UserDevices.selectAll().where {
-                UserDevices.uid inList uid
+            search {
+                UserDevices.selectAll().where {
+                    UserDevices.uid inList uid
+                }
             }
+            map(UserDevice::wrapRow)
         }
-        map(UserDevice::wrapRow)
-    }
 
     override suspend fun addAcgForUser(record: TaskRecord, assetTransaction: AssetTransaction?) =
         databaseSession.dbQuery {
@@ -409,16 +409,16 @@ class ExposedUserDatabase(
         isRequested: Boolean,
     ): CustomResult<Boolean, DatabaseError> =
         databaseSession.dbQuery {
-        TaskRecords.update({
-            if (isRequested) {
-                TaskRecords.id eq id and (TaskRecords.success eq false)
-            } else {
-                TaskRecords.id eq id
-            }
-        }) {
-            it[TaskRecords.retryRequested] = isRequested
-        } > 0
-    }
+            TaskRecords.update({
+                if (isRequested) {
+                    TaskRecords.id eq id and (TaskRecords.success eq false)
+                } else {
+                    TaskRecords.id eq id
+                }
+            }) {
+                it[TaskRecords.retryRequested] = isRequested
+            } > 0
+        }
 
     private suspend fun getTaskRecordSummary(type: TaskRecordType): CustomResult<TaskRecordSummary, DatabaseError> =
         getTaskRecordCount(type, true).andThen(DatabaseError::fromError) { successCount ->
@@ -488,39 +488,39 @@ class ExposedUserDatabase(
 
     override suspend fun getChildAccountCount(hostId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
-                .selectAll()
-                .where {
-                    ChildAccounts.hostId eq hostId
-                }
+            search {
+                ChildAccounts.join(Users, JoinType.INNER, ChildAccounts.uid, Users.id)
+                    .selectAll()
+                    .where {
+                        ChildAccounts.hostId eq hostId
+                    }
+            }
+            count()
         }
-        count()
-    }
 
     override suspend fun getChildAccountIds(hostId: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            ChildAccounts.select(ChildAccounts.uid).where {
-                ChildAccounts.hostId eq hostId
+            search {
+                ChildAccounts.select(ChildAccounts.uid).where {
+                    ChildAccounts.hostId eq hostId
+                }
+            }
+            map {
+                it[ChildAccounts.uid]
             }
         }
-        map {
-            it[ChildAccounts.uid]
-        }
-    }
 
     override suspend fun getRawChildAccount(uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            ChildAccounts.selectAll().where {
-                ChildAccounts.uid eq uid
+            search {
+                ChildAccounts.selectAll().where {
+                    ChildAccounts.uid eq uid
+                }
+            }
+            first {
+                ChildAccount.wrapRow(it)
             }
         }
-        first {
-            ChildAccount.wrapRow(it)
-        }
-    }
 
     override suspend fun createChildAccount(
         hostId: PrimaryKey,
@@ -546,14 +546,14 @@ class ExposedUserDatabase(
 
     override suspend fun getAllUsers(primaryKeyFetch: PrimaryKeyFetch) =
         paginationFromResults(
-        getUserListByPredicate(
-            { bindPaginationQuery(Users, primaryKeyFetch) },
-            User::wrapRow,
-        ).andThen(DatabaseError::fromError) {
-            processUserToRawUser(null, it)
-        },
-        getUserCount(),
-    )
+            getUserListByPredicate(
+                { bindPaginationQuery(Users, primaryKeyFetch) },
+                User::wrapRow,
+            ).andThen(DatabaseError::fromError) {
+                processUserToRawUser(null, it)
+            },
+            getUserCount(),
+        )
 
     override suspend fun getUserCount() = getUserCountByPredicate()
 
@@ -581,113 +581,113 @@ class ExposedUserDatabase(
 
     private suspend fun getUserCountByPredicate(queryBuilder: Query.() -> Query = { this }) =
         databaseSession.dbSearch {
-        search {
-            Users.select(Users.id).queryBuilder()
+            search {
+                Users.select(Users.id).queryBuilder()
+            }
+            count()
         }
-        count()
-    }
 
     override suspend fun getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
         paginationFromResults(
-        databaseSession.dbSearch {
-            search {
-                UserLogs.selectAll().where {
-                    UserLogs.uid eq uid
-                }.orderBy(UserLogs.id, SortOrder.DESC).bindPaginationQuery(UserLogs, fetch)
-            }
-            map(UserLog::wrapRow)
-        },
-        databaseSession.dbSearch {
-            search {
-                UserLogs.select(UserLogs.id).where { UserLogs.uid eq uid }
-            }
-            count()
-        },
-    )
+            databaseSession.dbSearch {
+                search {
+                    UserLogs.selectAll().where {
+                        UserLogs.uid eq uid
+                    }.orderBy(UserLogs.id, SortOrder.DESC).bindPaginationQuery(UserLogs, fetch)
+                }
+                map(UserLog::wrapRow)
+            },
+            databaseSession.dbSearch {
+                search {
+                    UserLogs.select(UserLogs.id).where { UserLogs.uid eq uid }
+                }
+                count()
+            },
+        )
 
     override suspend fun getUserTwoFactor(uid: PrimaryKey) =
         databaseSession.dbSearch {
-        search {
-            UserTwoFactors.selectAll().where {
-                UserTwoFactors.uid eq uid
+            search {
+                UserTwoFactors.selectAll().where {
+                    UserTwoFactors.uid eq uid
+                }
             }
+            first(UserTwoFactor::wrapRow)
         }
-        first(UserTwoFactor::wrapRow)
-    }
 
     override suspend fun upsertUserTwoFactor(twoFactor: UserTwoFactor) =
         databaseSession.dbQuery {
-        check(
-            UserTwoFactors.upsert(UserTwoFactors.uid, onUpdate = {
-                it[UserTwoFactors.enabled] = twoFactor.enabled
-                it[UserTwoFactors.type] = twoFactor.type
-                it[UserTwoFactors.totpSecret] = twoFactor.totpSecret
-                it[UserTwoFactors.recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
-                it[UserTwoFactors.updatedAt] = twoFactor.updatedAt
-            }) {
-                it[uid] = twoFactor.uid
-                it[enabled] = twoFactor.enabled
-                it[type] = twoFactor.type
-                it[totpSecret] = twoFactor.totpSecret
-                it[recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
-                it[updatedAt] = twoFactor.updatedAt
-                it[createdTime] = twoFactor.updatedAt
-            }.insertedCount > 0,
-        ) {
-            "upsert user two factor failed"
+            check(
+                UserTwoFactors.upsert(UserTwoFactors.uid, onUpdate = {
+                    it[UserTwoFactors.enabled] = twoFactor.enabled
+                    it[UserTwoFactors.type] = twoFactor.type
+                    it[UserTwoFactors.totpSecret] = twoFactor.totpSecret
+                    it[UserTwoFactors.recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
+                    it[UserTwoFactors.updatedAt] = twoFactor.updatedAt
+                }) {
+                    it[uid] = twoFactor.uid
+                    it[enabled] = twoFactor.enabled
+                    it[type] = twoFactor.type
+                    it[totpSecret] = twoFactor.totpSecret
+                    it[recoveryCodeHashes] = encodeRecoveryCodeHashes(twoFactor.recoveryCodeHashes)
+                    it[updatedAt] = twoFactor.updatedAt
+                    it[createdTime] = twoFactor.updatedAt
+                }.insertedCount > 0,
+            ) {
+                "upsert user two factor failed"
+            }
         }
-    }
 
     override suspend fun disableUserTwoFactor(uid: PrimaryKey) =
         databaseSession.dbQuery {
-        UserTwoFactors.update({
-            UserTwoFactors.uid eq uid
-        }) {
-            it[enabled] = false
+            UserTwoFactors.update({
+                UserTwoFactors.uid eq uid
+            }) {
+                it[enabled] = false
+            }
+            Unit
         }
-        Unit
-    }
 
     override suspend fun updateRecoveryCodeHashes(uid: PrimaryKey, hashes: List<String>) =
         databaseSession.dbQuery {
-        UserTwoFactors.update({
-            UserTwoFactors.uid eq uid
-        }) {
-            it[recoveryCodeHashes] = encodeRecoveryCodeHashes(hashes)
+            UserTwoFactors.update({
+                UserTwoFactors.uid eq uid
+            }) {
+                it[recoveryCodeHashes] = encodeRecoveryCodeHashes(hashes)
+            }
+            Unit
         }
-        Unit
-    }
 
     private suspend fun processUserToRawUser(
         uid: PrimaryKey?,
         users: List<User>,
     ): CustomResult<List<RawUser>, DatabaseError> =
         captureFailure(DatabaseError::from) {
-        val userIds = users.map { it.id }
-        if (userIds.isEmpty()) return@captureFailure emptyList()
+            val userIds = users.map { it.id }
+            if (userIds.isEmpty()) return@captureFailure emptyList()
 
-        val favoriteMap =
-            if (uid != null) {
-                combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(userIds), uid)
-                    .getOrThrow().associateBy { it.objectId }
-            } else {
-                emptyMap()
+            val favoriteMap =
+                if (uid != null) {
+                    combinedDatabase.favorite.getHasFavorite(ObjectListFetch.IdListFetch(userIds), uid)
+                        .getOrThrow().associateBy { it.objectId }
+                } else {
+                    emptyMap()
+                }
+
+            val subscriptionMap =
+                if (uid != null) {
+                    combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(userIds), uid)
+                        .getOrThrow().associateBy { it.objectId }
+                } else {
+                    emptyMap()
+                }
+
+            users.map { user ->
+                RawUser(
+                    user,
+                    favoriteId = favoriteMap[user.id]?.id,
+                    subscriptionId = subscriptionMap[user.id]?.id,
+                )
             }
-
-        val subscriptionMap =
-            if (uid != null) {
-                combinedDatabase.subscription.getHasSubscription(ObjectListFetch.IdListFetch(userIds), uid)
-                    .getOrThrow().associateBy { it.objectId }
-            } else {
-                emptyMap()
-            }
-
-        users.map { user ->
-            RawUser(
-                user,
-                favoriteId = favoriteMap[user.id]?.id,
-                subscriptionId = subscriptionMap[user.id]?.id,
-            )
         }
-    }
 }

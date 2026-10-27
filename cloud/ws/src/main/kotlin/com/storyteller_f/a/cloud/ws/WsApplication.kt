@@ -193,15 +193,15 @@ private fun Application.buildWsBackend(): Backend = buildBackendFromEnv(readEnv(
 
 private fun Application.readInjectedEnv() =
     engine.environment.config.toMap().mapNotNull {
-    (it.value as? String)?.let { v ->
-        it.key to v
-    }
-}.associate { it }
+        (it.value as? String)?.let { v ->
+            it.key to v
+        }
+    }.associate { it }
 
 private fun buildDatabaseReader() =
     DatabaseReader.Builder(
-    ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
-).build()
+        ClassLoader.getSystemResourceAsStream("GeoLite2-Country.mmdb"),
+    ).build()
 
 class WsBackend(
     override val customConfig: CustomConfig,

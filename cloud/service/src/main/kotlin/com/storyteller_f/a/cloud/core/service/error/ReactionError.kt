@@ -31,13 +31,13 @@ sealed interface ReactionError : FailureDetails {
     companion object {
         fun fromError(error: FailureDetails): ReactionError =
             when (error) {
-            is ReactionError -> error
-            is ConstraintFailure -> Conflict(error.cause)
-            is InvalidInputFailure -> InvalidInput(error.cause)
-            is AuthenticationFailure -> Unauthenticated(error.cause)
-            is PermissionFailure -> Forbidden(error.cause)
-            else -> Unexpected(error.cause)
-        }
+                is ReactionError -> error
+                is ConstraintFailure -> Conflict(error.cause)
+                is InvalidInputFailure -> InvalidInput(error.cause)
+                is AuthenticationFailure -> Unauthenticated(error.cause)
+                is PermissionFailure -> Forbidden(error.cause)
+                else -> Unexpected(error.cause)
+            }
 
         fun from(cause: Throwable): ReactionError {
             if (cause is CancellationException) throw cause

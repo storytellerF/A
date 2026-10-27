@@ -22,53 +22,53 @@ internal class CancellationSafeSQLiteDriverTest {
     @Test
     internal fun cancelledAllocationDisposesUndeliveredResource() =
         runTest {
-        val started = CompletableDeferred<Unit>()
-        val response = CompletableDeferred<Any>()
-        var disposed = false
-        var delivered = false
-        val job =
-            launch {
-                awaitWorkerResponse(onCancelled = { disposed = true }) {
-                    started.complete(Unit)
-                    response.await()
+            val started = CompletableDeferred<Unit>()
+            val response = CompletableDeferred<Any>()
+            var disposed = false
+            var delivered = false
+            val job =
+                launch {
+                    awaitWorkerResponse(onCancelled = { disposed = true }) {
+                        started.complete(Unit)
+                        response.await()
+                    }
+                    delivered = true
                 }
-                delivered = true
-            }
-        started.await()
-        job.cancel()
-        testScheduler.runCurrent()
-        assertFalse(disposed)
-        response.complete(Any())
-        testScheduler.runCurrent()
-        assertTrue(disposed)
-        assertFalse(delivered)
-        assertTrue(job.isCancelled)
-    }
+            started.await()
+            job.cancel()
+            testScheduler.runCurrent()
+            assertFalse(disposed)
+            response.complete(Any())
+            testScheduler.runCurrent()
+            assertTrue(disposed)
+            assertFalse(delivered)
+            assertTrue(job.isCancelled)
+        }
 
     @Test
     internal fun cancelledCleanupWaitsForReleaseResponse() =
         runTest {
-        val response = CompletableDeferred<Unit>()
-        var recycled = false
-        val job =
-            launch {
-                try {
-                    awaitCancellation()
-                } finally {
-                    awaitWorkerFinalizer { response.await() }
-                    recycled = true
+            val response = CompletableDeferred<Unit>()
+            var recycled = false
+            val job =
+                launch {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        awaitWorkerFinalizer { response.await() }
+                        recycled = true
+                    }
                 }
-            }
-        testScheduler.runCurrent()
-        job.cancel()
-        testScheduler.runCurrent()
-        assertFalse(job.isCompleted)
-        assertFalse(recycled)
-        response.complete(Unit)
-        testScheduler.runCurrent()
-        assertTrue(recycled)
-        assertTrue(job.isCancelled)
-    }
+            testScheduler.runCurrent()
+            job.cancel()
+            testScheduler.runCurrent()
+            assertFalse(job.isCompleted)
+            assertFalse(recycled)
+            response.complete(Unit)
+            testScheduler.runCurrent()
+            assertTrue(recycled)
+            assertTrue(job.isCancelled)
+        }
 
     private suspend fun TestScope.verifyCancellation() {
         val requestStarted = CompletableDeferred<Unit>()

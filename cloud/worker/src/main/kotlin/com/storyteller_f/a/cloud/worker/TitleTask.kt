@@ -132,13 +132,13 @@ private fun CustomResult<Unit, WorkerError>.logTitleResult(objectId: PrimaryKey)
 
 private fun generateTitleNotificationContent(title: Title): String =
     buildString {
-    appendLine("You received a new title!")
-    appendLine("Title: ${title.name}")
-    appendLine("From: System")
-    appendLine("Created: ${title.createdTime}")
-    if (title.expiresAt != null) {
-        appendLine("Expires: ${title.expiresAt ?: "<none>"}")
+        appendLine("You received a new title!")
+        appendLine("Title: ${title.name}")
+        appendLine("From: System")
+        appendLine("Created: ${title.createdTime}")
+        if (title.expiresAt != null) {
+            appendLine("Expires: ${title.expiresAt ?: "<none>"}")
+        }
     }
-}
 
 private const val TITLE_LOG_TAG = "title"

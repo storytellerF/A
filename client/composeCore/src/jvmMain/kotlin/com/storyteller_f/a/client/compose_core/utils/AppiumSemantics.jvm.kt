@@ -19,13 +19,13 @@ internal actual fun Modifier.nativeAppiumSemantics(
     click: (() -> Unit)?,
 ): Modifier =
     semantics {
-    tag?.let { testTag = it }
-    (label ?: description)?.let { contentDescription = it }
-    label?.let { text = AnnotatedString(it) }
-    click?.let { action ->
-        onClick {
-            action()
-            true
+        tag?.let { testTag = it }
+        (label ?: description)?.let { contentDescription = it }
+        label?.let { text = AnnotatedString(it) }
+        click?.let { action ->
+            onClick {
+                action()
+                true
+            }
         }
     }
-}

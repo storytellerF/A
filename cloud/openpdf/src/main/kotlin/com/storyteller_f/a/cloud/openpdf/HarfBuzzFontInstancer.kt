@@ -25,34 +25,34 @@ internal class HarfBuzzFontInstancer(private val native: HarfBuzzCalls = HarfBuz
         axes: Map<String, Float>,
     ): CustomResult<ByteArray, FontError> =
         captureFontFailure {
-        val metadata = SfntFont(source, faceIndex)
-        val cff2 = metadata.hasTable("CFF2")
-        val staticCff = metadata.hasTable("CFF ") && !metadata.hasTable("fvar")
-        require(metadata.hasTable("glyf") || staticCff || cff2) {
-            "PDF instancing requires TrueType, static CFF or CFF2 outlines"
-        }
-        validateAxes(metadata.axes, axes)
-        if (cff2) {
-            check(native.invokeInt("hb_version_atleast", 13, 0, 0) != 0) {
-                "CFF2 PDF fonts require HarfBuzz 13.0.0 or newer"
+            val metadata = SfntFont(source, faceIndex)
+            val cff2 = metadata.hasTable("CFF2")
+            val staticCff = metadata.hasTable("CFF ") && !metadata.hasTable("fvar")
+            require(metadata.hasTable("glyf") || staticCff || cff2) {
+                "PDF instancing requires TrueType, static CFF or CFF2 outlines"
             }
-        }
-        native.createBlob(source).use { blob ->
-            native.createHandle("hb_face_create", "hb_face_destroy", blob.pointer, faceIndex).use { face ->
-                native.createHandle("hb_subset_input_create_or_fail", "hb_subset_input_destroy").use { input ->
-                    native.invokeVoid("hb_subset_input_keep_everything", input.pointer)
-                    if (cff2) {
-                        val flags = native.invokeInt("hb_subset_input_get_flags", input.pointer)
-                        // Public HB_SUBSET_FLAGS_DOWNGRADE_CFF2 (13.0+); preserve keep-everything flags.
-                        native.invokeVoid("hb_subset_input_set_flags", input.pointer, flags or 0x4000)
-                    }
-                    if (metadata.axes.isNotEmpty()) pinAxes(input.pointer, face.pointer, axes)
-                    native.createHandle(
-                        "hb_subset_or_fail",
-                        "hb_face_destroy",
-                        face.pointer,
-                        input.pointer,
-                    ).use { output ->
+            validateAxes(metadata.axes, axes)
+            if (cff2) {
+                check(native.invokeInt("hb_version_atleast", 13, 0, 0) != 0) {
+                    "CFF2 PDF fonts require HarfBuzz 13.0.0 or newer"
+                }
+            }
+            native.createBlob(source).use { blob ->
+                native.createHandle("hb_face_create", "hb_face_destroy", blob.pointer, faceIndex).use { face ->
+                    native.createHandle("hb_subset_input_create_or_fail", "hb_subset_input_destroy").use { input ->
+                        native.invokeVoid("hb_subset_input_keep_everything", input.pointer)
+                        if (cff2) {
+                            val flags = native.invokeInt("hb_subset_input_get_flags", input.pointer)
+                            // Public HB_SUBSET_FLAGS_DOWNGRADE_CFF2 (13.0+); preserve keep-everything flags.
+                            native.invokeVoid("hb_subset_input_set_flags", input.pointer, flags or 0x4000)
+                        }
+                        if (metadata.axes.isNotEmpty()) pinAxes(input.pointer, face.pointer, axes)
+                        native.createHandle(
+                            "hb_subset_or_fail",
+                            "hb_face_destroy",
+                            face.pointer,
+                            input.pointer,
+                        ).use { output ->
                             native.createHandle(
                                 "hb_face_reference_blob",
                                 "hb_blob_destroy",
@@ -60,11 +60,11 @@ internal class HarfBuzzFontInstancer(private val native: HarfBuzzCalls = HarfBuz
                             ).use { result ->
                                 native.readBlob(result.pointer).also { validateInstance(it, cff2) }
                             }
+                        }
                     }
                 }
             }
         }
-    }
 
     private fun validateInstance(bytes: ByteArray, cff2: Boolean) {
         val instance = SfntFont(bytes, 0)

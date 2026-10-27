@@ -125,34 +125,34 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
 
     override suspend fun getAllMembers(distinct: List<String>) =
         databaseSession.dbQuery {
-        Members
-            .join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)
-            .join(Aids, JoinType.INNER, Members.objectId, Aids.objectId)
-            .join(Users, JoinType.INNER, Members.uid, Users.id)
-            .select(Users.fields + Aids.value)
-            .where {
-                Aids.value inList distinct
-            }.toList().map {
-                MemberAuthData(
-                    it[Users.publicKey],
-                    it[Users.encryptionPublicKey],
-                    it[Users.id],
-                    it[Aids.value],
-                    it[Users.algoType],
-                )
-            }
-    }
+            Members
+                .join(Rooms, JoinType.INNER, Members.objectId, Rooms.id)
+                .join(Aids, JoinType.INNER, Members.objectId, Aids.objectId)
+                .join(Users, JoinType.INNER, Members.uid, Users.id)
+                .select(Users.fields + Aids.value)
+                .where {
+                    Aids.value inList distinct
+                }.toList().map {
+                    MemberAuthData(
+                        it[Users.publicKey],
+                        it[Users.encryptionPublicKey],
+                        it[Users.id],
+                        it[Aids.value],
+                        it[Users.algoType],
+                    )
+                }
+        }
 
     override suspend fun batchAddEncryptTopicKeys(
         encryptedKeys: List<Triple<PrimaryKey, ByteArray, Long>>,
     ): CustomResult<Unit, DatabaseError> =
         databaseSession.dbQuery {
-        EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
-            this[EncryptedKeys.topicId] = topicId
-            this[EncryptedKeys.encryptedAes] = ExposedBlob(b)
-            this[EncryptedKeys.uid] = uid
+            EncryptedKeys.batchInsert(encryptedKeys) { (topicId, b, uid) ->
+                this[EncryptedKeys.topicId] = topicId
+                this[EncryptedKeys.encryptedAes] = ExposedBlob(b)
+                this[EncryptedKeys.uid] = uid
+            }
         }
-    }
 
     override suspend fun batchAddTopics(
         tuples: List<InsertTopicTuple>,
@@ -164,9 +164,9 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
 
     override suspend fun createTaskRecord(record: TaskRecord) =
         databaseSession.dbQuery {
-        addTaskRecord(record)
-        record
-    }
+            addTaskRecord(record)
+            record
+        }
 
     override suspend fun getTaskRecords(
         type: TaskRecordType?,
@@ -211,19 +211,19 @@ class ExposedAdminDatabase(val databaseSession: ExposedDatabaseSession) : AdminD
         log: com.storyteller_f.a.backend.core.types.PanelLog,
     ): CustomResult<Unit, DatabaseError> =
         databaseSession.dbQuery {
-        check(
-            PanelLogs.insert {
-                it[id] = log.id
-                it[adminId] = log.adminId
-                it[targetId] = log.targetId
-                it[objectType] = log.objectType
-                it[action] = log.action
-                it[createdTime] = log.createdTime
-            }.insertedCount > 0,
-        ) {
-            "insert panel log failed"
+            check(
+                PanelLogs.insert {
+                    it[id] = log.id
+                    it[adminId] = log.adminId
+                    it[targetId] = log.targetId
+                    it[objectType] = log.objectType
+                    it[action] = log.action
+                    it[createdTime] = log.createdTime
+                }.insertedCount > 0,
+            ) {
+                "insert panel log failed"
+            }
         }
-    }
 
     override suspend fun getPanelLogs(targetId: PrimaryKey, objectType: ObjectType, fetch: PrimaryKeyFetch) =
         paginationFromResults(

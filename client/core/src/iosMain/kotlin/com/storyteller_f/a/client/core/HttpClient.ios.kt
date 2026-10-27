@@ -12,8 +12,8 @@ import io.ktor.serialization.kotlinx.json.json
 
 actual fun getClient(block: HttpClientConfig<*>.() -> Unit): HttpClient =
     HttpClient(Darwin) {
-    install(ContentNegotiation) {
-        json()
+        install(ContentNegotiation) {
+            json()
+        }
+        block()
     }
-    block()
-}

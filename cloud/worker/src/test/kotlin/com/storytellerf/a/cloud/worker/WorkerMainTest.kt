@@ -28,32 +28,32 @@ internal class WorkerMainTest {
     @Test
     fun `reviewer retries after factory failure`() =
         runTest {
-        val config = commonJson.encodeToString(LlmConfig(provider = LlmProvider.OPENAI))
-        val reviewer = TopicSafetyReviewer { false }
-        var attempts = 0
-        TopicSafetyReviewerProvider {
-            attempts += 1
-            if (attempts == 1) {
-                createTopicSafetyReviewer(CustomResult.success(config))
-            } else {
-                CustomResult.success(reviewer)
+            val config = commonJson.encodeToString(LlmConfig(provider = LlmProvider.OPENAI))
+            val reviewer = TopicSafetyReviewer { false }
+            var attempts = 0
+            TopicSafetyReviewerProvider {
+                attempts += 1
+                if (attempts == 1) {
+                    createTopicSafetyReviewer(CustomResult.success(config))
+                } else {
+                    CustomResult.success(reviewer)
+                }
+            }.use { provider ->
+                assertNull(provider.get())
+                assertSame(reviewer, provider.get())
+                assertSame(reviewer, provider.get())
+                assertEquals(2, attempts)
             }
-        }.use { provider ->
-            assertNull(provider.get())
-            assertSame(reviewer, provider.get())
-            assertSame(reviewer, provider.get())
-            assertEquals(2, attempts)
         }
-    }
 
     @Test
     fun `reviewer initialization preserves cancellation`() =
         runTest {
-        val cancellation = CancellationException("initialization cancelled")
-        TopicSafetyReviewerProvider { throw cancellation }.use { provider ->
-            assertSame(cancellation, assertFailsWith<CancellationException> { provider.get() })
+            val cancellation = CancellationException("initialization cancelled")
+            TopicSafetyReviewerProvider { throw cancellation }.use { provider ->
+                assertSame(cancellation, assertFailsWith<CancellationException> { provider.get() })
+            }
         }
-    }
 
     @Test
     fun `reviewer provider retries initialization`() {

@@ -72,8 +72,8 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun clickByTextContaining(text: String) =
         click(
-        By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
-    )
+            By.cssSelector("[data-appium-text*='${text.cssAttributeValue()}']"),
+        )
 
     override suspend fun inputText(text: String) {
         try {
@@ -102,8 +102,8 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     override suspend fun assertVisibleByDescription(description: String) =
         assertVisible(
-        descriptionLocator(description),
-    )
+            descriptionLocator(description),
+        )
 
     override suspend fun assertVisibleByText(text: String) = assertVisible(textLocator(text))
 
@@ -213,28 +213,28 @@ class WasmAppTestDriver(private val browser: WebDriver) : AppTestDriver {
 
     private fun findOnScreen(locator: By): WebElement =
         wait.until {
-        // Overlay nodes share a z-index; later dialog nodes are painted above page controls.
-        browser.findElements(locator).lastOrNull(::isOnScreen)
-    }
+            // Overlay nodes share a z-index; later dialog nodes are painted above page controls.
+            browser.findElements(locator).lastOrNull(::isOnScreen)
+        }
 
     private fun isOnScreen(element: WebElement): Boolean =
         captureFailure(ArtifactCollectionError::CollectionFailed) {
-        (browser as JavascriptExecutor).executeScript(
-            """
-            const rect = arguments[0].getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            return rect.width > 0 && rect.height > 0 && centerX >= 0 && centerX <= window.innerWidth &&
-              centerY >= 0 && centerY <= window.innerHeight;
-            """.trimIndent(),
-            element,
-        ) == true
-    }.getOrElse { false }
+            (browser as JavascriptExecutor).executeScript(
+                """
+                const rect = arguments[0].getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                return rect.width > 0 && rect.height > 0 && centerX >= 0 && centerX <= window.innerWidth &&
+                  centerY >= 0 && centerY <= window.innerHeight;
+                """.trimIndent(),
+                element,
+            ) == true
+        }.getOrElse { false }
 
     private fun descriptionLocator(description: String) =
         By.cssSelector(
-        "[aria-label='${description.cssAttributeValue()}']",
-    )
+            "[aria-label='${description.cssAttributeValue()}']",
+        )
 
     private fun textLocator(text: String) = By.cssSelector("[data-appium-text='${text.cssAttributeValue()}']")
 

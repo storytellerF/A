@@ -42,21 +42,21 @@ data class RawRoom(
 
 fun RawRoom.toRoomInfo(icon: FileInfo? = null): RoomInfo =
     RoomInfo(
-    room.id,
-    room.createdTime,
-    room.name,
-    room.aid,
-    room.creator,
-    memberCount ?: 0,
-    icon = icon,
-    joinedTime = joinedTime,
-    communityId = room.communityId,
-    lastRead = lastRead,
-    latestTopic = latestTopic,
-    favoriteId = favoriteId,
-    subscriptionId = subscriptionId,
-    status = room.status,
-)
+        room.id,
+        room.createdTime,
+        room.name,
+        room.aid,
+        room.creator,
+        memberCount ?: 0,
+        icon = icon,
+        joinedTime = joinedTime,
+        communityId = room.communityId,
+        lastRead = lastRead,
+        latestTopic = latestTopic,
+        favoriteId = favoriteId,
+        subscriptionId = subscriptionId,
+        status = room.status,
+    )
 
 fun buildUserNotificationRoom(user: User, adminUid: PrimaryKey): Room {
     val notificationAid = "${user.aid?.takeIf(String::isNotBlank) ?: user.id}_notification"
@@ -73,24 +73,24 @@ fun buildUserNotificationRoom(user: User, adminUid: PrimaryKey): Room {
 
 suspend fun buildMemberForNotificationRoom(user: User, adminUid: PrimaryKey): List<Member> =
     listOf(
-    Member(
-        SnowflakeFactory.nextId(),
-        user.id,
-        user.notificationId,
-        ObjectType.ROOM,
-        now(),
-        MemberStatus.INVITED,
-        joinedTime = null,
-        invitedTime = now(),
-    ),
-    Member(
-        SnowflakeFactory.nextId(),
-        adminUid,
-        user.notificationId,
-        ObjectType.ROOM,
-        now(),
-        MemberStatus.JOINED,
-        joinedTime = now(),
-        invitedTime = null,
-    ),
-)
+        Member(
+            SnowflakeFactory.nextId(),
+            user.id,
+            user.notificationId,
+            ObjectType.ROOM,
+            now(),
+            MemberStatus.INVITED,
+            joinedTime = null,
+            invitedTime = now(),
+        ),
+        Member(
+            SnowflakeFactory.nextId(),
+            adminUid,
+            user.notificationId,
+            ObjectType.ROOM,
+            now(),
+            MemberStatus.JOINED,
+            joinedTime = now(),
+            invitedTime = null,
+        ),
+    )

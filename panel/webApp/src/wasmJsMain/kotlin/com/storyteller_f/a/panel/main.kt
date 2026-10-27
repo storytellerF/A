@@ -46,8 +46,8 @@ fun main() {
 
 private fun wasmQueryParameter(name: String): String? =
     window.location.search
-    .removePrefix("?")
-    .split('&')
-    .firstOrNull { it.substringBefore('=') == name }
-    ?.substringAfter('=', missingDelimiterValue = "")
-    ?.takeIf(String::isNotEmpty)
+        .removePrefix("?")
+        .split('&')
+        .firstOrNull { it.substringBefore('=') == name }
+        ?.substringAfter('=', missingDelimiterValue = "")
+        ?.takeIf(String::isNotEmpty)
