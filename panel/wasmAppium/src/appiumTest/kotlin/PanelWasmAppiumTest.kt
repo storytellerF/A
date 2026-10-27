@@ -44,35 +44,43 @@ class PanelWasmAppiumTest(private val browserType: WasmBrowser) :
     @Test
     fun `test html semantics bridge mounts`() =
         runAppiumBlockingTest {
-        WasmDistributionServer(resolveWasmDistribution()).use { server ->
-            browserType.withBrowser(Dimension(500, 800)) { browser ->
-                browser.get("${server.url}?appium=true")
-                captureFailure(ArtifactCollectionError::CollectionFailed) {
-                    WebDriverWait(browser, Duration.ofSeconds(30)).until(
-                        ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-appium-text='Sign in']")),
-                    )
-                }.getOrElse { cause ->
-                    val body = browser.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
-                    val errors =
-                        (browser as JavascriptExecutor)
-                            .executeScript("return window.appiumErrors || []")
-                            ?: emptyList<Any>()
-                    throw AssertionError(
-                        "Panel Wasm semantics did not mount; requested=${server.requestedPaths}; " +
-                            "body=$body; errors=$errors",
-                        cause.cause,
-                    )
+            WasmDistributionServer(
+                resolveWasmDistribution(),
+                coverageDirectory =
+                createWasmCoverageDirectory(
+                    "PanelWasmAppiumTest",
+                    "test html semantics bridge mounts",
+                    browserType,
+                ),
+            ).use { server ->
+                browserType.withBrowser(Dimension(500, 800), beforeClose = server::collectCoverage) { browser ->
+                    browser.get("${server.url}?appium=true")
+                    captureFailure(ArtifactCollectionError::CollectionFailed) {
+                        WebDriverWait(browser, Duration.ofSeconds(30)).until(
+                            ExpectedConditions.presenceOfElementLocated(By.cssSelector("[data-appium-text='Sign in']")),
+                        )
+                    }.getOrElse { cause ->
+                        val body = browser.findElement(By.tagName("body")).getAttribute("innerHTML").orEmpty()
+                        val errors =
+                            (browser as JavascriptExecutor)
+                                .executeScript("return window.appiumErrors || []")
+                                ?: emptyList<Any>()
+                        throw AssertionError(
+                            "Panel Wasm semantics did not mount; requested=${server.requestedPaths}; " +
+                                "body=$body; errors=$errors",
+                            cause.cause,
+                        )
+                    }
                 }
             }
         }
-    }
 
     @Test
     fun `test panel sign in by injected private session`() = testPanelInjectedSessionByHelper()
 }
 
 private fun resolveWasmDistribution(): File {
-    val distribution = File("build/wasmDistribution")
+    val distribution = File(System.getProperty("e2e.coverage.wasmDistribution", "build/wasmDistribution"))
     return distribution.takeIf { File(it, "index.html").isFile }
         ?: error("Wasm distribution was not prepared; run :panel:wasmAppium:prepareWasmDistribution first.")
 }

@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlinJvm)
 }
 
+val coverageEnabled = providers.gradleProperty("e2e.coverage").map(String::toBooleanStrict).orElse(false)
+
 val e2eTest =
     sourceSets.create(
         "e2eTest",
@@ -43,11 +45,15 @@ tasks.register<Test>("e2eTest") {
         ":cloud:ws:buildTestDockerImage",
         ":cloud:filesystem-service:buildTestDockerImage",
         ":cloud:lucene-service:buildTestDockerImage",
-        ":panel:cliApp:installDist",
+        if (coverageEnabled.get()) ":panel:cliApp:prepareE2eCoverageDistribution" else ":panel:cliApp:installDist",
     )
     systemProperty(
         "panel.cli.app.install.dir",
-        project(":panel:cliApp").layout.buildDirectory.dir("install/cliApp").get().asFile.absolutePath,
+        project(
+            ":panel:cliApp",
+        ).layout.buildDirectory.dir(
+            if (coverageEnabled.get()) "e2e-coverage/install" else "install/cliApp",
+        ).get().asFile.absolutePath,
     )
     maxParallelForks = gradle.startParameter.maxWorkerCount
 }

@@ -38,7 +38,10 @@ class WasmAppiumHelper(
                 testName.removeSuffix("[${browserType.name}]"),
             )
         report.run {
-            WasmDistributionServer(distribution).use { server ->
+            WasmDistributionServer(
+                distribution,
+                coverageDirectory = report.directory.resolve("coverage/wasm"),
+            ).use { server ->
                 runAppiumTestEnvironment(report, allowedOrigins = server.url.removeSuffix("/")) { ports ->
                     server.setBackendUrl("http://127.0.0.1:${ports.server}")
                     browserType.withProfile { profile ->
@@ -65,6 +68,7 @@ class WasmAppiumHelper(
                                     (browser as JavascriptExecutor).executeScript(
                                         "window.localStorage.removeItem('appium.injected_session');",
                                     )
+                                    server.collectCoverage(browser)
                                     browser.quit()
                                     browser = browserType.createDriver(profile, windowSize)
                                     browser.get(url)
@@ -74,6 +78,7 @@ class WasmAppiumHelper(
                             )
                         } finally {
                             report.captureDriver(browser)
+                            report.collect("Wasm coverage") { server.collectCoverage(browser) }
                             report.collect("Browser shutdown") { browser.quit() }
                         }
                     }

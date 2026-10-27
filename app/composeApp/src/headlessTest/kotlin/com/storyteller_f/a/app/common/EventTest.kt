@@ -52,146 +52,149 @@ class EventTest {
     @Test
     fun testProcessTopicCreated() =
         runTest {
-        val fakeTopicStorage = FakeTopicStorage()
-        val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
-        val bus = MutableSharedFlow<Any>()
-        val parentId: PrimaryKey = 100L
-        val topicInfo = TopicInfo.EMPTY.copy(id = 1L, parentId = parentId)
+            val fakeTopicStorage = FakeTopicStorage()
+            val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
+            val bus = MutableSharedFlow<Any>()
+            val parentId: PrimaryKey = 100L
+            val topicInfo = TopicInfo.EMPTY.copy(id = 1L, parentId = parentId)
 
-        val job =
-            launch(UnconfinedTestDispatcher(testScheduler)) {
-                processEvent(fakeStorage, bus)
-            }
-        bus.emit(OnTopicCreated(topicInfo))
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(fakeStorage, bus)
+                }
+            bus.emit(OnTopicCreated(topicInfo))
 
-        val savedFirst = fakeTopicStorage.savedFirst
-        assertEquals(1, savedFirst.size)
-        assertEquals(TopicCollection.ChildTopicList(parentId), savedFirst[0].first)
-        assertEquals(topicInfo, savedFirst[0].second)
+            val savedFirst = fakeTopicStorage.savedFirst
+            assertEquals(1, savedFirst.size)
+            assertEquals(TopicCollection.ChildTopicList(parentId), savedFirst[0].first)
+            assertEquals(topicInfo, savedFirst[0].second)
 
-        assertEquals(1, fakeTopicStorage.savedDefault.size)
-        assertEquals(topicInfo, fakeTopicStorage.savedDefault[0])
+            assertEquals(1, fakeTopicStorage.savedDefault.size)
+            assertEquals(topicInfo, fakeTopicStorage.savedDefault[0])
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
     fun topicChangedUpdatesRecommend() =
         runTest {
-        val fakeTopicStorage = FakeTopicStorage()
-        val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
-        val bus = MutableSharedFlow<Any>()
-        val parentId: PrimaryKey = 100L
-        val topicId: PrimaryKey = 2L
-        val topicInfo =
-            TopicInfo.EMPTY.copy(
-                id = topicId,
-                parentId = parentId,
-                content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
-            )
+            val fakeTopicStorage = FakeTopicStorage()
+            val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
+            val bus = MutableSharedFlow<Any>()
+            val parentId: PrimaryKey = 100L
+            val topicId: PrimaryKey = 2L
+            val topicInfo =
+                TopicInfo.EMPTY.copy(
+                    id = topicId,
+                    parentId = parentId,
+                    content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
+                )
 
-        // Pre-populate recommend to test updateDocument call
-        fakeTopicStorage.documents[TopicCollection.Recommend to topicId.toString()] = topicInfo
+            // Pre-populate recommend to test updateDocument call
+            fakeTopicStorage.documents[TopicCollection.Recommend to topicId.toString()] = topicInfo
 
-        val job =
-            launch(UnconfinedTestDispatcher(testScheduler)) {
-                processEvent(fakeStorage, bus)
-            }
-        bus.emit(OnTopicChanged(topicInfo))
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(fakeStorage, bus)
+                }
+            bus.emit(OnTopicChanged(topicInfo))
 
-        // Check saveToDefault
-        assertEquals(1, fakeTopicStorage.savedDefault.size)
-        assertEquals(topicInfo, fakeTopicStorage.savedDefault[0])
+            // Check saveToDefault
+            assertEquals(1, fakeTopicStorage.savedDefault.size)
+            assertEquals(topicInfo, fakeTopicStorage.savedDefault[0])
 
-        // Check updateDocument for Recommend
-        val updatedDocs = fakeTopicStorage.updatedDocuments
-        val recommendUpdate = updatedDocs.find { it.first == TopicCollection.Recommend }
-        assertTrue(recommendUpdate != null, "Should update Recommend collection")
-        assertEquals(topicInfo, recommendUpdate.second)
+            // Check updateDocument for Recommend
+            val updatedDocs = fakeTopicStorage.updatedDocuments
+            val recommendUpdate = updatedDocs.find { it.first == TopicCollection.Recommend }
+            assertTrue(recommendUpdate != null, "Should update Recommend collection")
+            assertEquals(topicInfo, recommendUpdate.second)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
     fun topicChangedUpdatesChildTopicList() =
         runTest {
-        val fakeTopicStorage = FakeTopicStorage()
-        val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
-        val bus = MutableSharedFlow<Any>()
-        val parentId: PrimaryKey = 100L
-        val topicId: PrimaryKey = 2L
-        val topicInfo =
-            TopicInfo.EMPTY.copy(
-                id = topicId,
-                parentId = parentId,
-                content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
-            )
+            val fakeTopicStorage = FakeTopicStorage()
+            val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
+            val bus = MutableSharedFlow<Any>()
+            val parentId: PrimaryKey = 100L
+            val topicId: PrimaryKey = 2L
+            val topicInfo =
+                TopicInfo.EMPTY.copy(
+                    id = topicId,
+                    parentId = parentId,
+                    content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
+                )
 
-        fakeTopicStorage.documents[TopicCollection.ChildTopicList(parentId) to topicId.toString()] = topicInfo
-        val job = launch(UnconfinedTestDispatcher(testScheduler)) { processEvent(fakeStorage, bus) }
+            fakeTopicStorage.documents[TopicCollection.ChildTopicList(parentId) to topicId.toString()] = topicInfo
+            val job = launch(UnconfinedTestDispatcher(testScheduler)) { processEvent(fakeStorage, bus) }
 
-        bus.emit(OnTopicChanged(topicInfo))
+            bus.emit(OnTopicChanged(topicInfo))
 
-        val update = fakeTopicStorage.updatedDocuments.single { it.first == TopicCollection.ChildTopicList(parentId) }
-        assertEquals(topicInfo, update.second)
-        assertEquals(listOf(topicInfo), fakeTopicStorage.savedDefault)
-        job.cancel()
-    }
+            val update =
+                fakeTopicStorage.updatedDocuments.single {
+                    it.first == TopicCollection.ChildTopicList(parentId)
+                }
+            assertEquals(topicInfo, update.second)
+            assertEquals(listOf(topicInfo), fakeTopicStorage.savedDefault)
+            job.cancel()
+        }
 
     @Test
     fun testProcessRoomCreated() =
         runTest {
-        val fakeRoomStorage = FakeRoomStorage()
-        val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
-        val bus = MutableSharedFlow<Any>()
-        val communityId: PrimaryKey = 200L
-        val roomInfo = RoomInfo.EMPTY.copy(id = 10L, communityId = communityId)
+            val fakeRoomStorage = FakeRoomStorage()
+            val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
+            val bus = MutableSharedFlow<Any>()
+            val communityId: PrimaryKey = 200L
+            val roomInfo = RoomInfo.EMPTY.copy(id = 10L, communityId = communityId)
 
-        val job =
-            launch(UnconfinedTestDispatcher(testScheduler)) {
-                processEvent(fakeStorage, bus)
-            }
-        bus.emit(OnRoomCreated(roomInfo))
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(fakeStorage, bus)
+                }
+            bus.emit(OnRoomCreated(roomInfo))
 
-        assertEquals(1, fakeRoomStorage.savedDefault.size)
-        assertEquals(roomInfo, fakeRoomStorage.savedDefault[0])
+            assertEquals(1, fakeRoomStorage.savedDefault.size)
+            assertEquals(roomInfo, fakeRoomStorage.savedDefault[0])
 
-        val savedFirst = fakeRoomStorage.savedFirst
-        assertEquals(1, savedFirst.size)
-        assertEquals(RoomCollection.CommunityRooms(communityId), savedFirst[0].first)
-        assertEquals(roomInfo, savedFirst[0].second)
+            val savedFirst = fakeRoomStorage.savedFirst
+            assertEquals(1, savedFirst.size)
+            assertEquals(RoomCollection.CommunityRooms(communityId), savedFirst[0].first)
+            assertEquals(roomInfo, savedFirst[0].second)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 
     @Test
     fun testProcessRoomUpdated() =
         runTest {
-        val fakeRoomStorage = FakeRoomStorage()
-        val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
-        val bus = MutableSharedFlow<Any>()
-        val communityId: PrimaryKey = 200L
-        val roomInfo = RoomInfo.EMPTY.copy(id = 10L, communityId = communityId)
+            val fakeRoomStorage = FakeRoomStorage()
+            val fakeStorage = FakeModelStorage(room = fakeRoomStorage)
+            val bus = MutableSharedFlow<Any>()
+            val communityId: PrimaryKey = 200L
+            val roomInfo = RoomInfo.EMPTY.copy(id = 10L, communityId = communityId)
 
-        // Pre-populate CommunityRooms to allow update
-        fakeRoomStorage.documents[RoomCollection.CommunityRooms(communityId) to roomInfo.id.toString()] = roomInfo
+            // Pre-populate CommunityRooms to allow update
+            fakeRoomStorage.documents[RoomCollection.CommunityRooms(communityId) to roomInfo.id.toString()] = roomInfo
 
-        val job =
-            launch(UnconfinedTestDispatcher(testScheduler)) {
-                processEvent(fakeStorage, bus)
-            }
-        bus.emit(OnRoomUpdated(roomInfo))
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(fakeStorage, bus)
+                }
+            bus.emit(OnRoomUpdated(roomInfo))
 
-        assertEquals(1, fakeRoomStorage.savedDefault.size)
-        assertEquals(roomInfo, fakeRoomStorage.savedDefault[0])
+            assertEquals(1, fakeRoomStorage.savedDefault.size)
+            assertEquals(roomInfo, fakeRoomStorage.savedDefault[0])
 
-        val updatedDocs = fakeRoomStorage.updatedDocuments
-        val communityRoomUpdate = updatedDocs.find { it.first == RoomCollection.CommunityRooms(communityId) }
-        assertTrue(communityRoomUpdate != null, "Should update CommunityRooms collection")
-        assertEquals(roomInfo, communityRoomUpdate.second)
+            val updatedDocs = fakeRoomStorage.updatedDocuments
+            val communityRoomUpdate = updatedDocs.find { it.first == RoomCollection.CommunityRooms(communityId) }
+            assertTrue(communityRoomUpdate != null, "Should update CommunityRooms collection")
+            assertEquals(roomInfo, communityRoomUpdate.second)
 
-        job.cancel()
-    }
+            job.cancel()
+        }
 }
 
 // Fakes

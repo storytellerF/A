@@ -11,10 +11,11 @@ import com.storyteller_f.a.test.useBackendFixture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import java.io.File
 import kotlin.time.Duration.Companion.minutes
 
 /** Mapped host ports of the HTTP and WebSocket services started for a CLI E2E test. */
-class E2ePorts(server: Int, ws: Int) {
+class E2ePorts(server: Int, ws: Int, internal val artifactDirectory: File? = null) {
     /** HTTP server port on the test host. */
     val server: Int = server
 
@@ -36,7 +37,7 @@ suspend fun runE2eTestEnvironment(suite: String, testName: String, block: suspen
     val directory = createTestArtifactDirectory(testArtifactRoot(), suite, testName)
     recordTestArtifacts(directory, suite, testName) {
         useBackendFixture(directory.resolve("logs")) { backend ->
-            block(E2ePorts(backend.serverPort, backend.wsPort))
+            block(E2ePorts(backend.serverPort, backend.wsPort, directory))
         }
     }
 }

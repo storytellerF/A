@@ -890,7 +890,7 @@ Existing host and integration tests consume CustomResult directly; their busines
 ## PDF font sources and variable-font instancing
 
 `cloud/openpdf` discovers installed font files without AWT enumeration or private JDK font APIs.
-No PDF font binaries, font test resources or font-generation task are shipped in the PDF module.
+Production PDF artifacts contain no font binaries. CFF2 regressions use pinned original test-only font resources.
 Install fonts before the first PDF request and restart the process after changing the installation.
 Discovery reads only SFNT/TTC directories, Unicode family names and OS/2 metrics, not outline/variation
 contents. The metadata layout follows the [OpenType specification](https://learn.microsoft.com/en-us/typography/opentype/spec/otff).
@@ -957,21 +957,18 @@ The distribution packages carry HarfBuzz's [Old MIT license](https://github.com/
 Font installation and licensing remain the responsibility of the system package/font installation.
 Production instancing uses no Python, subprocesses, JDK/Skiko private libraries or font registration.
 
-Run `./gradlew :cloud:openpdf:test -Pserver.flavor=dev -Pserver.buildType=dev --console=plain` with an
+Run `./gradlew :cloud:openpdf:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` with an
 installed standalone variable TrueType Noto Serif SC/CJK SC or Source Han Serif SC, mono Regular/Bold faces, and
-public native libraries. Also provide a standalone CFF2 Chinese variable font (Noto Serif SC/CJK SC
-or Source Han Serif SC), either installed in a standard location or via the test-only JVM property
-`pdf.test.cff2.font` pointing at the original OTF file. Pass it to Gradle workers through
-`JAVA_TOOL_OPTIONS=-Dpdf.test.cff2.font=/path/to/NotoSerifSC-VF.otf` alongside any JNA path setting.
-Missing prerequisites fail tests explicitly; there are no downloads, font registration or silent skips.
-For reproducible local preparation, the [official Noto CJK source](https://github.com/notofonts/noto-cjk/blob/f8d157532fbfaeda587e826d4cd5b21a49186f7c/Serif/Variable/OTF/Subset/NotoSerifSC-VF.otf)
-has SHA-256 `71b4d3ded2d90ff43bb75a4e48cdbe170f0b8d5486dc89ff87f2a1728b56da64`.
-Multi-axis and collection regressions additionally use external Source Serif 4 Variable Roman/Italic
-OTF inputs from [adobe-fonts/source-serif](https://github.com/adobe-fonts/source-serif/tree/80d3f8894c09c937bebfa9011247d2e1c79fd6f4/VAR).
-Set test-only properties `pdf.test.cff2.multiaxis.font` (Roman) and `pdf.test.cff2.collection.font`
-(Italic) through the same `JAVA_TOOL_OPTIONS`. Both inputs have `wght` and `opsz` axes with matching ranges.
-Pinned SHA-256 values are `867b73c6a954a4a64616906d179f94572a748790a1d022ebeeff07f56ea0221a`
-(Roman) and `68220a94535e9cffb9b7d844140583ac2a3195eabdd4890b15f83272c8bfcfe4` (Italic).
+public native libraries. CFF2 regressions read original Noto Serif SC Variable and Source Serif 4
+Variable Roman/Italic OTF files from `cloud/openpdf/src/test/resources/fonts`. Their upstream
+revisions, paths and SHA-256 checksums are recorded in `fonts/fixtures.properties`; loading
+verifies every bundled font before use. The corresponding upstream OFL license files are
+kept beside each family. These files belong only to the test classpath, with no runtime
+download, system font registration or production packaging.
+Optional diagnostic overrides `pdf.test.cff2.font`, `pdf.test.cff2.multiaxis.font` (Roman) and
+`pdf.test.cff2.collection.font` (Italic) remain available through `JAVA_TOOL_OPTIONS`.
+An invalid explicit override fails rather than falling back to a bundled font.
+Both Source Serif inputs have `wght` and `opsz` axes with matching ranges.
 Tests construct aligned collections in memory, compare each extracted face with its standalone source,
 verify face-index cache separation, and compare optical-size-dependent advances. A separate fixed-opsz
 case renders identical text at weights 400/700 using NORMAL PDF style, checks heavier actual bold outlines,
@@ -983,7 +980,8 @@ uses public table callbacks to pause inside a real `hb_subset_or_fail` call, can
 then releases the callback and verifies completed conversion, reverse handle release and cancelled delivery.
 The synchronous C callback uses an isolated blocking coroutine bridge; test deadlines and native work
 run on real dispatchers, and failure cleanup always releases the gate and joins the worker.
-Keep external verification inputs outside source/resource trees; do not commit font binaries. Tests generate static integration inputs in memory from the installed variable font. Synthetic
+Keep optional external verification overrides outside source/resource trees. Preserve the bundled
+originals and licenses; generate static integration inputs in memory instead of committing derived fonts. Synthetic
 metadata fixtures cover discovery, collection indices and malformed/unrelated fonts without shipping
 font programs. Tests also cover static priority, P2 deferred IO, mixed families, axes, native failures,
 cancellation, reverse cleanup, concurrent cache publication, rendering, bilingual extraction, embedding,
@@ -1462,3 +1460,102 @@ The bitmap-ownership browser check counts native installs/finalizers and defers 
 callbacks so garbage collection cannot hide a missed close. It covers committed disposal,
 publication before commit followed by removal/source replacement, and active-playback
 replacement/disposal. Run against the production fixture with MEDIA_COMPOSE_BUILD=production.
+
+
+## Offline E2E application coverage
+
+Add `--coverage` to `scripts/test_scripts/build-and-test.sh --e2e --plain`, or pass
+`-Pe2e.coverage=true -Pserver.flavor=dev -Pserver.buildType=debug` to explicit
+Appium/CLI E2E Gradle tasks. When coverage is disabled, normal distributions and release
+applications do not contain the control receiver, collector or rewritten bytecode.
+Acquire and renew the Android device lease around the entire command, including
+installation. Desktop tests still need an interactive, unlocked desktop. Keep MSYS
+graphics DLL directories out of the Windows desktop process PATH: mixing its EGL
+with Nucleus's bundled ANGLE libraries can crash the native renderer at startup.
+Covered Windows distribution launchers use a manifest classpath JAR, preserving
+dependency order without exceeding cmd.exe's command-length limit.
+
+JVM application distributions, desktop classpaths and backend test images use Kover
+0.9.11 offline instrumentation. Android debug variants transform source-owned class
+files before D8 and use the same Kover runtime. A test-only counter-store boundary
+serializes snapshots with counter updates. JVM snapshots use per-process file
+requests and process-owned running/shutdown markers; Android snapshots use a debuggable-only receiver protected by the system
+DUMP permission. Collect snapshots before driver shutdown, force-stop or container
+removal, including on failure and before application restart. Private control files
+are removed with the fixture; exported binary reports remain with the case artifacts.
+Desktop snapshots select the current launch PID from its launcher file. Driver
+force-quit can leave an old running marker behind; retain its exported snapshot
+without requesting that retired process again after restart.
+
+All selected E2E runners prepare their immutable application artifacts before live
+fixtures start. Coverage backend images use the separate `e2e-coverage` tag. Test
+images still follow `distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`.
+Never rebuild shared runtime files from a second Gradle invocation during UI tests.
+Linux and macOS desktop collection requires the test runner and launched application
+to share the fixture filesystem, as their existing launch/session/log contract does.
+
+Wasm coverage additionally requires a host Rust toolchain with Cargo. The pinned
+`dev/wasmCoverage` tool validates and rewrites the exact Kotlin development Wasm
+binary identified in webpack output. It adds stack-neutral boolean global probes
+without renumbering functions, imports or types. Only repository Kotlin source lines
+mapped to linked executable operators form the denominator. Compiler anchors beyond
+the physical source file (including the empty EOF line) remain unmapped. Dead-code-eliminated,
+unmapped, third-party and JavaScript code is outside that denominator. The collector
+observes window instances; Worker instances need a separate collection channel.
+This is mapped line coverage, with no source branch metric. It is exported as LCOV
+and HTML separately from Kover. The test server injects its collector only in covered
+distributions; every document and module instance must acknowledge a snapshot.
+An acknowledged explicit boundary snapshot suppresses the redundant unload beacon.
+New or unacknowledged instances retain the beacon fallback; incomplete transport remains an error.
+Chrome, Edge and Firefox keep their original sequential, isolated-profile matrix.
+
+Each case exports under its raw `build/test-results/<task>/artifacts/.../coverage`
+directory. The root `e2eCoverageReport` finalizer consumes completed files only and
+writes `build/reports/e2eCoverage/index.html`. JVM aggregate, individual JVM/Android
+variants and Wasm reports are linked from that page; Android and JVM bytecode
+variants are never combined into one percentage. Original-bytecode identities and
+source fingerprints prevent stale binaries from being reported against changed
+sources. Missing, empty or incomplete data makes the report task fail and leaves an
+explicit error on the index. Ordinary unit-test Kover reports remain independently
+available; their percentages are not added to E2E percentages. Run reporting in the
+same invocation as the selected E2E tasks to retain the runner selection; a standalone
+report task reads all runner artifact directories and rejects mixed builds.
+
+### Unit and E2E union
+
+With coverage enabled, `prepareE2eCoverageArtifacts` first runs the existing ordinary
+unit-test Kover XML/HTML report tasks, before preparing or launching immutable E2E
+artifacts. Ordinary backend fixtures retain freshly built `latest` images; covered
+fixtures use `e2e-coverage` images built in separate immutable contexts. Every covered
+E2E invocation also finalizes `coverageReport`, writing
+`build/reports/coverage/index.html`, `lcov.info` and `summary.json`. The ordinary
+`build/reports/kover` and independent `build/reports/e2eCoverage` outputs remain intact.
+To regenerate the union from completed E2E artifacts, run:
+
+```shell
+./gradlew coverageReport -Pe2e.coverage=true -Pserver.flavor=dev -Pserver.buildType=debug --console=plain
+```
+
+This cross-platform summary unions repository-relative source paths and executable
+line numbers. A line hit by either test layer counts once; the page shows unit hits,
+E2E hits, overlap and the combined numerator against the union of reported executable
+lines. Shared source hits on one platform do not establish coverage on every platform.
+Use the independent reports for platform-specific bytecode, branch and instruction
+metrics. Wasm E2E mapped lines participate through LCOV; uninstrumented Wasm unit tests
+contribute no coverage. Existing ordinary Kover test selection is unchanged.
+Generated/external sources outside the production source catalog are listed explicitly;
+ambiguous source ownership, foreign LCOV paths and incomplete E2E data fail reporting.
+No percentages or cross-platform branch counters are added together.
+
+This integration covers the existing Android, desktop, CLI and Wasm E2E runners
+and their JVM backend containers. The optional iOS projects have no E2E runner or
+coverage collector in this workflow; Kotlin/Native coverage is not implemented.
+
+Platform-protected session history tests stay under `app/composeApp/src/headlessTest/kotlin/platform_storage`.
+The `platformStorageTest` source set shares them between JVM and Android device tests; Android host
+Robolectric tests exclude that directory because AndroidKeyStore requires a real OS-backed provider.
+All session, signature and encryption assertions are retained. The device initialization base supplies
+its real instrumentation context and does not install a fake keystore or change production storage.
+
+PDF host tests use a 1 GiB worker heap for eight concurrent cold full-size CJK font instances;
+the concurrency, native cleanup checks and font assertions remain unchanged.

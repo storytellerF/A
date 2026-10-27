@@ -26,3 +26,8 @@ dependencies {
     testImplementation(libs.pdfbox)
     testImplementation(libs.kotlinx.coroutines.test)
 }
+
+tasks.test {
+    // Eight concurrent cold instances retain full-size CJK sources plus immutable output copies.
+    maxHeapSize = "1g"
+}

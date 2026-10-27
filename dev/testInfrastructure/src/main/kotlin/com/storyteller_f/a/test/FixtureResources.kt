@@ -23,8 +23,16 @@ internal class FixtureResources(private val logDirectory: File) : AutoCloseable 
 
     suspend fun <T : GenericContainer<*>> start(name: String, container: T): T {
         own(container)
+        if (E2eCoverage.enabled && name !in setOf("postgresql", "redis")) {
+            container.withEnv("E2E_COVERAGE_DIRECTORY", "/home/app/logs/e2e-coverage")
+        }
         if (container is FixtureLogSource) {
-            container.exportBeforeStop = { collectFailure(collectionErrors) { exportLogs(name, container) } }
+            container.exportBeforeStop = {
+                collectFailure(collectionErrors) {
+                    collectContainerCoverage(name, container, logDirectory.parentFile)
+                }
+                collectFailure(collectionErrors) { exportLogs(name, container) }
+            }
         }
         // Testcontainers is blocking. Register ownership before crossing a cancellable dispatcher boundary.
         withContext(Dispatchers.IO) { container.start() }

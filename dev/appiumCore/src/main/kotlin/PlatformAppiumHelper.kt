@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.E2eCoverage
 import com.storyteller_f.a.test.useBackendFixture
 import io.appium.java_client.AppiumDriver
 import io.appium.java_client.android.AndroidDriver
@@ -82,7 +83,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                         AndroidAppiumTestScope(
                             driver = AndroidAppTestDriver(driver, ::runAdbCommand),
                             packageName = target.androidApp.packageName,
-                            restartApp = { restartApp(target.androidApp) },
+                            restartApp = {
+                                collectAndroidCoverage(report, target.androidApp)
+                                restartApp(target.androidApp)
+                            },
                         ),
                         prepared.data,
                     )
@@ -92,6 +96,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     testFailed = true
                     throw throwable
                 } finally {
+                    report.collect("Android coverage") { collectAndroidCoverage(report, target.androidApp) }
                     driver?.let { activeDriver ->
                         report.captureDriver(activeDriver)
                         report.collect("Recording") { saveRecording(activeDriver, report.directory) }
@@ -132,6 +137,38 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         runAdbCommand(listOf("shell", "am", "force-stop", app.packageName))
         runAdbCommand(listOf("shell", "run-as", app.packageName, "rm", "-f", INJECTED_SESSION_FILE))
         runAdbCommand(listOf("shell", "am", "start", "-n", "${app.packageName}/${app.mainActivityClassName}"))
+    }
+
+    private fun collectAndroidCoverage(report: AppiumTestReport, app: AppUnderTest) {
+        if (!E2eCoverage.enabled) return
+        E2eCoverage.collect(report.directory.resolve("coverage/android")) {
+            val pid = runAdbCommand(listOf("shell", "pidof", app.packageName)).trim()
+            check(pid.isNotEmpty() && pid.all(Char::isDigit)) { "Expected one running Android application process" }
+            val response =
+                runAdbCommand(
+                    listOf(
+                        "shell",
+                        "am",
+                        "broadcast",
+                        "-n",
+                        "${app.packageName}/com.storyteller_f.a.coverage.CoverageReceiver",
+                    ),
+                )
+            check(
+                "result=-1" in response && "data=\"$pid\"" in response,
+            ) { "Android coverage export did not acknowledge the running process" }
+            val directory = report.directory.resolve("coverage/android/$pid").also { it.mkdirs() }
+            listOf("report.ic", "classes.properties").forEach { name ->
+                val encoded =
+                    runAdbCommand(
+                        listOf("shell", "run-as", app.packageName, "base64", "files/e2e-coverage/$name"),
+                    )
+                directory.resolve(name).writeBytes(Base64.getMimeDecoder().decode(encoded))
+            }
+            check(directory.resolve("report.ic").length() > 0) { "Android coverage report is empty" }
+            val scope = if (app.packageName.contains(".panel.")) "panel" else "app"
+            E2eCoverage.copyDescriptor(directory.resolve("classes.properties"), directory, ":$scope:androidApp")
+        }
     }
 
     private fun pushInjectedSessionToPrivateDir(packageName: String, file: File, content: String) {
@@ -239,11 +276,11 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
     private data class AdbCommandResult(val exitCode: Int, val output: String) {
         fun connectedDeviceSerials(): List<String> =
             output.lineSequence()
-            .drop(1)
-            .map { it.trim().split(Regex("\\s+")) }
-            .filter { it.size >= 2 && it[1] == "device" }
-            .map { it[0] }
-            .toList()
+                .drop(1)
+                .map { it.trim().split(Regex("\\s+")) }
+                .filter { it.size >= 2 && it[1] == "device" }
+                .map { it[0] }
+                .toList()
     }
 
     private companion object {
@@ -323,14 +360,19 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                     ),
                 )
 
+            val collectCoverage: suspend () -> Unit = {
+                collectDesktopCoverage(report, runtimeDir, config, sessionFile)
+            }
             var driver: AppiumDriver? = null
             try {
                 val caps = platform.createCapabilities(launchScript, config.windowWaitSeconds)
                 val serverUrl = System.getenv("APPIUM_DESKTOP_SERVER_URL") ?: "http://127.0.0.1:4723"
                 driver = AppiumDriver(URI(serverUrl).toURL(), caps)
                 block(driver, setup, readDesktopProcessId(sessionFile)) {
+                    collectCoverage()
                     driver?.quit()
                     sessionFile.delete()
+                    File("${sessionFile.canonicalPath}.pid").delete()
                     val restarted = AppiumDriver(URI(serverUrl).toURL(), caps)
                     driver = restarted
                     DesktopAppTestDriver(restarted, readDesktopProcessId(sessionFile))
@@ -353,12 +395,45 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 }
                 throw throwable
             } finally {
-                driver?.let { activeDriver ->
-                    report.captureDriver(activeDriver)
-                    report.collect("Driver shutdown") { activeDriver.quit() }
-                }
-                report.collect("Launch script cleanup") { launchScript.deleteRecursively() }
+                finishDesktopTest(report, driver, launchScript, collectCoverage)
             }
+        }
+    }
+
+    private suspend fun finishDesktopTest(
+        report: AppiumTestReport,
+        driver: AppiumDriver?,
+        launchScript: File,
+        collectCoverage: suspend () -> Unit,
+    ) {
+        try {
+            if (E2eCoverage.enabled) {
+                report.collectSuspending("Desktop coverage") {
+                    collectCoverage()
+                }
+            }
+        } finally {
+            driver?.let { activeDriver ->
+                report.captureDriver(activeDriver)
+                report.collect("Driver shutdown") { activeDriver.quit() }
+            }
+            report.collect("Launch script cleanup") { launchScript.deleteRecursively() }
+        }
+    }
+
+    private suspend fun collectDesktopCoverage(
+        report: AppiumTestReport,
+        runtimeDir: File,
+        config: DesktopAppiumRuntimeConfig,
+        sessionFile: File,
+    ) {
+        if (E2eCoverage.enabled) {
+            E2eCoverage.collectJvm(
+                runtimeDir.resolve("coverage"),
+                report.directory.resolve("coverage/desktop"),
+                config.coverageClassSet,
+                processIds = readCoverageProcessIds(sessionFile),
+            )
         }
     }
 
@@ -368,10 +443,15 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
 
     private fun readDesktopProcessId(sessionFile: File): Long? =
         if (platform == DesktopTestPlatform.Windows) {
-        File("${sessionFile.canonicalPath}.pid").readText().trim().toLong()
-    } else {
-        null
-    }
+            File("${sessionFile.canonicalPath}.pid").readText().trim().toLong()
+        } else {
+            null
+        }
+
+    private fun readCoverageProcessIds(sessionFile: File): Set<Long> =
+        setOfNotNull(
+            File("${sessionFile.canonicalPath}.pid").takeIf(File::isFile)?.readText()?.trim()?.toLongOrNull(),
+        )
 
     private fun resolveRuntimeClasspath(config: DesktopAppiumRuntimeConfig): String =
         config.runtimeClasspathCandidates.firstOrNull { it.isFile }
@@ -473,6 +553,9 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 }
                 add("-Dappium.desktop.tmpdir=${tmpDir.canonicalPath}")
                 add("-Dappium.desktop.log=${appLogFile.canonicalPath}")
+                if (E2eCoverage.enabled) {
+                    add("-De2e.coverage.directory=${context.runtimeDir.resolve("coverage").canonicalPath}")
+                }
                 add("-Dappium.desktop.pid.file=${sessionFile.canonicalPath}.pid")
                 add("-cp")
                 add(runtimeClasspath)
