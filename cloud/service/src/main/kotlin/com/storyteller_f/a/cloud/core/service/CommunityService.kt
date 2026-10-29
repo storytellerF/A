@@ -48,6 +48,7 @@ import com.storyteller_f.result.onSuccess
 import com.storyteller_f.result.recover
 import com.storyteller_f.result.requireTrue
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.CommunityMembershipItem
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FontSettingsWithInfo
 import com.storyteller_f.shared.model.MemberInfo
@@ -159,7 +160,7 @@ suspend fun Backend.searchCommunities(
     uid: PrimaryKey?,
     search: CustomApi.Communities.CommunitySearchQuery,
     primaryKeyFetch: OffsetFetch,
-): CustomResult<PaginationResult<CommunityInfo>?, CommunityError> {
+): CustomResult<PaginationResult<CommunityMembershipItem>?, CommunityError> {
     val word = search.word.trim()
     if (word.isBlank()) {
         return CustomResult.success(null)
@@ -202,7 +203,7 @@ suspend fun Backend.searchUserJoinedCommunities(
     uid: PrimaryKey,
     search: CustomApi.Users.JoinedCommunities.UserCommunitiesSearchQuery,
     primaryKeyFetch: OffsetFetch,
-): CustomResult<PaginationResult<CommunityInfo>?, CommunityError> {
+): CustomResult<PaginationResult<CommunityMembershipItem>?, CommunityError> {
     val word = search.word.trim()
     if (word.isBlank()) {
         return CustomResult.success(null)
@@ -223,17 +224,17 @@ private suspend fun Backend.processCommunities(
     communities: List<RawCommunity>,
     uid: PrimaryKey?,
     target: PrimaryKey?,
-): CustomResult<List<CommunityInfo>?, CommunityError> =
+): CustomResult<List<CommunityMembershipItem>?, CommunityError> =
     processRawCommunityToCommunityInfo(communities).andThenPresent(CommunityError::fromError) { value ->
         when {
-            target == null -> CustomResult.success(value)
+            target == null -> CustomResult.success(value.map { CommunityMembershipItem(it, null) })
 
             uid != null -> processUserJoinedTimeReplace(value, uid)
 
             else ->
                 CustomResult.success(
                     value.map {
-                        it.copy(member = null, extension = CommunityInfo.Extension(it.member))
+                        CommunityMembershipItem(it.copy(member = null), it.member)
                     },
                 )
         }
@@ -242,7 +243,7 @@ private suspend fun Backend.processCommunities(
 private suspend fun Backend.processUserJoinedTimeReplace(
     communityInfos: List<CommunityInfo>,
     uid: PrimaryKey,
-): CustomResult<List<CommunityInfo>, CommunityError> {
+): CustomResult<List<CommunityMembershipItem>, CommunityError> {
     val communityIds =
         communityInfos.map {
             it.id
@@ -250,7 +251,7 @@ private suspend fun Backend.processUserJoinedTimeReplace(
     return database.container.getMemberByIds(uid, communityIds).map { joinedTimeList ->
         val map = joinedTimeList.associate { it }
         communityInfos.map {
-            it.copy(member = map[it.id], extension = CommunityInfo.Extension(it.member))
+            CommunityMembershipItem(it.copy(member = map[it.id]), it.member)
         }
     }.mapError(CommunityError::fromError)
 }
@@ -535,7 +536,7 @@ suspend fun Backend.getUserJoinedCommunities(
     target: PrimaryKey,
     primaryKeyFetch: PrimaryKeyFetch,
     hasPosterSearch: PosterSearch? = null,
-): CustomResult<PaginationResult<CommunityInfo>?, CommunityError> =
+): CustomResult<PaginationResult<CommunityMembershipItem>?, CommunityError> =
     database.community.getCommunityPaginationResult(
         hasPosterSearch = hasPosterSearch ?: PosterSearch.UNSPECIFIED,
         primaryKeyFetch = primaryKeyFetch,

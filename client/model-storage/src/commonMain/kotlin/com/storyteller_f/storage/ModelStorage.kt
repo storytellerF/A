@@ -19,17 +19,17 @@ import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UploadRecordInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
+import com.storyteller_f.shared.model.UserLogItem
 import com.storyteller_f.shared.model.UserOverview
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.PrimaryKey
 import kotlinx.coroutines.flow.Flow
@@ -325,9 +325,9 @@ interface UserInfoStorage : CollectionListStorageWithDefault<UserCollection, Use
 
 interface CommunityInfoStorage : CollectionListStorageWithDefault<CommunityCollection, CommunityInfo>
 
-interface TopicInfoStorage : CollectionListStorageWithDefault<TopicCollection, TopicInfo>
+interface TopicInfoStorage : CollectionListStorageWithDefault<TopicCollection, TopicDetail>
 
-interface TitleInfoStorage : CollectionListStorageWithDefault<TitleCollection, TitleInfo>
+interface TitleInfoStorage : CollectionListStorageWithDefault<TitleCollection, TitleDetail>
 
 interface RoomInfoStorage : CollectionListStorageWithDefault<RoomCollection, RoomInfo>
 
@@ -393,13 +393,13 @@ interface UserOverviewStorage : SingletonItemStorage<UserOverview> {
     }
 }
 
-interface UserFavoriteStorage : CollectionListStorageWithDefault<UserFavoriteCollection, UserFavoriteInfo> {
+interface UserFavoriteStorage : CollectionListStorageWithDefault<UserFavoriteCollection, UserFavoriteItem> {
     companion object {
         const val COLLECTION_NAME = "user-favorite"
     }
 }
 
-interface UserSubscriptionStorage : CollectionListStorageWithDefault<UserSubscriptionCollection, UserSubscriptionInfo> {
+interface UserSubscriptionStorage : CollectionListStorageWithDefault<UserSubscriptionCollection, UserSubscriptionItem> {
     companion object {
         const val COLLECTION_NAME = "user-subscription"
     }
@@ -407,7 +407,7 @@ interface UserSubscriptionStorage : CollectionListStorageWithDefault<UserSubscri
 
 interface UserReactionRecordStorage : CollectionListStorage<UserReactionRecordCollection, ReactionRecordInfo>
 
-interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogInfo>
+interface UserLogInfoStorage : CollectionListStorage<UserLogCollection, UserLogItem>
 
 interface UploadRecordInfoStorage : CollectionListStorage<UploadRecordCollection, UploadRecordInfo>
 
@@ -443,13 +443,13 @@ data class RemoteKeyStorageWrapper(val remoteKeyStorage: RemoteKeyStorage, val c
 
 fun RemoteKeyStorage.wrap(collectionName: String) = RemoteKeyStorageWrapper(this, collectionName)
 
-suspend fun TopicInfoStorage.update(collection: TopicCollection, id: PrimaryKey, block: (TopicInfo) -> TopicInfo) {
+suspend fun TopicInfoStorage.update(collection: TopicCollection, id: PrimaryKey, block: (TopicDetail) -> TopicDetail) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)
 }
 
-suspend fun TitleInfoStorage.update(collection: TitleCollection, id: PrimaryKey, block: (TitleInfo) -> TitleInfo) {
+suspend fun TitleInfoStorage.update(collection: TitleCollection, id: PrimaryKey, block: (TitleDetail) -> TitleDetail) {
     val document = getDocument(collection, id) ?: return
     val value = block(document)
     updateDocument(collection, value)

@@ -28,9 +28,9 @@ import com.storyteller_f.result.mapError
 import com.storyteller_f.shared.buildEncryptedTopicContent
 import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.PosterSearch
-import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaDetail
 import com.storyteller_f.shared.model.QuotaType
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
@@ -666,7 +666,7 @@ suspend fun UserSessionManager.userTitles(
     status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-): CustomResult<ListResponse<TitleInfo>, RequestError> =
+): CustomResult<ListResponse<TitleDetail>, RequestError> =
     serviceCatching {
         CustomApi.Users.Id.Titles.get(
             CustomApi.Users.Id.Titles.TitleQuery(searchType, type, scopeId, status, nextId, size),
@@ -857,7 +857,7 @@ suspend fun UserSessionManager.getUserOverview() =
 suspend fun UserSessionManager.getQuotaInfo(
     objectTuple: ObjectTuple,
     quotaType: QuotaType = QuotaType.FILE,
-): CustomResult<QuotaInfo, RequestError> =
+): CustomResult<QuotaDetail, RequestError> =
     serviceCatching {
         CustomApi.Files.quota(CustomApi.Files.QuotaQuery(objectTuple.objectId, objectTuple.objectType, quotaType))
     }.mapError(RequestError::fromError)

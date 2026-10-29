@@ -48,7 +48,7 @@ suspend fun Backend.getJoinedPinnedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetc
         checkActivityPageSize(fetch)
         val page = database.topic.getJoinedCommunityPinnedTopics(uid, fetch).getOrThrow()
         val rawTopics = database.processTopicToRawTopic(uid, page.list).getOrThrow()
-        PaginationResult(processRawTopicToTopicInfo(rawTopics, uid, false).getOrThrow().orEmpty(), page.total)
+        PaginationResult(processTopicActivities(rawTopics, uid).getOrThrow().orEmpty(), page.total)
     }
 
 private suspend fun Backend.processRoomActivities(
@@ -64,7 +64,7 @@ private suspend fun Backend.processRoomActivities(
             uid,
             records.mapNotNull { it.latestMessageId },
         ).andThen(RoomActivityError::fromError) {
-            processRawTopicToTopicInfo(it, uid, false)
+            processTopicActivities(it, uid)
         }.getOrThrow().orEmpty().associateBy { it.id }
     return records.mapNotNull { record ->
         rooms[record.roomId]?.let { room ->

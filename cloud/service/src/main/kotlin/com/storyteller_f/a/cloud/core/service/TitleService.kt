@@ -32,11 +32,11 @@ import com.storyteller_f.result.onFailure
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -67,7 +67,7 @@ suspend fun Backend.getUserTitles(
 private suspend fun Backend.processTitleList(
     list: List<RawTitle>,
     uid: PrimaryKey?,
-): CustomResult<List<TitleInfo>?, TitleError> {
+): CustomResult<List<TitleDetail>?, TitleError> {
     val titleIds = list.map { it.title.id }
     val favoriteMap =
         if (uid != null && titleIds.isNotEmpty()) {
@@ -172,8 +172,8 @@ private fun processTitleList(
     communityList: List<CommunityInfo>,
     roomList: List<RoomInfo>,
     list: List<RawTitle>,
-    topicList: List<TopicInfo>,
-): List<TitleInfo> {
+    topicList: List<TopicDetail>,
+): List<TitleDetail> {
     val userMap = userList.associateBy { it.id }
     val communityMap = communityList.associateBy { it.id }
     val roomMap = roomList.associateBy { it.id }
@@ -181,8 +181,9 @@ private fun processTitleList(
     val currentTime = now()
     return list.map { rawTitle ->
         val title = rawTitle.title
-        val extension =
-            TitleInfo.Extension(
+        val projection =
+            TitleDetail(
+                title.toTitleInfo(rawTitle.favoriteId, rawTitle.subscriptionId, currentTime),
                 userMap.getValue(title.creator),
                 userMap.getValue(title.receiver),
                 topicMap.getValue(title.descriptionTopicId),
@@ -203,18 +204,18 @@ private fun processTitleList(
                     else -> null
                 },
             )
-        title.toTitleInfo(extension, rawTitle.favoriteId, rawTitle.subscriptionId, currentTime)
+        projection
     }
 }
 
 suspend fun Backend.getAllTitles(
     primaryKeyFetch: PrimaryKeyFetch,
-): CustomResult<PaginationResult<TitleInfo>, TitleError> =
+): CustomResult<PaginationResult<TitleDetail>, TitleError> =
     database.title.getAllRawTitles(primaryKeyFetch).mapPagingResultNotNull(TitleError::fromError) { list ->
         processTitleList(list, null).map { it.orEmpty() }
     }.mapError(TitleError::fromError)
 
-suspend fun Backend.getTitleInfo(id: PrimaryKey): CustomResult<TitleInfo?, TitleError> =
+suspend fun Backend.getTitleInfo(id: PrimaryKey): CustomResult<TitleDetail?, TitleError> =
     database.title.getTitle(id).andThenPresent(TitleError::fromError) { raw ->
         processTitleList(listOf(raw), null).map { it?.firstOrNull() }
     }.mapError(TitleError::fromError)
@@ -298,7 +299,7 @@ val titleMap: MutableMap<ObjectType, List<TitleType>> =
         ObjectType.TOPIC to listOf(TitleType.REGULAR),
     )
 
-suspend fun createTitle(title: NewTitle, backend: Backend, uid: PrimaryKey): CustomResult<TitleInfo?, TitleError> {
+suspend fun createTitle(title: NewTitle, backend: Backend, uid: PrimaryKey): CustomResult<TitleDetail?, TitleError> {
     val supportType = titleMap[title.scopeType] ?: return CustomResult.success(null)
     if (!supportType.contains(title.type)) {
         return CustomResult.Failure(

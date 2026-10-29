@@ -15,14 +15,14 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TitleDetail
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UploadRecordInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
+import com.storyteller_f.shared.model.UserLogItem
 import com.storyteller_f.shared.model.UserOverview
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CommunityCollection
@@ -135,27 +135,27 @@ class SqliteNowCommunityInfoStorage(db: AppDatabase) : CommunityInfoStorage {
 
 class SqliteNowTopicInfoStorage(db: AppDatabase) : TopicInfoStorage {
     private val storage = CommonStorageImpl(db)
-    override suspend fun saveToDefault(item: TopicInfo) = saveLast(TopicCollection.Topics, item)
-    override fun observeDatum(key: String): Flow<TopicInfo?> = storage.observeDatum(TopicCollection.Topics.getName(), key)
-    override suspend fun saveLast(collection: TopicCollection, item: TopicInfo) = storage.saveLast(
+    override suspend fun saveToDefault(item: TopicDetail) = saveLast(TopicCollection.Topics, item)
+    override fun observeDatum(key: String): Flow<TopicDetail?> = storage.observeDatum(TopicCollection.Topics.getName(), key)
+    override suspend fun saveLast(collection: TopicCollection, item: TopicDetail) = storage.saveLast(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override suspend fun saveFirst(collection: TopicCollection, item: TopicInfo) = storage.saveFirst(
+    override suspend fun saveFirst(collection: TopicCollection, item: TopicDetail) = storage.saveFirst(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override fun observeData(collection: TopicCollection): PagingSource<Int, TopicInfo> = storage.observeData(
+    override fun observeData(collection: TopicCollection): PagingSource<Int, TopicDetail> = storage.observeData(
         collection.getName()
     )
     override suspend fun clean(collection: TopicCollection) = storage.clean(collection.getName())
-    override suspend fun getDocument(collection: TopicCollection, key: String): TopicInfo? = storage.getDocument(
+    override suspend fun getDocument(collection: TopicCollection, key: String): TopicDetail? = storage.getDocument(
         collection.getName(),
         key
     )
-    override suspend fun updateDocument(collection: TopicCollection, item: TopicInfo) = storage.update(
+    override suspend fun updateDocument(collection: TopicCollection, item: TopicDetail) = storage.update(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
@@ -165,27 +165,27 @@ class SqliteNowTopicInfoStorage(db: AppDatabase) : TopicInfoStorage {
 
 class SqliteNowTitleInfoStorage(db: AppDatabase) : TitleInfoStorage {
     private val storage = CommonStorageImpl(db)
-    override suspend fun saveToDefault(item: TitleInfo) = saveLast(TitleCollection.Titles, item)
-    override fun observeDatum(key: String): Flow<TitleInfo?> = storage.observeDatum(TitleCollection.Titles.getName(), key)
-    override suspend fun saveLast(collection: TitleCollection, item: TitleInfo) = storage.saveLast(
+    override suspend fun saveToDefault(item: TitleDetail) = saveLast(TitleCollection.Titles, item)
+    override fun observeDatum(key: String): Flow<TitleDetail?> = storage.observeDatum(TitleCollection.Titles.getName(), key)
+    override suspend fun saveLast(collection: TitleCollection, item: TitleDetail) = storage.saveLast(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override suspend fun saveFirst(collection: TitleCollection, item: TitleInfo) = storage.saveFirst(
+    override suspend fun saveFirst(collection: TitleCollection, item: TitleDetail) = storage.saveFirst(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override fun observeData(collection: TitleCollection): PagingSource<Int, TitleInfo> = storage.observeData(
+    override fun observeData(collection: TitleCollection): PagingSource<Int, TitleDetail> = storage.observeData(
         collection.getName()
     )
     override suspend fun clean(collection: TitleCollection) = storage.clean(collection.getName())
-    override suspend fun getDocument(collection: TitleCollection, key: String): TitleInfo? = storage.getDocument(
+    override suspend fun getDocument(collection: TitleCollection, key: String): TitleDetail? = storage.getDocument(
         collection.getName(),
         key
     )
-    override suspend fun updateDocument(collection: TitleCollection, item: TitleInfo) = storage.update(
+    override suspend fun updateDocument(collection: TitleCollection, item: TitleDetail) = storage.update(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
@@ -618,38 +618,38 @@ class SqliteNowUserOverviewStorage(db: AppDatabase) : UserOverviewStorage {
 
 class SqliteNowUserFavoriteStorage(db: AppDatabase) : UserFavoriteStorage {
     private val storage = CommonStorageImpl(db)
-    override suspend fun saveToDefault(item: UserFavoriteInfo) = saveLast(
+    override suspend fun saveToDefault(item: UserFavoriteItem) = saveLast(
         UserFavoriteCollection.UserFavorites(item.id.toLong()),
         item
     )
-    override fun observeDatum(key: String): Flow<UserFavoriteInfo?> = storage.observeDatum(
+    override fun observeDatum(key: String): Flow<UserFavoriteItem?> = storage.observeDatum(
         UserFavoriteStorage.COLLECTION_NAME,
         key
     )
-    override suspend fun saveLast(collection: UserFavoriteCollection, item: UserFavoriteInfo) = storage.saveLast(
+    override suspend fun saveLast(collection: UserFavoriteCollection, item: UserFavoriteItem) = storage.saveLast(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override suspend fun saveFirst(collection: UserFavoriteCollection, item: UserFavoriteInfo) = storage.saveFirst(
+    override suspend fun saveFirst(collection: UserFavoriteCollection, item: UserFavoriteItem) = storage.saveFirst(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
     override fun observeData(
         collection: UserFavoriteCollection
-    ): PagingSource<Int, UserFavoriteInfo> = storage.observeData(
+    ): PagingSource<Int, UserFavoriteItem> = storage.observeData(
         collection.getName()
     )
     override suspend fun clean(collection: UserFavoriteCollection) = storage.clean(collection.getName())
     override suspend fun getDocument(
         collection: UserFavoriteCollection,
         key: String
-    ): UserFavoriteInfo? = storage.getDocument(
+    ): UserFavoriteItem? = storage.getDocument(
         collection.getName(),
         key
     )
-    override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteInfo) = storage.update(
+    override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteItem) = storage.update(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
@@ -662,17 +662,17 @@ class SqliteNowUserFavoriteStorage(db: AppDatabase) : UserFavoriteStorage {
 
 class SqliteNowUserSubscriptionStorage(db: AppDatabase) : UserSubscriptionStorage {
     private val storage = CommonStorageImpl(db)
-    override suspend fun saveToDefault(item: UserSubscriptionInfo) = saveLast(
+    override suspend fun saveToDefault(item: UserSubscriptionItem) = saveLast(
         UserSubscriptionCollection.UserSubscriptions(item.id.toLong()),
         item
     )
-    override fun observeDatum(key: String): Flow<UserSubscriptionInfo?> = storage.observeDatum(
+    override fun observeDatum(key: String): Flow<UserSubscriptionItem?> = storage.observeDatum(
         UserSubscriptionStorage.COLLECTION_NAME,
         key
     )
     override suspend fun saveLast(
         collection: UserSubscriptionCollection,
-        item: UserSubscriptionInfo
+        item: UserSubscriptionItem
     ) = storage.saveLast(
         collection.getName(),
         item.id.toString(),
@@ -680,7 +680,7 @@ class SqliteNowUserSubscriptionStorage(db: AppDatabase) : UserSubscriptionStorag
     )
     override suspend fun saveFirst(
         collection: UserSubscriptionCollection,
-        item: UserSubscriptionInfo
+        item: UserSubscriptionItem
     ) = storage.saveFirst(
         collection.getName(),
         item.id.toString(),
@@ -688,20 +688,20 @@ class SqliteNowUserSubscriptionStorage(db: AppDatabase) : UserSubscriptionStorag
     )
     override fun observeData(
         collection: UserSubscriptionCollection
-    ): PagingSource<Int, UserSubscriptionInfo> = storage.observeData(
+    ): PagingSource<Int, UserSubscriptionItem> = storage.observeData(
         collection.getName()
     )
     override suspend fun clean(collection: UserSubscriptionCollection) = storage.clean(collection.getName())
     override suspend fun getDocument(
         collection: UserSubscriptionCollection,
         key: String
-    ): UserSubscriptionInfo? = storage.getDocument(
+    ): UserSubscriptionItem? = storage.getDocument(
         collection.getName(),
         key
     )
     override suspend fun updateDocument(
         collection: UserSubscriptionCollection,
-        item: UserSubscriptionInfo
+        item: UserSubscriptionItem
     ) = storage.update(
         collection.getName(),
         item.id.toString(),
@@ -760,25 +760,25 @@ class SqliteNowUserReactionRecordStorage(db: AppDatabase) : UserReactionRecordSt
 
 class SqliteNowUserLogInfoStorage(db: AppDatabase) : UserLogInfoStorage {
     private val storage = CommonStorageImpl(db)
-    override suspend fun saveLast(collection: UserLogCollection, item: UserLogInfo) = storage.saveLast(
+    override suspend fun saveLast(collection: UserLogCollection, item: UserLogItem) = storage.saveLast(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override suspend fun saveFirst(collection: UserLogCollection, item: UserLogInfo) = storage.saveFirst(
+    override suspend fun saveFirst(collection: UserLogCollection, item: UserLogItem) = storage.saveFirst(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)
     )
-    override fun observeData(collection: UserLogCollection): PagingSource<Int, UserLogInfo> = storage.observeData(
+    override fun observeData(collection: UserLogCollection): PagingSource<Int, UserLogItem> = storage.observeData(
         collection.getName()
     )
     override suspend fun clean(collection: UserLogCollection) = storage.clean(collection.getName())
-    override suspend fun getDocument(collection: UserLogCollection, key: String): UserLogInfo? = storage.getDocument(
+    override suspend fun getDocument(collection: UserLogCollection, key: String): UserLogItem? = storage.getDocument(
         collection.getName(),
         key
     )
-    override suspend fun updateDocument(collection: UserLogCollection, item: UserLogInfo) = storage.update(
+    override suspend fun updateDocument(collection: UserLogCollection, item: UserLogItem) = storage.update(
         collection.getName(),
         item.id.toString(),
         com.storyteller_f.shared.commonJson.encodeToString(item)

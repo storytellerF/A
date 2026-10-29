@@ -29,13 +29,13 @@ import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
 import com.storyteller_f.shared.model.TaskRecordSummary
 import com.storyteller_f.shared.model.TaskRecordType
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.TitleDetail
+import com.storyteller_f.shared.model.TopicDetail
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
+import com.storyteller_f.shared.model.UserLogItem
 import com.storyteller_f.shared.model.UserOverview
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.Pagination
@@ -49,6 +49,12 @@ data class UserInfoListResponse(
     override val data: CustomImmutableList<UserInfo>,
     override val pagination: Pagination<String>? = null,
 ) : ListResponse<UserInfo>
+
+@Serializable
+data class CommunityMembershipListResponse(
+    override val data: CustomImmutableList<com.storyteller_f.shared.model.CommunityMembershipItem>,
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<com.storyteller_f.shared.model.CommunityMembershipItem>
 
 @Serializable
 data class CommunityInfoListResponse(
@@ -65,9 +71,9 @@ data class RoomInfoListResponse(
 
 @Serializable
 data class TitleInfoListResponse(
-    override val data: CustomImmutableList<TitleInfo>,
+    override val data: CustomImmutableList<TitleDetail>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<TitleInfo>
+) : ListResponse<TitleDetail>
 
 @Serializable
 data class FileInfoListResponse(
@@ -77,9 +83,9 @@ data class FileInfoListResponse(
 
 @Serializable
 data class UserLogInfoListResponse(
-    override val data: CustomImmutableList<UserLogInfo>,
+    override val data: CustomImmutableList<UserLogItem>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<UserLogInfo>
+) : ListResponse<UserLogItem>
 
 @Serializable
 data class UploadRecordInfoListResponse(
@@ -95,21 +101,21 @@ data class ReactionRecordInfoListResponse(
 
 @Serializable
 data class TopicInfoListResponse(
-    override val data: CustomImmutableList<TopicInfo>,
+    override val data: CustomImmutableList<TopicDetail>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<TopicInfo>
+) : ListResponse<TopicDetail>
 
 @Serializable
 data class UserFavoriteInfoListResponse(
-    override val data: CustomImmutableList<UserFavoriteInfo>,
+    override val data: CustomImmutableList<UserFavoriteItem>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<UserFavoriteInfo>
+) : ListResponse<UserFavoriteItem>
 
 @Serializable
 data class UserSubscriptionInfoListResponse(
-    override val data: CustomImmutableList<UserSubscriptionInfo>,
+    override val data: CustomImmutableList<UserSubscriptionItem>,
     override val pagination: Pagination<String>? = null,
-) : ListResponse<UserSubscriptionInfo>
+) : ListResponse<UserSubscriptionItem>
 
 @Serializable
 data class MemberInfoListResponse(
@@ -207,7 +213,7 @@ object AdminApi {
             object Communities {
                 val get =
                     safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/communities") {
-                        resp(CommunityInfoListResponse::class)
+                        resp(CommunityMembershipListResponse::class)
                         query(CustomApi.Users.JoinedCommunities.UserCommunitiesQuery::class)
                         path(CommonPath::class)
                     }
@@ -270,7 +276,7 @@ object AdminApi {
             object Comments {
                 val get =
                     safeEndpointWithQueryAndPathBuilder("/admin/users/{id}/comments") {
-                        resp(TopicInfoListResponse::class)
+                        resp(TopicActivityListResponse::class)
                         query(PaginationQuery::class)
                         path(CommonPath::class)
                     }
@@ -478,7 +484,7 @@ object AdminApi {
         object Id {
             val get =
                 safeEndpointWithPathBuilder("/admin/topics/{id}") {
-                    resp(TopicInfo::class)
+                    resp(TopicDetail::class)
                     path(CommonPath::class)
                 }
 
@@ -512,7 +518,7 @@ object AdminApi {
         object Id {
             val get =
                 safeEndpointWithPathBuilder("/admin/titles/{id}") {
-                    resp(TitleInfo::class)
+                    resp(TitleDetail::class)
                     path(CommonPath::class)
                 }
 

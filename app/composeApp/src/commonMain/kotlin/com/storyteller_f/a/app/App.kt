@@ -97,17 +97,17 @@ import com.storyteller_f.a.client.core.UserPass
 import com.storyteller_f.a.client.core.UserSessionModel
 import com.storyteller_f.a.client.core.buildWebSocketUrl
 import com.storyteller_f.a.client.core.createSimpleUserSessionManager
+import com.storyteller_f.a.client.core.decryptCreatedTopic
 import com.storyteller_f.a.client.core.defaultClientConfigure
 import com.storyteller_f.a.client.core.getClient
 import com.storyteller_f.a.client.core.login
-import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.restoreSession
 import com.storyteller_f.a.client.core.startBackgroundTask
 import com.storyteller_f.a.client.room.getRoomModelStorage
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicProjection
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.RoomFrame
@@ -659,7 +659,7 @@ private fun ObserveMessage() {
                 val plainFrame =
                     if (frame.topicInfo.content is TopicContent.Encrypted) {
                         val topicInfo =
-                            processEncryptedTopic(listOf(frame.topicInfo), sessionManager).first()
+                            decryptCreatedTopic(frame.topicInfo, sessionManager)
                         RoomFrame.NewTopicInfo(topicInfo)
                     } else {
                         frame
@@ -676,7 +676,7 @@ private fun ObserveMessage() {
                         if (roomId != topicInfo.parentId &&
                             topicId != topicInfo.parentId
                         ) {
-                            val nickname = topicInfo.extension?.authorInfo?.nickname
+                            val nickname = topicInfo.authorInfo?.nickname
                             messageToasterState.show("${nickname ?: "<none>"}: ${message.plain}")
                         }
                     } else if (hasPermission) {
@@ -690,7 +690,7 @@ private fun ObserveMessage() {
 
 private const val TOPIC_NOTIFICATION_ID_KEY = "topic-id"
 
-private fun sendTopicNotification(message: TopicContent.Plain, topicInfo: TopicInfo) {
+private fun sendTopicNotification(message: TopicContent.Plain, topicInfo: TopicProjection) {
     showAppNotification(
         title = "New topic",
         body = message.plain,

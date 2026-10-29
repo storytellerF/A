@@ -12,6 +12,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
+import com.storyteller_f.a.api.CommunityInfoListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewTitle
 import com.storyteller_f.a.api.PaginationQuery
@@ -82,23 +83,23 @@ import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.FileRefInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.PosterSearch
-import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaDetail
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.TopicPinSearch
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.UserPubKeyInfo
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
@@ -124,7 +125,9 @@ import com.storyteller_f.storage.UserReactionRecordCollection
 import com.storyteller_f.storage.UserSubscriptionCollection
 import com.storyteller_f.storage.WrappedPagingSource
 import com.storyteller_f.storage.getName
+import com.storyteller_f.storage.mergeActivity
 import com.storyteller_f.storage.wrap
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -183,6 +186,12 @@ class CommunitiesViewModel(
             modelStorage.community,
             RegularPagingSource { key, size ->
                 sessionManager.searchCommunity(size, joinStatusSearch, word, target, key, PosterSearch.UNSPECIFIED)
+                    .map {
+                        CommunityInfoListResponse(
+                            it.data.map { item -> item.communityInfo }.toImmutableList(),
+                            it.pagination,
+                        )
+                    }
             },
         ).flow.cachedIn(viewModelScope)
 }
@@ -205,12 +214,22 @@ class UserJoinedCommunitiesViewModel(
                 if (target == null) {
                     sessionManager.getUserCommunities(
                         CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.UNSPECIFIED, key, size),
-                    )
+                    ).map { response ->
+                        CommunityInfoListResponse(
+                            response.data.map { it.communityInfo }.toImmutableList(),
+                            response.pagination,
+                        )
+                    }
                 } else {
                     sessionManager.getUserJoinedCommunities(
                         target,
                         CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.UNSPECIFIED, key, size),
-                    )
+                    ).map { response ->
+                        CommunityInfoListResponse(
+                            response.data.map { it.communityInfo }.toImmutableList(),
+                            response.pagination,
+                        )
+                    }
                 }
             },
         ).flow.cachedIn(viewModelScope)
@@ -230,17 +249,22 @@ class UserJoinedCommunitiesWithPosterViewModel(sessionManager: UserSessionManage
         ) { key, size ->
             sessionManager.getUserCommunities(
                 CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(PosterSearch.HAS_POSTER, key, size),
-            )
+            ).map { response ->
+                CommunityInfoListResponse(
+                    response.data.map { it.communityInfo }.toImmutableList(),
+                    response.pagination,
+                )
+            }
         }.flow.cachedIn(viewModelScope)
 }
 
 @OptIn(ExperimentalPagingApi::class)
 class WorldViewModel(val sessionManager: UserSessionManager, modelStorage: ModelStorage) :
-    PagingViewModel<TopicInfo>() {
+    PagingViewModel<TopicDetail>() {
     private val modelCollection = TopicCollection.Recommend
 
     @OptIn(FlowPreview::class)
-    override val flow: Flow<PagingData<TopicInfo>> =
+    override val flow: Flow<PagingData<TopicDetail>> =
         buildPager(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
@@ -268,11 +292,11 @@ class TopicsViewModel(
     modelStorage: ModelStorage,
     id: PrimaryKey,
     type: ObjectType,
-) : PagingViewModel<TopicInfo>() {
+) : PagingViewModel<TopicDetail>() {
     private val modelCollection = TopicCollection.ChildTopicList(id)
 
     @OptIn(FlowPreview::class)
-    override val flow: Flow<PagingData<TopicInfo>> =
+    override val flow: Flow<PagingData<TopicDetail>> =
         buildPager(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
@@ -311,14 +335,13 @@ class TopicsViewModel(
         }.flow.cachedIn(viewModelScope)
 }
 
-private fun extractHeadlineIfPlain(it: TopicInfo): TopicInfo {
-    val content = it.content
+private fun extractHeadlineIfPlain(topic: TopicDetail): TopicDetail {
+    val content = topic.content
     return if (content is TopicContent.Plain) {
-        it.copy(
-            content = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.fileInfos, content.plain),
-        )
+        val preview = TopicContent.Extracted(extractMarkdownHeadline(content.plain), content.fileInfos, content.plain)
+        topic.copy(topicInfo = topic.topicInfo.copy(content = preview))
     } else {
-        it
+        topic
     }
 }
 
@@ -360,10 +383,10 @@ class TopicSearchViewModel(
     word: String,
     parentId: PrimaryKey?,
     parentType: ObjectType?,
-) : PagingViewModel<TopicInfo>() {
+) : PagingViewModel<TopicDetail>() {
     private val modelCollection = TopicCollection.SearchTopic(word, parentId)
 
-    override val flow: Flow<PagingData<TopicInfo>> =
+    override val flow: Flow<PagingData<TopicDetail>> =
         buildPager(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
@@ -521,11 +544,11 @@ class ReactionsViewModel(sessionManager: UserSessionManager, objectId: PrimaryKe
         }.flow.cachedIn(viewModelScope)
 }
 
-abstract class TopicViewModel : SimpleViewModel<TopicInfo>()
+abstract class TopicViewModel : SimpleViewModel<TopicDetail>()
 
 class IdTopicViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage, topicId: PrimaryKey) :
     TopicViewModel() {
-    override val handler: LoadingHandler<TopicInfo> =
+    override val handler: LoadingHandler<TopicDetail> =
         CachedLoadingHandler(
             modelStorage.topic.observeDatum(topicId),
             viewModelScope,
@@ -541,7 +564,7 @@ class IdTopicViewModel(sessionManager: UserSessionManager, modelStorage: ModelSt
 
 class AidTopicViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage, aid: String) :
     TopicViewModel() {
-    override val handler: LoadingHandler<TopicInfo> =
+    override val handler: LoadingHandler<TopicDetail> =
         CachedLoadingHandler(
             modelStorage.topic.observeDatum(aid),
             viewModelScope,
@@ -588,10 +611,10 @@ class TitlesViewModel(
     status: TitleWorkStatus? = null,
     type: TitleType? = null,
     scopeId: PrimaryKey? = null,
-) : PagingViewModel<TitleInfo>() {
+) : PagingViewModel<TitleDetail>() {
     private val modelCollection = TitleCollection.SearchTitle(uid, searchType, status, type, scopeId)
 
-    override val flow: Flow<PagingData<TitleInfo>> =
+    override val flow: Flow<PagingData<TitleDetail>> =
         buildPager(
             modelCollection,
             modelStorage.remoteKey.wrap(modelCollection.getName()),
@@ -634,8 +657,8 @@ class DownloadListViewModel(modelStorage: ModelStorage) : PagingViewModel<Downlo
 }
 
 class QuotaViewModel(sessionManager: UserSessionManager, objectTuple: ObjectTuple, quotaType: QuotaType) :
-    SimpleViewModel<QuotaInfo>() {
-    override val handler: LoadingHandler<QuotaInfo> =
+    SimpleViewModel<QuotaDetail>() {
+    override val handler: LoadingHandler<QuotaDetail> =
         SimpleLoadingHandler(viewModelScope) {
             sessionManager.getQuotaInfo(objectTuple, quotaType)
         }
@@ -718,11 +741,11 @@ class SessionHistoryViewModel(uIViewModel: UIViewModel) : SimpleViewModel<SavedS
 }
 
 class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
-    PagingViewModel<UserFavoriteInfo>() {
+    PagingViewModel<UserFavoriteItem>() {
     private val collection = UserFavoriteCollection.UserFavorites(0)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<UserFavoriteInfo>> =
+    override val flow: Flow<PagingData<UserFavoriteItem>> =
         buildPager(
             collection,
             modelStorage.remoteKey.wrap(collection.getName()),
@@ -733,11 +756,11 @@ class FavoritesViewModel(sessionManager: UserSessionManager, modelStorage: Model
 }
 
 class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
-    PagingViewModel<UserSubscriptionInfo>() {
+    PagingViewModel<UserSubscriptionItem>() {
     private val collection = UserSubscriptionCollection.UserSubscriptions(0)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<UserSubscriptionInfo>> =
+    override val flow: Flow<PagingData<UserSubscriptionItem>> =
         buildPager(
             collection,
             modelStorage.remoteKey.wrap(collection.getName()),
@@ -750,11 +773,10 @@ class SubscriptionsViewModel(sessionManager: UserSessionManager, modelStorage: M
                 CompatPagingSource(modelStorage.subscription.observeData(collection), IntKeyConverter),
             ) { list ->
                 list.map { subscriptionInfo ->
-                    val extensions = subscriptionInfo.extensions
-                    val topicInfo = extensions?.topicInfo
+                    val topicInfo = subscriptionInfo.topicInfo
                     if (topicInfo != null) {
                         val newTopic = processEncryptedTopic(listOf(topicInfo), sessionManager).first()
-                        subscriptionInfo.copy(extensions = extensions.copy(topicInfo = newTopic))
+                        subscriptionInfo.copy(topicInfo = newTopic)
                     } else {
                         subscriptionInfo
                     }
@@ -780,17 +802,24 @@ class UserReactionRecordsViewModel(sessionManager: UserSessionManager, modelStor
 }
 
 class UserCommentsViewModel(sessionManager: UserSessionManager, modelStorage: ModelStorage) :
-    PagingViewModel<TopicInfo>() {
+    PagingViewModel<TopicDetail>() {
     val collection = TopicCollection.UserComments(0)
 
     @OptIn(ExperimentalPagingApi::class)
-    override val flow: Flow<PagingData<TopicInfo>> =
+    override val flow: Flow<PagingData<TopicDetail>> =
         buildPager(
             collection,
             modelStorage.remoteKey.wrap(collection.getName()),
             modelStorage.topic,
             RegularPagingSource { key, size ->
-                sessionManager.getComments(PaginationQuery(key, size = size))
+                sessionManager.getComments(PaginationQuery(key, size = size)).map { response ->
+                    com.storyteller_f.a.api.TopicInfoListResponse(
+                        response.data.map { summary ->
+                            modelStorage.topic.mergeActivity(summary)
+                        }.toImmutableList(),
+                        response.pagination,
+                    )
+                }
             },
         ) {
             WrappedPagingSource(

@@ -52,7 +52,7 @@ import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
-import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.TopicActivityListResponse
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.ActivityPreviewHost
 import com.storyteller_f.a.app.common.MessagePreview
@@ -501,7 +501,7 @@ class HomeAdaptiveUiTest {
                             persistentListOf(RoomActivityInfo(RoomInfo.EMPTY.copy(name = "Live room"), null, null, 5)),
                         ),
                     )
-                }, { CustomResult.success(TopicInfoListResponse(persistentListOf())) })
+                }, { CustomResult.success(TopicActivityListResponse(persistentListOf())) })
             try {
                 setContent {
                     CompositionLocalProvider(LocalLifecycleOwner provides owner) {

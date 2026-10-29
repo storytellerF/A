@@ -29,7 +29,7 @@ import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.TopicPinSearch
 import com.storyteller_f.shared.setupKmpLogger
 import com.storyteller_f.shared.type.ObjectType
@@ -179,7 +179,7 @@ private suspend fun processCommunityTask(
             ).getOrThrow()
         delay(1.seconds)
         resp.data.forEach { communityInfo ->
-            extracted(communityInfo)
+            extracted(communityInfo.communityInfo)
         }
         next = resp.pagination?.nextPageToken ?: break
     }
@@ -254,7 +254,7 @@ private suspend fun getLatestHasCommentedTopic(sessionManager: SimpleUserSession
 }
 
 private suspend fun handleTopic(
-    topicInfo: TopicInfo,
+    topicInfo: TopicDetail,
     client: Client,
     sessionManager: SimpleUserSessionManager,
     prompt: String,
@@ -297,7 +297,7 @@ private suspend fun handleCommunityNews(
     }
     var next: String? = null
     // 找出最新的评论过的topic
-    var latestTopic: TopicInfo? = null
+    var latestTopic: TopicDetail? = null
     while (true) {
         val resp =
             sessionManager.getTopicList(
@@ -324,7 +324,7 @@ private suspend fun handleCommunityNews(
 
 @OptIn(ExperimentalTime::class)
 private suspend fun addTopic(
-    latestTopic: TopicInfo?,
+    latestTopic: TopicDetail?,
     client: Client,
     prompt: String,
     communityInfo: CommunityInfo,

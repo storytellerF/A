@@ -54,7 +54,7 @@ import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.UnreadRoomsResponse
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
+import com.storyteller_f.shared.model.UserLogItem
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.model.UserOverview
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
@@ -546,10 +546,10 @@ suspend fun Backend.getUserById(id: PrimaryKey) = getUserInfo(ObjectFetch.IdFetc
 
 suspend fun Backend.getUserLogs(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
     database.user.getUserLogs(uid, fetch).andThen(UserError::fromError) { (list, total) ->
-        processUserLogToUserLogInfo(list, uid).pagingNotNull(total)
+        buildUserLogItems(list, uid).pagingNotNull(total)
     }
 
-private suspend fun Backend.processUserLogToUserLogInfo(list: List<UserLog>, uid: PrimaryKey) =
+private suspend fun Backend.buildUserLogItems(list: List<UserLog>, uid: PrimaryKey) =
     captureFailure(UserError::from) {
         val userIds = mutableListOf<PrimaryKey>()
         val communityIds = mutableListOf<PrimaryKey>()
@@ -576,15 +576,15 @@ private suspend fun Backend.processUserLogToUserLogInfo(list: List<UserLog>, uid
         val roomMap = rooms.associateBy { it.id }
         val topicMap = topics.associateBy { it.id }
         list.map { log ->
-            val ext =
+            val projection =
                 when (log.objectType) {
-                    ObjectType.USER -> UserLogInfo.Extensions(user = userMap[log.objectId])
-                    ObjectType.COMMUNITY -> UserLogInfo.Extensions(community = communityMap[log.objectId])
-                    ObjectType.ROOM -> UserLogInfo.Extensions(room = roomMap[log.objectId])
-                    ObjectType.TOPIC -> UserLogInfo.Extensions(topic = topicMap[log.objectId])
+                    ObjectType.USER -> UserLogItem(log.toUserLogInfo(), user = userMap[log.objectId])
+                    ObjectType.COMMUNITY -> UserLogItem(log.toUserLogInfo(), community = communityMap[log.objectId])
+                    ObjectType.ROOM -> UserLogItem(log.toUserLogInfo(), room = roomMap[log.objectId])
+                    ObjectType.TOPIC -> UserLogItem(log.toUserLogInfo(), topic = topicMap[log.objectId])
                     else -> null
                 }
-            log.toUserLogInfo().copy(extensions = ext)
+            projection ?: UserLogItem(log.toUserLogInfo())
         }
     }
 
@@ -611,12 +611,11 @@ suspend fun Backend.getUserReactions(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
 
 suspend fun Backend.getUserCommentedTopics(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
     database.topic.getUserCommentedTopicsPaginationResult(uid, fetch).andThen(UserError::fromError) { (list, total) ->
-        processRawTopicToTopicInfo(
+        processTopicActivities(
             list.map { topic ->
                 database.processTopicToRawTopic(uid, listOf(topic)).getOrThrow().first()
             },
             uid,
-            false,
         ).paging(total)
     }
 

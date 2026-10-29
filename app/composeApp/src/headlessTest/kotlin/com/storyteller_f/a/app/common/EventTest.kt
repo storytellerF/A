@@ -8,8 +8,13 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicActivity
+import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicCreated
+import com.storyteller_f.shared.model.TopicDetail
+import com.storyteller_f.shared.model.TopicReplyPreview
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CollectionListStorageWithDefault
@@ -37,6 +42,8 @@ import com.storyteller_f.storage.UserLogInfoStorage
 import com.storyteller_f.storage.UserOverviewStorage
 import com.storyteller_f.storage.UserReactionRecordStorage
 import com.storyteller_f.storage.UserSubscriptionStorage
+import com.storyteller_f.storage.mergeActivity
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -50,19 +57,55 @@ import kotlin.test.assertTrue
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class EventTest {
     @Test
+    fun activityRefreshPreservesLoadedReplies() =
+        runTest {
+            val storage = FakeTopicStorage()
+            val reply = TopicReplyPreview(TopicDetail.EMPTY.topicInfo.copy(id = 2), UserInfo.EMPTY)
+            val cached = TopicDetail.EMPTY.copy(subTopics = persistentListOf(reply))
+            storage.documents[TopicCollection.Topics to cached.id.toString()] = cached
+            val summary = TopicActivity(cached.topicInfo.copy(isPin = true), null, persistentListOf(), null)
+            val merged = storage.mergeActivity(summary)
+            assertTrue(merged.isPin)
+            assertEquals(cached.subTopics, merged.subTopics)
+        }
+
+    @Test
+    fun compactCreationPreservesCachedRelations() =
+        runTest {
+            val storage = FakeTopicStorage()
+            val cached = TopicDetail.EMPTY.copy(authorInfo = UserInfo.EMPTY.copy(nickname = "Author"))
+            storage.documents[TopicCollection.Topics to cached.id.toString()] = cached
+            val bus = MutableSharedFlow<Any>()
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(FakeModelStorage(topic = storage), bus)
+                }
+            try {
+                bus.emit(OnTopicCreated(TopicCreated(cached.topicInfo, null)))
+                assertEquals(cached, storage.savedDefault.single())
+                assertEquals(cached, storage.savedFirst.single().second)
+            } finally {
+                job.cancel()
+            }
+        }
+
+    @Test
     fun testProcessTopicCreated() =
         runTest {
             val fakeTopicStorage = FakeTopicStorage()
             val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
             val bus = MutableSharedFlow<Any>()
             val parentId: PrimaryKey = 100L
-            val topicInfo = TopicInfo.EMPTY.copy(id = 1L, parentId = parentId)
+            val topicInfo =
+                TopicDetail.EMPTY.copy(
+                    topicInfo = TopicDetail.EMPTY.topicInfo.copy(id = 1L, parentId = parentId),
+                )
 
             val job =
                 launch(UnconfinedTestDispatcher(testScheduler)) {
                     processEvent(fakeStorage, bus)
                 }
-            bus.emit(OnTopicCreated(topicInfo))
+            bus.emit(OnTopicCreated(TopicCreated(topicInfo.topicInfo, topicInfo.authorInfo)))
 
             val savedFirst = fakeTopicStorage.savedFirst
             assertEquals(1, savedFirst.size)
@@ -76,69 +119,68 @@ class EventTest {
         }
 
     @Test
-    fun topicChangedUpdatesRecommend() =
+    fun pinChangePreservesEachCachedProjection() =
         runTest {
-            val fakeTopicStorage = FakeTopicStorage()
-            val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
-            val bus = MutableSharedFlow<Any>()
-            val parentId: PrimaryKey = 100L
-            val topicId: PrimaryKey = 2L
-            val topicInfo =
-                TopicInfo.EMPTY.copy(
-                    id = topicId,
-                    parentId = parentId,
-                    content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
+            val storage = FakeTopicStorage()
+            val base =
+                TopicDetail.EMPTY.topicInfo.copy(
+                    id = 2,
+                    parentId = 100,
+                    aid = "topic-two",
+                    content = TopicContent.Plain("# Heading\n\nFull body"),
+                    reactionCount = 3,
                 )
-
-            // Pre-populate recommend to test updateDocument call
-            fakeTopicStorage.documents[TopicCollection.Recommend to topicId.toString()] = topicInfo
-
+            val cached =
+                TopicDetail.EMPTY.copy(
+                    topicInfo = base,
+                    authorInfo = UserInfo.EMPTY,
+                    subTopics = persistentListOf(TopicReplyPreview(base.copy(id = 3), UserInfo.EMPTY)),
+                )
+            val recommended = cached.copy(topicInfo = base.copy(reactionCount = 4))
+            val child =
+                cached.copy(topicInfo = base.copy(content = TopicContent.Encrypted("ciphertext", emptyMap())))
+            storage.documents[TopicCollection.Topics to "2"] = cached
+            storage.documents[TopicCollection.Recommend to "2"] = recommended
+            storage.documents[TopicCollection.ChildTopicList(100) to "2"] = child
+            val bus = MutableSharedFlow<Any>()
             val job =
                 launch(UnconfinedTestDispatcher(testScheduler)) {
-                    processEvent(fakeStorage, bus)
+                    processEvent(FakeModelStorage(topic = storage), bus)
                 }
-            bus.emit(OnTopicChanged(topicInfo))
-
-            // Check saveToDefault
-            assertEquals(1, fakeTopicStorage.savedDefault.size)
-            assertEquals(topicInfo, fakeTopicStorage.savedDefault[0])
-
-            // Check updateDocument for Recommend
-            val updatedDocs = fakeTopicStorage.updatedDocuments
-            val recommendUpdate = updatedDocs.find { it.first == TopicCollection.Recommend }
-            assertTrue(recommendUpdate != null, "Should update Recommend collection")
-            assertEquals(topicInfo, recommendUpdate.second)
-
-            job.cancel()
+            try {
+                bus.emit(OnTopicPinChanged(2, 100, ObjectType.ROOM, true))
+                assertEquals(listOf(cached.copy(topicInfo = base.copy(isPin = true))), storage.savedDefault)
+                assertEquals(
+                    listOf(
+                        TopicCollection.Recommend to
+                            recommended.copy(topicInfo = recommended.topicInfo.copy(isPin = true)),
+                        TopicCollection.ChildTopicList(100) to
+                            child.copy(topicInfo = child.topicInfo.copy(isPin = true)),
+                    ),
+                    storage.updatedDocuments,
+                )
+            } finally {
+                job.cancel()
+            }
         }
 
     @Test
-    fun topicChangedUpdatesChildTopicList() =
+    fun pinChangeDoesNotCreateMissingCacheEntries() =
         runTest {
-            val fakeTopicStorage = FakeTopicStorage()
-            val fakeStorage = FakeModelStorage(topic = fakeTopicStorage)
+            val storage = FakeTopicStorage()
             val bus = MutableSharedFlow<Any>()
-            val parentId: PrimaryKey = 100L
-            val topicId: PrimaryKey = 2L
-            val topicInfo =
-                TopicInfo.EMPTY.copy(
-                    id = topicId,
-                    parentId = parentId,
-                    content = com.storyteller_f.shared.model.TopicContent.Plain("Updated"),
-                )
-
-            fakeTopicStorage.documents[TopicCollection.ChildTopicList(parentId) to topicId.toString()] = topicInfo
-            val job = launch(UnconfinedTestDispatcher(testScheduler)) { processEvent(fakeStorage, bus) }
-
-            bus.emit(OnTopicChanged(topicInfo))
-
-            val update =
-                fakeTopicStorage.updatedDocuments.single {
-                    it.first == TopicCollection.ChildTopicList(parentId)
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(FakeModelStorage(topic = storage), bus)
                 }
-            assertEquals(topicInfo, update.second)
-            assertEquals(listOf(topicInfo), fakeTopicStorage.savedDefault)
-            job.cancel()
+            try {
+                bus.emit(OnTopicPinChanged(2, 100, ObjectType.ROOM, false))
+                assertTrue(storage.savedDefault.isEmpty())
+                assertTrue(storage.updatedDocuments.isEmpty())
+                assertTrue(storage.savedFirst.isEmpty())
+            } finally {
+                job.cancel()
+            }
         }
 
     @Test
@@ -233,7 +275,7 @@ open class FakeCollectionListStorage<C, I : Any> : CollectionListStorageWithDefa
 }
 
 class FakeTopicStorage :
-    FakeCollectionListStorage<TopicCollection, TopicInfo>(),
+    FakeCollectionListStorage<TopicCollection, TopicDetail>(),
     TopicInfoStorage
 class FakeRoomStorage :
     FakeCollectionListStorage<RoomCollection, RoomInfo>(),

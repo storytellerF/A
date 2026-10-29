@@ -71,16 +71,7 @@ data class UserLogInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDate,
-    val extensions: Extensions? = null,
-) : PrimaryKeyIdentifiable {
-    @Serializable
-    data class Extensions(
-        val user: UserInfo? = null,
-        val topic: TopicInfo? = null,
-        val community: CommunityInfo? = null,
-        val room: RoomInfo? = null,
-    )
-}
+) : PrimaryKeyIdentifiable
 
 @Serializable
 data class UserPubKeyInfo(
@@ -141,11 +132,7 @@ data class QuotaInfo(
     val total: Long,
     val used: Long,
     val lockId: PrimaryKey?,
-    val extensions: Extensions? = null,
-) {
-    @Serializable
-    data class Extensions(val uploadRecord: UploadRecordInfo? = null)
-}
+)
 
 @Serializable
 data class MemberInfo(

@@ -54,7 +54,7 @@ import com.storyteller_f.a.panel.tab_topics
 import com.storyteller_f.a.panel.topic_detail_title_with_info
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.obj.UpdateObjectStatusBody
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
@@ -201,15 +201,15 @@ private fun TopicTopicsTab(id: PrimaryKey) {
 }
 
 @Composable
-private fun TopicCell(info: TopicInfo, panelNav: PanelNav) {
+private fun TopicCell(info: TopicDetail, panelNav: PanelNav) {
     val text =
         when (val content = info.content) {
             is TopicContent.Plain -> content.plain
             is TopicContent.Extracted -> content.plain
             else -> ""
         }
-    val author = info.extension?.authorInfo?.nickname ?: info.author.toString()
-    val room = info.extension?.roomInfo?.name.orEmpty()
+    val author = info.authorInfo?.nickname ?: info.author.toString()
+    val room = info.roomInfo?.name.orEmpty()
     val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
     val counts =
         if (info.commentCount > 0 || info.reactionCount > 0) {

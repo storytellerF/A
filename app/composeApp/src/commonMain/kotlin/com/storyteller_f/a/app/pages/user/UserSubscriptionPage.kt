@@ -27,9 +27,8 @@ import com.storyteller_f.a.app.pages.topic.TopicCell
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.TopicDetail
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.type.ObjectType
 
 @Composable
@@ -57,14 +56,14 @@ fun SubscriptionPageInternal(viewModel: SubscriptionsViewModel) {
     }
 }
 
-class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserFavoriteInfo> {
-    override val values: Sequence<UserFavoriteInfo>
+class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserSubscriptionItem> {
+    override val values: Sequence<UserSubscriptionItem>
         get() =
             sequenceOf(
-                UserFavoriteInfo.EMPTY.copy(
-                    extensions =
-                    UserFavoriteInfo.Extensions(
-                        TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")),
+                UserSubscriptionItem.EMPTY.copy(
+                    topicInfo =
+                    TopicDetail.EMPTY.copy(
+                        topicInfo = TopicDetail.EMPTY.topicInfo.copy(content = TopicContent.Plain("hello")),
                     ),
                 ),
             )
@@ -73,7 +72,7 @@ class UserSubscriptionPreviewProvider : PreviewParameterProvider<UserFavoriteInf
 @Preview(widthDp = 300)
 @Composable
 fun UserSubscriptionCell(
-    @PreviewParameter(UserSubscriptionPreviewProvider::class) userFavoriteInfo: UserSubscriptionInfo?,
+    @PreviewParameter(UserSubscriptionPreviewProvider::class) userFavoriteInfo: UserSubscriptionItem?,
 ) {
     Column(Modifier.padding(vertical = 10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(
@@ -81,7 +80,7 @@ fun UserSubscriptionCell(
             modifier = Modifier.padding(horizontal = 10.dp),
         )
         if (userFavoriteInfo?.objectType == ObjectType.TOPIC) {
-            val topicInfo = userFavoriteInfo.extensions?.topicInfo
+            val topicInfo = userFavoriteInfo.topicInfo
             if (topicInfo != null) {
                 Box(
                     modifier =

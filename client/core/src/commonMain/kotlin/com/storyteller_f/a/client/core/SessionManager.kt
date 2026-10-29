@@ -19,7 +19,10 @@ import com.storyteller_f.shared.finalData
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.PanelAccountInfo
 import com.storyteller_f.shared.model.PrimaryKeyIdentifiable
+import com.storyteller_f.shared.model.TopicActivity
 import com.storyteller_f.shared.model.TopicContent
+import com.storyteller_f.shared.model.TopicCreated
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.RoomFrame
@@ -314,8 +317,17 @@ suspend fun PanelSessionManager.panelSignIn(authKey: AuthKey, passHolder: Simple
     return signResult.userInfo
 }
 
+suspend fun processEncryptedTopic(topics: List<TopicDetail>, manager: UserSessionManager): List<TopicDetail> =
+    topics.zip(decryptTopicBodies(topics.map { it.topicInfo }, manager)) { topic, body -> topic.copy(topicInfo = body) }
+
+suspend fun decryptTopicActivities(topics: List<TopicActivity>, manager: UserSessionManager): List<TopicActivity> =
+    topics.zip(decryptTopicBodies(topics.map { it.topicInfo }, manager)) { topic, body -> topic.copy(topicInfo = body) }
+
+suspend fun decryptCreatedTopic(topic: TopicCreated, manager: UserSessionManager): TopicCreated =
+    topic.copy(topicInfo = decryptTopicBodies(listOf(topic.topicInfo), manager).single())
+
 @OptIn(ExperimentalStdlibApi::class)
-suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: UserSessionManager): List<TopicInfo> {
+private suspend fun decryptTopicBodies(topicInfos: List<TopicInfo>, manager: UserSessionManager): List<TopicInfo> {
     val model = manager.model
     val uid = model.uid
     val key = manager.passHolder.currentUserPass

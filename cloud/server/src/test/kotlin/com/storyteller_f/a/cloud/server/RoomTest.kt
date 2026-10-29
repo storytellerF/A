@@ -32,7 +32,7 @@ import com.storyteller_f.a.cloud.core.service.checkRoomWritePermission
 import com.storyteller_f.a.cloud.ws.rtcSession
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.obj.CustomAnswer
 import com.storyteller_f.shared.obj.CustomOffer
@@ -527,7 +527,7 @@ suspend fun UserSessionManager.expectedRoomCountForAllRoomList(expected: Int, ne
     assertListSize(expected, result)
 }
 
-suspend fun UserSessionManager.createJoinRoomTitleForTest(privateRoomId: PrimaryKey, uid: PrimaryKey): TitleInfo =
+suspend fun UserSessionManager.createJoinRoomTitleForTest(privateRoomId: PrimaryKey, uid: PrimaryKey): TitleDetail =
     createTitle(
         NewTitle("invite", TitleType.JOIN, uid, privateRoomId, ObjectType.ROOM, "invite for test"),
     ).getOrThrow()

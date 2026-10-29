@@ -97,10 +97,10 @@ import com.storyteller_f.result.onFailure
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
@@ -426,7 +426,11 @@ private fun DescriptionEditor(vm: TitleComposeViewModel) {
         if (content.isEmpty()) {
             Text("No Description", fontStyle = FontStyle.Italic, fontSize = 10.sp)
         } else {
-            AppTopicContentView(TopicInfo.EMPTY.copy(content = TopicContent.Plain(content)))
+            AppTopicContentView(
+                TopicDetail.EMPTY.copy(
+                    topicInfo = TopicDetail.EMPTY.topicInfo.copy(content = TopicContent.Plain(content)),
+                ),
+            )
         }
     }
 }
@@ -556,7 +560,7 @@ private fun TitleTypeSelector(titleType: TitleType, updateTitleType: (TitleType)
 
 private suspend fun AppGlobalDialogController.createTitle(
     newTitle: NewTitle,
-): CustomResult<TitleInfo, TitleActionError> =
+): CustomResult<TitleDetail, TitleActionError> =
     request {
         createTitle(newTitle)
     }.onSuccess { title ->

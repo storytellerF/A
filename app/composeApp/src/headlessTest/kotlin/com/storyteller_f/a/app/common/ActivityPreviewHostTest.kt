@@ -7,9 +7,10 @@ package com.storyteller_f.a.app.common
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
-import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.TopicActivityListResponse
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicActivity
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.obj.Pagination
@@ -81,8 +82,15 @@ class ActivityPreviewHostTest {
                     )
                 }, {
                     CustomResult.success(
-                        TopicInfoListResponse(
-                            persistentListOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin"))),
+                        TopicActivityListResponse(
+                            persistentListOf(
+                                TopicActivity(
+                                    TopicInfo.EMPTY.copy(content = TopicContent.Plain("Pin")),
+                                    null,
+                                    persistentListOf(),
+                                    null,
+                                ),
+                            ),
                         ),
                     )
                 })
@@ -111,7 +119,7 @@ class ActivityPreviewHostTest {
                 ActivityPreviewHost(this, dispatcher, dispatcher, {
                     CustomResult.success(pending.await())
                 }, {
-                    CustomResult.success(TopicInfoListResponse(persistentListOf()))
+                    CustomResult.success(TopicActivityListResponse(persistentListOf()))
                 })
             host.refreshUnread()
             runCurrent()
@@ -136,13 +144,16 @@ class ActivityPreviewHostTest {
                     CustomResult.success(RoomActivityListResponse(persistentListOf()))
                 }, {
                     pinLoads++
-                    CustomResult.success(TopicInfoListResponse(persistentListOf()))
+                    CustomResult.success(TopicActivityListResponse(persistentListOf()))
                 })
             host.onEvent(OnRoomRead(1), true)
             runCurrent()
             assertEquals(1, unreadLoads)
             assertEquals(0, pinLoads)
-            host.onEvent(OnTopicChanged(TopicInfo.EMPTY.copy(rootType = ObjectType.COMMUNITY)), true)
+            host.onEvent(
+                OnTopicPinChanged(1, 2, ObjectType.COMMUNITY, true),
+                true,
+            )
             runCurrent()
             assertEquals(1, unreadLoads)
             assertEquals(1, pinLoads)
@@ -154,18 +165,43 @@ class ActivityPreviewHostTest {
         val encrypted =
             activity(
                 1,
-            ).copy(latestMessage = TopicInfo.EMPTY.copy(content = TopicContent.Encrypted("secret", emptyMap())))
+            ).copy(
+                latestMessage =
+                TopicActivity(
+                    TopicInfo.EMPTY.copy(content = TopicContent.Encrypted("secret", emptyMap())),
+                    null,
+                    persistentListOf(),
+                    null,
+                ),
+            )
         assertIs<MessageSummary.Unavailable>(encrypted.toPreview().message?.summary)
         val failed =
             encrypted.copy(
-                latestMessage = TopicInfo.EMPTY.copy(content = TopicContent.DecryptFailed("secret")),
+                latestMessage =
+                TopicActivity(
+                    TopicInfo.EMPTY.copy(content = TopicContent.DecryptFailed("secret")),
+                    null,
+                    persistentListOf(),
+                    null,
+                ),
             )
         assertIs<MessageSummary.Unavailable>(failed.toPreview().message?.summary)
         val missing = activity(1).copy(latestMessageId = 12)
         assertIs<MessageSummary.Unavailable>(missing.toPreview().message?.summary)
         assertNull(activity(1).toPreview().message)
         assertIs<MessageSummary.Unavailable>(activity(1).copy(unreadMessageCount = 2).toPreview().message?.summary)
-        val plain = activity(1).copy(latestMessage = TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello\nworld")))
+        val plain =
+            activity(
+                1,
+            ).copy(
+                latestMessage =
+                TopicActivity(
+                    TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello\nworld")),
+                    null,
+                    persistentListOf(),
+                    null,
+                ),
+            )
         assertEquals("hello world", assertIs<MessageSummary.Text>(plain.toPreview().message?.summary).value)
     }
 }

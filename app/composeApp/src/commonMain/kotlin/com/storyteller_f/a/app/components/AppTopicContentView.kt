@@ -10,13 +10,13 @@ import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.pages.topic.TopicRoute
 import com.storyteller_f.a.client.compose_core.components.TopicContentView
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.utils.readCodeFence
 
 @Composable
-fun AppTopicContentView(topicInfo: TopicInfo, isEmbed: Boolean = false) {
+fun AppTopicContentView(topicInfo: TopicDetail, isEmbed: Boolean = false) {
     val appNavFactory = LocalAppNavFactory.current
-    TopicContentView(topicInfo, {
+    TopicContentView(topicInfo.topicInfo, {
         appNavFactory.newAppNav().gotoMedia(it)
     }, isEmbed, {
         RefBlock(it)

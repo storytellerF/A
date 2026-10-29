@@ -82,7 +82,7 @@ import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.result.exceptionOrNull
 import com.storyteller_f.result.onFailure
 import com.storyteller_f.result.onSuccess
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -249,7 +249,7 @@ private fun ColumnScope.TopicPageContent(
 }
 
 @Composable
-private fun TopicPageInputGroup(topic: TopicInfo, snackBarHostState: SnackbarHostState, scrollToNew: () -> Unit) {
+private fun TopicPageInputGroup(topic: TopicDetail, snackBarHostState: SnackbarHostState, scrollToNew: () -> Unit) {
     val alertDialogState =
         remember {
             CustomAlertDialogController()
@@ -279,7 +279,7 @@ private fun TopicPageInputGroup(topic: TopicInfo, snackBarHostState: SnackbarHos
 }
 
 @Composable
-private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicInfo, snackBarHostState: SnackbarHostState) {
+private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicDetail, snackBarHostState: SnackbarHostState) {
     var input by remember {
         mutableStateOf("")
     }
@@ -301,7 +301,7 @@ private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicInfo, snackBarHost
             val data =
                 when (topic.rootType) {
                     ObjectType.ROOM -> {
-                        val roomInfo = topic.extension?.roomInfo ?: return@InputGroupInternal
+                        val roomInfo = topic.roomInfo ?: return@InputGroupInternal
                         roomInfo.communityId?.let {
                             TopicComposeData.PublicRoom(topic.rootId, it, parentTuple)
                         } ?: TopicComposeData.PrivateRoom(topic.rootId, parentTuple)
@@ -327,7 +327,7 @@ private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicInfo, snackBarHost
 
 @Composable
 fun TopicSendButton(
-    topic: TopicInfo,
+    topic: TopicDetail,
     input: String,
     updateInput: (String) -> Unit,
     scrollToNew: () -> Unit,
@@ -351,7 +351,7 @@ fun TopicSendButton(
     }
 }
 
-private fun sendTopicInTopicPage(input: String, topic: TopicInfo, context: SendTopicContext) {
+private fun sendTopicInTopicPage(input: String, topic: TopicDetail, context: SendTopicContext) {
     checkContent(input).exceptionOrNull()?.let {
         context.scope.launch {
             context.snackBarHostState.showSnackbar(it.message.orEmpty())

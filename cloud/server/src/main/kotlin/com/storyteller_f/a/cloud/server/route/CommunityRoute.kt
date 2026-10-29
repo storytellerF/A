@@ -4,7 +4,7 @@
 
 package com.storyteller_f.a.cloud.server.route
 
-import com.storyteller_f.a.api.CommunityInfoListResponse
+import com.storyteller_f.a.api.CommunityMembershipListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.MemberInfoListResponse
 import com.storyteller_f.a.api.NewFavorite
@@ -49,7 +49,7 @@ fun Route.bindCommunityRoute(backend: Backend) {
     CustomApi.Communities.search(handleResult(backend)) {
         usePrincipalOrNull { uid ->
             it.pagination(GeneralOffsetPagingGenerator, { l, p ->
-                CommunityInfoListResponse(l, p)
+                CommunityMembershipListResponse(l, p)
             }) { f ->
                 backend.searchCommunities(uid, it, f)
             }

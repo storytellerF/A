@@ -33,7 +33,7 @@ internal suspend fun UserSessionManager.decryptRoomList(response: RoomInfoListRe
 private suspend fun UserSessionManager.decryptRoomActivities(
     response: RoomActivityListResponse,
 ): RoomActivityListResponse {
-    val messages = processEncryptedTopic(response.data.mapNotNull { it.latestMessage }, this).associateBy { it.id }
+    val messages = decryptTopicActivities(response.data.mapNotNull { it.latestMessage }, this).associateBy { it.id }
     return response.copy(
         data =
         response.data.map { activity ->

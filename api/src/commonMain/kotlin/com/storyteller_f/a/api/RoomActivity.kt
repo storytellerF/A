@@ -5,7 +5,7 @@
 package com.storyteller_f.a.api
 
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicActivity
 import com.storyteller_f.shared.obj.ListResponse
 import com.storyteller_f.shared.obj.Pagination
 import com.storyteller_f.shared.type.CustomImmutableList
@@ -17,7 +17,7 @@ import kotlinx.serialization.Serializable
 data class RoomActivityInfo(
     val room: RoomInfo,
     val latestMessageId: PrimaryKey?,
-    val latestMessage: TopicInfo?,
+    val latestMessage: TopicActivity?,
     val unreadMessageCount: Long,
 )
 
@@ -30,3 +30,9 @@ data class RoomActivityListResponse(
 /** Total direct unread messages across all joined rooms, independent of list pagination. */
 @Serializable
 data class UnreadMessageCountResponse(val unreadMessageCount: Long)
+
+@Serializable
+data class TopicActivityListResponse(
+    override val data: CustomImmutableList<TopicActivity>,
+    override val pagination: Pagination<String>? = null,
+) : ListResponse<TopicActivity>

@@ -24,7 +24,7 @@ import com.storyteller_f.a.cloud.core.service.getChunkStatus
 import com.storyteller_f.a.cloud.core.service.getFileInfoById
 import com.storyteller_f.a.cloud.core.service.getFileInfoByName
 import com.storyteller_f.a.cloud.core.service.getFileList
-import com.storyteller_f.a.cloud.core.service.getQuotaInfo
+import com.storyteller_f.a.cloud.core.service.getQuotaDetail
 import com.storyteller_f.a.cloud.core.service.initChunkUpload
 import com.storyteller_f.a.cloud.core.service.newFileName
 import com.storyteller_f.a.cloud.core.service.removeSubscriptionByObject
@@ -85,7 +85,7 @@ fun Route.bindProtectedFileRoute(backend: Backend) {
 
     CustomApi.Files.quota(handleResult(backend)) {
         usePrincipal { _ ->
-            backend.getQuotaInfo(it.quotaType, ObjectTuple(it.objectId, it.objectType))
+            backend.getQuotaDetail(it.quotaType, ObjectTuple(it.objectId, it.objectType))
         }
     }
 

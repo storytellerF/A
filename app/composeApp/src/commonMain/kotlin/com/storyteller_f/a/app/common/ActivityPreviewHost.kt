@@ -7,7 +7,7 @@ package com.storyteller_f.a.app.common
 import com.storyteller_f.a.api.PaginationQuery
 import com.storyteller_f.a.api.RoomActivityInfo
 import com.storyteller_f.a.api.RoomActivityListResponse
-import com.storyteller_f.a.api.TopicInfoListResponse
+import com.storyteller_f.a.api.TopicActivityListResponse
 import com.storyteller_f.a.app.error.ActivityPreviewError
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.FailureDetails
@@ -16,8 +16,8 @@ import com.storyteller_f.result.getOrElse
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.result.map
 import com.storyteller_f.shared.model.RoomInfo
+import com.storyteller_f.shared.model.TopicActivity
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.formatTime
@@ -61,7 +61,7 @@ internal class ActivityPreviewHost(
     coordination: CoroutineDispatcher,
     private val worker: CoroutineDispatcher,
     private val fetchUnread: suspend (PaginationQuery) -> CustomResult<RoomActivityListResponse, FailureDetails>,
-    private val fetchPinned: suspend (PaginationQuery) -> CustomResult<TopicInfoListResponse, FailureDetails>,
+    private val fetchPinned: suspend (PaginationQuery) -> CustomResult<TopicActivityListResponse, FailureDetails>,
 ) {
     private val scope =
         CoroutineScope(
@@ -103,7 +103,7 @@ internal class ActivityPreviewHost(
             val pinsChanged =
                 when (event) {
                     is OnTopicCreated -> event.topicInfo.rootType == ObjectType.COMMUNITY && event.topicInfo.isPin
-                    is OnTopicChanged -> event.topicInfo.rootType == ObjectType.COMMUNITY
+                    is OnTopicPinChanged -> event.rootType == ObjectType.COMMUNITY
                     is OnCommunityJoined, is OnCommunityExited -> true
                     else -> false
                 }
@@ -149,14 +149,14 @@ internal fun RoomActivityInfo.toPreview(): RoomActivityPreview {
 }
 
 @OptIn(ExperimentalTime::class)
-private fun TopicInfo.messagePreview() =
+private fun TopicActivity.messagePreview() =
     MessagePreview(
         when (val body = content) {
             is TopicContent.Plain -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
             is TopicContent.Extracted -> summarizeMessage(body.plain, body.fileInfos.isNotEmpty())
             else -> MessageSummary.Unavailable
         },
-        extension?.authorInfo?.nickname?.takeIf { it.isNotBlank() },
+        authorInfo?.nickname?.takeIf { it.isNotBlank() },
         createdTime.formatTime(),
     )
 
@@ -173,7 +173,7 @@ internal fun Any.changesRoomActivity(): Boolean =
     when (this) {
         is OnTopicCreated -> topicInfo.rootType == ObjectType.ROOM
 
-        is OnTopicChanged -> topicInfo.rootType == ObjectType.ROOM
+        is OnTopicPinChanged -> rootType == ObjectType.ROOM
 
         is OnRoomRead, is OnRoomCreated, is OnRoomJoined, is OnRoomExited, is OnRoomUpdated,
         is OnCommunityJoined, is OnCommunityExited,

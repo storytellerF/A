@@ -34,10 +34,22 @@ class SearchOrderTest {
                     ).getOrThrow()
 
                 assertEquals(4, result.data.size)
-                assertEquals("apple", result.data[0].aid, "First result should be aid prefix match")
-                assertEquals("application", result.data[1].name, "Second result should be name prefix match")
-                assertEquals("pineapple", result.data[2].aid, "Third result should be aid inclusion match")
-                assertEquals("snappy", result.data[3].name, "Fourth result should be name inclusion match")
+                assertEquals("apple", result.data[0].communityInfo.aid, "First result should be aid prefix match")
+                assertEquals(
+                    "application",
+                    result.data[1].communityInfo.name,
+                    "Second result should be name prefix match",
+                )
+                assertEquals(
+                    "pineapple",
+                    result.data[2].communityInfo.aid,
+                    "Third result should be aid inclusion match",
+                )
+                assertEquals(
+                    "snappy",
+                    result.data[3].communityInfo.name,
+                    "Fourth result should be name inclusion match",
+                )
             }
         }
 

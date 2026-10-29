@@ -504,3 +504,9 @@
 - When inline-return raw strings make Indentation and StringTemplateIndent disagree,
   use an indented local value before returning it and verify the rendered content;
   do not alternate formatting or suppress either rule.
+- API relations belong directly on scenario-specific wrappers around base models. Use TopicCreated
+  for creation/WS, TopicReplyPreview for nested replies, TopicActivity for activity previews, and
+  TopicDetail for full queries. Pin responses update the nested base without discarding relations.
+  During alpha, do not add client database compatibility migrations for retired projection formats.
+- Pin/unpin events carry identifiers and the returned pin flag only. Patch each current cached
+  projection without persisting UI summaries or replacing unrelated fields.

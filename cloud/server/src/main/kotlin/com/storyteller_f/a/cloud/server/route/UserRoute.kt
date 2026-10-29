@@ -4,7 +4,7 @@
 
 package com.storyteller_f.a.cloud.server.route
 
-import com.storyteller_f.a.api.CommunityInfoListResponse
+import com.storyteller_f.a.api.CommunityMembershipListResponse
 import com.storyteller_f.a.api.CustomApi
 import com.storyteller_f.a.api.NewFavorite
 import com.storyteller_f.a.api.NewSubscription
@@ -12,6 +12,7 @@ import com.storyteller_f.a.api.ReactionRecordInfoListResponse
 import com.storyteller_f.a.api.RoomActivityListResponse
 import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
+import com.storyteller_f.a.api.TopicActivityListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.TotpCodeBody
 import com.storyteller_f.a.api.UserFavoriteInfoListResponse
@@ -143,7 +144,7 @@ private fun Route.bindProtectedUserActivityRoute(backend: Backend) {
     CustomApi.Users.Comments.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
-                TopicInfoListResponse(l, p)
+                TopicActivityListResponse(l, p)
             }) { fetch ->
                 backend.getUserCommentedTopics(uid, fetch)
             }
@@ -169,7 +170,7 @@ private fun Route.bindRoomActivityRoute(backend: Backend) {
         usePrincipal { uid ->
             query.pagination(
                 IdentifiablePagingGenerator,
-                { list, pagination -> TopicInfoListResponse(list, pagination) },
+                { list, pagination -> TopicActivityListResponse(list, pagination) },
             ) { fetch ->
                 backend.getJoinedPinnedTopics(uid, fetch)
             }
@@ -207,7 +208,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     CustomApi.Users.JoinedCommunities.get(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
-                CommunityInfoListResponse(l, p)
+                CommunityMembershipListResponse(l, p)
             }) { fetch ->
                 backend.getUserJoinedCommunities(uid, uid, fetch, q.hasPoster)
             }
@@ -216,7 +217,7 @@ private fun Route.bindUserCommunitiesRoute(backend: Backend) {
     CustomApi.Users.JoinedCommunities.search(handleResult(backend)) { q ->
         usePrincipal { uid ->
             q.pagination(GeneralOffsetPagingGenerator, { l, p ->
-                CommunityInfoListResponse(l, p)
+                CommunityMembershipListResponse(l, p)
             }) { fetch ->
                 backend.searchUserJoinedCommunities(uid, q, fetch)
             }
@@ -290,7 +291,7 @@ fun Route.bindUserRoute(backend: Backend) {
     CustomApi.Users.Id.Communities.get(handleResult(backend)) { q, p ->
         usePrincipalOrNull { uid ->
             q.pagination(IdentifiablePagingGenerator, { l, p ->
-                CommunityInfoListResponse(l, p)
+                CommunityMembershipListResponse(l, p)
             }) { f ->
                 backend.getUserJoinedCommunities(uid, p.id, f, q.hasPoster)
             }

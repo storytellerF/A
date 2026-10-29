@@ -23,7 +23,7 @@ import com.storyteller_f.a.app.pages.user.UserIconWithDialog
 import com.storyteller_f.a.client.compose_core.components.RefCellStateView
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.extractMarkdownHeadline
 
@@ -40,7 +40,7 @@ fun TopicRefCell(topicAid: String) {
 }
 
 @Composable
-fun TopicRefCellInternal(handler: LoadingHandler<TopicInfo>) {
+fun TopicRefCellInternal(handler: LoadingHandler<TopicDetail>) {
     val topicInfo by handler.data.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
     val shape = RoundedCornerShape(4.dp)
@@ -62,8 +62,8 @@ fun TopicRefCellInternal(handler: LoadingHandler<TopicInfo>) {
 }
 
 @Composable
-fun TopicRefCellContent(topicInfo: TopicInfo) {
-    val authorInfo = topicInfo.extension?.authorInfo
+fun TopicRefCellContent(topicInfo: TopicDetail) {
+    val authorInfo = topicInfo.authorInfo
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {

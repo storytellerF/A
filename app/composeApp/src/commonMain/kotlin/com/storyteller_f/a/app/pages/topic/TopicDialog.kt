@@ -75,10 +75,11 @@ import com.storyteller_f.a.client.core.unpinTopic
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.exceptionOrNull
 import com.storyteller_f.result.getOrThrow
+import com.storyteller_f.result.map
 import com.storyteller_f.result.mapError
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.utils.formatTime
 import io.github.aakira.napier.Napier
@@ -91,7 +92,7 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit) {
+fun TopicDialog(topicInfo: TopicDetail?, showDialog: Boolean, dismiss: () -> Unit) {
     if (topicInfo != null && showDialog) {
         BasicAlertDialog({
             dismiss()
@@ -103,7 +104,7 @@ fun TopicDialog(topicInfo: TopicInfo?, showDialog: Boolean, dismiss: () -> Unit)
 
 @OptIn(ExperimentalTime::class)
 @Composable
-fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
+fun TopicDialogInternal(topicInfo: TopicDetail, dismissDialog: () -> Unit) {
     val appNavFactory = LocalAppNavFactory.current
     DialogContainer(onDismissRequest = dismissDialog) {
         Text("pub: ${topicInfo.createdTime.formatTime()}")
@@ -129,7 +130,7 @@ fun TopicDialogInternal(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopicDialogMenuList(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
+private fun TopicDialogMenuList(topicInfo: TopicDetail, dismissDialog: () -> Unit) {
     val content = topicInfo.content
     Column {
         CopyButton(content)
@@ -162,7 +163,7 @@ private fun CopyButton(content: TopicContent) {
 }
 
 @Composable
-private fun SnapshotButton(topicInfo: TopicInfo) {
+private fun SnapshotButton(topicInfo: TopicDetail) {
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
     val instance by LocalUiViewModel.current.instance.collectAsState()
@@ -184,7 +185,7 @@ private fun SnapshotButton(topicInfo: TopicInfo) {
 }
 
 @Composable
-private fun TopicPinButton(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
+private fun TopicPinButton(topicInfo: TopicDetail, dismissDialog: () -> Unit) {
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     ButtonNav(
@@ -201,7 +202,7 @@ private fun TopicPinButton(topicInfo: TopicInfo, dismissDialog: () -> Unit) {
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
+private fun TranslateButton(content: TopicContent, topicInfo: TopicDetail) {
     val toasterState = LocalToaster.current
     var showSheet by remember {
         mutableStateOf(false)
@@ -222,7 +223,7 @@ private fun TranslateButton(content: TopicContent, topicInfo: TopicInfo) {
     }
 }
 
-suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): CustomResult<TopicInfo, TopicActionError> =
+suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicDetail): CustomResult<Unit, TopicActionError> =
     useResult {
         if (topicInfo.isPin) {
             request { unpinTopic(topicInfo.id) }
@@ -231,13 +232,13 @@ suspend fun AppGlobalDialogController.pinOrUnpinTopic(topicInfo: TopicInfo): Cus
         }
     }.onSuccess {
         context.emitEvent(
-            com.storyteller_f.a.app.common.OnTopicChanged(it),
+            com.storyteller_f.a.app.common.OnTopicPinChanged(it.id, it.parentId, it.rootType, it.isPin),
         )
-    }.mapError(TopicActionError::fromError)
+    }.map { Unit }.mapError(TopicActionError::fromError)
 
 @OptIn(ExperimentalMaterial3Api::class, InternalComposeUiApi::class)
 @Composable
-fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: TopicInfo, hideSheet: () -> Unit) {
+fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: TopicDetail, hideSheet: () -> Unit) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         SheetContainer {
             val currentModel by rememberStringPreference("gpt_model", "")
@@ -281,7 +282,7 @@ fun TopicTranslateSheet(showSheet: Boolean, sheetState: SheetState, topicInfo: T
 @Composable
 private fun BoxScope.TopicTranslateSheetInternal(
     result: CustomResult<Flow<GPTOutput>, ModelGenerationError>?,
-    topicInfo: TopicInfo,
+    topicInfo: TopicDetail,
     content: TopicContent.Plain,
 ) {
     when {
@@ -313,7 +314,9 @@ private fun BoxScope.TopicTranslateSheetInternal(
             }
             val scrollState = rememberScrollState()
             Column(modifier = Modifier.verticalScroll(scrollState).fillMaxSize()) {
-                AppTopicContentView(topicInfo.copy(content = content.copy(plain = output)))
+                AppTopicContentView(
+                    topicInfo.copy(topicInfo = topicInfo.topicInfo.copy(content = content.copy(plain = output))),
+                )
             }
         }
 

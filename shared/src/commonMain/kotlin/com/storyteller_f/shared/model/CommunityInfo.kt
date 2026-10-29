@@ -32,7 +32,6 @@ data class CommunityInfo(
     val icon: FileInfo? = null,
     val poster: FileInfo? = null,
     val member: NestedMemberInfo? = null,
-    val extension: Extension? = null,
     val lastRead: PrimaryKey? = null,
     val latestTopic: PrimaryKey? = null,
     val hasPoster: Boolean = poster != null,
@@ -45,9 +44,6 @@ data class CommunityInfo(
     val isJoined = member != null
     override val objectType: ObjectType
         get() = ObjectType.COMMUNITY
-
-    @Serializable
-    data class Extension(val targetMemberInfo: NestedMemberInfo? = null)
 
     companion object {
         val EMPTY = CommunityInfo(DEFAULT_PRIMARY_KEY, "", "", DEFAULT_PRIMARY_KEY, now(), 0, MemberPolicy.OPEN)
