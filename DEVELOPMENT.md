@@ -1559,3 +1559,36 @@ its real instrumentation context and does not install a fake keystore or change 
 
 PDF host tests use a 1 GiB worker heap for eight concurrent cold full-size CJK font instances;
 the concurrency, native cleanup checks and font assertions remain unchanged.
+
+## Release warning diagnostics
+
+Configure Yarn lock files only in the root build through `lockFileDirectoryProperty`
+and `lockFileNameProperty`. JS keeps `kotlin-js-store/yarn.lock`; Wasm keeps
+`kotlin-js-store/wasm/yarn.lock`. This API migration does not change npm dependencies
+or require regenerating either lock file.
+
+Both Compose modules configure Android device tests with
+`withDeviceTestBuilder { sourceSetTreeName = "test" }`. The default hierarchy supplies
+`commonTest`; do not add a cross-tree `dependsOn(commonTest)` edge.
+
+Use `./gradlew assemble -Pserver.flavor=dev -Pserver.buildType=dev --warning-mode all
+--stacktrace --console=plain --max-workers=1` on one line to attribute remaining
+Gradle deprecations. Run Detekt separately on Windows. Keep warnings enabled:
+a successful build does not establish Gradle 10 compatibility. Compose Hot Reload's
+`HotReloadUsageType` warning originates in the plugin, not the Yarn lock configuration.
+
+Panel view-model creation requires an owner-provided coroutine scope. Android owns
+that scope for the application lifetime; iOS uses the root composition scope so
+removing the controller cancels its work. Callers of `createPanelUIViewModel` must
+pass their existing lifecycle scope.
+
+The current dependency set also reports newer Material3 BottomSheet deprecations,
+Wasm interop opt-ins and diagnostics in the pinned Skiko source archive. Track these
+separately from the Release source-tree/Yarn/API migration; do not globally suppress
+them or edit generated copies under `build/upstream`.
+
+With the pinned plugins, `--stacktrace` attributes `Project.getProperties` to
+kotlinx-rpc (`RpcPluginConstKt.isInternalDevelopment`). The Gradle 11
+`Configuration.setVisible` warning is emitted by Kover, AGP, KSP, Detekt, JMH and
+Compose Hot Reload configuration code. These require upstream plugin migrations;
+changing application source or disabling diagnostics does not resolve them.

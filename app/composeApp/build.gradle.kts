@@ -152,6 +152,7 @@ kotlin {
             }
         }
         commonMain.dependencies {
+            implementation(libs.androidx.navigationevent.compose)
             implementation(libs.ktor.webrtc)
             implementation(libs.runtime)
             implementation(libs.foundation)

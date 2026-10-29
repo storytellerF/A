@@ -6,7 +6,8 @@ package com.storyteller_f.a.client.asciidoc_parser
 
 suspend fun buildAsciidocPreviewHtml(source: String): String {
     val documentHtml = convertAsciidoc(source)
-    return """
+    val previewHtml =
+        """
         <!doctype html>
         <html lang="en">
         <head>
@@ -38,6 +39,7 @@ suspend fun buildAsciidocPreviewHtml(source: String): String {
         </body>
         </html>
         """.trimIndent()
+    return previewHtml
 }
 
 expect suspend fun convertAsciidoc(source: String): String

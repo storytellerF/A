@@ -68,7 +68,7 @@ fun TopicRefCellContent(topicInfo: TopicInfo) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         UserIconWithDialog(authorInfo)
-        val text = (topicInfo.content as? TopicContent.Plain)?.plain?.toString().orEmpty()
+        val text = (topicInfo.content as? TopicContent.Plain)?.plain.orEmpty()
         val plain =
             remember(text) {
                 extractMarkdownHeadline(text)

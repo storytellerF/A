@@ -30,15 +30,15 @@ plugins {
 
 plugins.withType<YarnPlugin> {
     extensions.configure<YarnRootExtension> {
-        lockFileDirectory = layout.projectDirectory.dir("kotlin-js-store").asFile
-        lockFileName = "yarn.lock"
+        lockFileDirectoryProperty.set(layout.projectDirectory.dir("kotlin-js-store"))
+        lockFileNameProperty.set("yarn.lock")
     }
 }
 
 plugins.withType<WasmYarnPlugin> {
     extensions.configure<WasmYarnRootExtension> {
-        lockFileDirectory = layout.projectDirectory.dir("kotlin-js-store/wasm").asFile
-        lockFileName = "yarn.lock"
+        lockFileDirectoryProperty.set(layout.projectDirectory.dir("kotlin-js-store/wasm"))
+        lockFileNameProperty.set("yarn.lock")
     }
 }
 

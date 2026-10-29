@@ -398,7 +398,7 @@ private fun sendRoomTopic(roomInfo: RoomInfo, input: String, context: SendRoomTo
     val keyState = handler.state.value
     val keyData = handler.data.value
     checkContent(input).exceptionOrNull()?.let {
-        context.toasterState.showMessage(it.message?.toString().orEmpty())
+        context.toasterState.showMessage(it.message.orEmpty())
         return
     }
     if ((keyState !is LoadingState.Done || keyData == null) && roomInfo.isPrivate) {

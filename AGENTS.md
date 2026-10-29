@@ -494,3 +494,13 @@
 - Wasm source maps can assign synthetic operators to an empty EOF line. Exclude
   anchors beyond physical source lines and retain unmapped barriers; never inherit
   the previous executable line across those ranges.
+
+- Use Yarn lock Provider properties in the root build and explicit Gradle create/register
+  APIs. Attribute remaining deprecations with --warning-mode all --stacktrace before
+  claiming Gradle compatibility; preserve separate JS/Wasm lock locations.
+- Panel view-model factories require an owner-provided scope; do not restore GlobalScope
+  or opt into delicate APIs to hide missing lifecycle ownership.
+
+- When inline-return raw strings make Indentation and StringTemplateIndent disagree,
+  use an indented local value before returning it and verify the rendered content;
+  do not alternate formatting or suppress either rule.

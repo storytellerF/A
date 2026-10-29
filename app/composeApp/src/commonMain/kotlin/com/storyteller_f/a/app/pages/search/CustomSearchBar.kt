@@ -46,15 +46,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
@@ -191,7 +192,7 @@ internal fun detailSearchBar(scope: SearchScope, leadingIcon: @Composable () -> 
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 private fun CustomSearchBarInternal(
     scope: SearchScope,
     title: String?,
@@ -208,14 +209,14 @@ private fun CustomSearchBarInternal(
     val results =
         remember {
             movableContentOf<SearchScope, String> { searchScope, text ->
-                SearchContent(
-                    searchScope,
-                    text,
-                )
+                SearchContent(searchScope, text)
             }
         }
     val canCreate = showSelfIcon && LocalUserInfo.current != null
-    BackHandler(enabled = active) { onActiveChange(false) }
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = active,
+    ) { onActiveChange(false) }
     BoxWithConstraints(
         Modifier.fillMaxWidth().then(if (active) Modifier.imePadding() else Modifier).onPreviewKeyEvent { event ->
             if (active && event.key == Key.Escape && event.type == KeyEventType.KeyDown) {

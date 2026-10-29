@@ -40,7 +40,9 @@ kotlin {
             resources.merges.add("META-INF/LICENSE.md")
         }
         withHostTest { }
-        withDeviceTest {
+        withDeviceTestBuilder {
+            sourceSetTreeName = "test"
+        }.configure {
             instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         }
     }
@@ -107,7 +109,6 @@ kotlin {
             dependsOn(headlessTest)
         }
         getByName("androidDeviceTest") {
-            dependsOn(commonTest.get())
             dependencies {
                 implementation(libs.androidx.ui.test.junit4.android)
             }

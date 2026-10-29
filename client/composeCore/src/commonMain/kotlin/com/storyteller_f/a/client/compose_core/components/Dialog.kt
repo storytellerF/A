@@ -55,7 +55,7 @@ class CustomAlertDialogController(val state: MutableState<CustomAlertDialogState
     }
 
     fun showErrorMessage(e: Throwable) {
-        state.value = CustomAlertDialogState(e.message?.toString().orEmpty(), e.stackTraceToString())
+        state.value = CustomAlertDialogState(e.message.orEmpty(), e.stackTraceToString())
     }
 }
 

@@ -6,6 +6,7 @@ import java.io.BufferedInputStream
 import java.io.FileInputStream
 import java.security.MessageDigest
 import java.util.HexFormat
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 
@@ -16,7 +17,7 @@ plugins {
 group = "org.jetbrains.skiko"
 version = "0.150.2-media1"
 
-val upstreamSources by configurations.creating {
+val upstreamSources = configurations.create("upstreamSources") {
     resolutionStrategy.useGlobalDependencySubstitutionRules = false
 }
 val upstreamVersion = "0.150.2"
@@ -42,7 +43,7 @@ abstract class VerifySourceArchive : DefaultTask() {
         }
     }
 }
-val verifySourceArchive by tasks.registering(VerifySourceArchive::class) {
+val verifySourceArchive = tasks.register<VerifySourceArchive>("verifySourceArchive") {
     archive.set(layout.file(upstreamSources.elements.map { it.single().asFile }))
 }
 val sourceArchives = upstreamSources.elements
@@ -51,7 +52,7 @@ val archiveOperations = objects.newInstance<ArchiveOperationsHolder>()
 abstract class ArchiveOperationsHolder {
     @get:javax.inject.Inject abstract val archives: org.gradle.api.file.ArchiveOperations
 }
-val prepareSources by tasks.registering(Sync::class) {
+val prepareSources = tasks.register<Sync>("prepareSources") {
     dependsOn(verifySourceArchive)
     val unpack = archiveOperations.archives
     from(sourceArchives.map { files -> files.map { unpack.zipTree(it.asFile) } }) {
@@ -63,22 +64,29 @@ val prepareSources by tasks.registering(Sync::class) {
 kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs { browser() }
+    @OptIn(ExperimentalKotlinGradlePluginApi::class)
+    applyDefaultHierarchyTemplate {
+        common {
+            group("nativeJs") {
+                group("web") {
+                    withWasmJs()
+                }
+            }
+        }
+    }
     sourceSets {
         commonMain {
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("commonMain") })
             dependencies { api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0") }
         }
-        val nativeJsMain by creating {
-            dependsOn(commonMain.get())
+        named("nativeJsMain") {
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("nativeJsMain") })
         }
-        val webMain by creating {
-            dependsOn(nativeJsMain)
+        named("webMain") {
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("webMain") })
             dependencies { api("org.jetbrains.kotlinx:kotlinx-browser:0.5.0") }
         }
         wasmJsMain {
-            dependsOn(webMain)
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("wasmJsMain") })
         }
     }

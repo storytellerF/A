@@ -12,6 +12,6 @@ fun CharSequenceText(content: CharSequence) {
     if (content is String) {
         Text(content)
     } else {
-        Text(content::class.simpleName?.toString().orEmpty())
+        Text(content::class.simpleName.orEmpty())
     }
 }
