@@ -228,7 +228,7 @@ class CommunityTest {
                 assertEquals(10, response.data.size)
                 response.data.forEach {
                     assertFalse(it.isJoined)
-                    assertNotNull(it.extension?.targetMemberInfo)
+                    assertNotNull(it.targetMemberInfo)
                 }
             }
         }
@@ -259,7 +259,7 @@ class CommunityTest {
                     ).getOrThrow()
                 response2.data.forEach {
                     assertTrue(it.isJoined)
-                    assertNotNull(it.extension?.targetMemberInfo)
+                    assertNotNull(it.targetMemberInfo)
                 }
             }
         }

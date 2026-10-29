@@ -18,11 +18,7 @@ data class UserSubscriptionInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
-    val extensions: Extensions? = null,
 ) : PrimaryKeyIdentifiable {
-    @Serializable
-    data class Extensions(val topicInfo: TopicInfo? = null)
-
     companion object {
         /** Empty subscription record used before persisted data is available. */
         val EMPTY: UserSubscriptionInfo =
@@ -32,7 +28,6 @@ data class UserSubscriptionInfo(
                 objectId = DEFAULT_PRIMARY_KEY,
                 objectType = ObjectType.TOPIC,
                 now(),
-                null,
             )
     }
 }

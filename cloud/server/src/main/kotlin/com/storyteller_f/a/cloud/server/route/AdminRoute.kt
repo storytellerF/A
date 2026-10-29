@@ -6,6 +6,7 @@ package com.storyteller_f.a.cloud.server.route
 
 import com.storyteller_f.a.api.AdminApi
 import com.storyteller_f.a.api.CommunityInfoListResponse
+import com.storyteller_f.a.api.CommunityMembershipListResponse
 import com.storyteller_f.a.api.FileInfoListResponse
 import com.storyteller_f.a.api.FileRefInfoListResponse
 import com.storyteller_f.a.api.MemberInfoListResponse
@@ -15,6 +16,7 @@ import com.storyteller_f.a.api.RoomInfoListResponse
 import com.storyteller_f.a.api.TaskRecordInfoListResponse
 import com.storyteller_f.a.api.TaskRecordSummaryListResponse
 import com.storyteller_f.a.api.TitleInfoListResponse
+import com.storyteller_f.a.api.TopicActivityListResponse
 import com.storyteller_f.a.api.TopicInfoListResponse
 import com.storyteller_f.a.api.UploadRecordInfoListResponse
 import com.storyteller_f.a.api.UserFavoriteInfoListResponse
@@ -324,7 +326,7 @@ private fun Route.bindAdminUserBasicRoutes(backend: Backend) {
 private fun Route.bindAdminUserRelationRoutes(backend: Backend) {
     AdminApi.Users.Id.Communities.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
-            CommunityInfoListResponse(l, p)
+            CommunityMembershipListResponse(l, p)
         }) { f ->
             backend.getUserJoinedCommunities(null, p.id, f)
         }
@@ -376,7 +378,7 @@ private fun Route.bindAdminUserActivityRoutes(backend: Backend) {
     }
     AdminApi.Users.Id.Comments.get(handleResult(backend)) { q, p ->
         q.pagination(IdentifiablePagingGenerator, { l, p ->
-            TopicInfoListResponse(l, p)
+            TopicActivityListResponse(l, p)
         }) { f ->
             backend.getUserCommentedTopics(p.id, f)
         }

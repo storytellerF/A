@@ -4,7 +4,6 @@
 
 package com.storyteller_f.shared.model
 
-import com.storyteller_f.shared.type.CustomImmutableList
 import com.storyteller_f.shared.type.DEFAULT_PRIMARY_KEY
 import com.storyteller_f.shared.type.ObjectStatus
 import com.storyteller_f.shared.type.ObjectType
@@ -32,7 +31,6 @@ data class TopicInfo(
     val level: Int,
     val isPin: Boolean,
     val lastModifiedTime: LocalDateTime?,
-    val extension: Extension?,
     val aid: String? = null,
     val lastRead: PrimaryKey? = null,
     val favoriteId: PrimaryKey? = null,
@@ -62,18 +60,9 @@ data class TopicInfo(
                 level = 0,
                 isPin = false,
                 lastModifiedTime = now(),
-                extension = Extension(),
                 status = ObjectStatus.NORMAL,
             )
     }
-
-    @Serializable
-    data class Extension(
-        val authorInfo: UserInfo? = null,
-        val subTopics: CustomImmutableList<TopicInfo>? = null,
-        val reactions: CustomImmutableList<ReactionInfo>? = null,
-        val roomInfo: RoomInfo? = null,
-    )
 }
 
 @Serializable

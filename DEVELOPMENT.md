@@ -1,5 +1,48 @@
 # Development
 
+## Scenario-specific API projections
+
+Base models (`TopicInfo`, `TitleInfo`, `CommunityInfo`, favorite/subscription/log records and
+`QuotaInfo`) contain their own data. Related objects live directly alongside the base object in a
+serializable scenario projection; never add an `extension`/`extensions` bag or flatten the base
+object's properties into the JSON wrapper.
+
+| Scenario | Response item | Base object field | Related fields |
+| --- | --- | --- | --- |
+| Topic lists and details | `TopicDetail` | `topicInfo` | `authorInfo`, `subTopics`, `reactions`, `roomInfo` |
+| Nested reply preview | `TopicReplyPreview` | `topicInfo` | `authorInfo` |
+| Topic creation and `RoomFrame.NewTopicInfo` | `TopicCreated` | `topicInfo` | `authorInfo` |
+| Room activity, joined pinned topics and commented topics | `TopicActivity` | `topicInfo` | `authorInfo`, `reactions`, `roomInfo` |
+| Title lists and details | `TitleDetail` | `titleInfo` | Creator, receiver, description topic and scope objects |
+| Community search and user membership lists | `CommunityMembershipItem` | `communityInfo` | `targetMemberInfo` |
+| Favorites | `UserFavoriteItem` | `favoriteInfo` | Object selected by the record's `objectType` |
+| Subscriptions | `UserSubscriptionItem` | `subscriptionInfo` | `topicInfo` when applicable |
+| User logs | `UserLogItem` | `logInfo` | Related user, community, room or topic |
+| Quota inspection | `QuotaDetail` | `quotaInfo` | `uploadRecord` when a lock refers to an upload |
+
+Topic pin/unpin mutations return the base `TopicInfo`; clients apply the returned pin flag to their
+current cached projections through a pin-only event, preserving original content and related objects.
+Never write a UI summary back into the detail cache. Lists retain `data`, pagination tokens and server ordering. Topic list and detail
+queries currently load the same relations and deliberately share one projection. A missing
+or unavailable related object remains nullable; a scenario that never loads a field omits it
+from its type. Topic projections provide computed read accessors for existing consumers; these
+accessors are not serialized and updates explicitly copy the nested base object.
+
+Viewer membership stays inside `communityInfo.member`. `targetMemberInfo` belongs to the user
+selected by the query and must not overwrite the viewer's membership. Current community list UI
+stores only the base community because it does not display the target's membership.
+
+This is a breaking wire-format change: deploy matching server and client versions together.
+HTTP/WS and local cache serializers use the new projection contracts. During alpha, no compatibility
+migration is provided for retired client database formats. Activity previews remain ephemeral and
+session-scoped, with decrypted messages excluded from persistent storage.
+
+Existing tests retain their assertions but construct/read the corresponding projection instead
+of using extension fields. Validate `TopicProjectionTest`,
+`EventTest`, `ActivityPreviewHostTest` and the affected server Topic, Community, Title, User,
+Quota and RoomActivity integration tests. Run builds and tests with JDK 21 and explicit
+`-Pserver.flavor=dev -Pserver.buildType=debug`; serialize assembly, Windows Detekt and screenshot runs.
+
 ## Adaptive Home UI
 
 Home is an independent root destination; entering a community, room, topic or user pushes normal back

@@ -23,19 +23,19 @@ import com.storyteller_f.a.app.pages.topic.deleteReaction
 import com.storyteller_f.a.client.compose_core.components.Pill
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.shared.model.ReactionInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 
 @Composable
-fun InteractionRow(topicInfo: TopicInfo, startAddReaction: () -> Unit, startAddComment: () -> Unit) {
-    val reactions = topicInfo.extension?.reactions
-    InteractionRowInternal(reactions.orEmpty(), topicInfo, startAddComment, startAddReaction)
+fun InteractionRow(topicInfo: TopicDetail, startAddReaction: () -> Unit, startAddComment: () -> Unit) {
+    val reactions = topicInfo.reactions
+    InteractionRowInternal(reactions, topicInfo, startAddComment, startAddReaction)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InteractionRowInternal(
     data: List<ReactionInfo>,
-    topicInfo: TopicInfo,
+    topicInfo: TopicDetail,
     startAddComment: () -> Unit,
     startAddReaction: () -> Unit,
 ) {
@@ -214,7 +214,7 @@ private fun SubcomposeMeasureScope.measureFirstStage(
 }
 
 @Composable
-private fun EmojiCell(info: ReactionInfo, topicInfo: TopicInfo) {
+private fun EmojiCell(info: ReactionInfo, topicInfo: TopicDetail) {
     val topicId = topicInfo.id
     val emoji = info.emoji
     val hasReacted = info.hasReacted

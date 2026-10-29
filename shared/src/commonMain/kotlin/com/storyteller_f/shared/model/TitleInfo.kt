@@ -21,7 +21,6 @@ data class TitleInfo(
     val scopeType: ObjectType,
     val name: String,
     val descriptionTopicId: PrimaryKey,
-    val extension: Extension? = null,
     val favoriteId: PrimaryKey? = null,
     val subscriptionId: PrimaryKey? = null,
     val titleStatus: TitleWorkStatus = TitleWorkStatus.OK,
@@ -32,17 +31,6 @@ data class TitleInfo(
     val expired get() = titleStatus == TitleWorkStatus.EXPIRED
     override val objectType: ObjectType
         get() = ObjectType.TITLE
-
-    @Serializable
-    data class Extension(
-        val creatorInfo: UserInfo,
-        val receiverInfo: UserInfo,
-        val descriptionTopicInfo: TopicInfo,
-        val communityInfo: CommunityInfo? = null,
-        val roomInfo: RoomInfo? = null,
-        val userInfo: UserInfo? = null,
-        val topicInfo: TopicInfo? = null,
-    )
 }
 
 enum class TitleType {

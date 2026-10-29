@@ -13,16 +13,16 @@ import com.storyteller_f.a.app.common.createUserViewModel
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.type.PrimaryKey
 
 interface RefCellHandlerProvider {
     @Composable
-    fun topicHandler(topicId: PrimaryKey): LoadingHandler<TopicInfo>
+    fun topicHandler(topicId: PrimaryKey): LoadingHandler<TopicDetail>
 
     @Composable
-    fun topicHandler(topicAid: String): LoadingHandler<TopicInfo>
+    fun topicHandler(topicAid: String): LoadingHandler<TopicDetail>
 
     @Composable
     fun roomHandler(roomId: PrimaryKey): LoadingHandler<RoomInfo>
@@ -45,10 +45,10 @@ interface RefCellHandlerProvider {
 
 object DefaultRefCellHandlerProvider : RefCellHandlerProvider {
     @Composable
-    override fun topicHandler(topicId: PrimaryKey): LoadingHandler<TopicInfo> = createTopicViewModel(topicId).handler
+    override fun topicHandler(topicId: PrimaryKey): LoadingHandler<TopicDetail> = createTopicViewModel(topicId).handler
 
     @Composable
-    override fun topicHandler(topicAid: String): LoadingHandler<TopicInfo> = createTopicViewModel(topicAid).handler
+    override fun topicHandler(topicAid: String): LoadingHandler<TopicDetail> = createTopicViewModel(topicAid).handler
 
     @Composable
     override fun roomHandler(roomId: PrimaryKey): LoadingHandler<RoomInfo> = createRoomViewModel(roomId).handler

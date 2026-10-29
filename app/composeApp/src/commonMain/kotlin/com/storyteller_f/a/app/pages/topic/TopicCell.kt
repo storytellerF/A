@@ -52,7 +52,7 @@ import com.storyteller_f.a.client.compose_core.components.CustomIcon
 import com.storyteller_f.a.client.compose_core.components.IconRes
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.type.PrimaryKey
 import dev.tclement.fonticons.FontIcon
 import kotlinx.coroutines.launch
@@ -60,7 +60,7 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopicCell(info: TopicInfo?) {
+fun TopicCell(info: TopicDetail?) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     TopicCellInternal(info, supportPin = false) {
@@ -75,7 +75,7 @@ fun TopicCell(info: TopicInfo?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserTopicCell(info: TopicInfo?) {
+fun UserTopicCell(info: TopicDetail?) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     UserTopicCellInternal(info, supportPin = true) {
@@ -90,7 +90,7 @@ fun UserTopicCell(info: TopicInfo?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomTopicCell(info: TopicInfo?, showAvatar: Boolean = true) {
+fun RoomTopicCell(info: TopicDetail?, showAvatar: Boolean = true) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
     RoomTopicCellInternal(info, showAvatar) {
@@ -103,22 +103,27 @@ fun RoomTopicCell(info: TopicInfo?, showAvatar: Boolean = true) {
     }
 }
 
-class TopicPreviewProvider : PreviewParameterProvider<TopicInfo> {
-    override val values: Sequence<TopicInfo>
-        get() = sequenceOf(TopicInfo.EMPTY.copy(content = TopicContent.Plain("hello")))
+class TopicPreviewProvider : PreviewParameterProvider<TopicDetail> {
+    override val values: Sequence<TopicDetail>
+        get() =
+            sequenceOf(
+                TopicDetail.EMPTY.copy(
+                    topicInfo = TopicDetail.EMPTY.topicInfo.copy(content = TopicContent.Plain("hello")),
+                ),
+            )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun TopicCellInternal(
-    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicDetail?,
     supportPin: Boolean = false,
     startAddReaction: () -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
-    val authorInfo = topicInfo.extension?.authorInfo
+    val authorInfo = topicInfo.authorInfo
     CommonTopicCellInternal(topicInfo, supportPin) {
         UserCell(authorInfo)
         TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
@@ -129,7 +134,7 @@ fun TopicCellInternal(
 @Preview
 @Composable
 fun UserTopicCellInternal(
-    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicDetail?,
     supportPin: Boolean = false,
     startAddReaction: () -> Unit = {},
 ) {
@@ -141,7 +146,7 @@ fun UserTopicCellInternal(
 }
 
 @Composable
-private fun TopicContentAndInteraction(topicInfo: TopicInfo, startAddReaction: () -> Unit, topicId: PrimaryKey) {
+private fun TopicContentAndInteraction(topicInfo: TopicDetail, startAddReaction: () -> Unit, topicId: PrimaryKey) {
     val appNavFactory = LocalAppNavFactory.current
     Column(
         Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
@@ -159,7 +164,7 @@ private fun TopicContentAndInteraction(topicInfo: TopicInfo, startAddReaction: (
 @Preview
 @Composable
 fun CommonTopicCellInternal(
-    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicInfo?,
+    @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicDetail?,
     supportPin: Boolean = false,
     block: @Composable () -> Unit = {},
 ) {
@@ -196,9 +201,9 @@ fun CommonTopicCellInternal(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RoomTopicCellInternal(topicInfo: TopicInfo?, showAvatar: Boolean, startAddReaction: () -> Unit) {
+fun RoomTopicCellInternal(topicInfo: TopicDetail?, showAvatar: Boolean, startAddReaction: () -> Unit) {
     topicInfo ?: return
-    val authorInfo = topicInfo.extension?.authorInfo
+    val authorInfo = topicInfo.authorInfo
     val topicId = topicInfo.id
     val appNavFactory = LocalAppNavFactory.current
     var expanded by remember { mutableStateOf(false) }
@@ -238,8 +243,8 @@ fun RoomTopicCellInternal(topicInfo: TopicInfo?, showAvatar: Boolean, startAddRe
 }
 
 @Composable
-private fun SubTopics(topicInfo: TopicInfo) {
-    val topics = topicInfo.extension?.subTopics.orEmpty()
+private fun SubTopics(topicInfo: TopicDetail) {
+    val topics = topicInfo.subTopics
     if (topics.isNotEmpty()) {
         Column(
             modifier =
@@ -254,7 +259,7 @@ private fun SubTopics(topicInfo: TopicInfo) {
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val userInfo = info.extension?.authorInfo
+                    val userInfo = info.authorInfo
                     UserIconWithDialog(userInfo, size = 20.dp)
                     when (val content = info.content) {
                         is TopicContent.Extracted -> {
@@ -276,7 +281,7 @@ private fun SubTopics(topicInfo: TopicInfo) {
 }
 
 @Composable
-fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicInfo, onDismissRequest: () -> Unit) {
+fun TopicDropdownMenu(expanded: Boolean, topicInfo: TopicDetail, onDismissRequest: () -> Unit) {
     val scope = rememberCoroutineScope()
     val globalDialogController = LocalGlobalDialog.current
     DropdownMenu(

@@ -39,7 +39,7 @@ import com.storyteller_f.a.client.compose_core.components.LocalToaster
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import io.github.vinceglb.filekit.name
@@ -137,10 +137,12 @@ private fun TranslateModelPreferenceItem() {
     TopicTranslateSheet(
         showSheet,
         sheetState,
-        TopicInfo.EMPTY.copy(
-            content =
-            TopicContent.Plain(
-                """Jonas, a 12-year-old boy, lives in
+        TopicDetail.EMPTY.copy(
+            topicInfo =
+            TopicDetail.EMPTY.topicInfo.copy(
+                content =
+                TopicContent.Plain(
+                    """Jonas, a 12-year-old boy, lives in
             |a community isolated from all except a few similar towns,
             |where everyone has an assigned role.
             |With the annual Ceremony of Twelve upcoming,
@@ -150,7 +152,8 @@ private fun TranslateModelPreferenceItem() {
             |a high-ranking official in the Department of Justice.
             |He is told by his parents that the Elders,
             |who assign the children their careers, are always right.
-                """.trimMargin(),
+                    """.trimMargin(),
+                ),
             ),
         ),
     ) {

@@ -67,10 +67,9 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.MemberInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import io.github.aakira.napier.Antilog
@@ -80,6 +79,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import kotlinx.coroutines.channels.Channel
+import com.storyteller_f.shared.model.TopicDetail as TopicData
 
 private val LogGray = Color(160, 160, 160)
 private val TitleGreen = Color(100, 255, 100)
@@ -116,10 +116,10 @@ sealed interface Screen {
     data object Main : Screen
     data object PromptRegister : Screen
     data object PromptLogin : Screen
-    data class TopicList(val topics: List<TopicInfo>) : Screen
-    data class TopicDetail(val topic: TopicInfo) : Screen
-    data class TopicAddComment(val topic: TopicInfo) : Screen
-    data class TopicAddReaction(val topic: TopicInfo) : Screen
+    data class TopicList(val topics: List<TopicData>) : Screen
+    data class TopicDetail(val topic: TopicData) : Screen
+    data class TopicAddComment(val topic: TopicData) : Screen
+    data class TopicAddReaction(val topic: TopicData) : Screen
     data class CommunityList(val communities: List<CommunityInfo>) : Screen
     data class CommunityDetail(val community: CommunityInfo) : Screen
     data class CommunityMemberList(val members: List<MemberInfo>, val parent: Screen) : Screen
@@ -129,8 +129,8 @@ sealed interface Screen {
     data class RoomList(val rooms: List<RoomInfo>) : Screen
     data class RoomDetail(val room: RoomInfo) : Screen
     data class RoomSendMessage(val room: RoomInfo) : Screen
-    data class FavoriteList(val favorites: List<UserFavoriteInfo>) : Screen
-    data class SubscriptionList(val subscriptions: List<UserSubscriptionInfo>) : Screen
+    data class FavoriteList(val favorites: List<UserFavoriteItem>) : Screen
+    data class SubscriptionList(val subscriptions: List<UserSubscriptionItem>) : Screen
 }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
@@ -162,7 +162,7 @@ suspend fun handleInput(
                     sessionManager.getUserCommunities(
                         CustomApi.Users.JoinedCommunities.UserCommunitiesQuery(size = 10),
                     ).fold(
-                        onSuccess = { setScreen(Screen.CommunityList(it.data)) },
+                        onSuccess = { setScreen(Screen.CommunityList(it.data.map { item -> item.communityInfo })) },
                         onFailure = { sysLogError("Failed", it.cause) },
                     )
                 }
@@ -649,7 +649,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit
                 Text("=== Topic Detail ===")
                 Text("ID: ${s.topic.id}")
                 Text("Root ID: ${s.topic.rootId}")
-                Text("Author: ${s.topic.extension?.authorInfo?.nickname ?: "<none>"}")
+                Text("Author: ${s.topic.authorInfo?.nickname ?: "<none>"}")
                 Text("Content: ${s.topic.content}")
                 Text("====================")
                 Text("1. Favorite Topic")
@@ -768,9 +768,9 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit
                 Text("=== Favorites ===")
                 s.favorites.forEachIndexed { i, f ->
                     val extra =
-                        f.extensions?.topicInfo?.content
-                            ?: f.extensions?.communityInfo?.name
-                            ?: f.extensions?.roomInfo?.name
+                        f.topicInfo?.content
+                            ?: f.communityInfo?.name
+                            ?: f.roomInfo?.name
                             ?: "Unknown"
                     Text("[$i] ${f.objectType} ${f.objectId}: $extra")
                 }
@@ -780,7 +780,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit
             is Screen.SubscriptionList -> {
                 Text("=== Subscriptions ===")
                 s.subscriptions.forEachIndexed { i, sub ->
-                    val extra = sub.extensions?.topicInfo?.content ?: "Unknown"
+                    val extra = sub.topicInfo?.content ?: "Unknown"
                     Text("[$i] ${sub.objectType} ${sub.objectId}: $extra")
                 }
                 Text("\nHit enter to go back: ")

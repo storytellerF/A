@@ -18,18 +18,7 @@ data class UserFavoriteInfo(
     val objectId: PrimaryKey,
     val objectType: ObjectType,
     val createdTime: LocalDateTime,
-    val extensions: Extensions? = null,
 ) : PrimaryKeyIdentifiable {
-    @Serializable
-    data class Extensions(
-        val topicInfo: TopicInfo? = null,
-        val communityInfo: CommunityInfo? = null,
-        val roomInfo: RoomInfo? = null,
-        val userInfo: UserInfo? = null,
-        val titleInfo: TitleInfo? = null,
-        val fileInfo: FileInfo? = null,
-    )
-
     companion object {
         /** Empty favorite record used before persisted data is available. */
         val EMPTY: UserFavoriteInfo =
@@ -39,7 +28,6 @@ data class UserFavoriteInfo(
                 objectId = DEFAULT_PRIMARY_KEY,
                 objectType = ObjectType.TOPIC,
                 now(),
-                null,
             )
     }
 }

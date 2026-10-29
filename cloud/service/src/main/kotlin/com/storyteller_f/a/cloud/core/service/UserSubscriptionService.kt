@@ -21,7 +21,7 @@ import com.storyteller_f.result.firstOrNull
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.UserLogType
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.shared.utils.now
@@ -42,7 +42,7 @@ suspend fun Backend.addSubscription(uid: PrimaryKey, newSubscription: NewSubscri
             }
         })
     }.andThenPresent(UserSubscriptionError::fromError) {
-        processUserSubscriptionToUserSubscriptionInfo(uid, listOf(it))
+        buildSubscriptionItems(uid, listOf(it))
     }.firstOrNull()
 
 suspend fun Backend.removeSubscription(uid: PrimaryKey, subscriptionId: PrimaryKey) =
@@ -82,22 +82,20 @@ suspend fun Backend.getUserSubscriptions(uid: PrimaryKey, fetch: PrimaryKeyFetch
         uid,
         fetch,
     ).mapPagingResultNotNull(UserSubscriptionError::fromError) { list ->
-        processUserSubscriptionToUserSubscriptionInfo(uid, list)
+        buildSubscriptionItems(uid, list)
     }
 
-suspend fun Backend.processUserSubscriptionToUserSubscriptionInfo(
-    uid: PrimaryKey,
-    userSubscriptions: List<UserSubscription>,
-) = captureFailure(UserSubscriptionError::from) {
-    userSubscriptions.map {
-        val favoriteInfo = it.toUserSubscriptionInfo()
-        when (it.objectType) {
-            ObjectType.TOPIC -> {
-                val topicInfo = getTopic(it.objectId, uid, true).getOrThrow()
-                favoriteInfo.copy(extensions = UserSubscriptionInfo.Extensions(topicInfo))
-            }
+suspend fun Backend.buildSubscriptionItems(uid: PrimaryKey, userSubscriptions: List<UserSubscription>) =
+    captureFailure(UserSubscriptionError::from) {
+        userSubscriptions.map {
+            val favoriteInfo = it.toUserSubscriptionInfo()
+            when (it.objectType) {
+                ObjectType.TOPIC -> {
+                    val topicInfo = getTopic(it.objectId, uid, true).getOrThrow()
+                    UserSubscriptionItem(favoriteInfo, topicInfo)
+                }
 
-            else -> favoriteInfo
+                else -> UserSubscriptionItem(favoriteInfo)
+            }
         }
     }
-}

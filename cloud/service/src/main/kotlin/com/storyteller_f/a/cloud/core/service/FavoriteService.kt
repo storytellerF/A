@@ -21,7 +21,7 @@ import com.storyteller_f.result.andThenPresent
 import com.storyteller_f.result.captureFailure
 import com.storyteller_f.result.firstOrNull
 import com.storyteller_f.result.onSuccess
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserLogType
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -39,7 +39,7 @@ suspend fun Backend.addFavorite(uid: PrimaryKey, newFavorite: NewFavorite) =
             }
         }
     }.andThenPresent(FavoriteError::fromError) {
-        processUserFavoriteToUserFavoriteInfo(uid, listOf(it))
+        buildFavoriteItems(uid, listOf(it))
     }.firstOrNull()
 
 suspend fun Backend.deleteFavorite(uid: PrimaryKey, id: PrimaryKey) =
@@ -69,10 +69,10 @@ suspend fun Backend.deleteFavoriteByObject(uid: PrimaryKey, objectId: PrimaryKey
 
 suspend fun Backend.getFavorites(uid: PrimaryKey, fetch: PrimaryKeyFetch) =
     database.favorite.getUserFavorites(uid, fetch).mapPagingResultNotNull(FavoriteError::fromError) {
-        processUserFavoriteToUserFavoriteInfo(uid, it)
+        buildFavoriteItems(uid, it)
     }
 
-suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userFavorite: List<UserFavorite>) =
+suspend fun Backend.buildFavoriteItems(uid: PrimaryKey, userFavorite: List<UserFavorite>) =
     captureFailure(FavoriteError::from) {
         val topicIds = mutableListOf<PrimaryKey>()
         val communityIds = mutableListOf<PrimaryKey>()
@@ -112,16 +112,16 @@ suspend fun Backend.processUserFavoriteToUserFavoriteInfo(uid: PrimaryKey, userF
 
         userFavorite.map {
             val favoriteInfo = it.toUserFavoriteInfo()
-            val extensions =
+            val projection =
                 when (it.objectType) {
-                    ObjectType.TOPIC -> UserFavoriteInfo.Extensions(topicInfo = topics[it.objectId])
-                    ObjectType.COMMUNITY -> UserFavoriteInfo.Extensions(communityInfo = communities[it.objectId])
-                    ObjectType.ROOM -> UserFavoriteInfo.Extensions(roomInfo = rooms[it.objectId])
-                    ObjectType.USER -> UserFavoriteInfo.Extensions(userInfo = users[it.objectId])
-                    ObjectType.TITLE -> UserFavoriteInfo.Extensions(titleInfo = titles[it.objectId])
-                    ObjectType.FILE -> UserFavoriteInfo.Extensions(fileInfo = files[it.objectId])
+                    ObjectType.TOPIC -> UserFavoriteItem(favoriteInfo, topicInfo = topics[it.objectId])
+                    ObjectType.COMMUNITY -> UserFavoriteItem(favoriteInfo, communityInfo = communities[it.objectId])
+                    ObjectType.ROOM -> UserFavoriteItem(favoriteInfo, roomInfo = rooms[it.objectId])
+                    ObjectType.USER -> UserFavoriteItem(favoriteInfo, userInfo = users[it.objectId])
+                    ObjectType.TITLE -> UserFavoriteItem(favoriteInfo, titleInfo = titles[it.objectId])
+                    ObjectType.FILE -> UserFavoriteItem(favoriteInfo, fileInfo = files[it.objectId])
                     else -> null
                 }
-            favoriteInfo.copy(extensions = extensions)
+            projection ?: UserFavoriteItem(favoriteInfo)
         }
     }

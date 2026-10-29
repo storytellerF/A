@@ -27,10 +27,10 @@ import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.topPrepend
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 
 @Composable
-fun TopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
+fun TopicList(topicsViewModel: PagingViewModel<TopicDetail>) {
     CommonTopicList(topicsViewModel) { index, info, size ->
         TopicCell(info)
         if (index != size - 1) {
@@ -40,7 +40,7 @@ fun TopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
 }
 
 @Composable
-fun UserTopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
+fun UserTopicList(topicsViewModel: PagingViewModel<TopicDetail>) {
     CommonTopicList(topicsViewModel = topicsViewModel) { index, info, size ->
         UserTopicCell(info)
         if (index != size - 1) {
@@ -51,8 +51,8 @@ fun UserTopicList(topicsViewModel: PagingViewModel<TopicInfo>) {
 
 @Composable
 fun CommonTopicList(
-    topicsViewModel: PagingViewModel<TopicInfo>,
-    block: @Composable (index: Int, info: TopicInfo?, Int) -> Unit,
+    topicsViewModel: PagingViewModel<TopicDetail>,
+    block: @Composable (index: Int, info: TopicDetail?, Int) -> Unit,
 ) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         StateView(topicsViewModel, Modifier.widthIn(max = 900.dp).fillMaxSize()) { items ->
@@ -74,7 +74,7 @@ fun CommonTopicList(
 }
 
 @Composable
-fun RoomTopicList(items: LazyPagingItems<TopicInfo>, topicsViewModel: TopicsViewModel, lazyListState: LazyListState) {
+fun RoomTopicList(items: LazyPagingItems<TopicDetail>, topicsViewModel: TopicsViewModel, lazyListState: LazyListState) {
     StateView(topicsViewModel) {
         LazyColumn(
             state = lazyListState,

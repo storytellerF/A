@@ -44,7 +44,6 @@ fun Title.effectiveTitleStatus(currentTime: LocalDateTime = now()): TitleWorkSta
     }
 
 fun Title.toTitleInfo(
-    extensions: TitleInfo.Extension? = null,
     favoriteId: PrimaryKey? = null,
     subscriptionId: PrimaryKey? = null,
     currentTime: LocalDateTime = now(),
@@ -59,7 +58,6 @@ fun Title.toTitleInfo(
         scopeType = scopeType,
         name = name,
         descriptionTopicId = descriptionTopicId,
-        extension = extensions,
         favoriteId = favoriteId,
         subscriptionId = subscriptionId,
         titleStatus = effectiveTitleStatus(currentTime),

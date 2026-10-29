@@ -136,10 +136,10 @@ import com.storyteller_f.a.client.compose_core.utils.getRemoteImageBitmap
 import com.storyteller_f.a.client.core.LoadingState
 import com.storyteller_f.a.client.core.WebSocketClient
 import com.storyteller_f.a.client.core.addReadLog
+import com.storyteller_f.a.client.core.decryptCreatedTopic
 import com.storyteller_f.a.client.core.exitRoom
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.joinRoom
-import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.result.captureFailure
 import com.storyteller_f.result.exceptionOrNull
@@ -296,7 +296,7 @@ fun RoomInputGroup(
             } else if (frame is RoomFrame.NewTopicInfo) {
                 val plainFrame =
                     if (frame.topicInfo.content is TopicContent.Encrypted) {
-                        val topicInfo = processEncryptedTopic(listOf(frame.topicInfo), userSessionManager).first()
+                        val topicInfo = decryptCreatedTopic(frame.topicInfo, userSessionManager)
                         RoomFrame.NewTopicInfo(topicInfo)
                     } else {
                         frame

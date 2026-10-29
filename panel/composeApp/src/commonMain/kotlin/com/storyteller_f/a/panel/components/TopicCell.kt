@@ -15,19 +15,19 @@ import com.storyteller_f.a.panel.encrypted
 import com.storyteller_f.a.panel.interaction
 import com.storyteller_f.a.panel.pinned
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-fun TopicCell(info: TopicInfo, panelNav: PanelNav) {
+fun TopicCell(info: TopicDetail, panelNav: PanelNav) {
     val text =
         when (val content = info.content) {
             is TopicContent.Plain -> content.plain
             is TopicContent.Extracted -> content.plain
             else -> ""
         }
-    val author = info.extension?.authorInfo?.nickname ?: info.author.toString()
-    val room = info.extension?.roomInfo?.name.orEmpty()
+    val author = info.authorInfo?.nickname ?: info.author.toString()
+    val room = info.roomInfo?.name.orEmpty()
     val overline = listOf(author, room).filter { it.isNotEmpty() }.joinToString(" @ ")
     val counts =
         if (info.commentCount > 0 || info.reactionCount > 0) {

@@ -28,6 +28,7 @@ import com.storyteller_f.result.mapError
 import com.storyteller_f.result.mapPresent
 import com.storyteller_f.result.onFailure
 import com.storyteller_f.result.recover
+import com.storyteller_f.shared.model.QuotaDetail
 import com.storyteller_f.shared.model.QuotaInfo
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.obj.ObjectTuple
@@ -342,20 +343,23 @@ suspend fun <E : FailureDetails> Backend.lockQuotaInfo(
 }
 
 suspend fun Backend.getQuotaInfo(quotaType: QuotaType, objectTuple: ObjectTuple) =
+    getQuotaDetail(quotaType, objectTuple).map { it.quotaInfo }
+
+suspend fun Backend.getQuotaDetail(quotaType: QuotaType, objectTuple: ObjectTuple) =
     database.container.getQuotaInfo(objectTuple.objectId, quotaType).andThen(ContainerError::fromError) { quota ->
         if (quota == null) {
-            insertQuotaAndGet(quotaType, objectTuple)
+            insertQuotaAndGet(quotaType, objectTuple).map { QuotaDetail(it) }
         } else {
             val info = quota.toQuotaInfo()
             val lockId = info.lockId
             if (lockId != null) {
                 database.file.getUploadRecord(lockId).andThen(ContainerError::fromError) { rec ->
                     CustomResult.success(
-                        info.copy(extensions = QuotaInfo.Extensions(uploadRecord = rec?.toUploadRecordInfo())),
+                        QuotaDetail(info, rec?.toUploadRecordInfo()),
                     )
                 }
             } else {
-                CustomResult.success(info)
+                CustomResult.success(QuotaDetail(info))
             }
         }
     }

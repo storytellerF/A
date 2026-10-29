@@ -17,6 +17,7 @@ import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.createTopicSnapshot
+import com.storyteller_f.a.client.core.decryptCreatedTopic
 import com.storyteller_f.a.client.core.deleteReaction
 import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getCommunityTopics
@@ -30,7 +31,6 @@ import com.storyteller_f.a.client.core.getUserTopics
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
 import com.storyteller_f.a.client.core.pinTopic
-import com.storyteller_f.a.client.core.processEncryptedTopic
 import com.storyteller_f.a.client.core.searchCommunityTopics
 import com.storyteller_f.a.client.core.sendMessage
 import com.storyteller_f.a.client.core.unpinTopic
@@ -93,13 +93,13 @@ class TopicTest {
                 createTopic(ObjectType.COMMUNITY, communityId, "best world").getOrThrow()
                 // 使用新的专门方法替换废弃的 searchTopics
                 searchCommunityTopics(communityId, 10, "world").getOrThrow().data.forEach {
-                    assertNotNull(it.extension?.authorInfo)
+                    assertNotNull(it.authorInfo)
                 }
                 getCommunityTopics(
                     communityId,
                     paginationQuery = PaginationQuery(size = 10),
                 ).getOrThrow().data.forEach {
-                    assertNotNull(it.extension?.authorInfo)
+                    assertNotNull(it.authorInfo)
                 }
             }
         }
@@ -326,7 +326,7 @@ class TopicTest {
                 createTopicInRoomAndWait(receivedFrame) {
                     sendMessage(ObjectTuple(roomInfo2.id, ObjectType.ROOM), roomInfo2.isPrivate, "hello", keys)
                 }
-                assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.extension?.authorInfo)
+                assertNotNull((receivedFrame.first() as RoomFrame.NewTopicInfo).topicInfo.authorInfo)
             }
             receivedFrame.clear()
         }
@@ -517,10 +517,10 @@ class TopicTest {
                     assertEquals(
                         "hello",
                         (
-                            processEncryptedTopic(
-                                listOf(first.topicInfo),
+                            decryptCreatedTopic(
+                                first.topicInfo,
                                 this,
-                            ).first().content as TopicContent.Plain
+                            ).content as TopicContent.Plain
                             ).plain,
                     )
                 }

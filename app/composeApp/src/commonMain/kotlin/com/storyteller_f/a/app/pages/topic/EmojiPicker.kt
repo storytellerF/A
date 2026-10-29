@@ -38,13 +38,13 @@ import com.storyteller_f.result.mapError
 import com.storyteller_f.result.onFailure
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.ReactionInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import org.kodein.emoji.Emoji
 import org.kodein.emoji.list
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EmojiPicker(sheetState: SheetState, showSheet: Boolean, topic: TopicInfo, hideSheet: () -> Unit) {
+fun EmojiPicker(sheetState: SheetState, showSheet: Boolean, topic: TopicDetail, hideSheet: () -> Unit) {
     var query by remember {
         mutableStateOf("")
     }
@@ -59,7 +59,7 @@ fun EmojiPicker(sheetState: SheetState, showSheet: Boolean, topic: TopicInfo, hi
 @OptIn(ExperimentalMaterial3Api::class)
 private fun EmojiPickerInternal(
     query: String,
-    topic: TopicInfo,
+    topic: TopicDetail,
     hideSheet: () -> Unit,
     updateQuery: (String) -> Unit,
 ) {
@@ -120,7 +120,7 @@ private fun EmojiPickerInternal(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun EmojiItem(emojiSize: Dp, topic: TopicInfo, emoji: Emoji, hideSheet: () -> Unit) {
+private fun EmojiItem(emojiSize: Dp, topic: TopicDetail, emoji: Emoji, hideSheet: () -> Unit) {
     val globalTask = LocalGlobalTask.current
     val emojiText = emoji.details.string
     Box(
@@ -140,11 +140,11 @@ private fun EmojiItem(emojiSize: Dp, topic: TopicInfo, emoji: Emoji, hideSheet: 
 }
 
 internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.addReaction(
-    topic: TopicInfo,
+    topic: TopicDetail,
     emojiText: String,
 ): CustomResult<ReactionInfo, ReactionActionError> {
     val existing =
-        topic.extension?.reactions?.firstOrNull {
+        topic.reactions.firstOrNull {
             it.emoji == emojiText
         }
     val fakeInfo =
@@ -166,7 +166,7 @@ internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager
 }
 
 internal suspend fun NestedGlobalTask<GlobalTaskContext<SimpleUserSessionManager>>.deleteReaction(
-    topic: TopicInfo,
+    topic: TopicDetail,
     emojiText: String,
     existing: ReactionInfo,
 ): CustomResult<ReactionInfo, ReactionActionError> {

@@ -8,11 +8,14 @@ import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TitleDetail
+import com.storyteller_f.shared.model.TopicCreated
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.model.toInitialDetail
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
+import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.FileCollection
 import com.storyteller_f.storage.ModelStorage
@@ -25,14 +28,19 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-data class OnTopicChanged(val topicInfo: TopicInfo)
-data class OnTopicCreated(val topicInfo: TopicInfo)
+data class OnTopicPinChanged(
+    val topicId: PrimaryKey,
+    val parentId: PrimaryKey,
+    val rootType: ObjectType,
+    val isPin: Boolean,
+)
+data class OnTopicCreated(val topicInfo: TopicCreated)
 
 data class OnMediaUploaded(val fileInfos: List<FileInfo>)
 
 data class OnUserUpdated(val info: UserInfo)
 
-data class OnTitleCreated(val title: TitleInfo)
+data class OnTitleCreated(val title: TitleDetail)
 
 data class OnCommunityCreated(val info: CommunityInfo)
 data class OnCommunityJoined(val info: CommunityInfo)
@@ -48,8 +56,8 @@ data class OnRoomJoined(val info: RoomInfo)
 data class OnRoomExited(val info: RoomInfo)
 
 data class OnRoomUpdated(val info: RoomInfo)
-data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
-data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicInfo)
+data class OnAddReaction(val info: ReactionInfo, val topicInfo: TopicDetail)
+data class OnRemoveReaction(val info: ReactionInfo, val topicInfo: TopicDetail)
 
 data class OnAddFavorite(val objectTuple: ObjectTuple)
 data class OnRemoveFavorite(val objectTuple: ObjectTuple)
@@ -74,7 +82,7 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
                 database.community
                     .saveToDefault(event.info)
 
-            is OnTopicChanged -> processTopicChanged(event, database)
+            is OnTopicPinChanged -> processTopicPinChanged(event, database)
 
             is OnTopicCreated -> processTopicCreated(event, database)
 
@@ -114,7 +122,7 @@ private suspend fun processOnAddFavorite(event: OnAddFavorite, database: ModelSt
     when (event.objectTuple.objectType) {
         ObjectType.TOPIC ->
             database.topic.update(TopicCollection.Topics, objectId) {
-                it.copy(favoriteId = -1)
+                it.copy(topicInfo = it.topicInfo.copy(favoriteId = -1))
             }
 
         ObjectType.ROOM ->
@@ -129,7 +137,7 @@ private suspend fun processOnAddFavorite(event: OnAddFavorite, database: ModelSt
 
         ObjectType.TITLE ->
             database.title.update(TitleCollection.Titles, objectId) {
-                it.copy(favoriteId = -1)
+                it.copy(titleInfo = it.titleInfo.copy(favoriteId = -1))
             }
 
         ObjectType.FILE ->
@@ -151,7 +159,7 @@ private suspend fun processOnRemoveFavorite(event: OnRemoveFavorite, database: M
     when (event.objectTuple.objectType) {
         ObjectType.TOPIC ->
             database.topic.update(TopicCollection.Topics, objectId) {
-                it.copy(favoriteId = null)
+                it.copy(topicInfo = it.topicInfo.copy(favoriteId = null))
             }
 
         ObjectType.ROOM ->
@@ -166,7 +174,7 @@ private suspend fun processOnRemoveFavorite(event: OnRemoveFavorite, database: M
 
         ObjectType.TITLE ->
             database.title.update(TitleCollection.Titles, objectId) {
-                it.copy(favoriteId = null)
+                it.copy(titleInfo = it.titleInfo.copy(favoriteId = null))
             }
 
         ObjectType.FILE ->
@@ -188,7 +196,7 @@ private suspend fun processOnAddSubscription(event: OnAddSubscription, database:
     when (event.objectTuple.objectType) {
         ObjectType.TOPIC ->
             database.topic.update(TopicCollection.Topics, objectId) {
-                it.copy(subscriptionId = -1)
+                it.copy(topicInfo = it.topicInfo.copy(subscriptionId = -1))
             }
 
         ObjectType.ROOM ->
@@ -203,7 +211,7 @@ private suspend fun processOnAddSubscription(event: OnAddSubscription, database:
 
         ObjectType.TITLE ->
             database.title.update(TitleCollection.Titles, objectId) {
-                it.copy(subscriptionId = -1)
+                it.copy(titleInfo = it.titleInfo.copy(subscriptionId = -1))
             }
 
         ObjectType.FILE ->
@@ -225,7 +233,7 @@ private suspend fun processOnRemoveSubscriptionEvent(event: OnRemoveSubscription
     when (event.objectTuple.objectType) {
         ObjectType.TOPIC ->
             database.topic.update(TopicCollection.Topics, objectId) {
-                it.copy(subscriptionId = null)
+                it.copy(topicInfo = it.topicInfo.copy(subscriptionId = null))
             }
 
         ObjectType.ROOM ->
@@ -240,7 +248,7 @@ private suspend fun processOnRemoveSubscriptionEvent(event: OnRemoveSubscription
 
         ObjectType.TITLE ->
             database.title.update(TitleCollection.Titles, objectId) {
-                it.copy(subscriptionId = null)
+                it.copy(titleInfo = it.titleInfo.copy(subscriptionId = null))
             }
 
         ObjectType.FILE ->
@@ -258,23 +266,21 @@ private suspend fun processOnRemoveSubscriptionEvent(event: OnRemoveSubscription
 }
 
 private suspend fun processTopicCreated(event: OnTopicCreated, database: ModelStorage) {
-    val topicInfo = event.topicInfo
+    val topicInfo =
+        database.topic.getDocument(TopicCollection.Topics, event.topicInfo.id)
+            ?: event.topicInfo.toInitialDetail()
     database.topic.saveToDefault(topicInfo)
     database.topic.saveFirst(TopicCollection.ChildTopicList(topicInfo.parentId), topicInfo)
 }
 
-private suspend fun processTopicChanged(event: OnTopicChanged, database: ModelStorage) {
-    val topicInfo = event.topicInfo
-    database.topic.saveToDefault(topicInfo)
-    if (database.topic.getDocument(
-            TopicCollection.Recommend,
-            event.topicInfo.id,
-        ) != null
-    ) {
-        database.topic.updateDocument(TopicCollection.Recommend, topicInfo)
+private suspend fun processTopicPinChanged(event: OnTopicPinChanged, database: ModelStorage) {
+    database.topic.getDocument(TopicCollection.Topics, event.topicId)?.let { cached ->
+        database.topic.saveToDefault(cached.copy(topicInfo = cached.topicInfo.copy(isPin = event.isPin)))
     }
-    database.topic.update(TopicCollection.ChildTopicList(topicInfo.parentId), topicInfo.id) {
-        topicInfo
+    listOf(TopicCollection.Recommend, TopicCollection.ChildTopicList(event.parentId)).forEach { collection ->
+        database.topic.update(collection, event.topicId) { cached ->
+            cached.copy(topicInfo = cached.topicInfo.copy(isPin = event.isPin))
+        }
     }
 }
 
@@ -306,9 +312,8 @@ private suspend fun processRemoveReaction(database: ModelStorage, event: OnRemov
         TopicCollection.ChildTopicList(event.topicInfo.parentId),
     ).forEach { collectionName ->
         database.topic.update(collectionName, event.topicInfo.id) { old ->
-            val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
             val newReactions =
-                extension.reactions.orEmpty().map { info ->
+                old.reactions.map { info ->
                     if (info.emoji == event.info.emoji) {
                         event.info
                     } else {
@@ -317,7 +322,7 @@ private suspend fun processRemoveReaction(database: ModelStorage, event: OnRemov
                 }.filter {
                     it.count > 0
                 }.toImmutableList()
-            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount - 1)
+            old.copy(reactions = newReactions, topicInfo = old.topicInfo.copy(reactionCount = old.reactionCount - 1))
         }
     }
 }
@@ -329,8 +334,7 @@ private suspend fun processOnAddReaction(database: ModelStorage, event: OnAddRea
         TopicCollection.ChildTopicList(event.topicInfo.parentId),
     ).forEach { collectionName ->
         database.topic.update(collectionName, event.info.objectId) { old ->
-            val extension = old.extension ?: TopicInfo.Extension(UserInfo.EMPTY)
-            val oldReactions = extension.reactions.orEmpty()
+            val oldReactions = old.reactions
             val existing =
                 oldReactions.firstOrNull {
                     it.emoji == event.info.emoji
@@ -348,7 +352,7 @@ private suspend fun processOnAddReaction(database: ModelStorage, event: OnAddRea
                         }
                     }.toImmutableList()
                 }
-            old.copy(extension = extension.copy(reactions = newReactions), reactionCount = old.reactionCount + 1)
+            old.copy(reactions = newReactions, topicInfo = old.topicInfo.copy(reactionCount = old.reactionCount + 1))
         }
     }
 }

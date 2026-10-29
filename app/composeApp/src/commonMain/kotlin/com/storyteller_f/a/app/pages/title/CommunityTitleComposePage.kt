@@ -22,7 +22,7 @@ import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.result.mapError
 import com.storyteller_f.result.onSuccess
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -64,7 +64,7 @@ private fun CommunityTitleComposeInternal(communityId: PrimaryKey) {
 
 private suspend fun AppGlobalDialogController.createTitle(
     newTitle: NewTitle,
-): CustomResult<TitleInfo, TitleActionError> =
+): CustomResult<TitleDetail, TitleActionError> =
     request {
         createTitle(newTitle)
     }.onSuccess { title ->

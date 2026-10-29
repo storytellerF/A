@@ -70,7 +70,7 @@ import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
@@ -297,7 +297,13 @@ fun PreviewTopicPage(input: String, objectTuple: ObjectTuple) {
 @Composable
 private fun PreviewTopicInternal(markdownMediasViewModel: MarkdownMediasViewModel, input: String) {
     val list by markdownMediasViewModel.handler.data.collectAsState()
-    val topicInfo = TopicInfo.EMPTY.copy(content = TopicContent.Plain(input, list.orEmpty().toImmutableList()))
+    val topicInfo =
+        TopicDetail.EMPTY.copy(
+            topicInfo =
+            TopicDetail.EMPTY.topicInfo.copy(
+                content = TopicContent.Plain(input, list.orEmpty().toImmutableList()),
+            ),
+        )
     LazyColumn(
         modifier = Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 20.dp),
     ) {

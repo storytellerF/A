@@ -5,7 +5,7 @@
 package com.storyteller_f.shared.obj
 
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicCreated
 import com.storyteller_f.shared.type.CustomImmutableMap
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -28,7 +28,7 @@ sealed interface RoomFrame {
 
     @Serializable
     @SerialName("new-topic-info")
-    data class NewTopicInfo(val topicInfo: TopicInfo) : RoomFrame
+    data class NewTopicInfo(val topicInfo: TopicCreated) : RoomFrame
 
     @Serializable
     @SerialName("start-call")

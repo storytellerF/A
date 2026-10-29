@@ -22,15 +22,17 @@ import com.storyteller_f.shared.model.ChildAccountInfo
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.PosterSearch
-import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaDetail
 import com.storyteller_f.shared.model.QuotaType
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RecoveryCodesResponse
 import com.storyteller_f.shared.model.RoomInfo
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
+import com.storyteller_f.shared.model.TopicCreated
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.TopicInfo
 import com.storyteller_f.shared.model.TotpSetupInfo
 import com.storyteller_f.shared.model.TwoFactorSettingsInfo
@@ -80,7 +82,7 @@ object CustomApi {
 
             val get =
                 safeEndpointWithQueryBuilder("topics/aid") {
-                    resp(TopicInfo::class)
+                    resp(TopicDetail::class)
                     query(TopicAidQuery::class)
                 }
         }
@@ -168,7 +170,7 @@ object CustomApi {
 
             val get =
                 safeEndpointWithQueryAndPathBuilder("topics/{id}") {
-                    resp(TopicInfo::class)
+                    resp(TopicDetail::class)
                     query(TopicIdQuery::class)
                     path(CommonPath::class)
                 }
@@ -275,7 +277,7 @@ object CustomApi {
 
         val add =
             mutationEndpointBuilder("topics") {
-                resp(TopicInfo::class)
+                resp(TopicCreated::class)
                 body(NewTopic::class)
             }
     }
@@ -301,7 +303,7 @@ object CustomApi {
 
         val search =
             safeEndpointWithQueryBuilder("communities/search") {
-                resp(CommunityInfoListResponse::class)
+                resp(CommunityMembershipListResponse::class)
                 query(CommunitySearchQuery::class)
             }
 
@@ -640,7 +642,7 @@ object CustomApi {
             object Communities {
                 val get =
                     safeEndpointWithQueryAndPathBuilder("users/{id}/communities") {
-                        resp(CommunityInfoListResponse::class)
+                        resp(CommunityMembershipListResponse::class)
                         query(JoinedCommunities.UserCommunitiesQuery::class)
                         path(CommonPath::class)
                     }
@@ -798,7 +800,7 @@ object CustomApi {
         object Comments {
             val get =
                 safeEndpointWithQueryBuilder("users/comments") {
-                    resp(TopicInfoListResponse::class)
+                    resp(TopicActivityListResponse::class)
                     query(PaginationQuery::class)
                 }
         }
@@ -844,12 +846,12 @@ object CustomApi {
 
             val get =
                 safeEndpointWithQueryBuilder("users/joined-communities") {
-                    resp(CommunityInfoListResponse::class)
+                    resp(CommunityMembershipListResponse::class)
                     query(UserCommunitiesQuery::class)
                 }
             val search =
                 safeEndpointWithQueryBuilder("users/joined-communities/search") {
-                    resp(CommunityInfoListResponse::class)
+                    resp(CommunityMembershipListResponse::class)
                     query(UserCommunitiesSearchQuery::class)
                 }
         }
@@ -873,7 +875,7 @@ object CustomApi {
         object PinnedTopics {
             val get =
                 safeEndpointWithQueryBuilder("users/pinned-topics") {
-                    resp(TopicInfoListResponse::class)
+                    resp(TopicActivityListResponse::class)
                     query(PaginationQuery::class)
                 }
         }
@@ -993,7 +995,7 @@ object CustomApi {
 
         val quota =
             safeEndpointWithQueryBuilder("files/quota") {
-                resp(QuotaInfo::class)
+                resp(QuotaDetail::class)
                 query(QuotaQuery::class)
             }
 
@@ -1112,7 +1114,7 @@ object CustomApi {
 
         val add =
             mutationEndpointBuilder("titles") {
-                resp(TitleInfo::class)
+                resp(TitleDetail::class)
                 body(NewTitle::class)
             }
     }

@@ -23,7 +23,7 @@ import com.storyteller_f.a.panel.components.TopicCell
 import com.storyteller_f.a.panel.ui.theme.PanelTheme
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicDetail
 import kotlinx.datetime.LocalDateTime
 
 @PreviewTest
@@ -32,8 +32,9 @@ import kotlinx.datetime.LocalDateTime
 fun PanelTopicCellScreenshot() {
     PanelScreenshotTheme {
         PaddedPreview {
+            val topic = samplePanelTopic()
             TopicCell(
-                samplePanelTopic().copy(commentCount = 4, reactionCount = 9, isPin = true),
+                topic.copy(topicInfo = topic.topicInfo.copy(commentCount = 4, reactionCount = 9, isPin = true)),
                 PreviewPanelNav,
             )
         }
@@ -75,14 +76,17 @@ private fun PanelScreenshotTheme(content: @Composable () -> Unit) {
 }
 
 private fun samplePanelTopic() =
-    TopicInfo.EMPTY.copy(
-        id = 501,
-        content = TopicContent.Plain("Panel topic row rendered from screenshotTest."),
-        createdTime = fixedTime(),
-        commentCount = 2,
-        reactionCount = 3,
-        isEncrypted = true,
-        lastModifiedTime = fixedTime(),
+    TopicDetail.EMPTY.copy(
+        topicInfo =
+        TopicDetail.EMPTY.topicInfo.copy(
+            id = 501,
+            content = TopicContent.Plain("Panel topic row rendered from screenshotTest."),
+            createdTime = fixedTime(),
+            commentCount = 2,
+            reactionCount = 3,
+            isEncrypted = true,
+            lastModifiedTime = fixedTime(),
+        ),
     )
 
 private object PreviewPanelNav : PanelNav {

@@ -19,7 +19,7 @@ import com.storyteller_f.a.client.compose_core.components.LayoutDefaults
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.bottomAppending
 import com.storyteller_f.a.client.compose_core.components.topPrepend
-import com.storyteller_f.shared.model.TitleInfo
+import com.storyteller_f.shared.model.TitleDetail
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TitleWorkStatus
 import com.storyteller_f.shared.type.ObjectType
@@ -51,7 +51,7 @@ fun TitleList(titlesViewModel: TitlesViewModel) {
 }
 
 @Composable
-fun TitleItem(titleInfo: TitleInfo) {
+fun TitleItem(titleInfo: TitleDetail) {
     Column {
         Text(titleInfo.name)
         Text(
@@ -64,7 +64,7 @@ fun TitleItem(titleInfo: TitleInfo) {
             },
         )
 
-        titleInfo.extension?.let {
+        titleInfo.let {
             UserIconWithDialog(it.creatorInfo)
             Text("->")
             UserIconWithDialog(it.receiverInfo)

@@ -12,14 +12,14 @@ import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.ReactionRecordInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TaskRecordInfo
-import com.storyteller_f.shared.model.TitleInfo
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TitleDetail
+import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UploadRecordInfo
-import com.storyteller_f.shared.model.UserFavoriteInfo
+import com.storyteller_f.shared.model.UserFavoriteItem
 import com.storyteller_f.shared.model.UserInfo
-import com.storyteller_f.shared.model.UserLogInfo
+import com.storyteller_f.shared.model.UserLogItem
 import com.storyteller_f.shared.model.UserOverview
-import com.storyteller_f.shared.model.UserSubscriptionInfo
+import com.storyteller_f.shared.model.UserSubscriptionItem
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.RemoteKeyStorage.Companion.NEXT_COLLECTION
 import com.storyteller_f.storage.RemoteKeyStorage.Companion.PRE_COLLECTION
@@ -174,29 +174,29 @@ class CommunityDocumentInfoStorage(
 class TopicDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
 ) : TopicInfoStorage {
-    override fun observeDatum(id: PrimaryKey): Flow<TopicInfo?> {
-        return kotbaseDocumentSource.getCollection<TopicInfo>(TopicCollection.Topics.getName())
+    override fun observeDatum(id: PrimaryKey): Flow<TopicDetail?> {
+        return kotbaseDocumentSource.getCollection<TopicDetail>(TopicCollection.Topics.getName())
             .observeDatum(id)
     }
 
-    override suspend fun saveLast(collection: TopicCollection, item: TopicInfo) {
+    override suspend fun saveLast(collection: TopicCollection, item: TopicDetail) {
         saveFirst(collection, item)
     }
 
-    override suspend fun saveFirst(collection: TopicCollection, item: TopicInfo) {
+    override suspend fun saveFirst(collection: TopicCollection, item: TopicDetail) {
         saveToDefault(item)
         if (collection != TopicCollection.Topics) {
-            kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName())
+            kotbaseDocumentSource.getCollection<TopicDetail>(collection.getName())
                 .save(item.id, item)
         }
     }
 
     override fun observeData(
         collection: TopicCollection,
-    ): PagingSource<Int, TopicInfo> {
+    ): PagingSource<Int, TopicDetail> {
         return when (collection) {
             is TopicCollection.Recommend, is TopicCollection.SearchTopic -> {
-                kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName())
+                kotbaseDocumentSource.getCollection<TopicDetail>(collection.getName())
                     .getSource {
                         orderBy {
                             "id".descending()
@@ -210,8 +210,8 @@ class TopicDocumentInfoStorage(
 
     override fun observeDatum(
         key: String
-    ): Flow<TopicInfo?> {
-        return kotbaseDocumentSource.getCollection<TopicInfo>(TopicCollection.Topics.getName())
+    ): Flow<TopicDetail?> {
+        return kotbaseDocumentSource.getCollection<TopicDetail>(TopicCollection.Topics.getName())
             .observeDatum {
                 "aid" equalTo key
             }
@@ -220,24 +220,24 @@ class TopicDocumentInfoStorage(
     override suspend fun getDocument(
         collection: TopicCollection,
         key: String
-    ): TopicInfo? {
-        return kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName())
+    ): TopicDetail? {
+        return kotbaseDocumentSource.getCollection<TopicDetail>(collection.getName())
             .getDocument(key)
     }
 
     override suspend fun clean(collection: TopicCollection) = Unit
 
-    override suspend fun updateDocument(collection: TopicCollection, item: TopicInfo) {
+    override suspend fun updateDocument(collection: TopicCollection, item: TopicDetail) {
         saveToDefault(item)
-        kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName()).save(item.id.toString(), item)
+        kotbaseDocumentSource.getCollection<TopicDetail>(collection.getName()).save(item.id.toString(), item)
     }
 
     override suspend fun delete(collection: TopicCollection, key: String) {
-        kotbaseDocumentSource.getCollection<TopicInfo>(collection.getName()).delete(key)
+        kotbaseDocumentSource.getCollection<TopicDetail>(collection.getName()).delete(key)
     }
 
-    override suspend fun saveToDefault(item: TopicInfo) {
-        with(kotbaseDocumentSource.getCollection<TopicInfo>(TopicCollection.Topics.getName())) {
+    override suspend fun saveToDefault(item: TopicDetail) {
+        with(kotbaseDocumentSource.getCollection<TopicDetail>(TopicCollection.Topics.getName())) {
             save(item.id.toString(), item)
             save(item.aid, item)
         }
@@ -247,29 +247,29 @@ class TopicDocumentInfoStorage(
 class TitleDocumentInfoStorage(
     val kotbaseDocumentSource: KotbaseDocumentSource
 ) : TitleInfoStorage {
-    override fun observeDatum(id: PrimaryKey): Flow<TitleInfo?> {
-        return kotbaseDocumentSource.getCollection<TitleInfo>(TitleCollection.Titles.getName())
+    override fun observeDatum(id: PrimaryKey): Flow<TitleDetail?> {
+        return kotbaseDocumentSource.getCollection<TitleDetail>(TitleCollection.Titles.getName())
             .observeDatum(id)
     }
 
-    override suspend fun saveLast(collection: TitleCollection, item: TitleInfo) {
+    override suspend fun saveLast(collection: TitleCollection, item: TitleDetail) {
         saveFirst(collection, item)
     }
 
-    override suspend fun saveFirst(collection: TitleCollection, item: TitleInfo) {
+    override suspend fun saveFirst(collection: TitleCollection, item: TitleDetail) {
         saveToDefault(item)
         if (collection != TitleCollection.Titles) {
-            kotbaseDocumentSource.getCollection<TitleInfo>(collection.getName())
+            kotbaseDocumentSource.getCollection<TitleDetail>(collection.getName())
                 .save(item.id, item)
         }
     }
 
     override fun observeData(
         collection: TitleCollection,
-    ): PagingSource<Int, TitleInfo> {
+    ): PagingSource<Int, TitleDetail> {
         return when (collection) {
             is TitleCollection.SearchTitle -> {
-                kotbaseDocumentSource.getCollection<TitleInfo>(collection.getName())
+                kotbaseDocumentSource.getCollection<TitleDetail>(collection.getName())
                     .getSource {
                         orderBy {
                             "id".descending()
@@ -283,26 +283,26 @@ class TitleDocumentInfoStorage(
 
     override suspend fun clean(collection: TitleCollection) = Unit
 
-    override fun observeDatum(key: String): Flow<TitleInfo?> {
-        return kotbaseDocumentSource.getCollection<TitleInfo>(TitleCollection.Titles.getName())
+    override fun observeDatum(key: String): Flow<TitleDetail?> {
+        return kotbaseDocumentSource.getCollection<TitleDetail>(TitleCollection.Titles.getName())
             .observeDatum(key)
     }
 
-    override suspend fun getDocument(collection: TitleCollection, key: String): TitleInfo? {
-        return kotbaseDocumentSource.getCollection<TitleInfo>(collection.getName()).getDocument(key)
+    override suspend fun getDocument(collection: TitleCollection, key: String): TitleDetail? {
+        return kotbaseDocumentSource.getCollection<TitleDetail>(collection.getName()).getDocument(key)
     }
 
-    override suspend fun updateDocument(collection: TitleCollection, item: TitleInfo) {
+    override suspend fun updateDocument(collection: TitleCollection, item: TitleDetail) {
         saveToDefault(item)
-        kotbaseDocumentSource.getCollection<TitleInfo>(collection.getName()).save(item.id.toString(), item)
+        kotbaseDocumentSource.getCollection<TitleDetail>(collection.getName()).save(item.id.toString(), item)
     }
 
     override suspend fun delete(collection: TitleCollection, key: String) {
-        kotbaseDocumentSource.getCollection<TitleInfo>(collection.getName()).delete(key)
+        kotbaseDocumentSource.getCollection<TitleDetail>(collection.getName()).delete(key)
     }
 
-    override suspend fun saveToDefault(item: TitleInfo) {
-        kotbaseDocumentSource.getCollection<TitleInfo>(TitleCollection.Titles.getName()).save(item.id.toString(), item)
+    override suspend fun saveToDefault(item: TitleDetail) {
+        kotbaseDocumentSource.getCollection<TitleDetail>(TitleCollection.Titles.getName()).save(item.id.toString(), item)
     }
 }
 
@@ -647,20 +647,20 @@ class UploadInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource
 }
 
 class UserFavoriteDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : UserFavoriteStorage {
-    override suspend fun saveLast(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+    override suspend fun saveLast(collection: UserFavoriteCollection, item: UserFavoriteItem) {
         saveFirst(collection, item)
     }
 
-    override suspend fun saveFirst(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+    override suspend fun saveFirst(collection: UserFavoriteCollection, item: UserFavoriteItem) {
         saveToDefault(item)
         if (UserFavoriteStorage.COLLECTION_NAME != collection.getName()) {
-            kotbaseDocumentSource.getCollection<UserFavoriteInfo>(collection.getName())
+            kotbaseDocumentSource.getCollection<UserFavoriteItem>(collection.getName())
                 .save(item.id, item)
         }
     }
 
-    override fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteInfo> {
-        return kotbaseDocumentSource.getCollection<UserFavoriteInfo>(collection.getName())
+    override fun observeData(collection: UserFavoriteCollection): PagingSource<Int, UserFavoriteItem> {
+        return kotbaseDocumentSource.getCollection<UserFavoriteItem>(collection.getName())
             .getSource {
                 orderBy {
                     "id".descending()
@@ -670,45 +670,45 @@ class UserFavoriteDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSour
 
     override suspend fun clean(collection: UserFavoriteCollection) = Unit
 
-    override suspend fun getDocument(collection: UserFavoriteCollection, key: String): UserFavoriteInfo? {
-        return kotbaseDocumentSource.getCollection<UserFavoriteInfo>(collection.getName()).getDocument(key)
+    override suspend fun getDocument(collection: UserFavoriteCollection, key: String): UserFavoriteItem? {
+        return kotbaseDocumentSource.getCollection<UserFavoriteItem>(collection.getName()).getDocument(key)
     }
 
-    override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteInfo) {
+    override suspend fun updateDocument(collection: UserFavoriteCollection, item: UserFavoriteItem) {
         saveToDefault(item)
-        kotbaseDocumentSource.getCollection<UserFavoriteInfo>(collection.getName()).save(item.id, item)
+        kotbaseDocumentSource.getCollection<UserFavoriteItem>(collection.getName()).save(item.id, item)
     }
 
     override suspend fun delete(collection: UserFavoriteCollection, key: String) {
-        kotbaseDocumentSource.getCollection<UserFavoriteInfo>(collection.getName()).delete(key)
+        kotbaseDocumentSource.getCollection<UserFavoriteItem>(collection.getName()).delete(key)
     }
 
-    override suspend fun saveToDefault(item: UserFavoriteInfo) {
-        kotbaseDocumentSource.getCollection<UserFavoriteInfo>(UserFavoriteStorage.COLLECTION_NAME).save(item.id, item)
+    override suspend fun saveToDefault(item: UserFavoriteItem) {
+        kotbaseDocumentSource.getCollection<UserFavoriteItem>(UserFavoriteStorage.COLLECTION_NAME).save(item.id, item)
     }
 
-    override fun observeDatum(key: String): Flow<UserFavoriteInfo?> {
-        return kotbaseDocumentSource.getCollection<UserFavoriteInfo>(
+    override fun observeDatum(key: String): Flow<UserFavoriteItem?> {
+        return kotbaseDocumentSource.getCollection<UserFavoriteItem>(
             UserFavoriteStorage.COLLECTION_NAME
         ).observeDatum(key)
     }
 }
 
 class UserSubscriptionDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : UserSubscriptionStorage {
-    override suspend fun saveLast(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+    override suspend fun saveLast(collection: UserSubscriptionCollection, item: UserSubscriptionItem) {
         saveFirst(collection, item)
     }
 
-    override suspend fun saveFirst(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+    override suspend fun saveFirst(collection: UserSubscriptionCollection, item: UserSubscriptionItem) {
         saveToDefault(item)
         if (UserSubscriptionStorage.COLLECTION_NAME != collection.getName()) {
-            kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(collection.getName())
+            kotbaseDocumentSource.getCollection<UserSubscriptionItem>(collection.getName())
                 .save(item.id, item)
         }
     }
 
-    override fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionInfo> {
-        return kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(collection.getName())
+    override fun observeData(collection: UserSubscriptionCollection): PagingSource<Int, UserSubscriptionItem> {
+        return kotbaseDocumentSource.getCollection<UserSubscriptionItem>(collection.getName())
             .getSource {
                 orderBy {
                     "id".descending()
@@ -718,27 +718,27 @@ class UserSubscriptionDocumentStorage(val kotbaseDocumentSource: KotbaseDocument
 
     override suspend fun clean(collection: UserSubscriptionCollection) = Unit
 
-    override suspend fun getDocument(collection: UserSubscriptionCollection, key: String): UserSubscriptionInfo? {
-        return kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(collection.getName()).getDocument(key)
+    override suspend fun getDocument(collection: UserSubscriptionCollection, key: String): UserSubscriptionItem? {
+        return kotbaseDocumentSource.getCollection<UserSubscriptionItem>(collection.getName()).getDocument(key)
     }
 
-    override suspend fun updateDocument(collection: UserSubscriptionCollection, item: UserSubscriptionInfo) {
+    override suspend fun updateDocument(collection: UserSubscriptionCollection, item: UserSubscriptionItem) {
         saveToDefault(item)
-        kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(collection.getName()).save(item.id, item)
+        kotbaseDocumentSource.getCollection<UserSubscriptionItem>(collection.getName()).save(item.id, item)
     }
 
     override suspend fun delete(collection: UserSubscriptionCollection, key: String) {
-        kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(collection.getName()).delete(key)
+        kotbaseDocumentSource.getCollection<UserSubscriptionItem>(collection.getName()).delete(key)
     }
 
-    override suspend fun saveToDefault(item: UserSubscriptionInfo) {
-        kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(
+    override suspend fun saveToDefault(item: UserSubscriptionItem) {
+        kotbaseDocumentSource.getCollection<UserSubscriptionItem>(
             UserSubscriptionStorage.COLLECTION_NAME
         ).save(item.id, item)
     }
 
-    override fun observeDatum(key: String): Flow<UserSubscriptionInfo?> {
-        return kotbaseDocumentSource.getCollection<UserSubscriptionInfo>(
+    override fun observeDatum(key: String): Flow<UserSubscriptionItem?> {
+        return kotbaseDocumentSource.getCollection<UserSubscriptionItem>(
             UserSubscriptionStorage.COLLECTION_NAME
         ).observeDatum(key)
     }
@@ -779,17 +779,17 @@ class UserReactionRecordDocumentStorage(val kotbaseDocumentSource: KotbaseDocume
 }
 
 class UserLogInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSource) : UserLogInfoStorage {
-    override suspend fun saveLast(collection: UserLogCollection, item: UserLogInfo) {
+    override suspend fun saveLast(collection: UserLogCollection, item: UserLogItem) {
         saveFirst(collection, item)
     }
 
-    override suspend fun saveFirst(collection: UserLogCollection, item: UserLogInfo) {
-        kotbaseDocumentSource.getCollection<UserLogInfo>(collection.getName())
+    override suspend fun saveFirst(collection: UserLogCollection, item: UserLogItem) {
+        kotbaseDocumentSource.getCollection<UserLogItem>(collection.getName())
             .save(item.id, item)
     }
 
-    override fun observeData(collection: UserLogCollection): PagingSource<Int, UserLogInfo> {
-        return kotbaseDocumentSource.getCollection<UserLogInfo>(collection.getName())
+    override fun observeData(collection: UserLogCollection): PagingSource<Int, UserLogItem> {
+        return kotbaseDocumentSource.getCollection<UserLogItem>(collection.getName())
             .getSource {
                 orderBy {
                     "id".descending()
@@ -799,16 +799,16 @@ class UserLogInfoDocumentStorage(val kotbaseDocumentSource: KotbaseDocumentSourc
 
     override suspend fun clean(collection: UserLogCollection) = Unit
 
-    override suspend fun getDocument(collection: UserLogCollection, key: String): UserLogInfo? {
-        return kotbaseDocumentSource.getCollection<UserLogInfo>(collection.getName()).getDocument(key)
+    override suspend fun getDocument(collection: UserLogCollection, key: String): UserLogItem? {
+        return kotbaseDocumentSource.getCollection<UserLogItem>(collection.getName()).getDocument(key)
     }
 
-    override suspend fun updateDocument(collection: UserLogCollection, item: UserLogInfo) {
-        kotbaseDocumentSource.getCollection<UserLogInfo>(collection.getName()).save(item.id, item)
+    override suspend fun updateDocument(collection: UserLogCollection, item: UserLogItem) {
+        kotbaseDocumentSource.getCollection<UserLogItem>(collection.getName()).save(item.id, item)
     }
 
     override suspend fun delete(collection: UserLogCollection, key: String) {
-        kotbaseDocumentSource.getCollection<UserLogInfo>(collection.getName()).delete(key)
+        kotbaseDocumentSource.getCollection<UserLogItem>(collection.getName()).delete(key)
     }
 }
 

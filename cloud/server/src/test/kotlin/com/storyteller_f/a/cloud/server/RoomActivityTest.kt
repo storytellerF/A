@@ -37,7 +37,7 @@ import com.storyteller_f.a.cloud.core.service.createTopicAtRoom
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.TitleType
 import com.storyteller_f.shared.model.TopicContent
-import com.storyteller_f.shared.model.TopicInfo
+import com.storyteller_f.shared.model.TopicCreated
 import com.storyteller_f.shared.obj.NewRoomTopic
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateUserRead
@@ -85,7 +85,7 @@ class RoomActivityTest {
                     ).getOrThrow().data.first { it.id == second.id }.createdTime,
                     latest.createdTime,
                 )
-                assertEquals(second.author, latest.extension?.authorInfo?.id)
+                assertEquals(second.author, latest.authorInfo?.id)
                 assertEquals("Second", assertIs<TopicContent.Plain>(latest.content).plain)
                 workerBackend.database.room.updateRoomStatus(room.id, ObjectStatus.READ_ONLY).getOrThrow()
                 assertEquals(
@@ -339,7 +339,7 @@ private suspend fun TestMate.createRoomMessage(
     parentId: PrimaryKey,
     text: String,
     parentType: ObjectType = ObjectType.ROOM,
-): TopicInfo =
+): TopicCreated =
     requireNotNull(
         workerBackend.createTopicAtRoom(NewRoomTopic(parentType, parentId, TopicContent.Plain(text)), uid).getOrThrow(),
     )

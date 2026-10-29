@@ -106,7 +106,7 @@ import com.storyteller_f.a.client.core.abortChunkUpload
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.model.FileInfo
-import com.storyteller_f.shared.model.QuotaInfo
+import com.storyteller_f.shared.model.QuotaDetail
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
@@ -377,7 +377,7 @@ private fun UploadedPage(mediaTarget: ObjectTuple) {
 private fun QuotaSheet(showSheet: Boolean, sheetState: SheetState, hideSheet: () -> Unit, mediaTarget: ObjectTuple) {
     BaseSheet(showSheet, sheetState, hideSheet) {
         val quotaVm = getQuotaViewModel(mediaTarget)
-        StateView(quotaVm.handler) { q: QuotaInfo ->
+        StateView(quotaVm.handler) { q: QuotaDetail ->
             Column(modifier = Modifier.padding(20.dp)) {
                 val totalText = HumanReadable.fileSize(q.total)
                 val usedText = HumanReadable.fileSize(q.used)
@@ -392,7 +392,7 @@ private fun QuotaSheet(showSheet: Boolean, sheetState: SheetState, hideSheet: ()
                     val percent = if (q.total > 0) q.used * 100f / q.total else 0f
                     Text("${percent.toInt()}%")
                 }
-                val rec = q.extensions?.uploadRecord
+                val rec = q.uploadRecord
                 if (rec != null) {
                     Spacer(modifier = Modifier.padding(8.dp))
                     Text("上传记录: ${rec.name}")

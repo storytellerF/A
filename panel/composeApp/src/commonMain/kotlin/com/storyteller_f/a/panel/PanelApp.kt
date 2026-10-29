@@ -568,19 +568,19 @@ sealed interface IPanelAccountInstance {
 
         private suspend fun handleTopicReadOnlyUpdated(storage: ModelStorage, event: OnTopicStatusUpdated) {
             storage.topic.update(TopicCollection.AllTopics, event.id) {
-                it.copy(status = event.status)
+                it.copy(topicInfo = it.topicInfo.copy(status = event.status))
             }
             storage.topic.getDocument(TopicCollection.AllTopics, event.id)?.let {
-                storage.topic.saveToDefault(it.copy(status = event.status))
+                storage.topic.saveToDefault(it.copy(topicInfo = it.topicInfo.copy(status = event.status)))
             }
         }
 
         private suspend fun handleTitleReadOnlyUpdated(storage: ModelStorage, event: OnTitleStatusUpdated) {
             storage.title.update(TitleCollection.AllTitles, event.id) {
-                it.copy(status = event.status)
+                it.copy(titleInfo = it.titleInfo.copy(status = event.status))
             }
             storage.title.getDocument(TitleCollection.AllTitles, event.id)?.let {
-                storage.title.saveToDefault(it.copy(status = event.status))
+                storage.title.saveToDefault(it.copy(titleInfo = it.titleInfo.copy(status = event.status)))
             }
         }
 
