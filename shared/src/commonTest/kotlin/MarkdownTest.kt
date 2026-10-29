@@ -20,6 +20,24 @@ import kotlin.test.assertEquals
 
 class MarkdownTest {
     @Test
+    fun preservesUnicodeDocumentLength() {
+        val text = "正文 🌍 **加粗**"
+        assertEquals(text.length, astNode(text).endOffset)
+    }
+
+    @Test
+    fun preservesUnicodeParagraph() {
+        val text = "正文 🌍 **加粗**\n\n第二段"
+        assertEquals("正文 🌍 **加粗**", extractHeadParagraph(text))
+    }
+
+    @Test
+    fun preservesUnicodeMediaOffsets() {
+        val text = "正文 🌍 **加粗**\n\n![图片](图片.png)"
+        assertEquals(listOf("图片.png"), extractMarkdownMediaLink(text))
+    }
+
+    @Test
     fun `test extract headline`() {
         val markdownText =
             """

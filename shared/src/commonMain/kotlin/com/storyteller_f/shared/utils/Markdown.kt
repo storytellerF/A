@@ -20,6 +20,7 @@ import org.intellij.markdown.ast.visitors.Visitor
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
+import org.intellij.markdown.parser.CancellationToken
 import org.intellij.markdown.parser.MarkdownParser
 
 fun extractMarkdownHeadline(markdownText: String): String {
@@ -306,8 +307,9 @@ fun extractMath(markdownText: String): MutableList<MathContext> {
 
 fun astNode(markdownText: String): ASTNode {
     val flavour = GFMFlavourDescriptor()
-    val parser = MarkdownParser(flavour)
-    return parser.buildMarkdownTreeFromString(markdownText)
+    val parser = MarkdownParser(flavour, cancellationToken = CancellationToken.NonCancellable)
+    val text: CharSequence = markdownText
+    return parser.buildMarkdownTreeFromString(text)
 }
 
 fun readCodeFence(node: ASTNode, content: String): String {

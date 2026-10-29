@@ -158,7 +158,7 @@ val LocalPanelUiViewModel =
         error("LocalPanelUiViewModel must be provided")
     }
 
-fun createPanelUIViewModel() = PanelUIViewModel(kotlinx.coroutines.GlobalScope, PanelConfig.SERVER_URL)
+fun createPanelUIViewModel(scope: CoroutineScope) = PanelUIViewModel(scope, PanelConfig.SERVER_URL)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -438,7 +438,6 @@ sealed interface IPanelAccountInstance {
 
     fun close() {
         accountScope.cancel()
-        sessionManager.client.close()
     }
 
     val isAlreadySign get() = passHolder.currentUserPass != null
@@ -458,6 +457,10 @@ sealed interface IPanelAccountInstance {
                 passHolder,
                 createSigninCookies(httpUrl, "panel"),
             )
+        init {
+            closePanelClientWithScope(accountScope, sessionManager.client)
+        }
+
         override val database = getRoomModelStorage("guest")
         val context: GlobalTaskContext<CustomPanelSessionManager> =
             GlobalTaskContext(events, sessionManager)
@@ -494,6 +497,7 @@ sealed interface IPanelAccountInstance {
             CustomGlobalDialogController(scope, dialogContext)
 
         init {
+            closePanelClientWithScope(accountScope, sessionManager.client)
             scope.launch {
                 sessionManager.restoreSession().onSuccess { sessionManager.model.updateUser(it) }
             }

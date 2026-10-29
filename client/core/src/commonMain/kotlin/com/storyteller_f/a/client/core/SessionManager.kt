@@ -340,7 +340,7 @@ suspend fun processEncryptedTopic(topicInfos: List<TopicInfo>, manager: UserSess
                             }
                         TopicContent.Plain(it, mediaInfos)
                     }, onFailure = {
-                        TopicContent.DecryptFailed(it.cause.message?.toString().orEmpty())
+                        TopicContent.DecryptFailed(it.cause.message.orEmpty())
                     })
                 topicInfo.copy(content = topicContent)
             } else {

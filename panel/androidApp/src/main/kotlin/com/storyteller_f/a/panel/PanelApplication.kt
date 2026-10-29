@@ -16,10 +16,14 @@ import com.storyteller_f.a.client.compose_core.startPlayMedia
 import com.storyteller_f.shared.appContextRef
 import com.storyteller_f.shared.loadCryptoLibIfNeed
 import com.storyteller_f.shared.setupKmpLogger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.lang.ref.WeakReference
 
 class PanelApplication : Application() {
-    val panelUiViewModel by lazy { createPanelUIViewModel() }
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default.limitedParallelism(1))
+    val panelUiViewModel by lazy { createPanelUIViewModel(applicationScope) }
     val mediaPlayer by lazy { buildPanelMediaPlayer(panelUiViewModel) }
 
     override fun onCreate() {

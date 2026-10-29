@@ -24,7 +24,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.core.remaining
-import io.ktor.utils.io.readRemaining
+import io.ktor.utils.io.readBuffer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
@@ -243,7 +243,7 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
             throw cancellation
         } catch (e: Exception) {
             updateDownloadInfo(modelStorage, id) {
-                it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message?.toString().orEmpty())
+                it.copy(status = DownloadStatus.PROCESS_FAILED, message = e.message.orEmpty())
             }
             return true
         }
@@ -285,7 +285,7 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
                     "download failed ${fileInfo.name}"
                 }
                 updateDownloadInfo(modelStorage, id) {
-                    it.copy(status = DownloadStatus.DOWNLOAD_FAILED, message = throwable.message?.toString().orEmpty())
+                    it.copy(status = DownloadStatus.DOWNLOAD_FAILED, message = throwable.message.orEmpty())
                 }
             }
             return true
@@ -315,7 +315,7 @@ class DownloaderImpl(val uiViewModel: UIViewModel, val register: TaskRegister) :
             // Open the sink in append mode to continue writing to the file
             SystemFileSystem.sink(path, append = true).use { sink ->
                 while (!channel.isClosedForRead) {
-                    val chunk = channel.readRemaining(10_240)
+                    val chunk = channel.readBuffer(10_240L)
                     if (chunk.exhausted()) continue
 
                     downloadedBytes += chunk.remaining

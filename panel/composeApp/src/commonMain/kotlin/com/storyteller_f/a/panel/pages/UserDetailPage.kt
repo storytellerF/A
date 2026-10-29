@@ -383,7 +383,7 @@ private fun UserBasicInfoSection(uid: PrimaryKey) {
                 add("nickname" to overview.userInfo.nickname)
                 add("status" to overview.userInfo.status.name)
                 add("address" to overview.userInfo.address)
-                add("aid" to overview.userInfo.aid?.toString().orEmpty())
+                add("aid" to overview.userInfo.aid.orEmpty())
                 add("favoriteCount" to overview.favoriteCount.toString())
                 add("subscriptionCount" to overview.subscriptionCount.toString())
                 add("acg" to overview.acg.toString())

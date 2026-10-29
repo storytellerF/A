@@ -17,16 +17,17 @@ import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.material_symbols_outlined
+import dev.tclement.fonticons.ExperimentalFontIconsApi
 import dev.tclement.fonticons.VariableIconFont
 import dev.tclement.fonticons.rememberVariableIconFont
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @Suppress("ObjectPropertyNaming", "LargeClass")
 object MaterialSymbolsOutlined {
     const val version: String = "2.791"
 
     @Composable
-    @OptIn(ExperimentalResourceApi::class)
+    // FontResource loading uses an in-memory descriptor on our Android 33+ targets.
+    @OptIn(ExperimentalFontIconsApi::class)
     fun rememberIconFont(fill: Boolean = false, grade: Int = 0, fontFeatureSettings: String? = null): VariableIconFont =
         rememberVariableIconFont(
             fontResource = Res.font.material_symbols_outlined,

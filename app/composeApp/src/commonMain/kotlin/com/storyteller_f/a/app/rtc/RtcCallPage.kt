@@ -43,14 +43,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
@@ -86,7 +87,6 @@ import org.jetbrains.compose.resources.stringResource
 // Application-owned serial coordination, separate from rendering on native platforms.
 internal val rtcCoordination = Dispatchers.Default.limitedParallelism(1)
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 internal fun RtcCallPage(roomId: PrimaryKey) {
     val scope = rememberCoroutineScope()
@@ -106,7 +106,7 @@ internal fun RtcCallPage(roomId: PrimaryKey) {
             host.effects.collect { nav.back() }
         }
     }
-    BackHandler { host.leave() }
+    NavigationBackHandler(rememberNavigationEventState(NavigationEventInfo.None)) { host.leave() }
     val state by host.state.collectAsStateWithLifecycle()
     RtcCallContent(roomId, state, host)
 }

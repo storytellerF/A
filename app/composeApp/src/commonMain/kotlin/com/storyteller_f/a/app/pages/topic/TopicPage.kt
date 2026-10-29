@@ -354,7 +354,7 @@ fun TopicSendButton(
 private fun sendTopicInTopicPage(input: String, topic: TopicInfo, context: SendTopicContext) {
     checkContent(input).exceptionOrNull()?.let {
         context.scope.launch {
-            context.snackBarHostState.showSnackbar(it.message?.toString().orEmpty())
+            context.snackBarHostState.showSnackbar(it.message.orEmpty())
         }
         return
     }
@@ -370,7 +370,7 @@ private fun sendTopicInTopicPage(input: String, topic: TopicInfo, context: SendT
             }
         }.onFailure {
             context.snackBarHostState
-                .showSnackbar(it.cause.message?.toString().orEmpty())
+                .showSnackbar(it.cause.message.orEmpty())
         }
     }
 }
