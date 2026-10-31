@@ -43,7 +43,7 @@ fun Member.Companion.wrapRow(row: ResultRow): Member =
 
 suspend fun batchAddMembers(members: List<Member>): List<ResultRow> =
     Members.batchInsert(members) {
-        this[Members.joinedTime] = it.createdTime
+        this[Members.joinedTime] = it.joinedTime
         this[Members.createdTime] = it.createdTime
         this[Members.invitedTime] = it.invitedTime
         this[Members.id] = it.id

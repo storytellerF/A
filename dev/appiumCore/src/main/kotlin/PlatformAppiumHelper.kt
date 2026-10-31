@@ -39,6 +39,58 @@ interface PlatformAppiumHelper {
 class AndroidAppiumHelper : PlatformAppiumHelper {
     override val capturesExternalAsciidocPreview = false
 
+    /** Blocks only protected preferences with real filesystem errors, restoring the original files. */
+    suspend fun <T> withProtectedWritesBlocked(packageName: String, block: suspend () -> T): T {
+        require(packageName.matches(Regex("[a-zA-Z0-9_.]+")))
+        val command = listOf("shell", "run-as", packageName)
+        runAdbCommand(command + listOf("mkdir", "-p", "shared_prefs", "files"))
+        val undo = mutableListOf<() -> Unit>()
+        return AutoCloseable { restoreProtectedPreferences(undo) }.use {
+            val backup = "files/appium-protected-preferences"
+            runAdbCommand(command + listOf("mkdir", backup))
+            undo.add { runAdbCommand(command + listOf("rmdir", backup)) }
+            listOf("protected-data.xml", "protected-data.xml.bak").forEach { name ->
+                val path = "shared_prefs/$name"
+                if (runAdbCommandAllowFailure(command + listOf("test", "-e", path)).exitCode == 0) {
+                    runAdbCommand(command + listOf("mv", path, "$backup/$name"))
+                    undo.add { runAdbCommand(command + listOf("mv", "$backup/$name", path)) }
+                }
+                runAdbCommand(command + listOf("mkdir", path))
+                undo.add {
+                    runAdbCommand(command + listOf("rm", "-f", "$path/blocked"))
+                    runAdbCommand(command + listOf("rmdir", path))
+                }
+                runAdbCommand(command + listOf("touch", "$path/blocked"))
+            }
+            block()
+        }
+    }
+
+    private fun restoreProtectedPreferences(undo: List<() -> Unit>) {
+        var failure: Exception? = null
+        undo.asReversed().forEach { restore ->
+            try {
+                restore()
+            } catch (restoreFailure: Exception) {
+                if (failure == null) failure = restoreFailure else failure.addSuppressed(restoreFailure)
+            }
+        }
+        failure?.let { throw it }
+    }
+
+    fun protectedPreferencesDigest(packageName: String): String {
+        require(packageName.matches(Regex("[a-zA-Z0-9_.]+")))
+        return runAdbCommand(
+            listOf(
+                "shell",
+                "run-as",
+                packageName,
+                "sha256sum",
+                "shared_prefs/protected-data.xml",
+            ),
+        ).substringBefore(' ')
+    }
+
     override suspend fun <T> runTest(
         testName: String,
         target: TargetAppiumHelper,
@@ -81,7 +133,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     driver.startRecordingScreen()
                     block(
                         AndroidAppiumTestScope(
-                            driver = AndroidAppTestDriver(driver, ::runAdbCommand),
+                            driver = AndroidAppTestDriver(driver, report, ::runAdbCommand),
                             packageName = target.androidApp.packageName,
                             restartApp = {
                                 collectAndroidCoverage(report, target.androidApp)
@@ -100,10 +152,10 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
                     driver?.let { activeDriver ->
                         report.captureDriver(activeDriver)
                         report.collect("Recording") { saveRecording(activeDriver, report.directory) }
+                        report.collect("Driver shutdown") { activeDriver.quit() }
                         if (testFailed) {
                             report.collect("Bugreport") { collectBugreport(report.directory) }
                         }
-                        report.collect("Driver shutdown") { activeDriver.quit() }
                     }
                     report.collect("Application log") {
                         copyAppLogToBuild(report.directory, target.androidApp.packageName)
@@ -129,7 +181,7 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
         ) { backend ->
             bindAndroidReverse(hostPort = backend.wsPort, devicePort = 8813)
             bindAndroidReverse(hostPort = backend.serverPort, devicePort = 8811)
-            block(AppiumPorts(server = backend.serverPort, ws = backend.wsPort))
+            block(createAppiumPorts(backend))
         }
     }
 
@@ -291,8 +343,14 @@ class AndroidAppiumHelper : PlatformAppiumHelper {
     }
 }
 
-class DesktopAppiumHelper : PlatformAppiumHelper {
+class DesktopAppiumHelper(private val protectedStoreLibrary: String? = null) : PlatformAppiumHelper {
     private val platform = DesktopTestPlatform.current()
+
+    init {
+        require(protectedStoreLibrary == null || platform == DesktopTestPlatform.Linux) {
+            "Credential-helper failure scenarios require a Linux desktop target"
+        }
+    }
     override val capturesExternalAsciidocPreview = false
 
     override suspend fun <T> runTest(
@@ -325,7 +383,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 browserCapture = browserCapture,
             ) { driver, prepared, processId, restartApp ->
                 block(
-                    DesktopAppiumTestScope(DesktopAppTestDriver(driver, processId), browserCapture, restartApp),
+                    DesktopAppiumTestScope(DesktopAppTestDriver(driver, report, processId), browserCapture, restartApp),
                     prepared.data,
                 )
             }
@@ -375,7 +433,7 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                     File("${sessionFile.canonicalPath}.pid").delete()
                     val restarted = AppiumDriver(URI(serverUrl).toURL(), caps)
                     driver = restarted
-                    DesktopAppTestDriver(restarted, readDesktopProcessId(sessionFile))
+                    DesktopAppTestDriver(restarted, report, readDesktopProcessId(sessionFile))
                 }
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
@@ -541,7 +599,12 @@ class DesktopAppiumHelper : PlatformAppiumHelper {
                 if (config.includeWsUrl) {
                     add("-Dappium.ws.url=ws://127.0.0.1:${ports.ws}")
                 }
+                ports.filesystemHttp?.let { add("-Dappium.filesystem.url=http://127.0.0.1:$it") }
                 add("-Dappium.session.file=${sessionFile.canonicalPath}")
+                protectedStoreLibrary?.let {
+                    require(platform == DesktopTestPlatform.Linux) { "Credential executable fixture requires Linux" }
+                    add("-Dappium.protected.storage.library=$it")
+                }
                 add("-Djava.util.prefs.userRoot=${prefsDir.canonicalPath}")
                 add("-Dapp.protected.storage.dir=${File(prefsDir, "protected-storage").canonicalPath}")
                 if (platform == DesktopTestPlatform.Linux) {

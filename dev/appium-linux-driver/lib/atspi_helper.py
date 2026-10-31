@@ -7,6 +7,8 @@ import sys
 import json
 import base64
 import time
+import re
+import subprocess
 import pyatspi
 
 
@@ -28,10 +30,47 @@ class ApplicationGroup:
 
 def get_app(app_pid):
     desktop = pyatspi.Registry.getDesktop(0)
-    applications = [app for app in desktop if app and app.get_process_id() == app_pid]
+    providers = [app for app in desktop if app]
+    applications = [app for app in providers if app.get_process_id() == app_pid]
     if not applications:
         return None
+    # XDG choosers live in a separate, shared portal process. Admit only an
+    # unambiguous top-level window with a native transient owner in this app.
+    dialog_pids = owned_dialog_processes(app_pid)
+    for app in providers:
+        if app.get_process_id() not in dialog_pids:
+            continue
+        dialogs = [child for child in app if child and
+                   child.getState().contains(pyatspi.STATE_SHOWING)]
+        if len(dialogs) == 1:
+            applications.append(dialogs[0])
     return applications[0] if len(applications) == 1 else ApplicationGroup(applications)
+
+
+def read_windows():
+    result = subprocess.run(['xprop', '-root', '_NET_CLIENT_LIST'],
+                            capture_output=True, text=True, check=True)
+    windows = []
+    for xid in re.findall(r'0x[0-9a-fA-F]+', result.stdout):
+        properties = subprocess.run(
+            ['xprop', '-id', xid, '_NET_WM_PID', 'WM_TRANSIENT_FOR'],
+            capture_output=True, text=True, check=True).stdout
+        pid = re.search(r'_NET_WM_PID\(CARDINAL\) = (\d+)', properties)
+        parent = re.search(r'WM_TRANSIENT_FOR\(WINDOW\): window id # (0x[0-9a-fA-F]+)', properties)
+        if pid:
+            windows.append((int(xid, 16), int(pid[1]), int(parent[1], 16) if parent else None))
+    return windows
+
+
+def owned_dialog_processes(app_pid):
+    try:
+        windows = read_windows()
+    except (OSError, subprocess.SubprocessError):
+        return set()
+    owners = {xid for xid, pid, _ in windows if pid == app_pid}
+    candidates = {pid for _, pid, parent in windows if pid != app_pid and parent in owners}
+    # A shared portal with other windows is ambiguous; never expose their UI.
+    return {pid for pid in candidates if sum(owner == pid for _, owner, _ in windows) == 1}
 
 
 def node_identity(node):

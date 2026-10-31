@@ -75,6 +75,7 @@ import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -229,6 +230,7 @@ private fun TopicComposeInternal(
 
 @Composable
 private fun TopicComposeSubmitButton(input: String, data: TopicComposeData, backPrePage: () -> Unit) {
+    if (LocalUserInfo.current?.status != UserStatus.NORMAL) return
     val alertDialogController = rememberAlertDialogController()
     CustomAlertDialog(alertDialogController, alertDialogController::close) {}
     if (data is TopicComposeData.PublicRoom) {

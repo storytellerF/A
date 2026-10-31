@@ -40,6 +40,8 @@ import com.storyteller_f.storage.UploadStatus
 import io.github.aakira.napier.Napier
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -51,9 +53,33 @@ interface Uploader {
 
     fun resume(pathHash: String)
     fun pause(pathHash: String)
+
+    suspend fun forget(pathHash: String)
 }
 
-class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister) : Uploader {
+class UploaderImpl(
+    val uiViewModel: UIViewModel,
+    val taskRegister: TaskRegister,
+    private val retainSelectedFiles: Boolean = false,
+    private val persistTransportProgress: Boolean = true,
+) : Uploader {
+    private val selectedFiles = mutableMapOf<String, ClientFile>()
+    private val selectedFilesMutex = Mutex()
+
+    override suspend fun forget(pathHash: String) {
+        selectedFilesMutex.withLock { selectedFiles.remove(pathHash) }
+    }
+
+    private suspend fun releaseCompletedFile(
+        modelStorage: ModelStorage,
+        collection: UploadCollection,
+        pathHash: String,
+    ) {
+        if (!retainSelectedFiles) return
+        val record = modelStorage.upload.getDocument(collection, pathHash)
+        if (record == null || record.status == UploadStatus.SUCCESS) forget(pathHash)
+    }
+
     override fun upload(clipData: ImmutableList<ClientFile>) {
         if (clipData.isEmpty()) {
             return
@@ -71,8 +97,11 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         val userSession = instance.sessionManager
         clipData.forEach {
             taskRegister.lockTask(md5(it.path)) {
+                val pathHash = md5(it.path)
+                if (retainSelectedFiles) selectedFilesMutex.withLock { selectedFiles[pathHash] = it }
                 try {
                     uploadIfNeed(userSession, myUid, it, modelStorage, UploadCollection(myUid))
+                    releaseCompletedFile(modelStorage, UploadCollection(myUid), pathHash)
                 } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                     throw cancellation
                 } catch (e: Exception) {
@@ -95,6 +124,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
         taskRegister.lockTask(pathHash) {
             try {
                 resumeIfNeed(modelStorage, myUid, pathHash, userSession, UploadCollection(myUid))
+                releaseCompletedFile(modelStorage, UploadCollection(myUid), pathHash)
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
             } catch (e: Exception) {
@@ -133,7 +163,8 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             }
             return
         }
-        val clientFile = getClientFile(uploadInfo.path) ?: return
+        val clientFile =
+            selectedFilesMutex.withLock { selectedFiles[pathHash] } ?: getClientFile(uploadInfo.path) ?: return
         upload(userSession, myUid, clientFile, UploadContext(modelStorage, collection, pathHash, uploadInfo))
     }
 
@@ -208,16 +239,18 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             uploadChunked(userSession, objectTuple, clientFile, modelStorage, uploadInfo, fileSha256)
             return
         }
+        val progress =
+            UploadProgressWriter(clientFile.size) { sent ->
+                updateUploadInfo(modelStorage, collection, pathHash) { it.copy(progress = sent) }
+            }
         userSession.upload(
             objectTuple,
             clientFile.getUploadDataFromClipFile(fileSha256),
-        ) { p, _ ->
-            updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(progress = p)
-            }
+        ) { sent, _ ->
+            if (persistTransportProgress) progress.update(sent)
         }.onSuccess {
             updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(status = UploadStatus.SUCCESS)
+                it.copy(status = UploadStatus.SUCCESS, progress = it.total)
             }
         }.onFailure { throwable ->
             updateUploadInfo(modelStorage, collection, pathHash) {
@@ -251,7 +284,7 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
             userSession.completeChunkUpload(it)
         }.onSuccess {
             updateUploadInfo(modelStorage, collection, pathHash) {
-                it.copy(status = UploadStatus.SUCCESS)
+                it.copy(status = UploadStatus.SUCCESS, progress = it.total)
             }
         }.onFailure { throwable ->
             updateUploadInfo(modelStorage, collection, pathHash) {
@@ -325,10 +358,14 @@ class UploaderImpl(val uiViewModel: UIViewModel, val taskRegister: TaskRegister)
                     // skip already uploaded chunks by index
                     if (!uploadedIndices.contains(index)) {
                         val hash = sha256(buf.peek())
-                        userSession.uploadChunk(uploadRecordId, index, buf, hash) { p, _ ->
-                            updateUploadInfo(modelStorage, collection, pathHash) {
-                                it.copy(progress = currentSent + p)
+                        val progress =
+                            UploadProgressWriter(count) { sent ->
+                                updateUploadInfo(modelStorage, collection, pathHash) {
+                                    it.copy(progress = currentSent + sent)
+                                }
                             }
+                        userSession.uploadChunk(uploadRecordId, index, buf, hash) { sent, _ ->
+                            if (persistTransportProgress) progress.update(sent)
                         }.getOrThrow()
                         currentSent += count
                         updateUploadInfo(modelStorage, collection, pathHash) {

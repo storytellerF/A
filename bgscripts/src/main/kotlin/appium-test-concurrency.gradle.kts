@@ -8,7 +8,7 @@ plugins {
 
 val platform = when (project.name) {
     "androidAppium" -> "android"
-    "desktopAppium" -> "desktop"
+    "desktopAppium", "linuxAppium" -> "desktop"
     "wasmAppium" -> "browser"
     else -> error("Unsupported Appium runner: ${project.path}")
 }

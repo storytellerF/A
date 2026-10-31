@@ -12,16 +12,90 @@ class DesktopAppiumTest :
         DesktopAppiumHelper(),
     ) {
     @Test
-    fun `test explicit sign in and sign out survive restart`() = testSignoutPersistenceByHelper()
+    fun `test native download cancellation returns to file preview`() = testNativeDownloadCancellation()
 
     @Test
-    fun `test child sign in stays in memory across restart`() = testChildSigninByHelper()
+    fun `test open source libraries shows bundled dependencies`() = testProjectLibraries()
+
+    @Test
+    fun `test image fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.IMAGE, topic = true)
+
+    @Test
+    fun `test image fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.IMAGE,
+            topic = false,
+        )
+
+    @Test
+    fun `test audio fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.AUDIO, topic = true)
+
+    @Test
+    fun `test audio fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.AUDIO,
+            topic = false,
+        )
+
+    @Test
+    fun `test video fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.VIDEO, topic = true)
+
+    @Test
+    fun `test video fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.VIDEO,
+            topic = false,
+        )
+
+    @Test
+    fun `test pdf fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.PDF, topic = true)
+
+    @Test
+    fun `test pdf fullscreen preview from uploaded file list`() = testUploadedPreview(PreviewFile.PDF, topic = false)
+
+    @Test
+    fun `test unsupported file shows download details from topic attachment`() =
+        testUploadedPreview(
+            PreviewFile.BINARY,
+            topic = true,
+        )
+
+    @Test
+    fun `test unsupported file shows download details from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.BINARY,
+            topic = false,
+        )
+
+    @Test
+    fun `test community exit and rejoin persist membership`() = testCommunityMembershipByHelper()
+
+    @Test
+    fun `test topic comment persists author parent and reentry`() = testTopicCommentByHelper()
+
+    @Test
+    fun `test invalid private key retains guest after restart`() = testInvalidKeyByHelper()
+
+    @Test
+    fun `test unknown private key rejects login and retains guest after restart`() = testUnknownKeyByHelper()
+
+    @Test
+    fun `test private room reading decrypts preview and clears unread`() = testActivityReadByHelper(privateRoom = true)
+
+    @Test
+    fun `test private room sending updates decrypted preview`() = testActivitySendByHelper(privateRoom = true)
+
+    @Test
+    fun `test signed out state survives restart`() = testSignoutPersistenceByHelper()
+
+    @Test
+    fun `test child switch is process local and restart restores parent`() = testChildSigninByHelper()
 
     @Test
     fun `test sign in survives restart and revocation requires explicit login`() = testSigninLifecycleByHelper()
 
     @Test
-    fun `test sign up`() = testSignUpByHelper()
+    fun `test sign up identity and session survive restart`() = testSignUpByHelper()
 
     @Test
     fun `test sign in as system user`() = testSignInAsSystemUserByHelper()
@@ -42,13 +116,34 @@ class DesktopAppiumTest :
     fun `test subscribe topic from community page`() = testSubscribeTopicByHelper()
 
     @Test
-    fun `test community profile actions from joined community`() = testCommunityProfileActionsByHelper()
+    fun `test community favorite toggle persists across navigation`() = testCommunityFavoriteByHelper()
+
+    @Test
+    fun `test community subscription toggle persists across navigation`() = testCommunitySubscriptionByHelper()
+
+    @Test
+    fun `test community member opens the selected profile`() = testCommunityMemberByHelper()
 
     @Test
     fun `test publish topic in joined community`() = testPublishTopicInCommunityByHelper()
 
     @Test
-    fun `test activity previews track reading sending and navigation`() = testActivityPreviewByHelper()
+    fun `test activity layout preserves preview and unread across sizes`() = testActivityLayoutByHelper()
+
+    @Test
+    fun `test room draft survives viewport resizing`() = testActivityDraftByHelper()
+
+    @Test
+    fun `test activity context opens room and pinned topic`() = testActivityContextByHelper()
+
+    @Test
+    fun `test reading activity clears unread`() = testActivityReadByHelper()
+
+    @Test
+    fun `test sending updates persisted activity preview`() = testActivitySendByHelper()
+
+    @Test
+    fun `test activity room navigation preserves latest message`() = testActivityNavigationByHelper()
 
     @Test
     fun `test room refresh clears unread after another session reads`() = testRoomActivityRefreshByHelper()

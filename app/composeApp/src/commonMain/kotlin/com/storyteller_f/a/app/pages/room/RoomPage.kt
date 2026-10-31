@@ -155,6 +155,7 @@ import com.storyteller_f.shared.obj.UpdateUserRead
 import com.storyteller_f.shared.obj.ob
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.checkContent
 import io.github.aakira.napier.Napier
 import kotlinx.coroutines.CoroutineScope
@@ -338,6 +339,7 @@ private fun RoomInputGroupInternal(
     updateInput: (String) -> Unit,
 ) {
     val myInfo = LocalUserInfo.current
+    val canWrite = myInfo?.status == UserStatus.NORMAL && roomInfo.isJoined && !roomInfo.readOnly
     val mediaTarget =
         if (roomInfo.isPrivate) {
             ObjectTuple(roomInfo.id, ObjectType.ROOM)
@@ -362,11 +364,11 @@ private fun RoomInputGroupInternal(
             RoomInputTopContent(roomInfo)
         },
         {
-            if (roomInfo.isJoined && !roomInfo.readOnly) {
+            if (canWrite) {
                 RoomSendButton(input, roomInfo, parentTarget, controller, scrollToNew)
             }
         },
-        enabled = roomInfo.isJoined && !roomInfo.readOnly,
+        enabled = canWrite,
     )
 }
 
@@ -445,6 +447,7 @@ fun RoomSendButton(
     controller: CustomAlertDialogController,
     scrollToNew: () -> Unit,
 ) {
+    if (LocalUserInfo.current?.status != UserStatus.NORMAL || roomInfo.readOnly) return
     val toasterState = LocalToaster.current
     val scope = rememberCoroutineScope()
     val uiViewModel = LocalUiViewModel.current

@@ -6,6 +6,8 @@ package com.storyteller_f.a.app
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
@@ -13,6 +15,9 @@ import com.storyteller_f.a.app.App
 import com.storyteller_f.a.app.IAccountInstance
 import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.UIViewModel
+import com.storyteller_f.a.app.common.Downloader
+import com.storyteller_f.a.app.common.SimpleTaskRegister
+import com.storyteller_f.a.app.common.UploaderImpl
 import com.storyteller_f.a.app.getWasmServerUrl
 import com.storyteller_f.a.app.getWasmWsServerUrl
 import com.storyteller_f.a.client.compose_core.components.ConstPlayItem
@@ -40,24 +45,49 @@ fun main() {
         val httpUrl = wasmQueryParameter("appiumHttpUrl") ?: getWasmServerUrl()
         val wsUrl = wasmQueryParameter("appiumWsUrl") ?: getWasmWsServerUrl()
         val uiViewModel = remember(httpUrl, wsUrl) { UIViewModel(MainScope(), wsUrl, httpUrl) }
+        val account by uiViewModel.instance.collectAsState()
+        val fileProvider =
+            remember(uiViewModel, account) {
+                val uploader =
+                    UploaderImpl(
+                        uiViewModel,
+                        SimpleTaskRegister(account.accountScope),
+                        retainSelectedFiles = true,
+                        // Fetch consumes the request body before transmission; report acknowledged chunks instead.
+                        persistTransportProgress = false,
+                    )
+                object : ClientFileProvider {
+                    override suspend fun getDownloader(): Downloader? = null
+                    override suspend fun getUploader() = uploader
+                }
+            }
         LaunchedEffect(uiViewModel) {
             if (window.location.search.contains("appium=true")) {
-                uiViewModel.instance.collectLatest { instance ->
-                    localStorage.setItem(
-                        "appium.session_ready",
-                        (instance !is IAccountInstance.None).toString(),
-                    )
-                }
+                publishAppiumSessionReady(uiViewModel)
             }
         }
         CompositionLocalProvider(
             LocalUiViewModel provides uiViewModel,
+            LocalClientFileProvider provides fileProvider,
             LocalMediaPlayerService provides WasmMediaPlayerService,
         ) {
             App()
         }
     }
 }
+
+private suspend fun publishAppiumSessionReady(uiViewModel: UIViewModel) {
+    uiViewModel.instance.collectLatest { instance ->
+        localStorage.setItem(APPIUM_SESSION_READY_KEY, "false")
+        if (instance !is IAccountInstance.None) {
+            instance.sessionManager.model.userHandler.data.collectLatest { user ->
+                localStorage.setItem(APPIUM_SESSION_READY_KEY, (user != null).toString())
+            }
+        }
+    }
+}
+
+private const val APPIUM_SESSION_READY_KEY = "appium.session_ready"
 
 private object WasmMediaPlayerService : MediaPlayerService() {
     override val enablePip = false

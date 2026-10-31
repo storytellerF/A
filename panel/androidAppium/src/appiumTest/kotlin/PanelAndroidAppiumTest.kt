@@ -19,4 +19,7 @@ class PanelAndroidAppiumTest :
 
     @Test
     fun `test panel sign in by injected private session`() = testPanelInjectedSessionByHelper()
+
+    @Test
+    fun `test panel uploaded video preview renders and returns`() = testAndroidPanelVideoPreview()
 }

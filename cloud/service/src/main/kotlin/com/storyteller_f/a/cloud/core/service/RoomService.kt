@@ -21,6 +21,7 @@ import com.storyteller_f.a.backend.core.PaginationResult
 import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.ROOM_NAME_LENGTH
 import com.storyteller_f.a.backend.core.UnauthorizedException
+import com.storyteller_f.a.backend.core.fixedSort
 import com.storyteller_f.a.backend.core.idListFetch
 import com.storyteller_f.a.backend.core.mapPagingResultNotNull
 import com.storyteller_f.a.backend.core.service.MemberDocument
@@ -270,6 +271,8 @@ suspend fun Backend.updateRoom(
     }.andThenPresent(RoomError::fromError) {
         database.room.updateRoom(id, newUpdate)
     }.andThenPresent(RoomError::fromError) {
+        if (newUpdate.name == null) CustomResult.success(Unit) else refreshRoomSearch(id)
+    }.andThenPresent(RoomError::fromError) {
         getRoomInfo(IdFetch(id), uid, true)
     }.mapError(RoomError::fromError)
 }
@@ -436,7 +439,7 @@ suspend fun Backend.searchCommunityRooms(
         ).mapPagingResultNotNull(RoomError::fromError) { searchResults ->
             val roomIds = searchResults.map { it.objectId }
             // 过滤出属于该社区的房间
-            database.room.getRawRooms(idListFetch(roomIds), uid)
+            getOrderedSearchRooms(roomIds, uid)
         }
     } else {
         // word 不为空 && 不是搜索已加入（Unspecified），使用 roomSearchService
@@ -446,7 +449,7 @@ suspend fun Backend.searchCommunityRooms(
         ).mapPagingResultNotNull(RoomError::fromError) { list ->
             val roomIds = list.map { it.id }
             // 过滤出属于该社区的房间
-            database.room.getRawRooms(idListFetch(roomIds), uid)
+            getOrderedSearchRooms(roomIds, uid)
         }
     }.mapPagingResultNotNull(RoomError::fromError) { list ->
         processRawRoomToRoomInfo(list)
@@ -471,7 +474,7 @@ suspend fun Backend.searchCurrentUserRooms(
         MemberDocumentSearch.RoomMembers(uid = uid, objectName = word, fetch = primaryKeyFetch),
     ).mapPagingResultNotNull(RoomError::fromError) { searchResults ->
         val roomIds = searchResults.map { it.objectId }
-        database.room.getRawRooms(idListFetch(roomIds), uid)
+        getOrderedSearchRooms(roomIds, uid)
     }.mapPagingResultNotNull(RoomError::fromError) { list ->
         processRawRoomToRoomInfo(list)
     }.mapError(RoomError::fromError)
@@ -500,3 +503,8 @@ suspend fun Backend.getRoomMemberInfos(
         }
     }.mapError(RoomError::fromError)
 }
+
+private suspend fun Backend.getOrderedSearchRooms(ids: List<PrimaryKey>, uid: PrimaryKey?) =
+    database.room.getRawRooms(idListFetch(ids), uid).map { rooms ->
+        fixedSort(rooms, ids) { it.room.id }
+    }

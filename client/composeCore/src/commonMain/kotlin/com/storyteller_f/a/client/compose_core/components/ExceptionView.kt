@@ -19,6 +19,7 @@ import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.RichText
 import com.storyteller_f.a.client.compose_core.Res
 import com.storyteller_f.a.client.compose_core.refresh
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.ServerErrorException
 import com.storyteller_f.shared.utils.safeMessage
 import io.ktor.client.network.sockets.*
@@ -40,18 +41,23 @@ fun ExceptionView(throwable: Throwable, modifier: Modifier = Modifier) {
 
                 RichText(state = state, modifier = modifier)
             } else {
-                Text("${throwable.status} ${throwable.text}", modifier)
+                ErrorText("${throwable.status} ${throwable.text}", modifier)
             }
         }
 
         is SocketTimeoutException, is ConnectTimeoutException -> {
-            Text("Timeout", modifier)
+            ErrorText("Timeout", modifier)
         }
 
         else -> {
-            Text(throwable.safeMessage(), modifier)
+            ErrorText(throwable.safeMessage(), modifier)
         }
     }
+}
+
+@Composable
+private fun ErrorText(text: String, modifier: Modifier) {
+    Text(text, modifier.appiumSemantics(text = text))
 }
 
 @Composable

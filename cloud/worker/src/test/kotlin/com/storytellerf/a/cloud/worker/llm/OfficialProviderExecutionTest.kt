@@ -35,6 +35,20 @@ private const val ROUTER_MODEL = "dots-studio/dots-3-note-preview:free"
 
 internal class OfficialProviderExecutionTest {
     @Test
+    fun `compatible provider preserves chat JSON`() =
+        runTest {
+            val request = executeChatProvider(LlmProvider.OPENAI_COMPATIBLE, "/chat/completions")
+            assertEquals("gpt-3.5-turbo", request.body.getValue("model").jsonPrimitive.content)
+            val messages = request.body.getValue("messages").jsonArray.map { it.jsonObject }
+            assertEquals(listOf("system", "user"), messages.map { it.getValue("role").jsonPrimitive.content })
+            assertEquals(
+                listOf("System instruction", "Classify"),
+                messages.map { it.getValue("content").jsonPrimitive.content },
+            )
+            assertChatSchema(request)
+        }
+
+    @Test
     fun `DeepSeek executes native chat requests`() =
         runTest {
             val request = executeChatProvider(LlmProvider.DEEPSEEK, "/chat/completions")

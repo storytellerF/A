@@ -332,13 +332,12 @@ class HomeAdaptiveUiTest {
                     MessagePreview(MessageSummary.Unavailable, "Sample author", "2026-01-01 12:00"),
                 )
             val unread = mutableStateOf<PreviewState<RoomActivityPreview>>(PreviewState.Failed)
-            var opened = 0
             setContent {
                 MaterialTheme {
                     Column(Modifier.requiredSize(300.dp, 600.dp)) {
                         ActivityPreviewSection("Unread", unread.value, {
                             unread.value = PreviewState.Ready(persistentListOf(preview), 1)
-                        }) { RoomActivityPreviewContent(it, open = { opened++ }) }
+                        }) { RoomActivityPreviewContent(it, open = {}) }
                         ActivityPreviewSection("Pinned", PreviewState.Ready(persistentListOf("Pin preview"), 1), {}) {
                             Text(it)
                         }
@@ -349,6 +348,22 @@ class HomeAdaptiveUiTest {
             onAllNodesWithText(getString(Res.string.refresh))[0].performClick()
             onNodeWithText("Pin preview").assertExists()
             onNodeWithText("42").assertExists()
+        }
+
+    @Test
+    fun roomPreviewClickInvokesNavigation() =
+        runComposeUiTest {
+            val room = RoomInfo.EMPTY.copy(id = 42, name = "Room preview")
+            val preview =
+                RoomActivityPreview(
+                    room,
+                    42,
+                    MessagePreview(MessageSummary.Unavailable, "Sample author", "2026-01-01 12:00"),
+                )
+            var opened = 0
+            setContent {
+                MaterialTheme { RoomActivityPreviewContent(preview, open = { opened++ }) }
+            }
             onNodeWithText("Room preview").performClick()
             runOnIdle { assertEquals(1, opened) }
         }

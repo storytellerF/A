@@ -30,6 +30,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.Res
@@ -45,6 +48,7 @@ import com.storyteller_f.a.client.compose_core.components.CustomIcon
 import com.storyteller_f.a.client.compose_core.components.FileIcon
 import com.storyteller_f.a.client.compose_core.components.IconRes
 import com.storyteller_f.a.client.compose_core.components.setText
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.model.checkMediaFileDimensionRatioMatch
@@ -59,14 +63,15 @@ import kotlin.time.ExperimentalTime
 fun FileCell(fileInfo: FileInfo?, requiredDimension: Dimension? = null, clickItem: (List<FileInfo>) -> Unit) {
     if (fileInfo != null) {
         var expanded by remember { mutableStateOf(false) }
-
+        val labels = CreateFileCellLabels(fileInfo, requiredDimension)
+        val click = { clickItem(listOf(fileInfo)) }
+        val expand = { expanded = true }
         Row(
             modifier =
-            Modifier.fillMaxWidth().combinedClickable(onLongClick = {
-                expanded = true
-            }) {
-                clickItem(listOf(fileInfo))
-            },
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+                contentDescription = labels.describe(fileInfo.name)
+            }.appiumSemantics(text = fileInfo.name, onClick = click, onLongClick = expand)
+                .combinedClickable(role = Role.Button, onLongClick = expand, onClick = click),
         ) {
             FileIcon(fileInfo)
             Spacer(modifier = Modifier.width(20.dp))
@@ -74,27 +79,16 @@ fun FileCell(fileInfo: FileInfo?, requiredDimension: Dimension? = null, clickIte
                 Text(fileInfo.name, style = MaterialTheme.typography.labelMedium)
                 Spacer(modifier = Modifier.height(10.dp))
                 Row {
-                    Text(fileInfo.lastModified.formatTime(), style = MaterialTheme.typography.labelSmall)
+                    Text(labels.modified, style = MaterialTheme.typography.labelSmall)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text(HumanReadable.fileSize(fileInfo.size), style = MaterialTheme.typography.labelSmall)
+                    Text(labels.size, style = MaterialTheme.typography.labelSmall)
                 }
-                if (fileInfo.contentType.startsWith("image")) {
+                labels.dimension?.let { dimension ->
                     Spacer(modifier = Modifier.height(5.dp))
-                    fileInfo.dimension?.let { dimension ->
-                        Text(
-                            stringResource(Res.string.image_dimension, dimension.width, dimension.height),
-                            style = MaterialTheme.typography.labelSmall,
-                        )
-                        if (requiredDimension != null &&
-                            !checkMediaFileDimensionRatioMatch(dimension, requiredDimension)
-                        ) {
-                            Text(
-                                stringResource(Res.string.image_requires_crop_hint),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                        }
-                    }
+                    Text(dimension, style = MaterialTheme.typography.labelSmall)
+                }
+                labels.warning?.let { warning ->
+                    Text(warning, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -102,6 +96,31 @@ fun FileCell(fileInfo: FileInfo?, requiredDimension: Dimension? = null, clickIte
             expanded = it
         }, fileInfo)
     }
+}
+
+private data class FileCellLabels(
+    val modified: String,
+    val size: String,
+    val dimension: String?,
+    val warning: String?,
+) {
+    fun describe(name: String) = listOfNotNull(name, modified, size, dimension, warning).joinToString(", ")
+}
+
+@OptIn(ExperimentalTime::class)
+@Composable
+private fun CreateFileCellLabels(file: FileInfo, requiredDimension: Dimension?): FileCellLabels {
+    val dimension = file.dimension?.takeIf { file.contentType.startsWith("image/") }
+    val dimensionText = dimension?.let { stringResource(Res.string.image_dimension, it.width, it.height) }
+    val warning =
+        if (dimension != null && requiredDimension != null &&
+            !checkMediaFileDimensionRatioMatch(dimension, requiredDimension)
+        ) {
+            stringResource(Res.string.image_requires_crop_hint)
+        } else {
+            null
+        }
+    return FileCellLabels(file.lastModified.formatTime(), HumanReadable.fileSize(file.size), dimensionText, warning)
 }
 
 @Composable

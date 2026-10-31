@@ -574,11 +574,9 @@ fun EditableImageBlock(block: ContentBlock.ImageBlock, isFocused: Boolean) {
  */
 @Composable
 fun EditableObjectBlock(block: ContentBlock.ObjectBlock, isFocused: Boolean) {
-    val name = block.contentType ?: "Embedded Object"
-
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
         Text(
-            text = "$name: ${block.title ?: block.name}",
+            text = block.title ?: block.name.ifBlank { "Embedded Object" },
             style = MaterialTheme.typography.bodyMedium,
         )
         if (isFocused) {

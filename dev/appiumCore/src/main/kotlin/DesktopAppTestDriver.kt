@@ -10,10 +10,13 @@ import io.appium.java_client.remote.AppiumWebElement
 import org.openqa.selenium.By
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.support.ui.WebDriverWait
-import java.io.File
 import java.time.Duration
 
-class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: Long? = null) : AppTestDriver {
+class DesktopAppTestDriver internal constructor(
+    private val driver: AppiumDriver,
+    private val report: AppiumTestReport,
+    windowsProcessId: Long? = null,
+) : AppTestDriver {
     private val platform = DesktopTestPlatform.current()
     private val windows =
         if (platform == DesktopTestPlatform.Windows) {
@@ -28,6 +31,32 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
             DesktopTestPlatform.Linux -> "name"
         }
     private val valueAttribute = if (platform == DesktopTestPlatform.Windows) "Value" else "value"
+    suspend fun cancelNativeSaveDialog() {
+        if (platform == DesktopTestPlatform.Mac) {
+            findMacSaveControl("OKButton")
+            findMacSaveControl("CancelButton")
+            report.captureSnapshot(driver, "native-save-dialog")
+            clickElement { findMacSaveControl("CancelButton") }
+            WebDriverWait(driver, Duration.ofSeconds(1)).until {
+                driver.findElements(AppiumBy.accessibilityId("save-panel")).isEmpty()
+            }
+            return
+        }
+        assertVisibleByText("Save")
+        assertVisibleByText("Cancel")
+        report.captureSnapshot(driver, "native-save-dialog")
+        clickByText("Cancel")
+        assertNotVisibleByText("Save", timeoutSeconds = 1)
+    }
+
+    private fun findMacSaveControl(identifier: String): org.openqa.selenium.WebElement =
+        WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
+            // AppKit also exposes off-screen Touch Bar duplicates; use the actual save panel.
+            driver.findElements(AppiumBy.accessibilityId("save-panel")).singleOrNull()
+                ?.findElements(AppiumBy.accessibilityId(identifier))?.singleOrNull()
+                ?.takeIf { it.isDisplayed && it.isEnabled }
+        }
+
     suspend fun assertAsciidocPreviewOpened() {
         assertVisibleByDescription("close preview")
     }
@@ -70,7 +99,9 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                 val element = findElement()
                 // Semantics can appear before a navigation animation settles.
                 val bounds = element.rect
-                val ready = bounds == previousBounds && element.isDisplayed && element.isEnabled
+                val ready =
+                    bounds.width > 0 && bounds.height > 0 &&
+                        bounds == previousBounds && element.isDisplayed && element.isEnabled
                 previousBounds = bounds
                 if (!ready) return@until null
                 performElementClick(element, textTarget)
@@ -154,11 +185,8 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
                     .flatMap { driver.findElements(By.className(it)) }.lastOrNull()
                     ?: throw org.openqa.selenium.NoSuchElementException("No macOS text editor is available")
             }
-        // Send physical keys to the focused app; targeting the editor resolves its hierarchy for every key.
-        driver.executeScript(
-            "macos: keys",
-            mapOf("keys" to buildMacTextKeys(text)),
-        )
+        // Mac2 sends this string through XCTest typeText, preserving native keyboard input.
+        editor.sendKeys(text.replace("\r\n", "\n"))
         WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS)).until {
             editor.getAttribute("value")?.replace("\r\n", "\n") == text.replace("\r\n", "\n")
         }
@@ -166,6 +194,16 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
 
     override suspend fun assertVisibleByDescription(description: String) {
         findDescriptionElement(description)
+    }
+
+    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
+        val locator =
+            if (platform == DesktopTestPlatform.Mac) {
+                AppiumBy.iOSNsPredicateString(macTextPredicate(description, false))
+            } else {
+                By.xpath("//*[${namePredicate(description)}]")
+            }
+        assertNotVisible(locator, timeoutSeconds)
     }
 
     override suspend fun assertVisibleByText(text: String) {
@@ -278,10 +316,7 @@ class DesktopAppTestDriver(private val driver: AppiumDriver, windowsProcessId: L
     }
 
     override suspend fun saveSnapshot(name: String) {
-        val outputDir = File("build/test/appium-debug/DesktopAppiumTest")
-        outputDir.mkdirs()
-        val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        File(outputDir, "$safeName.xml").writeText(checkNotNull(driver.pageSource) { "Appium returned no page source" })
+        report.captureSnapshot(driver, name)
     }
 
     companion object {
@@ -300,12 +335,6 @@ internal fun buildWindowsTextActions(text: String): List<Map<String, Any>> =
 /** AT-SPI may append comma-separated suffix labels, including an empty badge suffix. */
 internal fun matchesDesktopLabel(name: String, label: String): Boolean =
     name == label || name.split(", ").any { it == label }
-
-internal fun buildMacTextKeys(text: String): List<Any> =
-    listOf(mapOf("key" to "a", "modifierFlags" to 16), "XCUIKeyboardKeyDelete") +
-        text.replace("\r\n", "\n").codePoints().toArray().map { code ->
-            if (code == 10) "XCUIKeyboardKeyReturn" else String(Character.toChars(code))
-        }
 
 internal fun macPredicateLiteral(value: String): String {
     val escaped =

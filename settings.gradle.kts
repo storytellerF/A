@@ -53,6 +53,7 @@ include(":dev:e2eCore")
 include(":dev:appiumCore")
 include(":app:androidAppium")
 include(":app:desktopAppium")
+include(":app:linuxAppium")
 include(":app:wasmAppium")
 include(":panel:androidAppium")
 include(":panel:desktopAppium")
@@ -107,6 +108,15 @@ include(":panel:benchmark")
 include(":app:benchmark")
 
 includeBuild("bgscripts")
+
+// Preserve rapid CLI input until upstream Mosaic provides a lossless event queue.
+// https://github.com/JakeWharton/mosaic/issues/1241
+includeBuild("dev/mosaicInputRuntime") {
+    dependencySubstitution {
+        substitute(module("com.jakewharton.mosaic:mosaic-tty-terminal")).using(project(":"))
+        substitute(module("com.jakewharton.mosaic:mosaic-tty-terminal-jvm")).using(project(":"))
+    }
+}
 
 // Wasm-only Skiko source patch; Android/JVM keep their published artifacts.
 includeBuild("dev/skikoMediaRuntime") {

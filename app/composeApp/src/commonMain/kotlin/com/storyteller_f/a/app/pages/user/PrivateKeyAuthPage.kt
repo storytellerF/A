@@ -35,6 +35,7 @@ import com.storyteller_f.a.app.UIViewModel
 import com.storyteller_f.a.app.auth_private_key_subtitle
 import com.storyteller_f.a.app.common.AppNavFactory
 import com.storyteller_f.a.app.error.AccountActionError
+import com.storyteller_f.a.app.invalid_private_key
 import com.storyteller_f.a.app.sign_in
 import com.storyteller_f.a.app.sign_up
 import com.storyteller_f.a.app.start_sign_in
@@ -167,14 +168,15 @@ private fun PrivateKeyAuthContent(
             }) {
                 viewModel.updateEncryptionPrivateKey(it)
             }
-            privateKeyError?.let { error ->
+            if (privateKeyError != null) {
+                val errorText = stringResource(Res.string.invalid_private_key)
                 Text(
-                    text = error,
+                    text = errorText,
                     color = MaterialTheme.colorScheme.error,
                     modifier =
                     Modifier.appiumSemantics(
                         description = "private key error",
-                        text = error,
+                        text = errorText,
                     ),
                 )
             }

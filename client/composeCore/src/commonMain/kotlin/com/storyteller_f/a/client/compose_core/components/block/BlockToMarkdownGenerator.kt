@@ -66,7 +66,6 @@ private fun generateObjectBlockMarkdown(block: ContentBlock.ObjectBlock): String
             name = block.name,
             url = block.url,
             isPlayList = block.isPlaylist,
-            contentType = block.contentType,
             cover = block.cover,
             title = block.title,
         )

@@ -28,6 +28,9 @@ class Node:
     def getChildAtIndex(self, index):
         return self.children[index]
 
+    def __iter__(self):
+        return iter(self.children)
+
     def getState(self):
         return types.SimpleNamespace(contains=lambda state: self.defunct)
 
@@ -115,6 +118,50 @@ class MergedLabelsTest(unittest.TestCase):
 
 
 class ApplicationProvidersTest(unittest.TestCase):
+    def test_xprop_parent_and_process_are_parsed_together(self):
+        outputs = [
+            '_NET_CLIENT_LIST(WINDOW): window id # 0x10, 0x20, 0x30',
+            '_NET_WM_PID(CARDINAL) = 42\nWM_TRANSIENT_FOR: not found.',
+            '_NET_WM_PID(CARDINAL) = 7\nWM_TRANSIENT_FOR(WINDOW): window id # 0x10',
+            '_NET_WM_PID: not found.\nWM_TRANSIENT_FOR(WINDOW): window id # 0x10',
+        ]
+        with unittest.mock.patch.object(helper.subprocess, 'run',
+                side_effect=[types.SimpleNamespace(stdout=value) for value in outputs]):
+            self.assertEqual(helper.read_windows(), [(16, 42, None), (32, 7, 16)])
+
+    def test_owned_portal_dialog_preserves_bus_identity(self):
+        native, dialog = Node('/native'), Node('/dialog')
+        portal = Node('/portal', [dialog])
+        native.get_process_id = lambda: 42
+        portal.get_process_id = lambda: 7
+        dialog.app.bus_name = ':1.9'
+        dialog.getState = lambda: types.SimpleNamespace(contains=lambda state: state == 'showing')
+        with unittest.mock.patch.object(helper.pyatspi, 'Registry',
+                types.SimpleNamespace(getDesktop=lambda _: [native, portal]), create=True):
+            with unittest.mock.patch.object(helper, 'owned_dialog_processes', return_value={7}):
+                group = helper.get_app(42)
+        self.assertEqual(group.children, [native, dialog])
+        self.assertIs(helper.find_by_path(group, ':1.9/dialog'), dialog)
+
+    def test_unrelated_and_ambiguous_portals_are_excluded(self):
+        for windows in [
+            [(10, 42, None), (20, 7, None)],
+            [(10, 42, None), (20, 7, 10), (21, 7, 999)],
+            [(10, 42, None), (20, 7, 999)],
+        ]:
+            with self.subTest(windows=windows):
+                with unittest.mock.patch.object(helper, 'read_windows', return_value=windows):
+                    self.assertEqual(helper.owned_dialog_processes(42), set())
+
+    def test_native_transient_parent_establishes_portal_ownership(self):
+        with unittest.mock.patch.object(helper, 'read_windows',
+                return_value=[(10, 42, None), (20, 7, 10), (30, 8, None)]):
+            self.assertEqual(helper.owned_dialog_processes(42), {7})
+
+    def test_disappearing_window_does_not_expose_foreign_process(self):
+        with unittest.mock.patch.object(helper, 'read_windows', side_effect=OSError('gone')):
+            self.assertEqual(helper.owned_dialog_processes(42), set())
+
     def test_process_providers_preserve_bus_identity(self):
         gtk = Node('/shared')
         native = Node('/shared')

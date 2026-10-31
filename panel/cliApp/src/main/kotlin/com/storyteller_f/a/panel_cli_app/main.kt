@@ -85,13 +85,25 @@ fun sysLogError(s: String, t: Throwable? = null) {
 
 sealed interface Screen {
     data object Main : Screen
-    data object PromptRegister : Screen
-    data object PromptLogin : Screen
+    data class PromptRegister(val pem: String = "") : Screen
+    data class PromptLogin(val pem: String = "") : Screen
     data class UserList(val users: List<UserInfo>) : Screen
     data class CommunityList(val communities: List<CommunityInfo>) : Screen
     data class RoomList(val rooms: List<RoomInfo>) : Screen
     data class Overview(val state: PanelOverview) : Screen
 }
+
+private sealed interface PemEntry {
+    data class Pending(val pem: String) : PemEntry
+    data class Complete(val pem: String) : PemEntry
+}
+
+private fun appendPemLine(previous: String, line: String): PemEntry =
+    when {
+        previous.isEmpty() && !line.startsWith("-----BEGIN ") -> PemEntry.Complete(line)
+        line.startsWith("-----END ") -> PemEntry.Complete(previous + line + "\n")
+        else -> PemEntry.Pending(previous + line + "\n")
+    }
 
 @Suppress("CyclomaticComplexMethod", "LongMethod")
 suspend fun handleInput(
@@ -105,9 +117,9 @@ suspend fun handleInput(
     when (screen) {
         is Screen.Main -> {
             when (line) {
-                "1" -> setScreen(Screen.PromptRegister)
+                "1" -> setScreen(Screen.PromptRegister())
 
-                "2" -> setScreen(Screen.PromptLogin)
+                "2" -> setScreen(Screen.PromptLogin())
 
                 "3" -> {
                     sysLog("Fetching Users...")
@@ -148,7 +160,16 @@ suspend fun handleInput(
         }
 
         is Screen.PromptRegister -> {
-            var pk = line
+            val key =
+                when (val entry = appendPemLine(screen.pem, line)) {
+                    is PemEntry.Pending -> {
+                        setScreen(screen.copy(pem = entry.pem))
+                        return
+                    }
+
+                    is PemEntry.Complete -> entry.pem
+                }
+            var pk = key
             if (pk.isEmpty()) {
                 val algo = getAlgo(AlgoType.P256)
                 pk = algo.generatePemKeyPair().getOrNull()?.first.orEmpty()
@@ -176,13 +197,22 @@ suspend fun handleInput(
         }
 
         is Screen.PromptLogin -> {
+            val key =
+                when (val entry = appendPemLine(screen.pem, line)) {
+                    is PemEntry.Pending -> {
+                        setScreen(screen.copy(pem = entry.pem))
+                        return
+                    }
+
+                    is PemEntry.Complete -> entry.pem
+                }
             try {
                 val algo = getAlgo(AlgoType.P256)
-                val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
-                val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
+                val derPriKey = algo.getDerPrivateKey(key).getOrThrow()
+                val derPubKey = algo.getDerPublicKeyFromPrivateKey(key).getOrThrow()
                 val user =
                     sessionManager.panelSignIn(
-                        AuthKey.P256(line, derPriKey, derPubKey),
+                        AuthKey.P256(key, derPriKey, derPubKey),
                         passHolder,
                     )
                 sysLog("Logged in as: ${user.name}")
@@ -229,8 +259,19 @@ fun App(sessionManager: PanelSessionManager, passHolder: SimplePassHolder, exit:
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
 
     LaunchedEffect(Unit) {
+        var currentScreen: Screen = Screen.Main
         for (line in submitChannel) {
-            handleInput(line, screen, { screen = it }, sessionManager, passHolder, exit)
+            handleInput(
+                line,
+                currentScreen,
+                { next ->
+                    currentScreen = next
+                    screen = next
+                },
+                sessionManager,
+                passHolder,
+                exit,
+            )
         }
     }
 

@@ -7,11 +7,10 @@
 package com.storyteller_f.a.app.rtc
 
 import io.ktor.client.webrtc.MediaTrackFactory
-import io.ktor.client.webrtc.NavigatorMediaDevices
 import io.ktor.client.webrtc.WebRtcMedia
 
 /** Converts browser failures into exceptions understood by the shared call lifecycle. */
-internal class BrowserRtcMediaDevices(private val devices: MediaTrackFactory = NavigatorMediaDevices) :
+internal class BrowserRtcMediaDevices(private val devices: MediaTrackFactory = BrowserTrackFactory) :
     MediaTrackFactory {
     override suspend fun createAudioTrack(constraints: WebRtcMedia.AudioTrackConstraints): WebRtcMedia.AudioTrack =
         acquireBrowserMedia { devices.createAudioTrack(constraints) }

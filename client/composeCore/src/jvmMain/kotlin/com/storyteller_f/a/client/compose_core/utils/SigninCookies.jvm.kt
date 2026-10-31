@@ -7,13 +7,7 @@ package com.storyteller_f.a.client.compose_core.utils
 import com.sun.jna.Platform
 import com.sun.jna.platform.win32.Crypt32Util
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -38,7 +32,7 @@ internal actual suspend fun readProtectedValue(key: String): String? =
                 MacKeychain.read("A-signin", name)
                     ?.let { Base64.decode(it.trim()).decodeToString() }
 
-            else -> readSecret(listOf("secret-tool", "lookup", "application", "A-signin", "account", name))
+            else -> LinuxSecretStore.read(name)
         }
     }
 
@@ -54,11 +48,7 @@ internal actual suspend fun writeProtectedValue(key: String, value: String) =
             Platform.isMac() ->
                 MacKeychain.write("A-signin", name, Base64.encode(value.encodeToByteArray()))
 
-            else ->
-                writeSecret(
-                    listOf("secret-tool", "store", "--label=A sign-in", "application", "A-signin", "account", name),
-                    value,
-                )
+            else -> LinuxSecretStore.write(name, value)
         }
     }
 
@@ -79,47 +69,8 @@ private fun saveProtectedFile(name: String, encrypted: ByteArray) {
 }
 
 private fun credentialName(key: String): String {
-    val scope = System.getProperty("app.protected.storage.dir").takeIf { Platform.isMac() }
+    val scope = System.getProperty("app.protected.storage.dir").takeIf { Platform.isMac() || Platform.isLinux() }
     val scopedKey = if (scope == null) key else "$scope\u0000$key"
     return MessageDigest.getInstance("SHA-256").digest(scopedKey.encodeToByteArray())
         .joinToString("") { "%02x".format(Locale.ROOT, it) }
 }
-
-private suspend fun readSecret(command: List<String>): String? =
-    coroutineScope {
-        val process = ProcessBuilder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-        BufferedOutputStream(process.outputStream).close()
-        val output =
-            async(Dispatchers.IO) {
-                BufferedInputStream(process.inputStream).use { it.readBytes().decodeToString().trimEnd() }
-            }
-        try {
-            withTimeoutOrNull(10_000) { process.onExit().await() }
-                ?: throw java.io.IOException("System credential store timed out")
-            if (process.exitValue() == 0) output.await() else null
-        } finally {
-            if (process.isAlive) process.destroyForcibly()
-            output.cancel()
-        }
-    }
-
-private suspend fun writeSecret(command: List<String>, value: String) =
-    coroutineScope {
-        val process =
-            ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD).start()
-        val input =
-            async(Dispatchers.IO) {
-                BufferedOutputStream(process.outputStream).use { it.write(value.encodeToByteArray()) }
-            }
-        try {
-            withTimeoutOrNull(10_000) {
-                input.await()
-                process.onExit().await()
-            } ?: throw java.io.IOException("System credential store timed out")
-            check(process.exitValue() == 0) { "System credential store unavailable" }
-        } finally {
-            if (process.isAlive) process.destroyForcibly()
-            input.cancel()
-        }
-    }

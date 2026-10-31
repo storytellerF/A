@@ -23,6 +23,8 @@ kotlin {
         wasmJsMain.dependencies {
             implementation(projects.app.composeApp)
             implementation(projects.client.composeCore)
+            implementation(projects.client.core)
+            implementation(projects.shared)
             implementation(libs.ui)
             implementation(libs.components.resources)
         }

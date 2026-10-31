@@ -91,6 +91,7 @@ fun PrivateKeyInput(
                 modifier =
                 Modifier.weight(1f).appiumSemantics(
                     description = address?.let { ACCOUNT_ADDRESS_DESCRIPTION },
+                    text = address,
                 ),
             )
             IconButton({

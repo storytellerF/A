@@ -233,7 +233,7 @@ if [ "$RUN_E2E" = true ]; then
     rm -rf ./panel/desktopAppium/build/test/appium/sessions
     rm -rf ./app/cliE2e/build/test/e2e/sessions
     rm -rf ./panel/cliE2e/build/test/e2e/sessions
-    runGradleWithTests \
+    set -- \
         :app:androidAppium:appiumTest \
         :app:desktopAppium:appiumTest \
         :app:wasmAppium:appiumTest \
@@ -241,8 +241,11 @@ if [ "$RUN_E2E" = true ]; then
         :panel:desktopAppium:appiumTest \
         :panel:wasmAppium:appiumTest \
         :app:cliE2e:e2eTest \
-        :panel:cliE2e:e2eTest \
-        --continue
+        :panel:cliE2e:e2eTest
+    case "${APPIUM_DESKTOP_PLATFORM:-$(uname -s)}" in
+        [Ll][Ii][Nn][Uu][Xx]) set -- "$@" :app:linuxAppium:appiumTest ;;
+    esac
+    runGradleWithTests "$@" --continue
 fi
 
 #./gradlew :composeApp:wasmJsTest

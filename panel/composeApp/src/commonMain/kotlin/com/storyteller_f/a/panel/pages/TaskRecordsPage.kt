@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.CreatePanelTaskRecordsViewModel
@@ -141,7 +142,9 @@ internal fun failureTypeForStatus(status: Boolean?, failureType: String?): Strin
 @Composable
 private fun TaskRecordSummaryItem(summary: TaskRecordSummary, onClick: () -> Unit) {
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier =
+        Modifier.clickable(onClick = onClick)
+            .appiumSemantics(text = summary.type.name, onClick = onClick),
         headlineContent = { Text(summary.type.name) },
         supportingContent = {
             Text(
@@ -217,9 +220,15 @@ private fun TaskRecordHistoryItem(record: TaskRecordInfo, retryRequested: Boolea
         },
         trailingContent = {
             if (!record.isSuccess) {
+                val retry = { onMarkForRetry(record.id) }
                 Button(
                     enabled = !retryRequested,
-                    onClick = { onMarkForRetry(record.id) },
+                    onClick = retry,
+                    modifier =
+                    Modifier.appiumSemantics(
+                        text = if (retryRequested) "Retry requested" else "Retry",
+                        onClick = retry.takeUnless { retryRequested },
+                    ),
                 ) {
                     Text(if (retryRequested) "Retry requested" else "Retry")
                 }

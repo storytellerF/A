@@ -24,7 +24,7 @@ actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassIn
 
     return try {
         val content = BufferedInputStream(injectedFile.inputStream()).use { it.readBytes().decodeToString() }
-        injectedSessionJson.decodeFromString(ConvertedRawUserPassInfo.serializer(), content)
+        injectedSessionJson.decodeFromString<ConvertedRawUserPassInfo>(content)
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
         throw cancellation
     } catch (expected: Exception) {

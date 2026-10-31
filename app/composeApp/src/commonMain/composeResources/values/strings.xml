@@ -14,7 +14,7 @@
     <string name="world">World</string>
     <string name="communities">Communities</string>
     <string name="success">Success</string>
-    <string name="design_spec">Design Spec</string>
+    <string name="source_repository">Source repository</string>
     <string name="private_key">Private Key</string>
     <string name="go_to_sign_up">Go to sign up</string>
     <string name="go_to_sign_in">Go to sign in</string>
@@ -59,7 +59,6 @@
     
     <!-- HomePage strings -->
     <string name="open_source_libraries">Open Source Libraries</string>
-    <string name="download_latest_app">Download latest app</string>
     
     <!-- PreferencePage strings -->
     <string name="translate_model">Translate Model</string>
@@ -178,4 +177,10 @@
     <string name="rtc_permission_required">Allow microphone and camera access in app settings.</string>
     <string name="rtc_open_settings">Open settings</string>
     <string name="rtc_media_failed">Unable to update media. Check your camera and microphone.</string>
+    <string name="invalid_private_key">Invalid private key. Check the PEM format.</string>
+    <string name="download_file">Download</string>
+    <string name="file_saved">File saved</string>
+    <string name="preview_unavailable">Preview unavailable for this file type</string>
+    <string name="library_count">%1$d libraries</string>
+    <string name="download_started">Download started</string>
 </resources>

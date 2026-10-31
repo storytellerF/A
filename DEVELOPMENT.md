@@ -150,24 +150,188 @@ waits for an existing query to complete so an update cannot be dropped while loa
 identifies the unread state in both rail and bottom navigation. Native room cells retain their merged
 content text for assistive technology; the browser test overlay keeps its room-name navigation label.
 
-The `test activity previews track reading sending and navigation` Appium scenario registers two synthetic
-accounts against the isolated real backend and explicitly signs in through the UI. Messages use the
-production WebSocket channel. It verifies the latest summary, exact unread count, room/topic navigation,
-read-marker clearing, keyboard send, updated preview and navigation-badge clearing. The private-room
-variant verifies real encrypted message delivery and client decryption. A separate refresh scenario
-marks the room read through another session, then verifies that UI refresh clears rows and navigation
-together. On wide Android
-viewports it also verifies unread/pinned context; the desktop variant adds repeated narrow/medium/wide/
-short-window resizing and draft retention. Existing room-publication E2E remains compatible. Windows
-viewport changes target the verified test JVM's native window through Appium, with DPI conversion.
+Activity Appium tests use isolated synthetic accounts and the real backend/WebSocket channel.
+Reading/unread clearing, sending/persisted previews, repeated room navigation, context navigation,
+room-list resizing and draft retention each have their own test result and shared fixture setup.
+Private-room read/send cases exercise encrypted delivery and same-account decryption; they do not
+establish authorized cross-user decryption or unauthorized plaintext isolation. A separate refresh
+case marks a room read through another session and verifies UI refresh.
 
-Run `:app:androidAppium:appiumTest --tests '*test activity previews*'` with the usual dev/debug properties
-through the configured Docker test environment and a leased device. Temporary Android size/density,
-power and locale changes must be restored. Desktop acceptance uses the same named test under
-`:app:desktopAppium:appiumTest` after preparing its runtime classpath. It requires an interactive unlocked
-desktop for native keyboard/Escape input; an accessibility tree alone is insufficient. Do not claim
-native desktop or browser acceptance from Android/host results. Keep issue #60 open through review and
-remaining platform checks.
+Desktop and browser runners expose layout/draft cases explicitly. Android's separate wide-context
+case temporarily selects 1920×1080 at 160 dpi and restores the original size/density overrides even
+on failure. Android runs require a lease for the entire invocation. Desktop viewport changes use
+the verified native window and DPI conversion. Desktop keyboard tests need an interactive unlocked
+desktop. Browser cases run sequentially on Chrome, Edge and Firefox; platform executions are not
+independent business contracts.
+
+Run affected cases with `:app:androidAppium:appiumTest`, `:app:desktopAppium:appiumTest` or
+`:app:wasmAppium:appiumTest`, using `--tests '*activity*'`, `--tests '*room draft*'`, `--tests '*private room*'` and the usual
+dev/debug properties. Finish artifact preparation before driving a desktop; do not rebuild shared
+runtime JARs during UI execution. Preserve the separate room-publication and refresh cases.
+
+### Test contract coverage tracked by issue #100
+
+CLI keyboard input uses the source rebuild in `dev/mosaicInputRuntime`. Mosaic 0.18.0's
+terminal event channel drops old events once its 64-event buffer fills, which can truncate
+ordinary pasted PEM keys before the application receives them. The rebuild verifies the
+published source archive's SHA256 and changes that queue to bounded suspending delivery.
+It retains the published native terminal artifacts and Apache license. Upstream tracking:
+[Mosaic #1241](https://github.com/JakeWharton/mosaic/issues/1241). Remove the
+substitution once an upstream release provides lossless event delivery and the CLI login
+and supported-command suites pass with that release. Reaction input also accepts explicit
+Unicode code points (for example `U+2764 U+FE0F`) on terminals limited to ASCII keyboard events.
+
+Windows protected-value integration runs separately with
+`:client:composeCore:windowsProtectedStoreTest` and the usual dev/debug properties. It uses real
+DPAPI encryption and a non-empty directory at the target file to force an actual filesystem
+write failure, verifies the encrypted original and cleans its module-build fixture. Ordinary
+`jvmTest` excludes this platform-specific class; invoking the explicit task on another OS fails
+rather than silently skipping it. This is storage integration, not desktop UI acceptance.
+
+Uploaded files open the same full-page preview from File Explorer's Uploaded list or a topic
+attachment. Images support zoom; audio/video use the platform player; PDF uses the native renderer
+or an in-page browser PDF viewer. Other file types show a download action without pretending to
+render their contents. Upload records continue to describe the upload operation; incomplete local
+files are not preview destinations. The topic attachment action precedes an inline player so a
+large video cannot hide its full-page entry below the current viewport. Native uploaded-file rows
+merge the filename and visible metadata into one actionable accessibility label.
+
+Browser audio playback requires an available default output device. The media host rejects a
+zero-channel destination before awaiting AudioContext.resume, reports a visible playback failure
+and releases the decoder/context. Keep E2E playback-progress assertions: trusted input and allowed
+autoplay alone do not verify audio output availability. Run `node --test client/composeCore/wasm-media-host/*.test.mjs` for this
+failure path and playback/resource lifecycle regressions.
+
+Browser PDF previews fetch the uploaded document anonymously into a same-origin Blob URL. Direct
+cross-origin PDF frames are blocked by the client's cross-origin isolation policy. PdfPreviewHost
+owns the request and resulting URL: retry waits for the previous request to close, navigation
+aborts pending reception, and disposal revokes the URL. The browser tests verify native PDF-viewer
+support, iframe load, full-page bounds and exact document bytes; review the captured rendered page
+as well. Synthetic PDF fixtures include visible text so an empty frame is distinguishable.
+
+Filesystem HTTP exposes anonymous read-only CORS on `/objects/*`, including GET/HEAD preflight
+and missing-object responses. Browser image and download clients can preflight their requests;
+allowing only successful GET responses is insufficient. Mutation preflights are denied and RPC
+routes do not inherit object-read CORS. ObjectDownloadTest covers these boundaries.
+
+Preview downloads use FileKit's native save dialog on Android/desktop and the browser download
+manager on the web. Native transfers stream into the selected destination, close it on all outcomes,
+and verify the received byte count. Cancelling the save dialog does not start a request. Browser
+exports verify the received size before handing bytes to the download manager. Native save-dialog
+cancellation is exercised through the operating system picker and returns to the same preview.
+The success message distinguishes a completed native save from a started browser download. Errors are shown
+through GlobalDialog and failed operations are never replayed automatically.
+
+Attachment object blocks carry names, URLs, cover/title and playlist metadata. Their MIME type comes
+from the resolved FileInfo, so MarkdownObject and ContentBlock.ObjectBlock no longer serialize a
+contentType field. Existing Markdown/JSON with that field remains readable through commonJson's
+unknown-field compatibility. Object generation uses the JSON serializer so quoted filenames remain
+valid. The parser/generator tests now verify legacy decoding, preserved names/URLs and omission of
+the removed field instead of asserting redundant MIME metadata.
+
+The project menu links to the source repository and the bundled open-source library list. Keep
+License.name in AboutLibraries exports: the runtime parser requires it and otherwise returns an
+empty list for the entire document. The page reports loading and errors explicitly and shows the
+number of loaded libraries. The obsolete application-download menu item has been removed.
+
+macOS protected-value integration has an explicit :client:composeCore:macosProtectedStoreTest task.
+Run it only on the exclusively leased test account: it creates a temporary native keychain, verifies
+large Unicode values and locked-keychain write rejection through the production storage boundary,
+and restores the previous default/search keychains and interaction policy before deleting its
+fixture. Ordinary jvmTest excludes this class as well as WindowsProtectedStoreTest. Platform tasks
+fail on the wrong OS instead of silently skipping. The former MacKeychainTest round-trip case
+now runs inside MacProtectedStoreTest on its temporary keychain, including replacement, empty values
+and deletion. Run macosProtectedStoreTest to execute that coverage; ordinary host tests no longer
+discover a macOS-only assumption skip. Guest acceptance runs the host-compiled test
+classes against the guest's real operating-system APIs; no guest compilation is required.
+
+Browser file uploads use the shared uploader owned by the active account scope.
+Coalesce transport progress writes in 256 KiB steps and always persist each request's exact
+end; writing a database transaction for every small network buffer throttles the upload itself.
+Browser Fetch consumes a buffered request body before transmission, so browser progress uses
+server-acknowledged chunks rather than treating body consumption as bytes delivered. Selected
+browser files remain in memory while paused or failed so the same page can resume without
+replaying stored chunks. Successful and aborted uploads release their selected files; leaving
+the account drops that uploader. A page reload cannot reopen a browser-selected file by its
+path, so restart coverage checks completed records rather than promising automatic resume.
+Browser picker fixtures let FileKit create its real file input and use WebDriver to select a
+file through that input. They intercept the native picker opening only; FileKit's change
+handler, shared uploader, storage and HTTP requests all run normally. This does not test an
+operating-system picker dialog or a client download action.
+
+Browser capture owns the entire returned `MediaStream` until a requested track reaches
+the RTC engine. Disable the unused media kind, stop any surplus tracks, and release all
+tracks if cancellation occurs before delivery, including when capture resolves after
+cancellation. A connected peer or visible video element alone does not verify presentation;
+the browser E2E observes actual `requestVideoFrameCallback` callbacks.
+
+This matrix describes source-level coverage, not a record of successful execution. Actual platform
+acceptance comes from the corresponding Gradle results. Partial rows remain open work in issue #100.
+
+| Priority / feature | Contract / test | Platforms | Layer | Status | Coverage boundary |
+| --- | --- | --- | --- | --- | --- |
+| P0 registration | `test sign up identity and session survive restart` | Android, desktop, browsers | E2E | Covered | Identity derived from registration key; restart identity and authenticated publication |
+| P0 account switching | `test child switch is process local and restart restores parent` | Android, desktop | E2E | Covered | Child identity before restart, parent identity after restart; browser has no switch |
+| P0 sign-out | `test signed out state survives restart`; Panel sign-out case | Android, desktop, browsers | E2E | Covered | Signed-out UI after restart; Panel also checks sign-in restart |
+| P0 revocation | App/Panel `test sign in survives restart and revocation requires explicit login` | Android, desktop, browsers | E2E + API assertion | Covered | Old fixture Cookie rejected before/after restart; explicit UI login restores protected operation |
+| P0 activity reading | `test reading activity clears unread` | Android, desktop, browsers | E2E | Covered | Exact initial count, persisted read marker, row and supported navigation badge clearing |
+| P0 activity sending | `test sending updates persisted activity preview` | Android, desktop, browsers | E2E | Covered | UI send, persisted latest text and read count, returned list preview |
+| P0 private activity | Private read/send; authorized-peer and outsider cases in `ClientRoomScenarios` | Android, desktop, browsers | E2E | Covered | Native same-account read/send plus browser authorized-peer decryption, restart and outsider plaintext isolation |
+| P0 permissions | Read-only, nonmember and notification-recipient cases; existing server tests | Browser / server JVM | E2E + API integration | Covered | Actual UI reads and unavailable writes plus Cookie HTTP/WS refusal; notification recipients retain INVITED membership |
+| P0 dual client messages | `test two clients exchange unread messages and retain read state` | Browsers | E2E | Covered | Independent real profiles send/receive, assert exact peer unread/read state and restart persistence |
+| P0 authentication failures | Invalid/unknown key cases; Android protected-write and Linux missing-library cases | Android, desktop, browsers | E2E / integration | Covered | Invalid/unknown keys, Android real protected-write errors and Linux missing-library/process-local switching; Windows DPAPI/filesystem failure and macOS locked-keychain failure use real native storage integration, separate from GUI E2E |
+| P1 community actions | Separate community favorite/subscription toggle and member profile cases | Android, desktop, browsers | E2E | Covered | API persistence, UI state used after navigation, selected member's unique profile content |
+| P1 activity navigation | Repeated room navigation and separate context case | Android, desktop, browsers | E2E | Covered | Android context has an explicit wide fixture |
+| P1 adaptive activity | List layout and draft-resize cases | Desktop, browsers | E2E | Covered | Explicit window matrix; no implicit Android resize coverage |
+| P1 files | `ClientFileScenarios`, existing `FileTest` | Browser / server JVM | E2E + API integration | Covered | Real browser picker, upload bytes/ownership/restart, acknowledged progress, pause/resume without chunk replay, cancel/quota; topic/list download checks exact saved bytes; native save cancellation and transfer unit cases cover their separate boundaries |
+| P1 attachment preview | Separate image/audio/video/PDF/unsupported-file cases in UploadedFileScenarios | Android, desktop, browsers | E2E | Covered | Topic and Uploaded-list entry, actual loaded media/PDF content, return navigation and download action; only uploaded file attachments, excluding Mermaid/math/code blocks |
+| P1 Android video and picture in picture | Inline, playing and paused video cases in AndroidVideoScenarios | Android | E2E | Covered | Actual decoded RGB frames inline, before/inside/after PiP and on re-entry; paused-video exclusion |
+| P1 Android panel video | test panel uploaded video preview renders and returns | Android panel | E2E | Covered | All-files entry, full-screen native decoded frames and return to file details; preview uses the page-owned PlayerView |
+| P1 project menu | Repository and Open Source Libraries cases | Browsers / native library page | E2E + unit | Covered | Repository destination, nonempty generated license data and displayed library count; obsolete app-download entry removed |
+| P1 search/paging | `ClientSearchScenarios`, split search and existing paging tests | Browser / server / client fixtures | E2E / integration / unit | Covered | UI query/server order, observed opaque-token continuation, rename-index replacement and refresh anchor; ordered database hydration preserves index order |
+| P1 community content | Creation/membership/comment cases plus existing publication/favorite/subscription | Android, desktop, browsers | E2E | Covered for supported actions | Browser creation and restart plus native/browser membership and comment persistence; creation updates an already-loaded joined collection; topic editing/deletion are unsupported product actions and excluded from coverage |
+| P1 management | `PanelMutationScenarios` plus existing authentication/navigation | Browsers | E2E | Covered | User status, file status/content, Worker configuration/effect and retry/restart/exact consumption through the real UI and backend |
+| P1 RTC | `ClientRtcScenarios`, native negotiation, capture and signaling tests | Browser / JVM / server | E2E + integration | Covered | Two real browser UIs/signaling/presented frames, mute/hangup, pre-join cancellation and late-capture release; native negotiation and failure/resource tests; synthetic browser media is scoped to RTC |
+| P1 CLI clients | App/Panel contract suites plus original registration smoke tests | Host JVM | E2E | Covered | App/Panel supported list/detail/mutation commands plus invalid-key/guest/menu failures; multiline private keys and actual persisted results |
+| Worker persistence | Four independent Worker persistence cases | Server JVM | Integration | Covered | One Worker type per independently discovered case |
+| Preset import | Separate CLI topic and title cases in `CliTest` | Server JVM | Integration | Covered | Topic content/author and title receiver/scope/description verified separately |
+| Adaptive preview | Retry isolation and `roomPreviewClickInvokesNavigation` | Compose fixtures | UI | Covered | Independent refresh and click results |
+
+Lucene replacement is a generic query-plus-documents RPC operation with one index commit.
+The service validates documents before mutation and rolls back failed writes. Room and member
+adapters declare their own identifier query and pin one RPC proxy for the operation; appending
+an updated document leaves obsolete keyword matches behind.
+
+Server integration fixtures own an explicit Ktor `TestApplication` and stop it in failure-safe
+cleanup before their service containers are removed. The block-based convenience helper only
+reaches its stop call when the block returns normally. Preserve the original failure, including
+cancellation, and attach cleanup failures as suppressed exceptions.
+
+Room renames refresh both room documents and joined-member search documents before the
+update returns. Reindex member pages with the user-key cursor used by the database query,
+and exclude invited or departed memberships. Search refresh fixtures verify index readiness
+before comparing server order; the first fully visible row is the scroll anchor.
+
+Wasm bridge geometry must follow placement as well as composition. Lazy list cache entries
+can stay composed after they are no longer placed; detach their HTML nodes in the unplaced
+callback and restore them on placement. Otherwise old rows remain interactable at stale
+coordinates. Temporarily hide transparent test controls during real WebDriver wheel input so it reaches the underlying
+renderer and require an unobscured pointer target for interactive nodes. Search input has its
+own named selector; generic editor input must resolve one visible non-search editor.
+
+Wasm bridge actions use real WebDriver pointer clicks to retain browser user activation; synthetic
+JavaScript clicks can cause Chromium security failures and stop Compose rendering. Bridge actions
+can leave focus on the document body. Injected-session readiness waits for restored user info,
+not only account-instance creation: that asynchronous result changes avatar/create placement.
+Wait for stable committed layout before resolving pointer targets. The test driver focuses the visible
+Compose canvas (including shadow roots) before sending a real Escape key, then waits for the dialog
+to disappear. Keep the same UI timeout and business assertions; do not substitute a clickable dialog
+surface or invoke dismissal callbacks directly.
+
+Necessary journeys stay together: write/read persistence, sign-in/revocation/recovery and socket
+reconnect without replay. Independent APIs or unrelated transitions must have separate results.
+When selecting tests externally, replace the former combined activity/community-profile and server
+test names with the named contracts above; the normal Gradle test tasks discover all replacement cases.
 
 
 The browser runner now reuses the same public/private activity and cross-session refresh scenarios.
@@ -399,6 +563,7 @@ Desktop E2E helpers select the host platform by default. `APPIUM_DESKTOP_PLATFOR
 - Windows: use Appium 3 with `appium driver install --source=npm appium-desktop-driver@2.8.0`. The helper launches the JDK 21 JVM using a quoted argument file with `appium:javaSwing=false` and operates on Tao's native UIA tree. No Java accessibility agent, bytecode patch, Java Access Bridge or WinAppDriver is needed. Queries use native UIA. Controls settle to visible/stable bounds before activation. Windows uses native focus and Space to activate focusable TabItem controls. Other controls with InvokePattern use DesktopDriver's `windows: invoke` after focus where available; SelectionItemPattern uses `windows: select`. The Tao tab provider exposes InvokePattern and keyboard focus without SelectionItemPattern; focus/Space activation was checked in a real native session. Remaining controls use `windows: hover` (200 ms) followed by `windows: click` (100 ms press). These are standard native UIA/keyboard operations; failed actions are not retried and assertions remain unchanged. Windows back navigation sends native Escape through the existing keyboard interface, allowing the active dialog/navigation dispatcher to consume it first; invoking a background back button can bypass a modal scene layer. Text entry uses native focus/keys. For native non-password Edit controls with an available ValuePattern, the standard Appium extension returns that value through DesktopDriver's existing `windows: getValue` interface. DesktopDriver's TextPattern fallback can return the control caption instead of its typed value. Other controls, passwords and WebView contexts retain their original behavior. The normal Windows Appium extension maps the exact UIA `0x80040201` / `UIA_E_ELEMENTNOTAVAILABLE` code to the standard stale-element response, allowing existing waits to re-locate retired controls. The COM message about event subscribers is misleading for this UIA code; unrelated errors remain unchanged and the extension never retries commands itself. Test assertions and timeout budgets remain unchanged. Child accounts authenticate before being published to the UI or starting protected background requests. Failure/cancellation closes the unpublished account, leaves the previous account active and reports the failure through the existing dialog; publication rejects a superseded account. The account chooser closes when the active account instance changes, so a successful switch cannot leave its modal sheet intercepting the next toolbar click.
 - Linux: use the repository driver with `appium driver install --source=local "$PWD/dev/appium-linux-driver"`. It uses open-source AT-SPI2 through `python3-pyatspi`, `xdotool`, `xdpyinfo`, `gdbus` and GDK 3. The driver enables `org.a11y.Status.IsEnabled` on its desktop session bus before launching the application. A process can register both GTK and AccessKit providers; queries traverse all providers owned by that PID, and element identities include the D-Bus connection plus object path. The driver rejects unavailable or zero-size displays before launching the JVM. Window-size/rectangle commands target the single visible window owned by the launched PID; ambiguous ownership fails rather than resizing the focused desktop window. Screenshots return PNG data from the active X11 display using GDK 3 (`gir1.2-gtk-3.0`). It does not depend on `libstdspalinux.so`. The package is currently tested from source; publishing it is a separate step.
 - Linux driver regression tests: run `npm ci` and `npm test` in `dev/appium-linux-driver`. Element handles retain AT-SPI D-Bus connection/object-path pairs across navigation changes; Click and text-input commands preserve the saved identity; text input resolves that path directly, including when labels change. Missing or defunct targets return a stale-element error, including disappearance during a write. Text-input failures never select another editable control or use cached coordinates; non-stale editable-text failures are reported directly. Lookups respect the WebDriver implicit wait rather than adding a fixed wait. Live geometry, visibility and enabled-state queries resolve the saved identity; the shared helper waits for stable, visible controls inside its existing timeout. Merged room and activity cards expose the room, visible message/metadata and unread count as one complete accessible description. Match complete comma-separated label parts, rather than arbitrary substrings.
+- Linux/X11 file dialogs borrow the live Tao XID through FileKit. XDG portal choosers run outside the application PID: the driver verifies `WM_TRANSIENT_FOR` against application-owned XIDs and admits only a single unambiguous window/provider child. Other portal windows remain excluded. A disappearing window invalidates the lookup; no coordinates or unrelated desktop controls are substituted. Keep portal activation and applications on the test session's accessibility bus; inherited desktop services connected to an older bus can render a dialog without publishing it to the current test tree.
 - `APPIUM_DESKTOP_SERVER_URL` defaults to `http://127.0.0.1:4723`; `APP_DESKTOP_TEST_JAVA` optionally selects the Java executable.
 - Test JVMs use English UI labels, a JVM-local Preferences factory on Windows, and isolated database and protected-storage directories. The launcher records the JVM PID and writes application logs into each test report. Window enumeration/switching uses DesktopDriver's remote interfaces; the project Appium extension validates process/thread ownership and performs DPI-aware native-window resizing on the Appium server. Session cleanup force-closes the test JVM and deletes its PID file. Test helpers never operate on host windows using a remote process ID.
 
@@ -406,7 +571,7 @@ Build `:app:desktopApp:writeAppiumRuntimeClasspath` and `:panel:desktopApp:write
 
 Linux desktop applications use Tao with native X11/Wayland and AT-SPI support. Provide a graphical session, compatible system graphics libraries and WebKitGTK; a headless-only OS image is insufficient. Configure enough desktop space for the test window bounds at the active DPI before running either platform.
 
-For Linux desktop E2E, install `xvfb`, `openbox`, `x11-utils`, `dbus`, `libsecret-tools`, `gnome-keyring`, the Linux driver dependencies above, and Appium on PATH. Authentication scenarios require an unlocked native keyring on the isolated D-Bus session; use an isolated `XDG_DATA_HOME` rather than the personal desktop keyring. Then run:
+For Linux desktop E2E, install `xvfb`, `openbox`, `x11-utils`, `dbus`, `libsecret-1-0`, `libsecret-tools`, `gnome-keyring`, the Linux driver dependencies above, and Appium on PATH. Authentication scenarios require an unlocked native keyring on the isolated D-Bus session; use an isolated `XDG_DATA_HOME` rather than the personal desktop keyring. Then run:
 
 ```bash
 bash scripts/test_scripts/run-linux-desktop-e2e.sh -Pserver.flavor=dev -Pserver.buildType=debug
@@ -571,7 +736,13 @@ Android encrypts records with AES-GCM and an Android Keystore key, committing ci
 SharedPreferences `protected-data`, excluded from cloud backup and device transfer in both Android
 apps because the Keystore key cannot be transferred with it. Windows stores DPAPI ciphertext under `~/.a/protected-storage/`
 using atomic file replacement, avoiding Java Preferences' per-value size limit. macOS stores secrets
-in Keychain through native Security framework calls. This avoids the `security -i` interactive parser’s 4096-byte command limit without placing secret data in process arguments. The existing Base64 payload format remains compatible. When `app.protected.storage.dir` is set, macOS account names include its hashed namespace so independent tests cannot share account history; unset production storage names remain unchanged. Linux uses Secret Service through `secret-tool`, with bounded, cancellable subprocesses.
+in Keychain through native Security framework calls. This avoids the `security -i` interactive parser’s 4096-byte command limit without placing secret data in process arguments. The existing Base64 payload format remains compatible. When `app.protected.storage.dir` is set, macOS account names include its hashed namespace so independent tests cannot share account history; unset production storage names remain unchanged. Linux uses libsecret's binary Secret Service APIs through the existing JNA dependency. Each operation
+runs on IO, owns a `GCancellable`, retains its arguments until cancellation finishes and preserves the
+existing timeout. `secret-tool` silently truncates stdin at 8192 bytes, so it cannot store arbitrary
+account history; see [the upstream reader](https://github.com/GNOME/libsecret/blob/main/tool/secret-tool.c#L248).
+Linux requires libsecret 0.19 or newer. Existing raw UTF-8 values and Secret Service attributes remain
+compatible; no plaintext fallback or replay is added. An explicit `app.protected.storage.dir` also scopes
+Linux credential names, keeping test histories separate while unset production names remain unchanged.
 Account history persistence fails if protected storage is unavailable; Cookie persistence may retain
 an in-memory login but never falls back to plaintext. Browser account records and non-extractable
 AES-GCM keys use IndexedDB. Record names are authenticated as additional data. This protects stored
@@ -611,6 +782,19 @@ Wasm compilation tasks have no dedicated concurrency cap and follow the global G
 The default Kotlin daemon maximum heap is 8 GB (gradle.properties), raised from 6 GB after observing Wasm heap pressure on a 32 GB host. This is a maximum heap, not a reservation; keep enough memory for Gradle, test forks and native tools.
 
 The Gradle daemon maximum heap is 6 GB, raised from 4 GB to give in-process Compose Detekt analysis more headroom. Kotlin daemon heap remains independently configured at 8 GB.
+
+Detekt 2.0.0-alpha.6 type resolution has two relevant upstream limitations. Its flattened KMP
+source model rejects valid expect/actual declarations from separate source sets
+([detekt #9602](https://github.com/detekt/detekt/issues/9602)); compiler-plugin-generated
+serializer methods in the module being analyzed can also be invisible
+([detekt #7531](https://github.com/detekt/detekt/issues/7531)). Use the serialization library's
+public generic encode/decode and polymorphic subclass APIs where they preserve the existing
+serializer and JSON contract. These calls avoid direct references to generated methods.
+Keep KMP source coverage and type resolution enabled while the fragment-model limitation remains.
+For diagnosis, enable the Detekt task's debug output with autoCorrect disabled and rerun the task
+using --rerun: changing debug alone does not invalidate cached results. Compare compiler diagnostics
+with an actual Kotlin compilation; a successful Detekt task alone does not establish complete type resolution.
+
 
 The expanded host-test allowlist includes in-process Ktor fixtures and local Lucene/filesystem tests with unique temporary directories. App JVM tests already exclude device_based UI tests; their protected-history test is confined to one class. dev/appiumCore tests exercise bridge/capability helpers rather than Appium suites. Modules mixing ordinary tests with Docker integration (backend/core, backend/minio, backend/filesystem, backend/lucene, cloud/runtime, cloud/server and cloud/cli) now use the same worker-based fork capacity after reviewing per-container mapped ports and isolated storage. cloud/worker is also allowlisted after reviewing all five test classes: its LiteRT tests substitute backend factories and do not initialize a native engine or execute model inference; remaining tests cover client construction, JSON/configuration and scheduling/moderation logic. Fork capacity does not reserve VM resources: unrestricted container startup on the 4 GB/4 CPU test guest produced Elasticsearch readiness timeouts. A seven-module validation with -PunitTest.maxParallelForks=4 passed 106 tests; this is a per-run override, not the project default. Increasing the local test VM to 8 GB subsequently passed the same 106-test selection with the default 28 workers and no fork override; guest memory peaked at 6290 MiB. Backend resource sizing and private lifecycle configuration belong to the operator; keep published service-port ranges aligned with the environment transport. client/kotbase and client/sqlite-now are not included in settings.gradle.kts.
 
@@ -832,11 +1016,11 @@ know which environment provider is used. Both app and panel use the same role co
 
 For special runtime dependencies, a platform may declare `hooks.host_prepare` entries with literal `command` argv, relative `cwd` and `timeout_seconds`, or `hooks.guest_setup` entries with a relative self-contained `script`, `interpreter`, literal `arguments` and `timeout_seconds`. Host preparation may compile or package dependencies. Guest initialization may configure the OS and install prebuilt artifacts, but must not compile applications, test code or native dependencies. Guest hooks receive opaque `TEST_DESKTOP_USER` and `TEST_RUNTIME_ASSETS` values so scripts do not need provider-specific usernames or storage paths. Hooks must remain in the foreground, fail on errors and avoid logging credentials. The environment initializer preserves private logs and stops on failure/timeout; changed guest script contents require reinitialization. These are ordinary project setup scripts; they must not reference AI-plugin installation paths, VM providers or private connection profiles.
 
-Native accessibility diagnostics are the page source returned by the active Appium session and the report's screenshots. Collection errors remain separate attachments and preserve the original test failure. Tao does not expose an AWT accessibility tree; the former attach-agent exporter and Java bridge were removed rather than reporting an empty AWT tree as native diagnostics.
+Native accessibility diagnostics are the page source returned by the active Appium session and the report's screenshots. Native driver constructors receive the case's AppiumTestReport; successful snapshots and failure captures both use its owned artifact directories. Snapshot collection failures are recorded without replacing the original case failure. Collection errors remain separate attachments and preserve the original test failure. Tao does not expose an AWT accessibility tree; the former attach-agent exporter and Java bridge were removed rather than reporting an empty AWT tree as native diagnostics.
 
-Use Appium 3.2.2 with DesktopDriver 2.8.0 in an interactive logged-in Windows session. Prepare `dev/appium-windows-plugin` with prebuilt dependencies, install it through Appium's local plugin installation and activate `--use-plugins desktop-windows`. Its native dependency is pinned in package-lock.json. Standard remote window enumeration/switching stays in DesktopDriver; this extension supplies process/thread ownership checks, logical-pixel native-window resizing and complete physical-pixel screenshots. It restores the Appium thread's DPI context after native calls, keeps resized windows inside their monitor work area, and rejects dimensions that cannot fit. After a validated inspect/resize request registers the session process, screenshot capture uses DWM visible bounds and excludes invisible resize borders; it rejects reused handles and verifies that the session application is foreground before reading pixels. Other Appium drivers retain their standard screenshot behavior. This avoids the logical-pixel UIA bounds observed with Tao at 150% display scaling. Neither path calls host User32/JNA. Local desktop runs also require this extension. The full suite resizes windows up to 1600×1000 logical pixels, so the monitor work area must accommodate that size; validation uses a 1920×1080 desktop at 100% scaling. Native screenshot/resize behavior was also checked separately at 150% scaling.
+Use Appium 3.2.2 with DesktopDriver 2.8.0 in an interactive logged-in Windows session. Prepare `dev/appium-windows-plugin` with prebuilt dependencies, install it through Appium's local plugin installation and activate `--use-plugins desktop-windows`. Its native dependency is pinned in package-lock.json. Standard remote window enumeration/switching stays in DesktopDriver; this extension supplies process ownership checks (including native dialogs on separate application threads), logical-pixel native-window resizing and complete physical-pixel screenshots. It restores the Appium thread's DPI context after native calls, keeps resized windows inside their monitor work area, and rejects dimensions that cannot fit. After a validated inspect/resize request registers the session process, screenshot capture uses DWM visible bounds and excludes invisible resize borders; it rejects reused handles and verifies that the session application is foreground before reading pixels. Other Appium drivers retain their standard screenshot behavior. This avoids the logical-pixel UIA bounds observed with Tao at 150% display scaling. Neither path calls host User32/JNA. Local desktop runs also require this extension. The full suite resizes windows up to 1600×1000 logical pixels, so the monitor work area must accommodate that size; validation uses a 1920×1080 desktop at 100% scaling. Native screenshot/resize behavior was also checked separately at 150% scaling.
 
-macOS desktop E2E requires a qualified renderer as described in [the Skiko investigation](#macos-e2e-pause-and-skiko-investigation). The retained integration uses Appium 3 with `appium-mac2-driver@4.5.0` and a compatible full Xcode installation (Sonoma 14.8 uses Xcode 16.2). Select Xcode's developer directory, accept its license and complete first launch. Build WebDriverAgentMac and grant its runner and Xcode Helper Accessibility permission in the dedicated logged-in test account. On a qualified target, select `APPIUM_DESKTOP_PLATFORM=Mac` with the normal `APPIUM_DESKTOP_SERVER_URL`. The runner creates an ad-hoc-signed temporary application bundle using the JDK’s precompiled native launcher for Launch Services, uses Mac2 native predicate/class locators, waits for a visible, enabled click target with stable native bounds, uses native pointer clicks because an element click can report success without focusing Compose editors, clicks text containers in an area not covered by their descendants when available, and uses native keys and window adjustment (JVM text input uses `macos: keys` with value readback because XCTest `typeText` can return success without changing a Compose editor), and removes the bundle during cleanup. Applications and tests require a prebuilt macOS JDK 21 and matching native runtime libraries. Intel macOS additionally needs a matching SQLite JNI library: the official SQLite bundled 2.7.0 JVM artifact includes macOS ARM64, but no x64 binary. Prepare an x64 resource JAR on the host/designated build environment with the release's JNI sources (AndroidX commit `190a3431c064ca5e90e451b3443714ae684b8127`), SQLite 3.50.1 and its upstream compile flags, and add `natives/osx_x64/libsqliteJni.dylib` to the application runtime classpath. Validate an actual query before UI tests; do not substitute another platform binary or silently compile it in a work VM. A ready Appium endpoint alone does not verify UI automation; verify a real session, source, screenshot and click before running the suites.
+macOS desktop E2E requires a qualified renderer as described in [the Skiko investigation](#macos-e2e-pause-and-skiko-investigation). The retained integration uses Appium 3 with `appium-mac2-driver@4.5.0` and a compatible full Xcode installation (Sonoma 14.8 uses Xcode 16.2). Select Xcode's developer directory, accept its license and complete first launch. Build WebDriverAgentMac and grant its runner and Xcode Helper Accessibility permission in the dedicated logged-in test account. On a qualified target, select `APPIUM_DESKTOP_PLATFORM=Mac` with the normal `APPIUM_DESKTOP_SERVER_URL`. The runner creates an ad-hoc-signed temporary application bundle using the JDK’s precompiled native launcher for Launch Services, uses Mac2 native predicate/class locators, waits for a visible, enabled click target with stable native bounds, uses native pointer clicks because an element click can report success without focusing Compose editors, clicks text containers in an area not covered by their descendants when available, and uses native keys and window adjustment (JVM text input focuses the native editor and sends the complete value through its standard Appium keys operation, then verifies exact value readback; per-character modifier events can exceed the existing input timeout), and removes the bundle during cleanup. Applications and tests require a prebuilt macOS JDK 21 and matching native runtime libraries. Intel macOS additionally needs a matching SQLite JNI library: the official SQLite bundled 2.7.0 JVM artifact includes macOS ARM64, but no x64 binary. Prepare an x64 resource JAR on the host/designated build environment with the release's JNI sources (AndroidX commit `190a3431c064ca5e90e451b3443714ae684b8127`), SQLite 3.50.1 and its upstream compile flags, and add `natives/osx_x64/libsqliteJni.dylib` to the application runtime classpath. Validate an actual query before UI tests; do not substitute another platform binary or silently compile it in a work VM. A ready Appium endpoint alone does not verify UI automation; verify a real session, source, screenshot and click before running the suites.
 
 For a Windows/Linux host driving a qualified Mac target, the test helper emits the standard quoted JVM argument file. The external environment provider stages host-built artifacts, translates declared paths and service roles, packages the target JDK's precompiled native launcher into an ad-hoc-signed bundle, and supplies its app path and bundle identity to Mac2. Local Mac hosts retain direct bundle packaging. The provider must collect logs, remove private inputs and bundles, and fail on transport errors. A raw argument file is not an app bundle and must not be sent directly to Mac2.
 
@@ -848,7 +1032,7 @@ Both desktop entry points use `nucleusApplication(backend = NucleusBackend.Tao)`
 
 [ComposeNativeWebview 1.0.3](https://github.com/NucleusFramework/ComposeNativeWebview/releases/tag/v1.0.3) uses `dev.nucleusframework:composewebview`; shared imports use `dev.nucleusframework.webview`. Its [1.0.0 migration](https://github.com/NucleusFramework/ComposeNativeWebview/releases/tag/v1.0.0) removed the Swing/Wry desktop backend. Pin the application and Tao runtime modules to stable Nucleus 2.5.18. AsciiDoc HTML previews use a temporary/incognito WebView profile, avoiding the WebView2 default data directory beside the Java executable (which can be read-only). WebView remains an embedded native surface: WebView2 on Windows, WKWebView on macOS and WebKitGTK on Linux. Compose dialogs use scene layers inside the Tao host, preserving the native WebView parent and application composition locals. The old `desktop-native-webview` convention, checksum-guarded Wry binding transform, JNA AppKit dispatcher and transform test have been removed. A dependency migration is not evidence that the historical macOS deadlock or Skiko stall is fixed; renderer qualification below is still required.
 
-Desktop video uses VLC's callback surface rather than `SwingPanel` or an AWT player component. `DesktopVideoHost` owns playback state and native lifetime on an injected serial dispatcher, runs native construction/commands/disposal on a worker dispatcher, and consumes a conflated stream of copied opaque BGRA frames. Stream aspect-ratio/rotation metadata is read on the worker after VLC reports readiness; the visible image keeps that ratio even when the decoder output buffer has different dimensions. The Compose adapter builds raster images off the UI thread and renders the latest frame, playback controls and loading/failure state. Source changes and composition disposal cancel the owner and release the player/factory. A compatible system VLC installation is required; portable installations can provide their native library directory through JNA's standard `jna.library.path` and VLC's `VLC_PLUGIN_PATH`. Neither runtime installation nor media playback authorizes guest compilation.
+Desktop audio/video playback uses VLC's callback surface rather than `SwingPanel` or an AWT player component. Audio remains stopped until Play is pressed; video retains automatic playback. `DesktopVideoHost` owns playback state and native lifetime on an injected serial dispatcher, runs native construction/commands/disposal on a worker dispatcher, and consumes a conflated stream of copied opaque BGRA frames. Stream aspect-ratio/rotation metadata is read on the worker after VLC reports readiness; the visible image keeps that ratio even when the decoder output buffer has different dimensions. The Compose adapter builds raster images off the UI thread and renders the latest frame, playback controls and loading/failure state. Source changes and composition disposal cancel the owner and release the player/factory. A compatible system VLC installation is required; portable installations can provide their native library directory through JNA's standard `jna.library.path` and VLC's `VLC_PLUGIN_PATH`. Neither runtime installation nor media playback authorizes guest compilation.
 
 Run `:client:composeCore:jvmTest --tests '*DesktopVideoHostTest' :dev:appiumCore:test` for frame ownership, playback lifecycle and launch-capability checks. Verify actual decoded video frames, pause/resume, native accessibility queries/input, modal dismissal, window resizing, AsciiDoc preview and restart persistence on an isolated Windows/Linux desktop. Preserve the existing business assertions and timeout budgets. Run macOS integration only on a qualified accelerated desktop as described below.
 
@@ -1635,3 +1819,36 @@ kotlinx-rpc (`RpcPluginConstKt.isInternalDevelopment`). The Gradle 11
 `Configuration.setVisible` warning is emitted by Kover, AGP, KSP, Detekt, JMH and
 Compose Hot Reload configuration code. These require upstream plugin migrations;
 changing application source or disabling diagnostics does not resolve them.
+
+Browser request and media probes preserve the page's Promise constructor: chain the native fetch or
+getUserMedia result, and use `window.Promise` for test gates. Firefox executes WebDriver scripts in
+a separate realm; a sandbox async wrapper can otherwise fail Wasm's Promise cast before the observed
+operation completes. The probes keep real response bytes, paging tokens, cancellation and tracks.
+Community creation acceptance waits until the compose form is removed before changing sections;
+this observes successful submission rather than cancelling its page scope. Authenticated restart
+checks clear the previous readiness marker and wait for real restored user data before resolving
+controls whose layout changes with the account.
+
+`OnCommunityCreated` writes the complete returned community to the detail cache and the current-user
+joined-community collection (`JOINED`, empty query, no target, `UNSPECIFIED` poster filter). This keeps
+an already-loaded empty community list live after creation without a test-only Refresh action.
+Browser scroll helpers keep the semantics overlay hidden until a trusted wheel event is delivered;
+they commit hidden hit-test regions before dispatch and preserve wheel diagnostics on failure.
+
+Private-key failure acceptance asserts the visible localized PEM-format hint and restart guest state.
+For a valid unregistered key, it first checks the actual derived address, then the server refusal;
+absence of a browser-only error description cannot establish native validation success. The shared
+private-key input publishes its displayed address as the native accessible label as well.
+
+Linux credential E2E fault injection now selects an unavailable libsecret library instead of a missing
+CLI executable. Use the standard Linux suite: the shared launch helper sets the test-only library
+override, and the positive large-value case signs in with a valid PEM preamble exceeding 16 KiB and
+restores the same account after restart. This migration tests the actual native storage implementation.
+
+Android filename selectors match the full accessible filename with optional merged metadata. UiAutomator2 [UiExpressionParser](https://github.com/appium/appium-uiautomator2-server/blob/master/app/src/main/java/io/appium/uiautomator2/utils/UiExpressionParser.java) strips argument quotes and unescapes quotes only; do not JSON-escape regex backslashes. Native clicks wait for displayed, enabled controls with unchanged bounds across consecutive observations, then issue one click on the current element. This preserves normal animation settings and deadlines while avoiding input during drawer transitions. Driver snapshots and recordings finish before driver shutdown, and long failure bugreports are collected after shutdown so diagnostic work does not expire an otherwise idle session.
+
+Android video preserves the Media3 controller default visibility timing. E2E reveals controls only when PlayerView advertises "Show player controls", then taps the actual Pause button and verifies the paused player state before Home. Do not blindly toggle the video surface: that can hide an already-visible controller. See the upstream [PlayerView control contract](https://developer.android.com/reference/androidx/media3/ui/PlayerView#setControllerShowTimeoutMs(int)). Attachment pages reserve safe drawing insets for their toolbar and content.
+
+Media3 progress accessibility events can keep UiAutomator non-idle until auto-hide, so searching for Pause after an idle wait misses the visible controller. The Android animated-media interaction scope temporarily disables only waitForIdleTimeout, restores its exact previous value even on failure, and keeps the explicit pause-state assertion and normal assertion deadlines. This follows the upstream [UiAutomator idle-wait contract](https://github.com/appium/appium-uiautomator2-driver#poor-elements-interaction-performance); it does not disable animations or broaden element visibility.
+
+Android video uses a page-owned Media3 PlayerView through AndroidView. Navigation and PiP transitions may recreate its Surface and briefly display black; this transient behavior is accepted without introducing an activity-root overlay or manual viewport ownership. The view detaches its MediaController on final release. Playback state and commands remain in MediaPlayerService. PiP acceptance still verifies decoded RGB frames before entry, after the small window settles and after restoration, including a second entry; persistent black output remains a failure. Previous acceptance of the removed root-surface implementation does not establish acceptance of this page-owned implementation. Track reproduction and upstream ownership in [issue #117](https://github.com/storytellerF/A/issues/117).

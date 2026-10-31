@@ -62,6 +62,11 @@ class E2eCliTerminalFactory(private val ioDispatcher: CoroutineDispatcher = Disp
             val failures = mutableListOf<Throwable>()
             try {
                 try {
+                    terminal.writeObservations(checkNotNull(ports.artifactDirectory))
+                } catch (failure: Exception) {
+                    failures.add(failure)
+                }
+                try {
                     if (E2eCoverage.enabled) {
                         val directory = checkNotNull(ports.artifactDirectory)
                         val targetName = if (installDirProperty.contains("panel")) "panel" else "app"
@@ -121,9 +126,11 @@ class E2eCliTerminal private constructor(
 ) {
     private val transcript = StringBuilder()
     private var searchStart = 0
+    private val observations = mutableListOf<String>()
 
     /** Send a line of input to the CLI. */
     suspend fun sendLine(line: String) {
+        observations.add("Submitted input: ${line.length} characters")
         withContext(ioDispatcher) {
             output.write(line.encodeToByteArray())
             output.write(process.enterKeyCode.toInt())
@@ -137,6 +144,7 @@ class E2eCliTerminal private constructor(
             withTimeoutOrNull(90.seconds) {
                 waitForText(expected)
             } == true
+        observations.add("Observed: $expected; matched=$isFound")
         assertTrue(isFound, "CLI did not render '$expected'.\n${recentTranscript()}")
     }
 
@@ -163,6 +171,10 @@ class E2eCliTerminal private constructor(
             checkNotNull(chunk) { "CLI exited before rendering '$expected'.\n${recentTranscript()}" }
             transcript.append(chunk)
         }
+    }
+
+    internal fun writeObservations(directory: File) {
+        directory.resolve("terminal-observations.log").writeText(observations.joinToString("\n"))
     }
 
     internal suspend fun close() {

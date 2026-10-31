@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @Serializable
@@ -177,8 +178,8 @@ fun AddUserInternal(dismiss: () -> Unit) {
     val module =
         SerializersModule {
             polymorphic(NavKey::class) {
-                subclass(AddUserStartScreen::class, AddUserStartScreen.serializer())
-                subclass(AddUserPrivateKeyScreen::class, AddUserPrivateKeyScreen.serializer())
+                subclass(AddUserStartScreen::class)
+                subclass(AddUserPrivateKeyScreen::class)
             }
         }
     val config =

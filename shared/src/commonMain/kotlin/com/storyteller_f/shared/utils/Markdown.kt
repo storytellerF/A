@@ -357,7 +357,6 @@ data class MarkdownObject(
     val name: String = "",
     val url: String = "",
     val isPlayList: Boolean? = null,
-    val contentType: String? = null,
     val cover: String? = null,
     val title: String? = null,
 )
@@ -366,7 +365,7 @@ fun generateImageMarkdownContent(info: FileInfo): String = """![${info.name}](${
 
 fun generateObjectMarkdownContent(info: FileInfo): String =
     """```object
-{"name": "${info.name}","contentType": "${info.contentType}"}
+${commonJson.encodeToString(MarkdownObject(name = info.name))}
 ```"""
 
 fun generateModelMarkdownContent(objectTuple: ObjectTuple): String =

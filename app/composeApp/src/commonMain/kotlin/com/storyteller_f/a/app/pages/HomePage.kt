@@ -17,9 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.DesignServices
 import androidx.compose.material.icons.filled.Diversity3
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,8 +46,6 @@ import com.storyteller_f.a.app.LocalUiViewModel
 import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.common.getUnreadMessageCountViewModel
 import com.storyteller_f.a.app.communities
-import com.storyteller_f.a.app.design_spec
-import com.storyteller_f.a.app.download_latest_app
 import com.storyteller_f.a.app.home_start_destination_communities
 import com.storyteller_f.a.app.home_start_destination_rooms
 import com.storyteller_f.a.app.home_start_destination_world
@@ -59,12 +55,14 @@ import com.storyteller_f.a.app.pages.room.MyRoomsPage
 import com.storyteller_f.a.app.pages.search.CustomSearchBar
 import com.storyteller_f.a.app.pages.search.SearchScope
 import com.storyteller_f.a.app.rooms
+import com.storyteller_f.a.app.source_repository
 import com.storyteller_f.a.app.utils.rememberStringPreference
 import com.storyteller_f.a.app.world
 import com.storyteller_f.a.client.compose_core.components.ButtonNav
 import com.storyteller_f.a.client.compose_core.components.CenterBox
 import com.storyteller_f.a.client.compose_core.components.NavRoute
 import com.storyteller_f.a.client.compose_core.components.SignInButton
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.stringResource
@@ -166,7 +164,7 @@ private fun ProjectIcon() {
     }
     Box(
         modifier =
-        Modifier.size(40.dp)
+        Modifier.size(40.dp).appiumSemantics(description = "about project", onClick = { showDialog = true })
             .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
             .clip(CircleShape)
             .clickable {
@@ -223,10 +221,10 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
             val appNavFactory = LocalAppNavFactory.current
             Column {
                 ButtonNav(
-                    Icons.Default.DesignServices,
-                    stringResource(Res.string.design_spec),
+                    Icons.Default.Code,
+                    stringResource(Res.string.source_repository),
                 ) {
-                    uriHandler.openUri("https://storytellerf.github.io/aspec/")
+                    uriHandler.openUri("https://github.com/storytellerF/A")
                 }
                 ButtonNav(
                     Icons.Default.Code,
@@ -234,15 +232,6 @@ private fun ProjectDialogInternal(dismiss: () -> Unit) {
                 ) {
                     dismiss()
                     appNavFactory.newAppNav().gotoAbout()
-                }
-                ButtonNav(
-                    Icons.Default.Download,
-                    stringResource(Res.string.download_latest_app),
-                ) {
-                    dismiss()
-                    uriHandler.openUri(
-                        "https://nightly.link/storytellerF/A/workflows/alpha/alpha/Signed%20A%20Bundle.zip",
-                    )
                 }
             }
         }

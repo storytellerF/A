@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.CoreStrings
 import com.storyteller_f.a.client.compose_core.components.UserIcon
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.UserInfo
 
 @Composable
@@ -26,7 +27,7 @@ fun UserCell(userInfo: UserInfo?, onClick: (() -> Unit)? = null) {
         modifier =
         Modifier.fillMaxWidth().let { m ->
             if (onClick != null) m.clickable { onClick() } else m
-        }.padding(8.dp),
+        }.appiumSemantics(text = userInfo?.address, onClick = onClick).padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {

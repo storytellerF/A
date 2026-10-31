@@ -13,7 +13,6 @@ import io.ktor.util.date.GMTDate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 /** The browser owns its cookie jar; native main-account cookies use protected platform storage. */
@@ -64,7 +63,7 @@ internal class SigninCookies(
         if (loaded) return
         val cookies =
             try {
-                read(key)?.let { Json.decodeFromString(ListSerializer(SavedCookie.serializer()), it) }.orEmpty()
+                read(key)?.let { Json.decodeFromString<List<SavedCookie>>(it) }.orEmpty()
             } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                 throw cancellation
             } catch (_: Exception) {
@@ -81,7 +80,7 @@ internal class SigninCookies(
 
     private suspend fun persistCookies() {
         try {
-            write(key, Json.encodeToString(ListSerializer(SavedCookie.serializer()), saved))
+            write(key, Json.encodeToString<List<SavedCookie>>(saved))
         } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
             throw cancellation
         } catch (_: Exception) {

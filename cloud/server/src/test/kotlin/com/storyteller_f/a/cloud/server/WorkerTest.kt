@@ -13,6 +13,7 @@ import com.storyteller_f.a.backend.core.PrimaryKeyFetch
 import com.storyteller_f.a.backend.core.types.SubscriptionSentLog
 import com.storyteller_f.a.backend.core.types.TaskRecord
 import com.storyteller_f.a.backend.core.types.User
+import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.addSubscription
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createTitle
@@ -269,51 +270,32 @@ class WorkerTest {
     }
 
     @Test
-    fun `worker tasks persist results on shared backend`() =
-        test {
-            val owner =
-                attachSession {
-                    val community = createCommunityForTest()
-                    val topic = createTopic(ObjectType.COMMUNITY, community.id, "Worker topic").getOrThrow()
-                    val title =
-                        createTitle(
-                            com.storyteller_f.a.api.NewTitle(
-                                "Worker title",
-                                com.storyteller_f.shared.model.TitleType.REGULAR,
-                                it.uid,
-                                community.id,
-                                ObjectType.COMMUNITY,
-                                "Worker title notification",
-                            ),
-                        ).getOrThrow()
-                    topic.id to title.id
-                }
-            withWorkerBackend { backend ->
-                backend.createSystemUser(1L)
-                backend.doAcgTask()
-                backend.doIntroTask()
-                backend.doSubscriptionTask()
-                backend.doTitleTask()
+    fun `acg task persists results on shared backend`() =
+        verifyWorkerPersistence(TaskRecordType.TOPIC_ACG, { createWorkerTopic() }) { doAcgTask() }
 
-                val expected =
-                    mapOf(
-                        TaskRecordType.TOPIC_ACG to owner.custom.first,
-                        TaskRecordType.INTRO to owner.uid,
-                        TaskRecordType.SUBSCRIPTION to owner.custom.first,
-                        TaskRecordType.TITLE to owner.custom.second,
-                    )
-                expected.forEach { (type, objectId) ->
-                    val records =
-                        backend.database.admin.getTaskRecords(
-                            type = type,
-                            isSuccess = true,
-                            failureType = null,
-                            fetch = PrimaryKeyFetch(cursor = null, size = 20),
-                        ).getOrThrow().list
-                    assertTrue(records.any { it.objectId == objectId }, "Missing successful $type result")
-                }
-            }
-        }
+    @Test
+    fun `intro task persists results on shared backend`() =
+        verifyWorkerPersistence(TaskRecordType.INTRO, { it.uid }) { doIntroTask() }
+
+    @Test
+    fun `subscription results persist on shared backend`() =
+        verifyWorkerPersistence(TaskRecordType.SUBSCRIPTION, { createWorkerTopic() }) { doSubscriptionTask() }
+
+    @Test
+    fun `title task persists results on shared backend`() =
+        verifyWorkerPersistence(TaskRecordType.TITLE, { account ->
+            val community = createCommunityForTest()
+            createTitle(
+                com.storyteller_f.a.api.NewTitle(
+                    "Worker title",
+                    com.storyteller_f.shared.model.TitleType.REGULAR,
+                    account.uid,
+                    community.id,
+                    ObjectType.COMMUNITY,
+                    "Worker title notification",
+                ),
+            ).getOrThrow().id
+        }) { doTitleTask() }
 }
 
 private suspend fun Backend.assertAcgNotificationCount(userId: Long, expectedCount: Int) {
@@ -363,4 +345,29 @@ private suspend fun Backend.createSystemUser(id: Long) {
             notificationId = SnowflakeFactory.nextId(),
         ),
     ).getOrThrow()
+}
+
+private fun verifyWorkerPersistence(
+    type: TaskRecordType,
+    prepare: suspend UserSessionManager.(SessionTuple) -> Long,
+    execute: suspend Backend.() -> Unit,
+) = test {
+    val owner = attachSession(block = prepare)
+    withWorkerBackend { backend ->
+        backend.createSystemUser(1L)
+        backend.execute()
+        val records =
+            backend.database.admin.getTaskRecords(
+                type = type,
+                isSuccess = true,
+                failureType = null,
+                fetch = PrimaryKeyFetch(cursor = null, size = 20),
+            ).getOrThrow().list
+        assertTrue(records.any { it.objectId == owner.custom }, "Missing successful $type result")
+    }
+}
+
+private suspend fun UserSessionManager.createWorkerTopic(): Long {
+    val community = createCommunityForTest()
+    return createTopic(ObjectType.COMMUNITY, community.id, "Worker topic").getOrThrow().id
 }

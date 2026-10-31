@@ -43,6 +43,7 @@ import com.storyteller_f.a.client.compose_core.media_play
 import com.storyteller_f.a.client.compose_core.media_position
 import com.storyteller_f.a.client.compose_core.media_unmute
 import com.storyteller_f.a.client.compose_core.media_volume
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
@@ -158,18 +159,27 @@ private fun MediaControls(state: MediaSnapshot?, host: BrowserMediaHost) {
     var seekDraft by remember { mutableStateOf<Float?>(null) }
     val positionLabel = stringResource(Res.string.media_position)
     val volumeLabel = stringResource(Res.string.media_volume)
+    val playbackLabel =
+        stringResource(
+            if (status in listOf("playing", "buffering")) Res.string.media_pause else Res.string.media_play,
+        )
+    val togglePlayback = {
+        host.togglePlayback()
+        Unit
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         Button(
-            onClick = { host.togglePlayback() },
+            onClick = togglePlayback,
+            modifier = Modifier.appiumSemantics(text = playbackLabel, onClick = togglePlayback),
             enabled = status in listOf("playing", "buffering", "paused", "ended"),
         ) {
-            val label = if (status in listOf("playing", "buffering")) Res.string.media_pause else Res.string.media_play
-            Text(stringResource(label))
+            Text(playbackLabel)
         }
         Button(onClick = { host.toggleMute() }) {
             Text(stringResource(if (state?.muted == true) Res.string.media_unmute else Res.string.media_mute))
         }
-        Text("${state?.position?.toInt() ?: 0} / ${state?.duration?.toInt() ?: 0} s")
+        val progress = "${state?.position?.toInt() ?: 0} / ${state?.duration?.toInt() ?: 0} s"
+        Text(progress, Modifier.appiumSemantics(text = progress))
     }
     Slider(
         value = seekDraft ?: state?.position?.toFloat() ?: 0f,

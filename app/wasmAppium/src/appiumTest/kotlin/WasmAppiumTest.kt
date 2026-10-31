@@ -33,10 +33,150 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
     }
 
     @Test
-    fun `test activity previews track reading sending and navigation`() = testActivityPreviewByHelper()
+    fun `test open source libraries shows bundled dependencies`() = testProjectLibraries()
 
     @Test
-    fun `test activity previews decrypt private rooms`() = testActivityPreviewByHelper(privateRoom = true)
+    fun `test project menu requests repository and removes obsolete links`() = testProjectRepository()
+
+    @Test
+    fun `test image fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.IMAGE, topic = true)
+
+    @Test
+    fun `test image fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.IMAGE,
+            topic = false,
+        )
+
+    @Test
+    fun `test audio fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.AUDIO, topic = true)
+
+    @Test
+    fun `test audio fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.AUDIO,
+            topic = false,
+        )
+
+    @Test
+    fun `test video fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.VIDEO, topic = true)
+
+    @Test
+    fun `test video fullscreen preview from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.VIDEO,
+            topic = false,
+        )
+
+    @Test
+    fun `test pdf fullscreen preview from topic attachment`() = testUploadedPreview(PreviewFile.PDF, topic = true)
+
+    @Test
+    fun `test pdf fullscreen preview from uploaded file list`() = testUploadedPreview(PreviewFile.PDF, topic = false)
+
+    @Test
+    fun `test unsupported file shows download details from topic attachment`() =
+        testUploadedPreview(
+            PreviewFile.BINARY,
+            topic = true,
+        )
+
+    @Test
+    fun `test unsupported file shows download details from uploaded file list`() =
+        testUploadedPreview(
+            PreviewFile.BINARY,
+            topic = false,
+        )
+
+    @Test
+    fun `test download from topic attachment saves exact bytes`() = testUploadedDownload(topic = true)
+
+    @Test
+    fun `test download from uploaded file list saves exact bytes`() = testUploadedDownload(topic = false)
+
+    @Test
+    fun `test file picker upload persists exact bytes owner and restart record`() = testClientFileUpload()
+
+    @Test
+    fun `test file picker quota failure stores no file or consumed quota`() = testClientFileQuota()
+
+    @Test
+    fun `test file upload progress pauses and resumes without replaying stored chunks`() = testClientUploadResume()
+
+    @Test
+    fun `test cancelling partial file upload releases quota and survives restart`() = testClientUploadCancel()
+
+    @Test
+    fun `test room search uses query and preserves server order`() = testClientSearchOrder()
+
+    @Test
+    fun `test room search continues opaque token and refresh preserves anchor`() = testClientSearchPagingRefresh()
+
+    @Test
+    fun `test community creation persists owner policy and membership after restart`() = testCommunityCreation()
+
+    @Test
+    fun `test community exit and rejoin persist membership`() = testCommunityMembershipByHelper()
+
+    @Test
+    fun `test topic comment persists author parent and reentry`() = testTopicCommentByHelper()
+
+    @Test
+    fun `test invited notification recipient reads but cannot reply over HTTP or WS`() = testNotificationPermissions()
+
+    @Test
+    fun `test invalid private key retains guest after restart`() = testInvalidKeyByHelper()
+
+    @Test
+    fun `test unknown private key rejects login and retains guest after restart`() = testUnknownKeyByHelper()
+
+    @Test
+    fun `test two clients present RTC video propagate mute and release capture`() = testTwoClientRtc()
+
+    @Test
+    fun `test leaving RTC before joining never captures media`() = testCancelRtcBeforeJoining()
+
+    @Test
+    fun `test leaving RTC during capture releases late media`() = testCancelRtcDuringCapture()
+
+    @Test
+    fun `test readonly user retains room reads and cannot write over HTTP or WS`() = testReadOnlyClientPermissions()
+
+    @Test
+    fun `test nonmember reads public room but cannot write over HTTP or WS`() = testNonmemberClientPermissions()
+
+    @Test
+    fun `test private room denies outsider plaintext and mutations`() = testPrivateOutsiderIsolation()
+
+    @Test
+    fun `test two clients exchange unread messages and retain read state`() = testTwoClientMessages()
+
+    @Test
+    fun `test private room authorizes peer decryption across restart`() = testPrivateClientIsolation()
+
+    @Test
+    fun `test activity layout preserves preview and unread across sizes`() = testActivityLayoutByHelper()
+
+    @Test
+    fun `test room draft survives viewport resizing`() = testActivityDraftByHelper()
+
+    @Test
+    fun `test activity context opens room and pinned topic`() = testActivityContextByHelper()
+
+    @Test
+    fun `test reading activity clears unread`() = testActivityReadByHelper()
+
+    @Test
+    fun `test sending updates persisted activity preview`() = testActivitySendByHelper()
+
+    @Test
+    fun `test activity room navigation preserves latest message`() = testActivityNavigationByHelper()
+
+    @Test
+    fun `test private room reading decrypts preview and clears unread`() = testActivityReadByHelper(privateRoom = true)
+
+    @Test
+    fun `test private room sending updates decrypted preview`() = testActivitySendByHelper(privateRoom = true)
 
     @Test
     fun `test room refresh clears cross session unread state`() = testRoomActivityRefreshByHelper()
@@ -60,7 +200,7 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
     fun `test browser socket revocation stops reconnect`() = testBrowserSocketRevocation()
 
     @Test
-    fun `test explicit sign in and sign out survive restart`() = testSignoutPersistenceByHelper()
+    fun `test signed out state survives restart`() = testSignoutPersistenceByHelper()
 
     @Test
     fun `test sign in survives restart and revocation requires explicit login`() = testSigninLifecycleByHelper()
@@ -108,7 +248,7 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
         }
 
     @Test
-    fun `test sign up`() = testSignUpByHelper()
+    fun `test sign up identity and session survive restart`() = testSignUpByHelper()
 
     @Test
     fun `test sign in as system user`() = testSignInAsSystemUserByHelper()
@@ -129,7 +269,13 @@ class WasmAppiumTest(private val browserType: WasmBrowser) :
     fun `test subscribe topic from community page`() = testSubscribeTopicByHelper()
 
     @Test
-    fun `test community profile actions from joined community`() = testCommunityProfileActionsByHelper()
+    fun `test community favorite toggle persists across navigation`() = testCommunityFavoriteByHelper()
+
+    @Test
+    fun `test community subscription toggle persists across navigation`() = testCommunitySubscriptionByHelper()
+
+    @Test
+    fun `test community member opens the selected profile`() = testCommunityMemberByHelper()
 
     @Test
     fun `test publish topic in joined community`() = testPublishTopicInCommunityByHelper()

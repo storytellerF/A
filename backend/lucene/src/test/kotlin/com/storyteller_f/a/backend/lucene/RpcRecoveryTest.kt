@@ -188,6 +188,8 @@ private class SearchState : LuceneRpc {
             awaitCancellation()
         }
     }
+    override suspend fun replace(index: String, query: RpcLuceneQuery, documents: List<RpcLuceneDocument>): Unit =
+        error("Unexpected replacement")
     override suspend fun clean(index: String) {
         documents.value = emptyList()
     }

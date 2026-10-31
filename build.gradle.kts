@@ -270,7 +270,7 @@ subprojects {
 if (e2eCoverageEnabled.get()) {
     val runners = listOf("app", "panel").flatMap { target ->
         listOf("androidAppium", "desktopAppium", "wasmAppium", "cliE2e").map { ":$target:$it" }
-    }
+    } + ":app:linuxAppium"
     val requested = gradle.startParameter.taskNames
     val explicit = runners.filter { runner -> requested.any { it.startsWith("$runner:") } }
     val selected = explicit.ifEmpty { runners }
@@ -317,7 +317,8 @@ if (e2eCoverageEnabled.get()) {
             val target = runner.substringBeforeLast(':')
             when {
                 runner.endsWith("androidAppium") -> dependsOn("$target:androidApp:installDebug", "$runner:appiumTestClasses")
-                runner.endsWith("desktopAppium") -> dependsOn("$target:desktopApp:writeAppiumRuntimeClasspath", "$runner:appiumTestClasses")
+                runner.endsWith("desktopAppium") || runner.endsWith("linuxAppium") ->
+                    dependsOn("$target:desktopApp:writeAppiumRuntimeClasspath", "$runner:appiumTestClasses")
                 runner.endsWith("wasmAppium") -> dependsOn("$runner:prepareE2eCoverageWasmDistribution", "$runner:appiumTestClasses")
                 else -> dependsOn("$target:cliApp:prepareE2eCoverageDistribution", "$runner:e2eTestClasses")
             }

@@ -85,7 +85,6 @@ sealed interface ContentBlock {
         override val id: String,
         val name: String = "",
         val url: String = "",
-        val contentType: String? = null,
         val cover: String? = null,
         val title: String? = null,
         val isPlaylist: Boolean? = null,

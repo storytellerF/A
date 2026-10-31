@@ -23,34 +23,48 @@ enum class WasmBrowser {
     FIREFOX,
     ;
 
-    fun createDriver(profile: File, windowSize: Dimension): WebDriver {
+    fun createDriver(profile: File, windowSize: Dimension, syntheticMedia: Boolean = false): WebDriver {
         val binary =
             System.getenv("WASM_E2E_${name}_BINARY")?.let(::File)?.also {
                 require(it.isFile) { "WASM_E2E_${name}_BINARY must name an existing browser executable" }
             }
+        val downloads = profile.resolve("downloads").also(File::mkdirs).canonicalPath
         // Leaving the binary unset lets Selenium Manager discover installed browsers before downloading.
         return when (this) {
             CHROME ->
                 ChromeDriver(
-                    ChromeOptions().addArguments(chromiumArguments(profile, windowSize)).also {
+                    ChromeOptions().addArguments(chromiumArguments(profile, windowSize, syntheticMedia)).also {
                         if (binary != null) it.setBinary(binary.canonicalPath)
-                        it.setExperimentalOption("prefs", mapOf("intl.accept_languages" to "en-US,en"))
+                        it.setExperimentalOption(
+                            "prefs",
+                            mapOf(
+                                "intl.accept_languages" to "en-US,en",
+                                "download.default_directory" to downloads,
+                                "download.prompt_for_download" to false,
+                            ),
+                        )
                     },
                 )
 
             EDGE ->
                 createBlankEdgeDriver(
-                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize)).also {
+                    EdgeOptions().addArguments(chromiumArguments(profile, windowSize, syntheticMedia)).also {
                         if (binary != null) it.setBinary(binary.canonicalPath)
-                        it.setExperimentalOption("prefs", mapOf("intl.accept_languages" to "en-US,en"))
+                        it.setExperimentalOption(
+                            "prefs",
+                            mapOf(
+                                "intl.accept_languages" to "en-US,en",
+                                "download.default_directory" to downloads,
+                                "download.prompt_for_download" to false,
+                            ),
+                        )
                     },
                 )
 
             FIREFOX ->
                 FirefoxDriver(
                     firefoxService(),
-                    FirefoxOptions().addPreference("intl.accept_languages", "en-US,en")
-                        .addPreference("intl.locale.requested", "en-US")
+                    firefoxOptions(downloads, syntheticMedia)
                         .addArguments(
                             "-headless",
                             "--profile",
@@ -72,8 +86,10 @@ enum class WasmBrowser {
             useWasmBrowser(browser, beforeClose, block)
         }
 
-    suspend fun <T> withProfile(block: suspend (File) -> T): T {
-        val profile = File("build/test/appium/$name-profile-${Uuid.random().toHexString()}").also(File::mkdirs)
+    suspend fun <T> withProfile(directory: File? = null, block: suspend (File) -> T): T {
+        val profile =
+            (directory ?: File("build/test/appium/$name-profile-${Uuid.random().toHexString()}"))
+                .also { check(it.mkdirs() || it.isDirectory) { "Cannot create browser profile" } }
         return try {
             block(profile)
         } finally {
@@ -81,7 +97,7 @@ enum class WasmBrowser {
         }
     }
 
-    private fun chromiumArguments(profile: File, windowSize: Dimension) =
+    private fun chromiumArguments(profile: File, windowSize: Dimension, syntheticMedia: Boolean) =
         listOf(
             "--headless=new",
             "--user-data-dir=${profile.canonicalPath}",
@@ -89,7 +105,29 @@ enum class WasmBrowser {
             "--window-size=${windowSize.width},${windowSize.height}",
             "--no-first-run",
             "--no-default-browser-check",
-        )
+        ) +
+            if (syntheticMedia) {
+                listOf("--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream")
+            } else {
+                emptyList()
+            }
+
+    private fun firefoxOptions(downloads: String, syntheticMedia: Boolean) =
+        FirefoxOptions().addPreference("intl.accept_languages", "en-US,en")
+            .addPreference("intl.locale.requested", "en-US")
+            .addPreference("browser.download.folderList", 2)
+            .addPreference("browser.download.dir", downloads)
+            .addPreference("browser.download.useDownloadDir", true)
+            .addPreference(
+                "browser.helperApps.neverAsk.saveToDisk",
+                "application/octet-stream,image/png,application/pdf,video/mp4,audio/wav",
+            )
+            .also {
+                if (syntheticMedia) {
+                    it.addPreference("media.navigator.streams.fake", true)
+                    it.addPreference("media.navigator.permission.disabled", true)
+                }
+            }
 
     private fun firefoxService(): GeckoDriverService =
         object : GeckoDriverService.Builder() {

@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.PictureInPictureModeChangedInfo
@@ -106,7 +108,10 @@ private fun VideoPlayer(
     }
     val pipModifier = Modifier.androidPipMode(enablePip, ratio)
     EnablePipPre31(enablePip, localMediaPlaySession)
-    Box(modifier = pipModifier.aspectRatio(ratio.toFloat())) {
+    Box(
+        modifier =
+        pipModifier.aspectRatio(ratio.toFloat()),
+    ) {
         when {
             player == null -> PlayerWaiting(localMediaPlaySession, remoteMediaItem)
 
@@ -116,6 +121,7 @@ private fun VideoPlayer(
                 VideoPlayerInternal(
                     localMediaPlaySession,
                     player,
+                    remoteMediaItem.name,
                 )
 
             playingSession.id == localMediaPlaySession.id -> PlayerOccupy(localMediaPlaySession)
@@ -128,25 +134,33 @@ private fun VideoPlayer(
 @OptIn(ExperimentalUuidApi::class)
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-private fun BoxScope.VideoPlayerInternal(localMediaPlaySession: LocalMediaPlaySession, player: MediaController?) {
+private fun BoxScope.VideoPlayerInternal(
+    localMediaPlaySession: LocalMediaPlaySession,
+    player: MediaController?,
+    name: String,
+) {
     player ?: return
     AndroidPlayerContainer(player) {
-        AndroidView(
-            factory = {
-                PlayerView(it).apply {
-                    controllerShowTimeoutMs = 1000
-                }
-            },
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Napier.i {
-                "Video ${localMediaPlaySession.uuid} update"
-            }
-            it.player = player
-        }
         val playerState by rememberPlayerState(player, localMediaPlaySession)
-        if (playerState.currentIsPlaying) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center).height(40.dp))
+        val isPip = rememberIsInPipMode()
+        Box(
+            Modifier.fillMaxSize().semantics {
+                contentDescription =
+                    "video playback $name: ${if (playerState.currentIsPlaying) "playing" else "paused"}"
+            },
+        ) {
+            AndroidView(
+                factory = { PlayerView(it) },
+                modifier = Modifier.fillMaxSize(),
+                onReset = null,
+                onRelease = { it.player = null },
+            ) {
+                it.player = player
+                it.useController = !isPip
+            }
+            if (playerState.currentLoading) {
+                CircularProgressIndicator(Modifier.align(Alignment.Center).height(40.dp))
+            }
         }
     }
 }

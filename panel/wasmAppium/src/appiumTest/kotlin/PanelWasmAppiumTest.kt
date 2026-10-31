@@ -36,6 +36,18 @@ class PanelWasmAppiumTest(private val browserType: WasmBrowser) :
     }
 
     @Test
+    fun `test panel user status changes enforce writes and retain reads`() = testPanelUserStatus()
+
+    @Test
+    fun `test panel file status persists across restart and preserves content`() = testPanelFileStatus()
+
+    @Test
+    fun `test panel worker configuration persists and produces notification task`() = testPanelWorkerConfiguration()
+
+    @Test
+    fun `test panel task retry survives restart and executes failed object once`() = testPanelTaskRetry()
+
+    @Test
     fun `test explicit sign out survives restart`() = testPanelSignoutPersistenceByHelper()
 
     @Test

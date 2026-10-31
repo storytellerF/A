@@ -16,6 +16,8 @@ actual fun Modifier.appiumSemantics(
     inputValue: String?,
     onInputValueChange: ((String) -> Unit)?,
     onClick: (() -> Unit)?,
+    onInputSubmit: (() -> Unit)?,
+    onLongClick: (() -> Unit)?,
 ): Modifier = nativeAppiumSemantics(testTag, description, text, onClick)
 
 internal expect fun Modifier.nativeAppiumSemantics(

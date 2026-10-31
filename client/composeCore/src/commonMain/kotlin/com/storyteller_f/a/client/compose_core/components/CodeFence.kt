@@ -4,19 +4,27 @@
 
 package com.storyteller_f.a.client.compose_core.components
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import com.hrm.latex.renderer.Latex
 import com.hrm.latex.renderer.model.LatexConfig
 import com.mikepenz.markdown.compose.LocalMarkdownTypography
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.elements.highlightedCodeFence
 import com.storyteller.a.client.composecore.markdown.MermaidBlock
+import com.storyteller_f.a.client.compose_core.Res
+import com.storyteller_f.a.client.compose_core.preview
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.commonJson
 import com.storyteller_f.shared.model.FileInfo
 import com.storyteller_f.shared.utils.MarkdownObject
 import com.storyteller_f.shared.utils.getLang
 import com.storyteller_f.shared.utils.readCodeFence
+import org.jetbrains.compose.resources.stringResource
 import kotlin.collections.get
 
 @Composable
@@ -69,7 +77,7 @@ fun ObjectBlock(modal: MarkdownComponentModel, mediaList: Map<String, FileInfo>,
             val c = readCodeFence(modal.node, modal.content)
             commonJson.decodeFromString<MarkdownObject>(c)
         }
-    if (obj.contentType.isNullOrBlank()) {
+    if (mediaList.containsKey(obj.name)) {
         FileObjectBlock(obj, modal, mediaList, onClick)
     } else {
         HighlightCodeBlock(modal)
@@ -95,7 +103,7 @@ private fun FileObjectBlock(
         return
     }
     if (!contentType.startsWith("audio") && !contentType.startsWith("video/")) {
-        HighlightCodeBlock(modal)
+        UploadedFileAction(mediaInfo, onClick)
         return
     }
     val coverInfo = mediaMap[obj.cover]
@@ -108,10 +116,21 @@ private fun FileObjectBlock(
             cover = coverInfo,
             title = obj.title,
         )
-    if (contentType.startsWith("video/")) {
-        VideoViewEmbed(obj1)
-    } else if (contentType.startsWith("audio/")) {
-        AudioViewEmbed(obj1)
+    Column {
+        UploadedFileAction(mediaInfo, onClick)
+        if (contentType.startsWith("video/")) {
+            VideoViewEmbed(obj1)
+        } else {
+            AudioViewEmbed(obj1)
+        }
+    }
+}
+
+@Composable
+private fun UploadedFileAction(info: FileInfo, onClick: (FileInfo) -> Unit) {
+    val open = { onClick(info) }
+    TextButton(open, Modifier.appiumSemantics(description = "open file ${info.name}", onClick = open)) {
+        Text("${stringResource(Res.string.preview)}: ${info.name}")
     }
 }
 

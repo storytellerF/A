@@ -42,6 +42,7 @@ import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.globalLoader
 import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.updateFileStatus
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -215,11 +216,15 @@ private fun fileBasicInfoItems(info: com.storyteller_f.shared.model.FileInfo): L
 
 @Composable
 private fun FileReadOnlyToggleButton(readOnly: Boolean, onToggle: (Boolean) -> Unit) {
-    Button(onClick = {
-        val newValue = !readOnly
-        onToggle(newValue)
-    }, modifier = Modifier.padding(top = 16.dp)) {
-        Text(if (readOnly) "Set to Writable" else "Set to ReadOnly")
+    val label = if (readOnly) "Set to Writable" else "Set to ReadOnly"
+    val toggle = { onToggle(!readOnly) }
+    Button(
+        onClick = toggle,
+        modifier =
+        Modifier.padding(top = 16.dp)
+            .appiumSemantics(text = label, onClick = toggle),
+    ) {
+        Text(label)
     }
 }
 

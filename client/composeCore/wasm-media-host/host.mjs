@@ -266,6 +266,8 @@ export class MediaHost {
       // Called synchronously by the Compose button to retain user activation.
       if (this.metadata.audio && !this.context) {
         this.context = this.createAudio();
+        if (this.context.destination.maxChannelCount === 0)
+          throw new Error("No audio output device is available.");
         this.context.onstatechange = () => {
           if (this.context.state === "suspended" && this.status === "playing")
             this.pause();

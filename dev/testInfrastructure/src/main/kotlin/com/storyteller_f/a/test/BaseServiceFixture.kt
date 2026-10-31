@@ -25,6 +25,7 @@ data class BaseServiceFixture internal constructor(
     val containerEnvironment: Map<String, String>,
     val filesystemHttpPort: Int,
     val redis: GenericContainer<*>,
+    val postgres: PostgreSQLContainer<*>,
 )
 
 /** Allocates a fresh network and data directories; exports logs even on failure or cancellation. */
@@ -70,7 +71,7 @@ internal suspend fun startBaseServices(resources: FixtureResources): BaseService
                 "REDIS_ENDPOINT" to "signin-redis:6379",
                 "SIGNIN_REDIS_ENDPOINT" to "signin-redis:6379",
             )
-    return BaseServiceFixture(network, host, internal, filesystem.getMappedPort(FILESYSTEM_HTTP_PORT), redis)
+    return BaseServiceFixture(network, host, internal, filesystem.getMappedPort(FILESYSTEM_HTTP_PORT), redis, postgres)
 }
 
 private fun createPostgres(network: Network): PostgreSQLContainer<*> =

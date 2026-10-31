@@ -37,6 +37,7 @@ import com.mikepenz.markdown.model.markdownExtendedSpans
 import com.mikepenz.markdown.model.markdownInlineContent
 import com.mohamedrejeb.richeditor.annotation.ExperimentalRichTextApi
 import com.storyteller_f.a.client.compose_core.common.LocalClient
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.compose_core.utils.imageRequest
 import com.storyteller_f.shared.model.Dimension
 import com.storyteller_f.shared.model.FileInfo
@@ -111,7 +112,10 @@ class CustomCoil3ImageTransformerImpl(private val mediaMap: Map<String, FileInfo
             ImageData(
                 painter,
                 modifier =
-                Modifier.clip(RoundedCornerShape(10.dp)).clickable(info != null) {
+                Modifier.appiumSemantics(
+                    description = info?.let { "open file ${it.name}" },
+                    onClick = info?.let { { onClick(it) } },
+                ).clip(RoundedCornerShape(10.dp)).clickable(info != null) {
                     info?.let { it1 -> onClick(it1) }
                 },
             )
