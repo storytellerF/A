@@ -625,3 +625,6 @@
 - Keep Android PlayerView inside its page component; do not introduce an activity-root video overlay to eliminate transient Surface black frames. Brief black frames during navigation/PiP transitions are accepted. Detach the controller on final view release. Preserve PiP E2E checks for decoded frames after transitions settle, including re-entry; do not accept persistent black output or replace pixel assertions with system state alone.
 
 - Linux/X11 portal dialogs require a live parent XID and may belong to another process. Verify native transient ownership before admitting their AT-SPI nodes; reject ambiguous/shared portal windows, retain D-Bus/object-path identities, and keep portal activation on the same isolated accessibility bus as the test application.
+
+- Filter `tasks.names` before obtaining individual `tasks.named` providers for aggregate dependencies.
+  Keep excluded variants unrealized; see DEVELOPMENT.md for the AGP Compose Preview constraint.

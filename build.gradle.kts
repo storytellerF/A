@@ -93,9 +93,8 @@ val compileAllNoRelease = tasks.register("compileAllNoRelease") {
 
 subprojects {
     compileAllNoRelease.configure {
-        dependsOn(tasks.matching { task ->
-            isNoReleaseCompileTask(task.name)
-        })
+        // Filter names before realization: excluded AGP Preview tasks may require absent unit-test variants.
+        dependsOn(tasks.names.filter(::isNoReleaseCompileTask).map(tasks::named))
     }
 }
 
