@@ -771,6 +771,12 @@ closes the registered services when the application stops. It does not construct
 The existing service-file merge includes this provider in server/WS distributions. Regression tests
 build the registered provider, exercising registration along with the Redis storage behavior.
 
+The `compileAllNoRelease` aggregate filters `tasks.names` before obtaining individual `tasks.named` providers,
+so excluded tasks are never realized during dependency selection. Do not replace this with
+a filtered task collection (`tasks.matching` or `tasks.named { ... }`): dependency expansion can
+still realize excluded tasks. AGP 9.5 registers Compose Preview tasks for variants without unit-test components,
+and realizing an excluded release Preview task fails before compilation starts.
+
 Gradle enables parallel project execution by default. Detekt Worker API remains disabled because Detekt 2.0.0-alpha.6 starts process-isolated workers without a configurable heap, and Compose analysis exhausts that heap. Detekt runs within the 6 GB Gradle daemon instead; its internal parallel AST analysis remains enabled. Worker capacity follows Gradle defaults for compilation and Detekt; do not force --max-workers=1 for Detekt. Run compilation and Detekt in separate invocations. Docker builds inherit the same project settings.
 
 Detekt checks are read-only by default (`autoCorrect = false`). To explicitly apply supported
