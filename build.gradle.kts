@@ -111,7 +111,7 @@ subprojects {
         // Can lead to speedups in larger projects. `false` by default.
         parallel = true
 
-        autoCorrect = true
+        autoCorrect = false
 
         // Android: Don't create tasks for the specified build types (e.g. "release")
         ignoredBuildTypes = listOf("release")

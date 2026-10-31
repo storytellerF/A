@@ -8,7 +8,7 @@
 - Use the canonical imported-class Logback XML form documented in DEVELOPMENT.md.
 - Static analysis: run Detekt with `config/detekt/detekt.yml`. Do not create or use Detekt baseline files; every active finding must be fixed in source code. Do not add or broaden suppressions to bypass findings. When Detekt rules conflict, disable only the conflicting rule or narrowly scoped configuration necessary to resolve the conflict.
 
-- Diagnose Detekt type-resolution warnings with debug enabled and autoCorrect disabled; rerun the selected task because debug is not a cache input. Preserve KMP source coverage and active rules. See DEVELOPMENT.md for known expect/actual and generated-serializer limitations.
+- Diagnose Detekt type-resolution warnings with debug enabled and autoCorrect disabled; rerun the selected task because debug is not a cache input. Preserve KMP source coverage and active rules. Keep autoCorrect disabled by default; opt in with --auto-correct for a dedicated correction run. Do not force a single Gradle worker for Detekt. See DEVELOPMENT.md for known expect/actual and generated-serializer limitations.
 - Detekt permits public library entities and public data classes only in the configured `api` and `shared.model` protocol/model scopes and the `client/core` request boundary; keep these exceptions narrowly scoped in `config/detekt/detekt.yml`.
 - New Kotlin source files must start with the private-project license header configured by Detekt.
 - Coverage: generate Kover reports when needed.
@@ -118,7 +118,7 @@
 - Persist GUI private keys/account history through the protected-value boundary. Do not read or migrate old
   Settings history; new records must verify encrypted writes before reporting success. Never
   downgrade to plaintext when an OS secret store is unavailable. Browser private-key encryption does not
-  replace the HttpOnly Cookie boundary. Run Windows Detekt separately from compilation, with one worker.
+  replace the HttpOnly Cookie boundary. Run Windows Detekt separately from compilation; use Gradle's default worker capacity.
 
 - Provide sign-in storage through backend/core's SigninSessionServiceFactory registration. Keep driver
   dependencies and the Redis implementation in backend/redis; cloud/runtime owns only the Ktor adapter.
@@ -377,8 +377,6 @@
 - PDF syntax highlights may overlap and leave an unhighlighted suffix; emit each source character once and retain the tail. Check rendered pages as well as extracted text after layout changes.
 
 - Keep snapshot timestamp rendering independent of the host default timezone; PdfGenerationSpec carries UTC calendar values. Label the displayed UTC offset explicitly.
-
-- For read-only Detekt, override autoCorrect=false on every analysis task (including typed/source-set tasks), since the root build enables correction by default. Verify repository source hashes are unchanged.
 
 - Keep FunctionSignature.functionBodyExpressionWrapping=multiline while MultilineExpressionWrapping is active, so the two rules agree on multiline function bodies.
 

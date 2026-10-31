@@ -771,7 +771,14 @@ closes the registered services when the application stops. It does not construct
 The existing service-file merge includes this provider in server/WS distributions. Regression tests
 build the registered provider, exercising registration along with the Redis storage behavior.
 
-Gradle enables parallel project execution by default. Detekt Worker API remains disabled because Detekt 2.0.0-alpha.6 starts process-isolated workers without a configurable heap, and Compose analysis exhausts that heap. Detekt runs within the 6 GB Gradle daemon instead; its internal parallel AST analysis remains enabled. Worker capacity follows Gradle defaults; ordinary compilation should not force --max-workers=1. Run compilation and auto-correcting Detekt in separate invocations. Docker builds inherit the same project settings.
+Gradle enables parallel project execution by default. Detekt Worker API remains disabled because Detekt 2.0.0-alpha.6 starts process-isolated workers without a configurable heap, and Compose analysis exhausts that heap. Detekt runs within the 6 GB Gradle daemon instead; its internal parallel AST analysis remains enabled. Worker capacity follows Gradle defaults for compilation and Detekt; do not force --max-workers=1 for Detekt. Run compilation and Detekt in separate invocations. Docker builds inherit the same project settings.
+
+Detekt checks are read-only by default (`autoCorrect = false`). To explicitly apply supported
+corrections, run a dedicated invocation:
+
+```bash
+./gradlew detekt --auto-correct -Pserver.flavor=dev -Pserver.buildType=debug --console=plain
+```
 
 Remaining concurrency boundaries: Appium tasks use one test fork and platform-specific single-use Gradle build services (android, desktop, browser), serializing App and Panel tests within each platform while allowing different platforms to run concurrently in one Gradle invocation. These services do not coordinate separate Gradle processes; shared-device leases remain required; the standard --e2e runner submits six Appium and two CLI targets together in one Gradle invocation with --continue, allowing independent platforms to proceed after a test failure. Test filters are applied to every target. CLI E2E tasks use the global Gradle worker count as fork capacity; App and Panel tasks and independent test classes may run concurrently. Each currently has one class containing one scenario, so the existing suites can run at most one process per target. Test Docker images use independent immutable contexts and build concurrently. Deployment submits all selected targets in one Compose build; the standalone image helper starts its four builds concurrently and waits for all results; BuildKit sharing=locked serializes builders sharing Gradle caches. CI concurrency cancels obsolete runs for the same workflow/ref and does not limit workers inside a build. Unit-test tasks outside the reviewed host-test allowlist retain Gradle's default single fork; independent project tasks can run concurrently.
 
@@ -791,6 +798,10 @@ serializer methods in the module being analyzed can also be invisible
 public generic encode/decode and polymorphic subclass APIs where they preserve the existing
 serializer and JSON contract. These calls avoid direct references to generated methods.
 Keep KMP source coverage and type resolution enabled while the fragment-model limitation remains.
+These messages come from Detekt's internal compiler diagnostics, not named Detekt rules. This version
+has no supported per-diagnostic filter: debug controls detailed output, but the compiler-error count
+still appears. Do not disable unrelated type-aware checks or exclude source files to hide these messages.
+Revisit this limitation when the linked upstream fixes are available.
 For diagnosis, enable the Detekt task's debug output with autoCorrect disabled and rerun the task
 using --rerun: changing debug alone does not invalidate cached results. Compare compiler diagnostics
 with an actual Kotlin compilation; a successful Detekt task alone does not establish complete type resolution.
@@ -1505,7 +1516,7 @@ shared compiler daemons or change test budgets:
 
 ```bash
 ./gradlew assemble -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
-./gradlew detekt -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
+./gradlew detekt -Pserver.flavor=dev -Pserver.buildType=dev --console=plain
 ./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=dev --max-workers=1 --console=plain
 ```
 
