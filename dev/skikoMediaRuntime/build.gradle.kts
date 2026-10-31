@@ -77,7 +77,7 @@ kotlin {
     sourceSets {
         commonMain {
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("commonMain") })
-            dependencies { api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0") }
+            dependencies { api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0") }
         }
         named("nativeJsMain") {
             kotlin.srcDir(prepareSources.map { it.destinationDir.resolve("nativeJsMain") })

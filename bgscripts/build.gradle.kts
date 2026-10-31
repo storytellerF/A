@@ -21,7 +21,7 @@ dependencies {
     implementation(libs.gradle)
     implementation("org.jetbrains.kotlinx:kover-features-jvm:${libs.versions.kover.get()}")
     implementation("org.ow2.asm:asm:9.11.1")
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.google.code.gson:gson:2.15.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${libs.plugins.kotlinMultiplatform.get().version}")
     // https://github.com/gradle/gradle/issues/15383#issuecomment-779893192
     implementation(files(libs::class.java.superclass.protectionDomain.codeSource.location))
