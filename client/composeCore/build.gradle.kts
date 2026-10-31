@@ -152,7 +152,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines.swing)
 
             implementation(libs.vlcj)
-            implementation(libs.jlayer)
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
@@ -200,4 +199,32 @@ compose.resources {
         sourceSetName = "wasmJsMain",
         directoryProvider = layout.dir(tasks.named("downloadNotoWasmFont").map { it.outputs.files.singleFile }),
     )
+}
+
+// Platform integration is explicit; ordinary JVM checks remain portable.
+tasks.named<Test>("jvmTest") {
+    exclude("**/WindowsProtectedStoreTest*", "**/MacProtectedStoreTest*")
+}
+tasks.register<Test>("windowsProtectedStoreTest") {
+    group = "verification"
+    description = "Verifies real Windows protected storage and filesystem write failures."
+    dependsOn("jvmTestClasses")
+    val hostTest = tasks.named<Test>("jvmTest").get()
+    testClassesDirs = hostTest.testClassesDirs
+    classpath = hostTest.classpath
+    useJUnit()
+    filter { includeTestsMatching("*.WindowsProtectedStoreTest") }
+    maxParallelForks = 1
+}
+
+tasks.register<Test>("macosProtectedStoreTest") {
+    group = "verification"
+    description = "Verifies real macOS Keychain values and locked-keychain write failures."
+    dependsOn("jvmTestClasses")
+    val hostTest = tasks.named<Test>("jvmTest").get()
+    testClassesDirs = hostTest.testClassesDirs
+    classpath = hostTest.classpath
+    useJUnit()
+    filter { includeTestsMatching("*.MacProtectedStoreTest") }
+    maxParallelForks = 1
 }

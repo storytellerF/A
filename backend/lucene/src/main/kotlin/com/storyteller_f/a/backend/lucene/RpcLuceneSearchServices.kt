@@ -158,8 +158,10 @@ class LuceneRoomSearchService(private val connection: RpcServiceProvider<LuceneR
     constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<RoomDocument>) =
         rpcResult {
-            connection.acquire().save(
+            if (documents.isEmpty()) return@rpcResult Unit
+            connection.acquire().replace(
                 "room",
+                RpcLuceneQuery(mustLongSet = mapOf(DOCUMENT_ID_FIELD to documents.map { it.id })),
                 documents.map { LuceneRoomDocument(it).save() },
             )
         }
@@ -218,8 +220,10 @@ class LuceneMemberSearchService(private val connection: RpcServiceProvider<Lucen
     constructor(rpc: LuceneRpc) : this(RpcServiceProvider { rpc })
     override suspend fun saveDocument(documents: List<MemberDocument>) =
         rpcResult {
-            connection.acquire().save(
+            if (documents.isEmpty()) return@rpcResult Unit
+            connection.acquire().replace(
                 "member",
+                RpcLuceneQuery(mustLongSet = mapOf(DOCUMENT_ID_FIELD to documents.map { it.id })),
                 documents.map { LuceneMemberDocument(it).save() },
             )
         }

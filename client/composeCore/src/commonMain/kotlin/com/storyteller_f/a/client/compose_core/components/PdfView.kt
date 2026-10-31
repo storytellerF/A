@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.FileInfo
 import kotlinx.coroutines.launch
 
@@ -40,6 +41,7 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
     Column(
         modifier =
         Modifier
+            .appiumSemantics(testTag = "uploaded-pdf-attachment")
             .fillMaxWidth()
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer, shape)
@@ -54,9 +56,14 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
                 overflow = TextOverflow.MiddleEllipsis,
                 modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             )
-            IconButton({
-                onClick(fileInfo)
-            }) {
+            IconButton(
+                onClick = { onClick(fileInfo) },
+                modifier =
+                Modifier.appiumSemantics(
+                    description = "open file ${fileInfo.name}",
+                    onClick = { onClick(fileInfo) },
+                ),
+            ) {
                 Icon(Icons.Default.Fullscreen, "fullscreen")
             }
         }
@@ -82,7 +89,6 @@ fun PdfViewBlock(fileInfo: FileInfo, onClick: (FileInfo) -> Unit) {
     }
 }
 
-// 渲染远程 PDF。jvm/android 用 compose-pdf；wasm 无对应 Compose PDF 库，
-// 仅提供「在浏览器打开」按钮（见各平台 actual）。
+// Renders a remote PDF using the platform PDF viewer.
 @Composable
 expect fun PdfView(url: String, modifier: Modifier)

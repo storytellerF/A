@@ -33,7 +33,7 @@ import kotlin.uuid.ExperimentalUuidApi
 fun EnablePipPre31(enablePip: Boolean, localMediaPlaySession: LocalMediaPlaySession) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
         val context = LocalContext.current
-        DisposableEffect(context) {
+        DisposableEffect(context, enablePip, localMediaPlaySession) {
             val onUserLeaveBehavior =
                 Runnable {
                     Napier.d(tag = "MediaPlayer") {

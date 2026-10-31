@@ -30,6 +30,7 @@ import com.storyteller_f.a.app.utils.appPlatform
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 import org.jetbrains.compose.resources.stringResource
 
 @Serializable
@@ -51,10 +52,10 @@ fun SignInAndSignUpPage() {
             serializersModule =
                 SerializersModule {
                     polymorphic(NavKey::class) {
-                        subclass(SignIn::class, SignIn.serializer())
-                        subclass(SignUp::class, SignUp.serializer())
-                        subclass(SignUpInput::class, SignUpInput.serializer())
-                        subclass(SignInInput::class, SignInInput.serializer())
+                        subclass(SignIn::class)
+                        subclass(SignUp::class)
+                        subclass(SignUpInput::class)
+                        subclass(SignInInput::class)
                     }
                 }
         }

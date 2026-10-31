@@ -427,8 +427,8 @@ fun PanelLoginPage(back: () -> Unit) {
     val module =
         SerializersModule {
             polymorphic(NavKey::class) {
-                subclass(LoginSelectScreen::class, LoginSelectScreen.serializer())
-                subclass(LoginInputScreen::class, LoginInputScreen.serializer())
+                subclass(LoginSelectScreen::class)
+                subclass(LoginInputScreen::class)
             }
         }
     val config =

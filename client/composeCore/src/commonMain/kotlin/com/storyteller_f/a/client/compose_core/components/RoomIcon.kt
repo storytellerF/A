@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.utils.safeFirstUnicode
 
@@ -35,9 +36,10 @@ fun RoomIcon(roomInfo: RoomInfo?, width: Dp, setClickEvent: Boolean, updateDialo
             modifier =
             Modifier.size(width, height).clip(shape).let {
                 if (setClickEvent) {
-                    it.clickable {
-                        updateDialog(true)
-                    }
+                    it.clickable { updateDialog(true) }.appiumSemantics(
+                        description = "room details",
+                        onClick = { updateDialog(true) },
+                    )
                 } else {
                     it
                 }
@@ -51,9 +53,10 @@ fun RoomIcon(roomInfo: RoomInfo?, width: Dp, setClickEvent: Boolean, updateDialo
                 .clip(shape)
                 .let {
                     if (setClickEvent) {
-                        it.clickable {
-                            updateDialog(true)
-                        }
+                        it.clickable { updateDialog(true) }.appiumSemantics(
+                            description = "room details",
+                            onClick = { updateDialog(true) },
+                        )
                     } else {
                         it
                     }

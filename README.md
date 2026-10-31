@@ -25,6 +25,19 @@ Wide World's context includes bounded unread-room and joined-community pinned-to
 with its own refresh and loading/error state. Unavailable private messages show a neutral unavailable
 label; previews stay in memory and are not saved as plaintext.
 
+## Browser file uploads
+
+In File Explorer, select Upload and choose a file. Large uploads support pause, resume and abort.
+Browser progress reports server-acknowledged chunks. Keep the page open for unfinished uploads:
+reloading releases browser access to the selected source file. Completed upload records survive reload.
+
+## File previews and downloads
+
+Open an uploaded file in File Explorer, or open a file attached to a topic, to view it on its own page.
+Images, audio, video and PDF have previews. Use Download to save a copy through your device's save
+dialog or browser download manager. Other file types can be downloaded from the same page.
+Only completed uploads appear in the Uploaded list.
+
 ## Storage and Search Availability
 
 After a filesystem or Lucene service restart, later requests reconnect automatically. An interrupted
@@ -193,7 +206,7 @@ messages above as the source of truth.
 - Git Bash on Windows for repository shell scripts
 - Docker with Compose support for the local service stack
 - Desktop windows use Nucleus Tao. AsciiDoc previews use the system WebView engine: WebView2 on Windows, WKWebView on macOS, and WebKitGTK on Linux.
-- Desktop video playback requires VLC and uses its native frame callbacks.
+- Desktop audio/video playback requires VLC and uses its native frame callbacks.
 
 ### Build Commands
 
@@ -276,7 +289,7 @@ An external Redis can be selected with `SIGNIN_REDIS_ENDPOINT`. Redis failure pr
 until it recovers; credentials are retained locally during temporary outages.
 
 Native GUI clients protect saved session Cookies with Android Keystore, Windows DPAPI, macOS Keychain,
-or Linux Secret Service (`secret-tool`). Cookie persistence may retain an in-memory credential when
+or Linux Secret Service (libsecret 0.19+ and an unlocked keyring). Cookie persistence may retain an in-memory credential when
 protected storage is unavailable; saving account keys requires the system secure store. There is no
 plaintext fallback. Saved private keys and account history also use protected storage. Browser key history is encrypted
 in IndexedDB with a non-extractable WebCrypto key; browser login Cookies remain HttpOnly. Old

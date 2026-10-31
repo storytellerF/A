@@ -201,48 +201,64 @@ class RoomActivityTest {
         }
 
     @Test
-    fun `private activity requires membership and keys`() =
+    fun `private activity wire content stays encrypted`() =
         test {
-            val frames = mutableListOf<RoomFrame>()
-            val owner =
-                attachSession(onReceive = { frame, _, _ -> frames.add(frame) }) {
-                    val room = createRoom(NewRoom("private", "Private")).getOrThrow()
-                    val keys = getRoomMembersPublicKeys(room.id, PaginationQuery()).getOrThrow().data
-                    createTopicInRoomAndWait(frames) { sendMessage(room.tuple(), true, "Private message", keys) }
-                    val listWire =
-                        client.get(
-                            "/users/joined-rooms",
-                        ).body<com.storyteller_f.a.api.RoomInfoListResponse>()
-                    assertIs<TopicContent.Encrypted>(listWire.activities.single().latestMessage?.content)
-                    val listPage = getUserRooms(PaginationQuery()).getOrThrow()
-                    assertIs<TopicContent.Plain>(listPage.activities.single().latestMessage?.content)
-                    assertEquals(
-                        "Private message",
-                        assertIs<TopicContent.Plain>(
-                            getOnlyRoomActivity(room.id).latestMessage?.content,
-                        ).plain,
-                    )
-                    room.id
-                }
-            val lateMember =
-                attachSession {
-                    assertTrue(
-                        getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == owner.custom },
-                    )
-                }
+            val owner = preparePrivateActivity()
             loginSession(owner) {
-                createTitle(
-                    NewTitle("join", TitleType.JOIN, lateMember.uid, owner.custom, ObjectType.ROOM, ""),
-                ).getOrThrow()
+                val wire = client.get("/users/joined-rooms").body<com.storyteller_f.a.api.RoomInfoListResponse>()
+                assertIs<TopicContent.Encrypted>(wire.activities.single().latestMessage?.content)
             }
-            loginSession(lateMember) {
-                joinRoom(owner.custom).getOrThrow()
-                val activity = getOnlyRoomActivity(owner.custom)
+        }
+
+    @Test
+    fun `private activity decrypts with sender keys`() =
+        test {
+            val owner = preparePrivateActivity()
+            loginSession(owner) {
+                val page = getUserRooms(PaginationQuery()).getOrThrow()
+                assertIs<TopicContent.Plain>(page.activities.single().latestMessage?.content)
+                assertEquals(
+                    "Private message",
+                    assertIs<TopicContent.Plain>(
+                        getOnlyRoomActivity(owner.custom)
+                            .latestMessage?.content,
+                    ).plain,
+                )
+            }
+        }
+
+    @Test
+    fun `private activity is invisible to nonmembers`() =
+        test {
+            val owner = preparePrivateActivity()
+            attachSession {
+                assertTrue(getUserRooms(PaginationQuery()).getOrThrow().activities.none { it.room.id == owner.custom })
+            }
+        }
+
+    @Test
+    fun `late member cannot decrypt private history`() =
+        test {
+            withLatePrivateMember { roomId ->
+                val activity = getOnlyRoomActivity(roomId)
                 assertEquals(1L, activity.unreadMessageCount)
                 assertIs<TopicContent.DecryptFailed>(activity.latestMessage?.content)
-                exitRoom(owner.custom).getOrThrow()
+            }
+        }
+
+    @Test
+    fun `exiting private room removes unread activity`() =
+        test {
+            withLatePrivateMember { roomId ->
+                assertEquals(1L, getOnlyRoomActivity(roomId).unreadMessageCount)
+                exitRoom(roomId).getOrThrow()
                 assertTrue(getUnreadRoomActivities(PaginationQuery()).getOrThrow().data.isEmpty())
             }
+        }
+
+    @Test
+    fun `anonymous activity request is unauthorized`() =
+        test {
             noneSession {
                 val error =
                     assertFailsWith<ServerErrorException> {
@@ -253,32 +269,45 @@ class RoomActivityTest {
         }
 
     @Test
-    fun `pins follow joined scope and unpin or exit`() =
+    fun `joined pins paginate newest first`() =
         test {
-            val source =
-                attachSession {
-                    val community = createCommunityForTest()
-                    val old = createTopic(ObjectType.COMMUNITY, community.id, "Old pin").getOrThrow()
-                    val recent = createTopic(ObjectType.COMMUNITY, community.id, "Recent pin").getOrThrow()
-                    pinTopic(old.id).getOrThrow()
-                    pinTopic(recent.id).getOrThrow()
-                    val page = getJoinedPinnedTopics(PaginationQuery(size = 1)).getOrThrow()
-                    assertEquals(recent.id, page.data.single().id)
-                    assertEquals(
-                        old.id,
-                        getJoinedPinnedTopics(PaginationQuery(page.pagination?.nextPageToken, size = 1))
-                            .getOrThrow().data.single().id,
-                    )
-                    unpinTopic(recent.id).getOrThrow()
-                    assertEquals(
-                        listOf(old.id),
-                        getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.map { it.id },
-                    )
-                    community.id
-                }
-            attachSession { assertTrue(getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.isEmpty()) }
-            loginSession(source) {
-                exitCommunity(source.custom).getOrThrow()
+            withPinnedCommunity { _, old, recent ->
+                val page = getJoinedPinnedTopics(PaginationQuery(size = 1)).getOrThrow()
+                assertEquals(recent, page.data.single().id)
+                assertEquals(
+                    old,
+                    getJoinedPinnedTopics(PaginationQuery(page.pagination?.nextPageToken, size = 1))
+                        .getOrThrow().data.single().id,
+                )
+            }
+        }
+
+    @Test
+    fun `unpin removes only the selected joined pin`() =
+        test {
+            withPinnedCommunity { _, old, recent ->
+                unpinTopic(recent).getOrThrow()
+                assertEquals(listOf(old), getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.map { it.id })
+            }
+        }
+
+    @Test
+    fun `joined pins exclude nonmember communities`() =
+        test {
+            withPinnedCommunity { _, _, _ ->
+                attachSession { assertTrue(getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.isEmpty()) }
+            }
+        }
+
+    @Test
+    fun `exiting community removes its joined pins`() =
+        test {
+            withPinnedCommunity { communityId, old, recent ->
+                assertEquals(
+                    setOf(old, recent),
+                    getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.map { it.id }.toSet(),
+                )
+                exitCommunity(communityId).getOrThrow()
                 assertTrue(getJoinedPinnedTopics(PaginationQuery()).getOrThrow().data.isEmpty())
             }
         }
@@ -346,3 +375,36 @@ private suspend fun TestMate.createRoomMessage(
 
 private suspend fun UserSessionManager.getOnlyRoomActivity(roomId: PrimaryKey): RoomActivityInfo =
     getUserRooms(PaginationQuery()).getOrThrow().activities.single { it.room.id == roomId }
+
+private suspend fun TestMate.preparePrivateActivity(): SessionOuterTuple<Long> {
+    val frames = mutableListOf<RoomFrame>()
+    return attachSession(onReceive = { frame, _, _ -> frames.add(frame) }) {
+        val room = createRoom(NewRoom("private", "Private")).getOrThrow()
+        val keys = getRoomMembersPublicKeys(room.id, PaginationQuery()).getOrThrow().data
+        createTopicInRoomAndWait(frames) { sendMessage(room.tuple(), true, "Private message", keys) }
+        room.id
+    }
+}
+
+private suspend fun TestMate.withLatePrivateMember(block: suspend UserSessionManager.(Long) -> Unit) {
+    val owner = preparePrivateActivity()
+    val member = attachSession()
+    loginSession(owner) {
+        createTitle(NewTitle("join", TitleType.JOIN, member.uid, owner.custom, ObjectType.ROOM, "")).getOrThrow()
+    }
+    loginSession(member) {
+        joinRoom(owner.custom).getOrThrow()
+        block(owner.custom)
+    }
+}
+
+private suspend fun TestMate.withPinnedCommunity(block: suspend UserSessionManager.(Long, Long, Long) -> Unit) {
+    attachSession {
+        val community = createCommunityForTest()
+        val old = createTopic(ObjectType.COMMUNITY, community.id, "Old pin").getOrThrow()
+        val recent = createTopic(ObjectType.COMMUNITY, community.id, "Recent pin").getOrThrow()
+        pinTopic(old.id).getOrThrow()
+        pinTopic(recent.id).getOrThrow()
+        block(community.id, old.id, recent.id)
+    }
+}

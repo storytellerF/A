@@ -14,7 +14,7 @@
     <string name="world">世界</string>
     <string name="communities">社区</string>
     <string name="success">成功</string>
-    <string name="design_spec">设计规范</string>
+    <string name="source_repository">源代码仓库</string>
     <string name="private_key">私钥</string>
     <string name="go_to_sign_up">前往注册</string>
     <string name="go_to_sign_in">前往登录</string>
@@ -110,4 +110,10 @@
     <string name="rtc_permission_required">请在应用设置中允许访问麦克风和摄像头。</string>
     <string name="rtc_open_settings">打开设置</string>
     <string name="rtc_media_failed">无法更新媒体，请检查摄像头和麦克风。</string>
+    <string name="invalid_private_key">私钥无效，请检查 PEM 格式。</string>
+    <string name="download_file">下载</string>
+    <string name="file_saved">文件已保存</string>
+    <string name="preview_unavailable">暂不支持预览此文件类型</string>
+    <string name="library_count">%1$d 个开源库</string>
+    <string name="download_started">下载已开始</string>
 </resources>

@@ -28,6 +28,52 @@ import kotlin.test.assertTrue
 
 class AppiumTestReportTest {
     @Test
+    fun snapshotsRemainWithTheirOwningCase() =
+        runAppiumBlockingTest {
+            withReportRoot { root ->
+                val png =
+                    checkNotNull(javaClass.getResourceAsStream("/media/sample.png")).buffered().use {
+                        it.readBytes()
+                    }
+                var source = "<html>before</html>"
+                val driver =
+                    Proxy.newProxyInstance(
+                        javaClass.classLoader,
+                        arrayOf(WebDriver::class.java, TakesScreenshot::class.java),
+                    ) { _, method, _ ->
+                        when (method.name) {
+                            "getPageSource" -> source
+                            "getScreenshotAs" -> png
+                            else -> error("Unexpected driver call")
+                        }
+                    } as WebDriver
+                val first = AppiumTestReport("suite", "desktop", "first", root)
+                val second = AppiumTestReport("suite", "desktop", "second", root)
+                first.run {
+                    first.captureSnapshot(driver, "before")
+                    source = "<html>after</html>"
+                    first.captureSnapshot(driver, "after")
+                }
+                source = "<html>second</html>"
+                second.run { second.captureSnapshot(driver, "before") }
+                assertEquals(
+                    "<html>before</html>",
+                    first.directory.resolve("snapshots/before/page-source.xml").readText(),
+                )
+                assertEquals(
+                    "<html>after</html>",
+                    first.directory.resolve("snapshots/after/page-source.xml").readText(),
+                )
+                assertEquals(
+                    "<html>second</html>",
+                    second.directory.resolve("snapshots/before/page-source.xml").readText(),
+                )
+                assertTrue(png.contentEquals(first.directory.resolve("snapshots/before/screenshot.png").readBytes()))
+                assertTrue(png.contentEquals(second.directory.resolve("snapshots/before/screenshot.png").readBytes()))
+            }
+        }
+
+    @Test
     fun isolateUnsafeNames() =
         runAppiumBlockingTest {
             withReportRoot { root ->

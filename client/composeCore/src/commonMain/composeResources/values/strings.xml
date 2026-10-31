@@ -57,5 +57,6 @@
     <string name="media_volume">Volume</string>
     <string name="media_position">Playback position</string>
     <string name="media_loading">Loading media…</string>
-    <string name="media_failed">Media playback failed. Check HTTPS, CORS, container and browser codec support.</string>
+    <string name="media_failed">Unable to play this file. You can download it and open it in another app.</string>
+    <string name="media_playback_error">Unable to play this media</string>
 </resources>

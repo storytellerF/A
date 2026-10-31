@@ -332,6 +332,36 @@ test("audio context construction failure becomes visible failure and releases wo
   await host.close();
 });
 
+test("missing audio output fails before waiting for context resume", async (t) => {
+  let resumes = 0;
+  const context = {
+    state: "suspended",
+    currentTime: 0,
+    destination: { maxChannelCount: 0 },
+    createGain: () => ({ connect() {}, disconnect() {}, gain: {} }),
+    async resume() {
+      resumes++;
+    },
+    async close() {
+      this.state = "closed";
+    },
+  };
+  const { host, workers, states } = fixture({
+    audio: true,
+    createAudio: () => context,
+  });
+  t.after(() => host.close());
+  await host.ready;
+  await host.play();
+  assert.equal(resumes, 0);
+  assert.equal(states.at(-1).status, "error");
+  assert.match(states.at(-1).error, /Media playback failed/);
+  assert.equal(workers[0].terminated, true);
+  await host.close();
+  assert.equal(context.state, "closed");
+  assert.ok(states.every((state) => state.status !== "playing"));
+});
+
 test("close during audio unlock prevents stale playback and closes the context", async () => {
   let unlock;
   const context = {

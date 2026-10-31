@@ -8,8 +8,11 @@ import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
 import com.storyteller_f.shared.model.AlgoType
 
-suspend fun scenarioSignUp(driver: AppTestDriver) {
-    val privateKey = getAlgo(AlgoType.P256).generatePemKeyPair().getOrThrow().first
+suspend fun scenarioSignUp(driver: AppTestDriver): String {
+    val algo = getAlgo(AlgoType.P256)
+    val privateKey = algo.generatePemKeyPair().getOrThrow().first
+    val publicKey = algo.getDerPublicKeyFromPrivateKey(privateKey).getOrThrow()
+    val address = algo.calcAddress(publicKey).getOrThrow()
     driver.clickByDescription("avatar")
     driver.clickByText("Sign in")
     driver.clickByText("Go to sign up")
@@ -20,7 +23,8 @@ suspend fun scenarioSignUp(driver: AppTestDriver) {
     driver.clickByText("Confirm")
     driver.assertVisibleByText("Start sign up")
     driver.clickByText("Start sign up")
-    driver.assertVisibleByDescription("avatar")
+    scenarioVerifyInjectedSessionLoaded(driver, address)
+    return address
 }
 
 suspend fun scenarioSignIn(driver: AppTestDriver, privateKey: String) {
@@ -79,7 +83,7 @@ suspend fun scenarioOpenAsciidocPreview(driver: AppTestDriver, address: String, 
 suspend fun scenarioFavoritePreparedTopic(driver: AppTestDriver, data: FavoriteTopicScenario) {
     scenarioFavoriteTopic(driver, data.authenticated.session.address, data.topicContent)
     waitUntilTopicFavorited(data.authenticated.sessionManager, data.topicId)
-    driver.navigateBack()
+    driver.dismissDialog()
     driver.assertVisibleByDescription("topic")
 }
 
@@ -98,17 +102,20 @@ suspend fun scenarioSubscribeTopic(driver: AppTestDriver, communityName: String,
 suspend fun scenarioSubscribePreparedTopic(driver: AppTestDriver, data: SubscriptionTopicScenario) {
     scenarioSubscribeTopic(driver, data.communityName, data.topicContent)
     waitUntilTopicSubscribed(data.authenticated.sessionManager, data.topicId)
-    driver.navigateBack()
+    driver.dismissDialog()
     driver.assertVisibleByDescription("topic")
 }
 
-suspend fun scenarioCommunityProfileActions(driver: AppTestDriver, communityName: String, ownerAddress: String) {
+suspend fun scenarioOpenCommunityProfile(driver: AppTestDriver, communityName: String) {
     scenarioOpenCommunity(driver, communityName)
     driver.clickByText(communityName.first().toString())
-    driver.clickByText("Favorite")
-    driver.clickByText("Subscription")
+}
+
+suspend fun scenarioOpenCommunityMember(driver: AppTestDriver, data: PreparedCommunityRoomScenario) {
+    scenarioOpenCommunityProfile(driver, data.communityName)
     driver.clickByTextContaining("All members")
-    driver.clickByTextContaining(ownerAddress)
+    driver.clickByTextContaining(data.ownerSession.address)
+    driver.assertVisibleByText(data.ownerTopic)
 }
 
 suspend fun scenarioPublishTopicInCommunity(driver: AppTestDriver, communityName: String) {

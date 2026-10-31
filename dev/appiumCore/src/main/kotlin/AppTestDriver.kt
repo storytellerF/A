@@ -11,6 +11,7 @@ interface AppTestDriver {
     suspend fun clickByTextContaining(text: String)
     suspend fun inputText(text: String)
     suspend fun assertVisibleByDescription(description: String)
+    suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long = 5)
     suspend fun assertVisibleByText(text: String)
 
     /** Verifies that visible UI text contains [text]. */

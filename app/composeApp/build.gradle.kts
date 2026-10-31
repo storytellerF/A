@@ -216,6 +216,7 @@ kotlin {
             implementation(libs.latex.renderer)
         }
         commonTest.dependencies {
+            implementation(libs.ktor.client.mock)
             implementation(libs.androidx.room.runtime)
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
@@ -246,7 +247,6 @@ kotlin {
                 },
             )
             implementation(libs.vlcj)
-            implementation(libs.jlayer)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)
             implementation(libs.tika.core)
@@ -348,7 +348,7 @@ aboutLibraries {
 
         // Allows to exclude some fields from the generated meta data field.
         // If the class name is specified, the field is only excluded for that class; without a class name, the exclusion is global.
-        excludeFields.addAll("License.name", "developers", "funding")
+        excludeFields.addAll("developers", "funding")
 
         // Enable pretty printing for the generated JSON file
         prettyPrint = true

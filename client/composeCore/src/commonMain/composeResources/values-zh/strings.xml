@@ -53,5 +53,6 @@
     <string name="media_volume">音量</string>
     <string name="media_position">播放位置</string>
     <string name="media_loading">正在加载媒体…</string>
-    <string name="media_failed">媒体播放失败。请检查 HTTPS、跨域权限、容器格式和浏览器编解码器支持。</string>
+    <string name="media_failed">无法播放此文件。可以下载后使用其他应用打开。</string>
+    <string name="media_playback_error">无法播放此媒体</string>
 </resources>

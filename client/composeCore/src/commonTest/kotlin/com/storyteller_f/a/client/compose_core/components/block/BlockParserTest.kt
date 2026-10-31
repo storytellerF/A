@@ -148,7 +148,7 @@ class BlockParserTest {
     }
 
     @Test
-    fun `test parse object block`() {
+    fun `test parse legacy object block`() {
         val markdown =
             """
             ```object
@@ -159,7 +159,6 @@ class BlockParserTest {
         assertEquals(1, blocks.size)
         val objectBlock = blocks[0] as ContentBlock.ObjectBlock
         assertEquals("test.mp4", objectBlock.name)
-        assertEquals("video/mp4", objectBlock.contentType)
         assertEquals("https://example.com/test.mp4", objectBlock.url)
     }
 
@@ -350,13 +349,13 @@ class BlockParserTest {
                     id = "test-id",
                     name = "video.mp4",
                     url = "https://example.com/video.mp4",
-                    contentType = "video/mp4",
                 ),
             )
         val markdown = generateMarkdownFromBlocks(blocks)
         assertTrue(markdown.contains("```object"))
         assertTrue(markdown.contains("video.mp4"))
-        assertTrue(markdown.contains("video/mp4"))
+        assertTrue(!markdown.contains("contentType"))
+        assertTrue(markdown.contains("https://example.com/video.mp4"))
     }
 
     @Test

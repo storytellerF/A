@@ -14,6 +14,7 @@ import com.storyteller_f.a.client.compose_core.common.SimpleViewModel
 import com.storyteller_f.a.client.compose_core.common.buildPager
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.a.client.core.PanelSessionManager
+import com.storyteller_f.a.client.core.SimpleLoadingHandler
 import com.storyteller_f.a.client.core.getAllCommunities
 import com.storyteller_f.a.client.core.getAllFiles
 import com.storyteller_f.a.client.core.getAllPrivateRooms
@@ -712,11 +713,7 @@ class TaskRecordsViewModel(
 internal class TaskRecordSummariesViewModel(sessionManager: PanelSessionManager) :
     SimpleViewModel<List<TaskRecordSummary>>() {
     override val handler: LoadingHandler<List<TaskRecordSummary>> =
-        CachedLoadingHandler(
-            MutableStateFlow(null),
-            viewModelScope,
-            {},
-        ) {
+        SimpleLoadingHandler(viewModelScope) {
             sessionManager.getTaskRecordSummaries().map { it.data }
         }
 }

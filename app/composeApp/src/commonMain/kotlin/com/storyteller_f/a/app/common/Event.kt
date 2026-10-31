@@ -6,6 +6,7 @@ package com.storyteller_f.a.app.common
 
 import com.storyteller_f.shared.model.CommunityInfo
 import com.storyteller_f.shared.model.FileInfo
+import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.ReactionInfo
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TitleDetail
@@ -14,6 +15,7 @@ import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.UserInfo
 import com.storyteller_f.shared.model.toInitialDetail
 import com.storyteller_f.shared.obj.ObjectTuple
+import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.CommunityCollection
@@ -72,6 +74,8 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
 
             is OnRemoveReaction -> processRemoveReaction(database, event)
 
+            is OnCommunityCreated -> processCommunityCreated(event, database)
+
             is OnCommunityJoined -> database.community.saveToDefault(event.info)
 
             is OnCommunityExited ->
@@ -107,6 +111,14 @@ suspend fun processEvent(database: ModelStorage, bus: MutableSharedFlow<Any>) {
             is OnRemoveSubscription -> processOnRemoveSubscriptionEvent(event, database)
         }
     }
+}
+
+private suspend fun processCommunityCreated(event: OnCommunityCreated, database: ModelStorage) {
+    database.community.saveToDefault(event.info)
+    database.community.saveFirst(
+        CommunityCollection.SearchCommunity(JoinStatusSearch.JOINED, "", null, PosterSearch.UNSPECIFIED),
+        event.info,
+    )
 }
 
 private suspend fun processOnMediaUploaded(event: OnMediaUploaded, database: ModelStorage) {

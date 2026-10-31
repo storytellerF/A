@@ -7,6 +7,8 @@
 - Logging: use Napier in shared/app code. Initialize a logging tree only when needed for tests or debugging.
 - Use the canonical imported-class Logback XML form documented in DEVELOPMENT.md.
 - Static analysis: run Detekt with `config/detekt/detekt.yml`. Do not create or use Detekt baseline files; every active finding must be fixed in source code. Do not add or broaden suppressions to bypass findings. When Detekt rules conflict, disable only the conflicting rule or narrowly scoped configuration necessary to resolve the conflict.
+
+- Diagnose Detekt type-resolution warnings with debug enabled and autoCorrect disabled; rerun the selected task because debug is not a cache input. Preserve KMP source coverage and active rules. Keep autoCorrect disabled by default; opt in with --auto-correct for a dedicated correction run. Do not force a single Gradle worker for Detekt. See DEVELOPMENT.md for known expect/actual and generated-serializer limitations.
 - Detekt permits public library entities and public data classes only in the configured `api` and `shared.model` protocol/model scopes and the `client/core` request boundary; keep these exceptions narrowly scoped in `config/detekt/detekt.yml`.
 - New Kotlin source files must start with the private-project license header configured by Detekt.
 - Coverage: generate Kover reports when needed.
@@ -116,7 +118,7 @@
 - Persist GUI private keys/account history through the protected-value boundary. Do not read or migrate old
   Settings history; new records must verify encrypted writes before reporting success. Never
   downgrade to plaintext when an OS secret store is unavailable. Browser private-key encryption does not
-  replace the HttpOnly Cookie boundary. Run Windows Detekt separately from compilation, with one worker.
+  replace the HttpOnly Cookie boundary. Run Windows Detekt separately from compilation; use Gradle's default worker capacity.
 
 - Provide sign-in storage through backend/core's SigninSessionServiceFactory registration. Keep driver
   dependencies and the Redis implementation in backend/redis; cloud/runtime owns only the Ktor adapter.
@@ -376,8 +378,6 @@
 
 - Keep snapshot timestamp rendering independent of the host default timezone; PdfGenerationSpec carries UTC calendar values. Label the displayed UTC offset explicitly.
 
-- For read-only Detekt, override autoCorrect=false on every analysis task (including typed/source-set tasks), since the root build enables correction by default. Verify repository source hashes are unchanged.
-
 - Keep FunctionSignature.functionBodyExpressionWrapping=multiline while MultilineExpressionWrapping is active, so the two rules agree on multiline function bodies.
 
 - Wasm media experiments must distinguish Host frame dispatch from actual Compose rendering
@@ -510,3 +510,118 @@
   During alpha, do not add client database compatibility migrations for retired projection formats.
 - Pin/unpin events carry identifiers and the returned pin flag only. Patch each current cached
   projection without persisting UI summaries or replacing unrelated fields.
+
+- Track test contracts and platform boundaries in DEVELOPMENT.md separately from executed acceptance.
+  Keep activity read/send, navigation, layout and draft-resize cases independently discoverable;
+  restore temporary Android screen overrides after the dedicated wide-context case.
+
+- Browser bridge callbacks can leave keyboard focus on the document body. Focus the real Compose
+  canvas before sending Escape and verify modal dismissal; do not add a clickable dialog surface.
+
+- Drive browser action bridges with real WebDriver pointer clicks. Synthetic JavaScript clicks do not
+  provide user activation and can cancel Compose effects on Chromium. Focus the renderer before Escape.
+
+- Browser injected-session readiness must wait for restored user info, not only account-instance
+  creation. User info changes avatar/create placement. Wait for committed, stable semantics geometry
+  before resolving pointer targets; preserve normal timeouts and do not retry actions.
+
+- CLI terminal event delivery must preserve pasted input under backpressure. Keep the pinned,
+  archive-verified Mosaic source rebuild until an upstream release passes the real multiline
+  login and command tests; do not hide dropped events with input delays.
+- Browser RTC capture owns every track in the returned stream until delivery. Disable unused
+  media kinds and stop surplus or late tracks after cancellation; verify presented frames
+  and track release independently of signaling connectivity.
+- Batch member insertion must preserve each member's joinedTime. Invited notification
+  recipients remain INVITED with no joined timestamp; joined creators retain their timestamp.
+- Recommendation fixtures need another author's topic in a joined community. A user's own
+  topics are deliberately excluded; wait for search visibility before driving the CLI list.
+- RTC acquisition under NonCancellable must retain the caller context and check it between
+  audio/video acquisition and before delivery. Returning on the same browser dispatcher does
+  not perform the cancellation check that a dispatcher switch would perform.
+- Browser test bridges must use clipped window bounds for controls inside scrolling panes;
+  viewport bounds alone can place an offscreen menu target over a pinned action.
+- CachedLoadingHandler requires onSave to publish into its observed data flow. Use
+  SimpleLoadingHandler for ephemeral results instead of a null flow and an empty saver.
+
+- Wasm test semantics must detach HTML controls when Compose nodes become unplaced, including
+  retained lazy-list cache entries. Let real WebDriver wheel input reach the renderer beneath transparent test controls;
+  match an unobscured interactive target and resolve editors independently from search fields.
+- Browser uploaders belong to the account scope. Retain selected files only for pending work,
+  release them after success or abort, and do not claim path-based resume after page reload.
+  File-input fixtures must use the real FileKit change handler and shared upload pipeline.
+
+- Room renames must refresh room and joined-member search documents; exclude invited or departed
+  memberships and paginate member/user joins using the query's user-ID cursor. Search refresh
+  assertions must use current indexed results and a fully visible row as the scroll anchor.
+
+- Replace changed Lucene documents atomically with an adapter-declared query; plain append keeps
+  stale keyword matches. Keep the service operation generic and roll back failed index writes.
+- Own Ktor test applications explicitly and stop them on failures before container teardown.
+  Preserve the original error and suppressed cleanup failures so one failed case cannot leave
+  a signaling listener consuming a later case's frames.
+
+- Browser E2E fetch/media probes must preserve the page's native Promise realm. Firefox WebDriver
+  sandbox async functions can produce incompatible Promise values for Wasm casts; chain native results
+  or construct page Promises. Preserve actual responses, AbortSignal and capture ownership.
+- Wait for successful form exit before navigating away after submission. A modal hiding the submit
+  control does not prove completion. Restart checks that expect authentication must await loaded user
+  data and clear stale test readiness markers before restarting the process.
+
+- Creation events must update the named collection observed by the visible list as well as its detail
+  cache. Verify creation from an already-loaded empty collection without a manual refresh; submission
+  completion alone does not prove cached lists receive the new record.
+
+- Cross-platform E2E validation must assert visible localized results or actual derived values.
+  Browser-only Appium bridge descriptions are not native selectors. Preserve displayed account
+  addresses in native accessibility instead of replacing their values with machine labels.
+
+- Linux protected values use libsecret binary APIs, not secret-tool stdin (which truncates at 8 KiB).
+  Keep native calls on IO with per-operation GCancellable ownership and cancellation-safe argument
+  lifetime. Preserve raw stored bytes and stable production names; scope explicit test storage roots
+  on Linux as on macOS. Cover large Unicode values and unavailable libraries against a real keyring.
+
+- Resolve uploaded attachment MIME types from FileInfo; keep Markdown object blocks free of duplicate
+  contentType metadata and preserve legacy unknown-field decoding. Generate object JSON through the
+  serializer so file names containing quotes remain valid.
+- Keep License.name in generated AboutLibraries metadata; omitting it makes the runtime parser return
+  an empty library list. Verify bundled dependencies and their license associations after export changes.
+- Dependency removal must cover every consuming module and unused version-catalog entries. Regenerate
+  bundled license metadata and verify the affected runtime classpaths before reporting cleanup complete.
+- Native keychain failure tests must use a private temporary keychain and restore the original default,
+  search list and interaction policy. Keep these OS-specific tests explicit and serialize account access.
+
+- Native uploaded-file rows must merge the filename and visible metadata into their actionable
+  accessibility label. Test file selectors match the complete filename boundary, including escaped
+  punctuation, rather than an arbitrary substring. Refuse clicks on zero-size native elements.
+- Mac2 text input must use native typeText for the complete string and verify the exact multiline
+  value. Reserve the key-chord API for shortcuts; per-character XCTest key operations can overrun
+  the transport timeout even after the visible text is complete.
+- AppKit exposes Save/Cancel controls in both the file dialog and Touch Bar. Scope native picker
+  actions to the save-panel accessibility identifier and its buttons, then verify panel dismissal.
+- Collect native fatal-error dialogs before cleanup. Close only newly created reporters belonging
+  to the test launch, rechecking process identity; refuse unexplained pre-existing dialogs.
+- Browser PDF preview owners must abort pending requests and revoke their Blob URLs on disposal.
+  Verify actual document bytes and rendered pages under the application's cross-origin isolation.
+
+- Bind ZoomImage main-thread checks to the actual desktop window UI thread. Its Swing default
+  does not recognize the native Tao event loop; retain rejection of worker-thread access.
+
+- Browser object reads need GET/HEAD CORS preflights and readable missing-object responses;
+  keep mutation preflights denied and RPC routes outside this public read boundary.
+- Browser audio acceptance requires a working default output device. A trusted click and allowed
+  autoplay do not prove that audio hardware is available; keep real playback-progress assertions
+  and diagnose zero output channels separately from application input or decoding failures.
+
+- Windows native file dialogs may run on a dedicated STA thread. Validate window ownership by the launched application process and visibility; do not require the main window thread ID when selecting owned foreground dialogs.
+
+- UiAutomator2 selector string arguments unescape quotes only. Preserve regex backslashes instead of JSON-escaping the expression; test matching after selector argument parsing, including merged filename metadata. Close the Appium driver before collecting long Android bugreports.
+
+- Reveal native player controls only when their accessibility state says they are hidden; an unconditional surface tap can hide an already-visible controller. Preserve platform default control visibility timing rather than shortening it below normal touch/accessibility interaction time.
+
+- Native Media3 progress updates can keep UiAutomator busy until its controls disappear. Disable UiAutomator idle waiting only during animated media interaction, restore the prior setting with cancellation/failure-safe cleanup, and preserve explicit state assertions and deadlines.
+
+- Android native clicks wait for visible, enabled controls with stable bounds before issuing one click. Presence alone does not establish that a navigation drawer is ready for input; do not retry the click or alter animation settings to hide a missed action.
+
+- Keep Android PlayerView inside its page component; do not introduce an activity-root video overlay to eliminate transient Surface black frames. Brief black frames during navigation/PiP transitions are accepted. Detach the controller on final view release. Preserve PiP E2E checks for decoded frames after transitions settle, including re-entry; do not accept persistent black output or replace pixel assertions with system state alone.
+
+- Linux/X11 portal dialogs require a live parent XID and may belong to another process. Verify native transient ownership before admitting their AT-SPI nodes; reject ambiguous/shared portal windows, retain D-Bus/object-path identities, and keep portal activation on the same isolated accessibility bus as the test application.

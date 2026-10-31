@@ -7,19 +7,51 @@ package com.storyteller_f.a.dev.appium
 import com.storyteller_f.a.test.ArtifactCollectionError
 import com.storyteller_f.result.captureFailure
 import io.appium.java_client.AppiumBy
+import io.appium.java_client.Setting
 import io.appium.java_client.android.AndroidDriver
 import kotlinx.coroutines.delay
+import org.openqa.selenium.By
 import org.openqa.selenium.OutputType
 import org.openqa.selenium.StaleElementReferenceException
 import org.openqa.selenium.support.ui.ExpectedConditions
 import org.openqa.selenium.support.ui.WebDriverWait
-import java.io.File
 import java.time.Duration
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 
-class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdbCommand: (List<String>) -> String) :
-    AppTestDriver {
+internal fun androidFileNamePattern(name: String): String =
+    "(?s)^${java.util.regex.Pattern.quote(
+        name,
+    )}(?:(?:, |\n).*)?$"
+
+internal fun androidFileNameSelector(name: String): String {
+    // UiAutomator2 unescapes quotes only; JSON escaping doubles regex backslashes.
+    val pattern = androidFileNamePattern(name).replace("\"", "\\\"")
+    return """new UiSelector().descriptionMatches("$pattern")"""
+}
+
+class AndroidAppTestDriver internal constructor(
+    private val driver: AndroidDriver,
+    private val report: AppiumTestReport,
+    private val runAdbCommand: (List<String>) -> String,
+) : AppTestDriver {
+    suspend fun cancelNativeSaveDialog(appPackageName: String) {
+        val pickerPackage =
+            WebDriverWait(driver, Duration.ofSeconds(15)).until {
+                driver.currentPackage?.takeIf { it.endsWith(".documentsui") }
+            }
+        val dump = runAdbCommand(listOf("shell", "dumpsys", "activity", "top"))
+        assertTrue("ACTIVITY $pickerPackage/" in dump, "Expected the foreground document picker")
+        val topActivity =
+            dump.substringAfter("ACTIVITY $pickerPackage/")
+                .substringBefore("\nACTIVITY ")
+        assertTrue("android.intent.action.CREATE_DOCUMENT" in topActivity, "Expected a native save-document request")
+        report.captureSnapshot(driver, "native-save-dialog")
+        dismissKeyboard()
+        navigateBack()
+        WebDriverWait(driver, Duration.ofSeconds(15)).until { driver.currentPackage == appPackageName }
+    }
+
     suspend fun assertAsciidocPreviewOpened(appPackageName: String, expectedSource: String) {
         assertTrue(expectedSource.isNotBlank(), "AsciiDoc source must not be blank")
         val expectedTitle =
@@ -51,11 +83,23 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
         assertElementVisible("""new UiSelector().text("$expectedTitle")""")
     }
 
-    fun isWideViewport(): Boolean {
-        val density =
-            runAdbCommand(listOf("shell", "wm", "density"))
-                .lineSequence().last { it.isNotBlank() }.substringAfter(": ").trim().toInt()
-        return driver.manage().window().size.width * 160 / density >= 1400
+    suspend fun withWideViewport(block: suspend () -> Unit) {
+        val size = runAdbCommand(listOf("shell", "wm", "size"))
+        val density = runAdbCommand(listOf("shell", "wm", "density"))
+        val originalSize =
+            size.lineSequence().firstOrNull { it.startsWith("Override size:") }
+                ?.substringAfter(":")?.trim() ?: "reset"
+        val originalDensity =
+            density.lineSequence().firstOrNull { it.startsWith("Override density:") }
+                ?.substringAfter(":")?.trim() ?: "reset"
+        try {
+            runAdbCommand(listOf("shell", "wm", "size", "1920x1080"))
+            runAdbCommand(listOf("shell", "wm", "density", "160"))
+            block()
+        } finally {
+            runAdbCommand(listOf("shell", "wm", "size", originalSize))
+            runAdbCommand(listOf("shell", "wm", "density", originalDensity))
+        }
     }
 
     fun assertUnreadRoomsIndicator(visible: Boolean) {
@@ -63,8 +107,83 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
         if (visible) assertElementVisible(selector) else assertElementNotVisible(selector, 5)
     }
 
+    internal suspend fun assertVideoPlaying(name: String) {
+        assertVisibleByDescription("video playback $name: playing")
+        val packageName = requireNotNull(driver.currentPackage) { "Video playback has no foreground application" }
+        assertVideoFrame(packageName, name)
+    }
+
+    internal suspend fun withAnimatedMediaControls(block: suspend () -> Unit) {
+        val setting = Setting.WAIT_FOR_IDLE_TIMEOUT
+        val originalWait = driver.settings.getValue(setting.toString())
+        val restoreWait = AutoCloseable { driver.setSetting(setting, originalWait) }
+        // Media3 progress updates prevent idle while native controls and video frames remain active.
+        driver.setSetting(setting, 0)
+        restoreWait.use { block() }
+    }
+
+    internal suspend fun pauseVideo(name: String) {
+        withAnimatedMediaControls {
+            driver.findElements(AppiumBy.accessibilityId("Show player controls")).singleOrNull()?.click()
+            clickByDescription("Pause")
+        }
+        assertVisibleByDescription("video playback $name: paused")
+    }
+
+    internal fun pressHomeAndAssertPip(packageName: String, expected: Boolean) {
+        driver.pressKey(
+            io.appium.java_client.android.nativekey.KeyEvent(io.appium.java_client.android.nativekey.AndroidKey.HOME),
+        )
+        WebDriverWait(driver, Duration.ofSeconds(15)).until { driver.currentPackage != packageName }
+        assertPipState(packageName, expected)
+    }
+
+    internal fun assertVideoFrame(packageName: String, name: String) {
+        val originalWindows = driver.settings.getValue("enableMultiWindows")
+        val restoreWindows = AutoCloseable { driver.setSetting("enableMultiWindows", originalWindows) }
+        driver.setSetting("enableMultiWindows", true)
+        restoreWindows.use {
+            WebDriverWait(driver, Duration.ofSeconds(UI_WAIT_SECONDS))
+                .ignoring(StaleElementReferenceException::class.java)
+                .until {
+                    val player =
+                        driver.findElements(By.xpath("//*[starts-with(@content-desc,'video playback ')]"))
+                            .singleOrNull { element ->
+                                element.getAttribute("package") == packageName &&
+                                    element.getAttribute("content-desc") == "video playback $name: playing"
+                            } ?: return@until false
+                    hasVideoTestPattern(driver.getScreenshotAs(OutputType.BYTES), player.rect)
+                }
+        }
+    }
+
+    internal fun restoreFromPip(packageName: String) {
+        driver.activateApp(packageName)
+        assertPipState(packageName, false)
+    }
+
+    private fun assertPipState(packageName: String, expected: Boolean) {
+        WebDriverWait(driver, Duration.ofSeconds(15)).until {
+            val activities = runAdbCommand(listOf("shell", "dumpsys", "activity", "activities"))
+            val stacks = activities.split(Regex("(?m)(?=^ * (?:RootTask|Stack) #)"))
+            val pinned =
+                stacks.any { stack ->
+                    ("mode=pinned" in stack || "windowingMode=2" in stack) && packageName in stack
+                }
+            pinned == expected
+        }
+    }
+
     override suspend fun clickByDescription(description: String) {
         clickElement("""new UiSelector().description("$description")""")
+    }
+
+    fun clickFileByName(name: String) {
+        clickElement(androidFileNameSelector(name))
+    }
+
+    fun assertFileNameVisible(name: String) {
+        assertElementVisible(androidFileNameSelector(name))
     }
 
     override suspend fun clickByText(text: String) {
@@ -81,6 +200,10 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
 
     override suspend fun assertVisibleByDescription(description: String) {
         assertElementVisible("""new UiSelector().description("$description")""")
+    }
+
+    override suspend fun assertNotVisibleByDescription(description: String, timeoutSeconds: Long) {
+        assertElementNotVisible("""new UiSelector().description("$description")""", timeoutSeconds)
     }
 
     override suspend fun assertVisibleByText(text: String) {
@@ -132,7 +255,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
             assertTrue(element.isDisplayed)
         } catch (throwable: Throwable) {
             captureFailure(ArtifactCollectionError::CollectionFailed) {
-                saveDebugSnapshot("assert-visible-failed-${System.currentTimeMillis()}")
+                saveDebugSnapshot("assert-visible-failed")
             }
             throw throwable
         }
@@ -146,7 +269,7 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
             }
         } catch (throwable: Throwable) {
             captureFailure(ArtifactCollectionError::CollectionFailed) {
-                saveDebugSnapshot("assert-not-visible-failed-${System.currentTimeMillis()}")
+                saveDebugSnapshot("assert-not-visible-failed")
             }
             throw throwable
         }
@@ -155,14 +278,27 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
     private fun clickElement(selector: String, seconds: Long = UI_WAIT_SECONDS) {
         try {
             val locator = AppiumBy.androidUIAutomator(selector)
-            if (seconds > 0) {
-                WebDriverWait(driver, Duration.ofSeconds(seconds))
-                    .until(ExpectedConditions.presenceOfElementLocated(locator))
-            }
-            driver.findElement(locator).click()
+            val element =
+                if (seconds > 0) {
+                    var previousBounds: org.openqa.selenium.Rectangle? = null
+                    WebDriverWait(driver, Duration.ofSeconds(seconds))
+                        .ignoring(StaleElementReferenceException::class.java)
+                        .until {
+                            val target = driver.findElement(locator)
+                            val bounds = target.rect
+                            val ready =
+                                target.isDisplayed && target.isEnabled && bounds.width > 0 && bounds.height > 0 &&
+                                    bounds == previousBounds
+                            previousBounds = bounds
+                            target.takeIf { ready }
+                        }
+                } else {
+                    driver.findElement(locator)
+                }
+            element.click()
         } catch (throwable: Throwable) {
             captureFailure(ArtifactCollectionError::CollectionFailed) {
-                saveDebugSnapshot("click-failed-${System.currentTimeMillis()}")
+                saveDebugSnapshot("click-failed")
             }
             throw throwable
         }
@@ -184,18 +320,14 @@ class AndroidAppTestDriver(private val driver: AndroidDriver, private val runAdb
             }
         } catch (throwable: Throwable) {
             captureFailure(ArtifactCollectionError::CollectionFailed) {
-                saveDebugSnapshot("input-failed-${System.currentTimeMillis()}")
+                saveDebugSnapshot("input-failed")
             }
             throw throwable
         }
     }
 
     private fun saveDebugSnapshot(name: String) {
-        val outputDir = File("build/test/appium-debug/AppiumTest")
-        outputDir.mkdirs()
-        val safeName = name.replace(Regex("[^a-zA-Z0-9._-]"), "_")
-        File(outputDir, "$safeName.xml").writeText(checkNotNull(driver.pageSource) { "Appium returned no page source" })
-        File(outputDir, "$safeName.png").writeBytes(driver.getScreenshotAs(OutputType.BYTES))
+        report.captureSnapshot(driver, name)
     }
 
     private companion object {

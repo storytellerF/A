@@ -10,17 +10,23 @@ import com.storyteller_f.services.filesystem.api.FilesystemRpc
 import com.storyteller_f.services.filesystem.api.ObjectStorageRecord
 import com.storyteller_f.services.filesystem.api.ObjectStorageWriteRecord
 import com.storyteller_f.services.filesystem.api.RpcUploadPack
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.autohead.AutoHeadResponse
 import io.ktor.server.plugins.partialcontent.PartialContent
 import io.ktor.server.response.header
+import io.ktor.server.response.respond
 import io.ktor.server.response.respondFile
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
+import io.ktor.server.routing.options
 import io.ktor.server.routing.routing
 import io.ktor.server.websocket.WebSockets
 import kotlinx.coroutines.job
@@ -170,16 +176,31 @@ internal fun Application.configureObjectDownloads(storage: LocalFileSystemObject
     install(AutoHeadResponse)
     routing {
         get("/health") { call.respondText("ok") }
+        options("/objects/{path...}") {
+            val method = call.request.headers[HttpHeaders.AccessControlRequestMethod]
+            if (method != HttpMethod.Get.value && method != HttpMethod.Head.value) {
+                call.respond(HttpStatusCode.Forbidden)
+            } else {
+                call.configureDownloadCors()
+                call.response.header(HttpHeaders.AccessControlAllowMethods, "GET, HEAD")
+                call.response.header(HttpHeaders.AccessControlAllowHeaders, "*")
+                call.respond(HttpStatusCode.NoContent)
+            }
+        }
         get("/objects/{path...}") {
+            call.configureDownloadCors()
             val path = call.parameters.getAll("path").orEmpty()
             val file = storage.getPathResponse(path)
             if (file == null) {
-                call.respondText("not found", status = io.ktor.http.HttpStatusCode.NotFound)
+                call.respondText("not found", status = HttpStatusCode.NotFound)
             } else {
-                call.response.header("Access-Control-Allow-Origin", "*")
-                call.response.header("Access-Control-Expose-Headers", "Content-Length,Content-Range,Accept-Ranges")
                 call.respondFile(file.toFile())
             }
         }
     }
+}
+
+private fun ApplicationCall.configureDownloadCors() {
+    response.header(HttpHeaders.AccessControlAllowOrigin, "*")
+    response.header(HttpHeaders.AccessControlExposeHeaders, "Content-Length,Content-Range,Accept-Ranges")
 }

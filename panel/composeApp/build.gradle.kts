@@ -173,7 +173,6 @@ kotlin {
         }
         jvmMain.dependencies {
             implementation(libs.vlcj)
-            implementation(libs.jlayer)
             implementation(libs.androidx.datastore.preferences.core)
             implementation(libs.connectivity.http)
             implementation(libs.connectivity.compose.http)

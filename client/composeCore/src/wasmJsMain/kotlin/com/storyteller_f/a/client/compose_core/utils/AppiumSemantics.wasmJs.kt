@@ -9,8 +9,12 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.node.GlobalPositionAwareModifierNode
+import androidx.compose.ui.node.ModifierNodeElement
+import androidx.compose.ui.node.UnplacedAwareModifierNode
+import androidx.compose.ui.platform.InspectorInfo
 import kotlinx.browser.document
 import kotlinx.browser.window
 import org.w3c.dom.HTMLElement
@@ -28,6 +32,8 @@ actual fun Modifier.appiumSemantics(
     inputValue: String?,
     onInputValueChange: ((String) -> Unit)?,
     onClick: (() -> Unit)?,
+    onInputSubmit: (() -> Unit)?,
+    onLongClick: (() -> Unit)?,
 ): Modifier {
     if (!window.location.search.contains("appium=true")) return this
     val semanticsModifier =
@@ -39,30 +45,34 @@ actual fun Modifier.appiumSemantics(
             SideEffect {
                 AppiumHtmlSemantics.updateMetadata(id, testTag, description, text)
                 AppiumHtmlSemantics.updateAction(id, onClick)
+                AppiumHtmlSemantics.updateLongAction(id, onLongClick)
                 if (input) {
                     AppiumHtmlSemantics.updateInput(
                         id = id,
                         value = inputValue.orEmpty(),
                         onValueChange = onInputValueChange,
+                        onSubmit = onInputSubmit,
                     )
                 }
             }
-            onGloballyPositioned { coordinates ->
-                val position = coordinates.positionInWindow()
-                val size = coordinates.size
-                AppiumHtmlSemantics.update(
-                    id = id,
-                    testTag = testTag,
-                    description = description,
-                    text = text,
-                    input = input,
-                    action = onClick != null,
-                    left = position.x,
-                    top = position.y,
-                    width = size.width.toFloat(),
-                    height = size.height.toFloat(),
-                )
-            }
+            then(
+                AppiumPlacementElement(onUnplaced = { AppiumHtmlSemantics.hide(id) }) { coordinates ->
+                    val bounds = coordinates.boundsInWindow()
+                    AppiumHtmlSemantics.update(
+                        id = id,
+                        testTag = testTag,
+                        description = description,
+                        text = text,
+                        input = input,
+                        action = onClick != null || onLongClick != null,
+                        left = bounds.left,
+                        top = bounds.top,
+                        width = bounds.width,
+                        height = bounds.height,
+                    )
+                    AppiumHtmlSemantics.updateLayoutSize(id, coordinates.size.width, coordinates.size.height)
+                },
+            )
         }
     return semanticsModifier
 }
@@ -72,8 +82,10 @@ private object AppiumHtmlSemantics {
     private val elements = mutableMapOf<Long, HTMLElement>()
 
     private val inputCallbacks = mutableMapOf<Long, (String) -> Unit>()
+    private val submitCallbacks = mutableMapOf<Long, () -> Unit>()
     private val inputValues = mutableMapOf<Long, String>()
     private val actionCallbacks = mutableMapOf<Long, () -> Unit>()
+    private val longActionCallbacks = mutableMapOf<Long, () -> Unit>()
 
     fun update(
         id: Long,
@@ -97,6 +109,13 @@ private object AppiumHtmlSemantics {
         element.updateAttachment(isInViewport(left, top, width, height))
     }
 
+    fun updateLayoutSize(id: Long, width: Int, height: Int) {
+        elements[id]?.apply {
+            setAttribute("data-appium-layout-width", width.toString())
+            setAttribute("data-appium-layout-height", height.toString())
+        }
+    }
+
     fun updateMetadata(id: Long, testTag: String?, description: String?, text: String?) {
         val element = elements[id] ?: return
         element.setOrRemoveAttribute("data-testid", testTag)
@@ -107,6 +126,13 @@ private object AppiumHtmlSemantics {
     private fun createElement(id: Long, input: Boolean): HTMLElement =
         if (input) {
             (document.createElement("textarea") as HTMLTextAreaElement).also { textArea ->
+                textArea.addEventListener("click", { actionCallbacks[id]?.invoke() })
+                textArea.addEventListener("keydown", { event ->
+                    if ((event as org.w3c.dom.events.KeyboardEvent).key == "Enter" && submitCallbacks.containsKey(id)) {
+                        event.preventDefault()
+                        submitCallbacks[id]?.invoke()
+                    }
+                })
                 textArea.addEventListener("input", {
                     inputCallbacks[id]?.invoke(textArea.value)
                     window.requestAnimationFrame {
@@ -124,6 +150,12 @@ private object AppiumHtmlSemantics {
                 button.setAttribute("type", "button")
                 button.addEventListener("click", {
                     actionCallbacks[id]?.invoke()
+                })
+                button.addEventListener("contextmenu", { event ->
+                    if (longActionCallbacks.containsKey(id)) {
+                        event.preventDefault()
+                        longActionCallbacks[id]?.invoke()
+                    }
                 })
             }
         }
@@ -182,9 +214,10 @@ private object AppiumHtmlSemantics {
         }
     }
 
-    fun updateInput(id: Long, value: String, onValueChange: ((String) -> Unit)?) {
+    fun updateInput(id: Long, value: String, onValueChange: ((String) -> Unit)?, onSubmit: (() -> Unit)?) {
         if (!isEnabled()) return
         inputValues[id] = value
+        if (onSubmit != null) submitCallbacks[id] = onSubmit else submitCallbacks.remove(id)
         if (onValueChange != null) {
             inputCallbacks[id] = onValueChange
         } else {
@@ -206,11 +239,22 @@ private object AppiumHtmlSemantics {
         }
     }
 
+    fun hide(id: Long) {
+        elements[id]?.updateAttachment(false)
+    }
+
     fun remove(id: Long) {
         inputCallbacks.remove(id)
+        submitCallbacks.remove(id)
         inputValues.remove(id)
         actionCallbacks.remove(id)
+        longActionCallbacks.remove(id)
         elements.remove(id)?.remove()
+    }
+
+    fun updateLongAction(id: Long, onLongClick: (() -> Unit)?) {
+        if (!isEnabled()) return
+        if (onLongClick != null) longActionCallbacks[id] = onLongClick else longActionCallbacks.remove(id)
     }
 
     private fun isEnabled(): Boolean = window.location.search.contains("appium=true")
@@ -238,4 +282,29 @@ private object AppiumHtmlSemantics {
                 element.style.setProperty("pointer-events", "none")
                 document.body?.appendChild(element)
             }
+}
+
+private data class AppiumPlacementElement(val onUnplaced: () -> Unit, val onPosition: (LayoutCoordinates) -> Unit) :
+    ModifierNodeElement<AppiumPlacementNode>() {
+    override fun create() = AppiumPlacementNode(onUnplaced, onPosition)
+
+    override fun update(node: AppiumPlacementNode) {
+        node.unplaced = onUnplaced
+        node.positioned = onPosition
+    }
+
+    override fun InspectorInfo.inspectableProperties() {
+        name = "appiumPlacement"
+    }
+}
+
+private class AppiumPlacementNode(var unplaced: () -> Unit, var positioned: (LayoutCoordinates) -> Unit) :
+    Modifier.Node(),
+    GlobalPositionAwareModifierNode,
+    UnplacedAwareModifierNode {
+    override fun onGloballyPositioned(coordinates: LayoutCoordinates) = positioned(coordinates)
+
+    override fun onUnplaced() = unplaced()
+
+    override fun onDetach() = unplaced()
 }

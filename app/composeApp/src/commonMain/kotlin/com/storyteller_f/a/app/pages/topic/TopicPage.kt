@@ -86,6 +86,7 @@ import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.obj.ObjectTuple
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import com.storyteller_f.shared.utils.checkContent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -285,6 +286,7 @@ private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicDetail, snackBarHo
     }
     val appNavFactory = LocalAppNavFactory.current
     val myInfo = LocalUserInfo.current
+    val canWrite = myInfo?.status == UserStatus.NORMAL && !topic.readOnly
     InputGroupInternal(
         if (topic.isEncrypted) {
             ObjectTuple(topic.rootId, topic.rootType)
@@ -317,6 +319,7 @@ private fun TopicInputGroup(scrollTo: () -> Unit, topic: TopicDetail, snackBarHo
                 }
             appNavFactory.newAppNav().gotoTopicCompose(data)
         },
+        enabled = canWrite,
         sendButton = {
             TopicSendButton(topic, input, {
                 input = it
@@ -333,6 +336,7 @@ fun TopicSendButton(
     scrollToNew: () -> Unit,
     snackBarHostState: SnackbarHostState,
 ) {
+    if (LocalUserInfo.current?.status != UserStatus.NORMAL || topic.readOnly) return
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val globalTask = LocalGlobalTask.current

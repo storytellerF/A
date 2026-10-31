@@ -20,7 +20,7 @@ actual fun readInjectedSessionFromPrivateStorageOrNull(): ConvertedRawUserPassIn
         return null
     }
     return try {
-        val injected = Json.decodeFromString(ConvertedRawUserPassInfo.serializer(), file.readText())
+        val injected = Json.decodeFromString<ConvertedRawUserPassInfo>(file.readText())
         Napier.d { "Injected desktop session loaded" }
         injected
     } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {

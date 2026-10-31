@@ -12,18 +12,22 @@ import io.ktor.client.webrtc.WebRtc
 import io.ktor.client.webrtc.WebRtcClient
 import io.ktor.client.webrtc.WebRtcMedia
 import io.ktor.client.webrtc.WebRtcPeerConnection
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 internal interface RtcAudioPlayback {
     fun close()
@@ -46,32 +50,44 @@ internal class KtorRtcEngine(
     private val createRuntime: () -> KtorRtcRuntime,
 ) : RtcEngine {
     override suspend fun openMedia(video: Boolean): RtcMedia {
+        // Native handle acquisition completes under protection; cancellation still belongs to the caller.
+        val caller = currentCoroutineContext()
+        caller.ensureActive()
         var acquired: KtorRtcMedia? = null
         var delivered = false
         try {
             val media =
                 withContext(NonCancellable + worker) {
-                    acquireMedia(video).also { acquired = it }
+                    acquireMedia(video, caller).also { acquired = it }
                 }
+            caller.ensureActive()
             delivered = true
             return media
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (failure: Throwable) {
+            caller.ensureActive()
+            throw failure
         } finally {
             if (!delivered) withContext(NonCancellable + worker) { acquired?.close() }
         }
     }
 
-    private suspend fun acquireMedia(video: Boolean): KtorRtcMedia {
+    private suspend fun acquireMedia(video: Boolean, caller: CoroutineContext): KtorRtcMedia {
         val runtime = createRuntime()
         var audio: WebRtcMedia.AudioTrack? = null
+        var camera: WebRtcMedia.VideoTrack? = null
         var acquired = false
         try {
+            caller.ensureActive()
             val microphone =
                 runtime.client.createAudioTrack {
                     echoCancellation = true
                     noiseSuppression = true
                 }
             audio = microphone
-            val camera =
+            caller.ensureActive()
+            camera =
                 if (video) {
                     runtime.client.createVideoTrack {
                         width = 640
@@ -80,11 +96,13 @@ internal class KtorRtcEngine(
                 } else {
                     null
                 }
+            caller.ensureActive()
             val media = KtorRtcMedia(runtime, microphone, camera, worker)
             acquired = true
             return media
         } finally {
             if (!acquired) {
+                camera?.close()
                 audio?.let(runtime.closeAudio)
                 runtime.client.close()
                 runtime.closeResources()

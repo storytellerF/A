@@ -39,6 +39,7 @@ import com.storyteller_f.a.app.pages.AdaptiveFormLayout
 import com.storyteller_f.a.app.pages.title.CommonComposePage
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.MemberPolicy
@@ -93,16 +94,38 @@ fun CommunityComposeInternal(
     onAidChange: (String) -> Unit = {},
 ) {
     AdaptiveFormLayout {
-        OutlinedTextField(name, onValueChange = {
-            onNameChange(it)
-        }, label = {
-            Text(stringResource(Res.string.name))
-        })
-        OutlinedTextField(aid, onValueChange = {
-            onAidChange(it)
-        }, label = {
-            Text(stringResource(Res.string.aid))
-        })
+        OutlinedTextField(
+            name,
+            modifier =
+            Modifier.appiumSemantics(
+                description = "community name",
+                input = true,
+                inputValue = name,
+                onInputValueChange = onNameChange,
+            ),
+            onValueChange = {
+                onNameChange(it)
+            },
+            label = {
+                Text(stringResource(Res.string.name))
+            },
+        )
+        OutlinedTextField(
+            aid,
+            modifier =
+            Modifier.appiumSemantics(
+                description = "community aid",
+                input = true,
+                inputValue = aid,
+                onInputValueChange = onAidChange,
+            ),
+            onValueChange = {
+                onAidChange(it)
+            },
+            label = {
+                Text(stringResource(Res.string.aid))
+            },
+        )
         val radioOptions = getMemberPolicies()
         CommunityMemberPolicyRadioGroup(radioOptions, memberJoinPolicy, onMemberJoinPolicyChange)
         SelectedMemberPolicyDescription(radioOptions, memberJoinPolicy)

@@ -79,6 +79,11 @@ class LuceneDocumentsTest {
                         error(
                             "unexpected save",
                         )
+                    override suspend fun replace(
+                        index: String,
+                        query: RpcLuceneQuery,
+                        documents: List<RpcLuceneDocument>,
+                    ): Unit = error("Unexpected replacement")
                     override suspend fun clean(index: String): Unit = error("unexpected clean")
                     override suspend fun delete(index: String, query: RpcLuceneQuery): Unit = error("unexpected delete")
                     override suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult {

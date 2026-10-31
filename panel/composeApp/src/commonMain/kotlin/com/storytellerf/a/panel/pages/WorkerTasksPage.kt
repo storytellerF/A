@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.common.CreateWorkerTasksViewModel
@@ -119,21 +120,7 @@ private fun WorkerTaskEditor(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = config.type.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                Switch(
-                    checked = config.isEnabled,
-                    enabled = !config.isSaving,
-                    onCheckedChange = onEnabledChange,
-                )
-            }
+            WorkerTaskHeader(config, onEnabledChange)
             OutlinedTextField(
                 value = config.fetchSize,
                 onValueChange = onFetchSizeChange,
@@ -141,7 +128,13 @@ private fun WorkerTaskEditor(
                 label = { Text(stringResource(Res.string.worker_task_fetch_size)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                Modifier.fillMaxWidth().appiumSemantics(
+                    description = "worker ${config.type.name} fetch size",
+                    input = true,
+                    inputValue = config.fetchSize,
+                    onInputValueChange = onFetchSizeChange.takeUnless { config.isSaving },
+                ),
             )
             OutlinedTextField(
                 value = config.waitDurationMillis,
@@ -150,12 +143,22 @@ private fun WorkerTaskEditor(
                 label = { Text(stringResource(Res.string.worker_task_wait_duration)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier =
+                Modifier.fillMaxWidth().appiumSemantics(
+                    description = "worker ${config.type.name} wait duration",
+                    input = true,
+                    inputValue = config.waitDurationMillis,
+                    onInputValueChange = onWaitDurationChange.takeUnless { config.isSaving },
+                ),
             )
             Button(
                 onClick = onSave,
                 enabled = !config.isSaving,
-                modifier = Modifier.align(Alignment.End),
+                modifier =
+                Modifier.align(Alignment.End).appiumSemantics(
+                    description = "save worker ${config.type.name}",
+                    onClick = onSave.takeUnless { config.isSaving },
+                ),
             ) {
                 if (config.isSaving) {
                     CircularProgressIndicator()
@@ -164,5 +167,23 @@ private fun WorkerTaskEditor(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun WorkerTaskHeader(config: WorkerTaskEditorState, onEnabledChange: (Boolean) -> Unit) {
+    val toggle = { onEnabledChange(!config.isEnabled) }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Text(config.type.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        Switch(
+            checked = config.isEnabled,
+            enabled = !config.isSaving,
+            onCheckedChange = onEnabledChange,
+            modifier =
+            Modifier.appiumSemantics(
+                description = "worker ${config.type.name} enabled ${config.isEnabled}",
+                onClick = toggle.takeUnless { config.isSaving },
+            ),
+        )
     }
 }

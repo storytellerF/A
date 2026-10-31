@@ -10,6 +10,7 @@ import com.storyteller_f.a.client.core.UserSessionManager
 import com.storyteller_f.a.client.core.createCommunity
 import com.storyteller_f.a.client.core.createRoom
 import com.storyteller_f.a.client.core.createTopic
+import com.storyteller_f.a.client.core.getCommunityInfo
 import com.storyteller_f.a.client.core.getTopicInfo
 import com.storyteller_f.a.client.core.joinCommunity
 import com.storyteller_f.a.client.core.joinRoom
@@ -38,11 +39,12 @@ data class AsciidocPreviewScenario(
 
 data class PreparedCommunityRoomScenario(
     val ownerSession: InjectedSession,
-    val viewerSession: InjectedSession,
+    val viewer: AuthenticatedSession,
     val communityId: Long,
     val roomId: Long,
     val communityName: String,
     val roomName: String,
+    val ownerTopic: String,
 )
 
 internal data class AuthenticatedRoomScenario(
@@ -172,6 +174,7 @@ suspend fun prepareCommunityRoomScenario(
     val now = System.currentTimeMillis()
     val owner = createAuthenticatedSession()
     var viewer: AuthenticatedSession? = null
+    var retained = false
     try {
         val aidSuffix = (now % 1_000_000).toString().padStart(6, '0')
         val communityName = "community-$aidSuffix"
@@ -179,25 +182,31 @@ suspend fun prepareCommunityRoomScenario(
         val communityId = createCommunityByApi(owner.sessionManager, communityName, "c$aidSuffix")
         val roomId = createRoomByApi(owner.sessionManager, roomName, "r$aidSuffix", communityId)
         createTopicByApi(owner.sessionManager, ObjectType.COMMUNITY, communityId, "appium-owner-community-topic-$now")
+        val ownerTopic = "appium-owner-profile-$now"
+        createTopicByApi(
+            owner.sessionManager,
+            ObjectType.USER,
+            requireNotNull(owner.sessionManager.model.uid),
+            ownerTopic,
+        )
         viewer = createAuthenticatedSession()
         viewer.sessionManager.joinCommunity(communityId).getOrThrow()
         viewer.sessionManager.joinRoom(roomId).getOrThrow()
-        return PreparedCommunityRoomScenario(
-            owner.session,
-            viewer.session,
-            communityId,
-            roomId,
-            communityName,
-            roomName,
-        )
-    } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
-        throw cancellation
-    } catch (throwable: Throwable) {
-        viewer?.sessionManager?.client?.close()
-        throw throwable
+        val prepared =
+            PreparedCommunityRoomScenario(
+                owner.session,
+                viewer,
+                communityId,
+                roomId,
+                communityName,
+                roomName,
+                ownerTopic,
+            )
+        retained = true
+        return prepared
     } finally {
         owner.sessionManager.client.close()
-        viewer?.sessionManager?.client?.close()
+        if (!retained) viewer?.sessionManager?.client?.close()
     }
 }
 
@@ -239,3 +248,18 @@ private suspend fun createTopicByApi(
     parentId: Long,
     content: String,
 ): Long = manager.createTopic(parentType, parentId, content).getOrThrow().id
+
+internal suspend fun waitUntilCommunityAction(
+    data: PreparedCommunityRoomScenario,
+    favorite: Boolean,
+    active: Boolean = true,
+) {
+    val deadline = System.currentTimeMillis() + java.time.Duration.ofSeconds(30).toMillis()
+    while (System.currentTimeMillis() < deadline) {
+        val info = data.viewer.sessionManager.getCommunityInfo(data.communityId).getOrThrow()
+        val selected = if (favorite) info.favoriteId != null else info.subscriptionId != null
+        if (selected == active) return
+        delay(500.milliseconds)
+    }
+    error("Community action was not persisted")
+}

@@ -80,11 +80,7 @@ internal fun createOpenAICompatibleClient(apiKey: String, baseUrl: String): LLMC
                     responseFormat = prompt.params.schema.toOpenAIResponseFormat(),
                 )
 
-            val requestBody =
-                jsonSerializer.encodeToString(
-                    ChatCompletionRequest.serializer(),
-                    request,
-                )
+            val requestBody = jsonSerializer.encodeToString(request)
 
             val response =
                 httpClient.post("$baseUrl/chat/completions") {

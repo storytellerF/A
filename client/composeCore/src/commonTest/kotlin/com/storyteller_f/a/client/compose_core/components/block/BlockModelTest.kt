@@ -104,14 +104,13 @@ class BlockModelTest {
                 id = "test-7",
                 name = "video.mp4",
                 url = "https://example.com/video.mp4",
-                contentType = "video/mp4",
                 cover = "cover.jpg",
                 title = "My Video",
                 isPlaylist = false,
             )
         assertEquals("test-7", block.id)
         assertEquals("video.mp4", block.name)
-        assertEquals("video/mp4", block.contentType)
+        assertEquals("https://example.com/video.mp4", block.url)
         assertEquals("cover.jpg", block.cover)
         assertEquals("My Video", block.title)
         assertEquals(false, block.isPlaylist)

@@ -11,6 +11,9 @@ import kotlinx.serialization.Serializable
 interface LuceneRpc {
     suspend fun health(): String
     suspend fun save(index: String, documents: List<RpcLuceneDocument>)
+
+    /** Replaces query matches and adds the supplied documents in one index commit. */
+    suspend fun replace(index: String, query: RpcLuceneQuery, documents: List<RpcLuceneDocument>)
     suspend fun clean(index: String)
     suspend fun delete(index: String, query: RpcLuceneQuery)
     suspend fun search(index: String, query: RpcLuceneQuery): RpcLuceneResult

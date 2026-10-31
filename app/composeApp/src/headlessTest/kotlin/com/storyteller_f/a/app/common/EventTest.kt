@@ -7,6 +7,8 @@ package com.storyteller_f.a.app.common
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.storyteller_f.shared.model.CommunityInfo
+import com.storyteller_f.shared.model.NestedMemberInfo
+import com.storyteller_f.shared.model.PosterSearch
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.model.TopicActivity
 import com.storyteller_f.shared.model.TopicContent
@@ -14,10 +16,13 @@ import com.storyteller_f.shared.model.TopicCreated
 import com.storyteller_f.shared.model.TopicDetail
 import com.storyteller_f.shared.model.TopicReplyPreview
 import com.storyteller_f.shared.model.UserInfo
+import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import com.storyteller_f.storage.ChildAccountStorage
 import com.storyteller_f.storage.CollectionListStorageWithDefault
+import com.storyteller_f.storage.CommunityCollection
 import com.storyteller_f.storage.CommunityInfoStorage
 import com.storyteller_f.storage.DownloadInfoStorage
 import com.storyteller_f.storage.FileInfoStorage
@@ -56,6 +61,40 @@ import kotlin.test.assertTrue
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class EventTest {
+    @Test
+    fun communityCreationUpdatesJoinedCollection() =
+        runTest {
+            val storage = FakeCommunityStorage()
+            val original = CommunityInfo.EMPTY
+            val info =
+                original.copy(
+                    id = 123,
+                    name = "Created community",
+                    owner = 456,
+                    memberCount = 1,
+                    member = NestedMemberInfo(MemberStatus.JOINED, original.createdTime),
+                )
+            val bus = MutableSharedFlow<Any>()
+            val job =
+                launch(UnconfinedTestDispatcher(testScheduler)) {
+                    processEvent(FakeModelStorage(community = storage), bus)
+                }
+            try {
+                bus.emit(OnCommunityCreated(info))
+                assertEquals(listOf(info), storage.savedDefault)
+                val joinedCollection: CommunityCollection =
+                    CommunityCollection.SearchCommunity(
+                        JoinStatusSearch.JOINED,
+                        "",
+                        null,
+                        PosterSearch.UNSPECIFIED,
+                    )
+                assertEquals(listOf(joinedCollection to info), storage.savedFirst)
+            } finally {
+                job.cancel()
+            }
+        }
+
     @Test
     fun activityRefreshPreservesLoadedReplies() =
         runTest {

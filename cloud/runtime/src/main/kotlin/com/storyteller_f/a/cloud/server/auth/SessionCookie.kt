@@ -64,8 +64,8 @@ fun SessionsConfig.setupUserSessions(env: MergedEnv, application: Application) {
     cookie<UserSession>("user_session", SigninSessionStorage(stores.getValue("user"))) {
         serializer =
             object : SessionSerializer<UserSession> {
-                override fun serialize(session: UserSession) = Json.encodeToString(UserSession.serializer(), session)
-                override fun deserialize(text: String) = Json.decodeFromString(UserSession.serializer(), text)
+                override fun serialize(session: UserSession) = Json.encodeToString<UserSession>(session)
+                override fun deserialize(text: String) = Json.decodeFromString<UserSession>(text)
             }
         cookie.path = "/"
         cookie.httpOnly = true
@@ -77,8 +77,8 @@ fun SessionsConfig.setupUserSessions(env: MergedEnv, application: Application) {
     cookie<PanelSession>("panel_session", SigninSessionStorage(stores.getValue("panel"))) {
         serializer =
             object : SessionSerializer<PanelSession> {
-                override fun serialize(session: PanelSession) = Json.encodeToString(PanelSession.serializer(), session)
-                override fun deserialize(text: String) = Json.decodeFromString(PanelSession.serializer(), text)
+                override fun serialize(session: PanelSession) = Json.encodeToString<PanelSession>(session)
+                override fun deserialize(text: String) = Json.decodeFromString<PanelSession>(text)
             }
         cookie.path = "/admin"
         cookie.httpOnly = true

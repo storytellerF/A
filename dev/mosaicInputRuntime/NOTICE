@@ -1,0 +1,6 @@
+Includes source from Jake Wharton's Mosaic 0.18.0 under the Apache License 2.0.
+https://github.com/JakeWharton/mosaic/tree/0.18.0
+
+Modified TtyTerminal.kt to preserve keyboard events using a bounded suspending queue.
+The native terminal libraries and public API are unchanged.
+Upstream issue: https://github.com/JakeWharton/mosaic/issues/1241

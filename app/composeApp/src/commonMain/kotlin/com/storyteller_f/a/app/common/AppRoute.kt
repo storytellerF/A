@@ -6,22 +6,12 @@
 
 package com.storyteller_f.a.app.common
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
-import com.mikepenz.aboutlibraries.ui.compose.LibraryDefaults
-import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
-import com.mikepenz.aboutlibraries.ui.compose.m3.libraryColors
-import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import com.storyteller_f.a.app.LocalUserInfo
-import com.storyteller_f.a.app.Res
 import com.storyteller_f.a.app.pages.HomePage
 import com.storyteller_f.a.app.pages.PreferencePage
 import com.storyteller_f.a.app.pages.community.CommunityComposePage
@@ -510,16 +500,7 @@ fun rootEntryProvider(nav: AppNav) =
         handleComposeScreen(nav)
         handleFileExplorerScreen()
         entry<AboutScreen> {
-            val libraries by produceLibraries {
-                Res.readBytes("files/aboutlibraries.json").decodeToString()
-            }
-            Surface {
-                LibrariesContainer(
-                    libraries,
-                    Modifier.fillMaxSize().statusBarsPadding(),
-                    colors = LibraryDefaults.libraryColors(),
-                )
-            }
+            com.storyteller_f.a.app.pages.AboutLibrariesPage()
         }
         entry<FileInfoScreen> {
             FileViewPage(FileViewData.Regular(it.fileId))

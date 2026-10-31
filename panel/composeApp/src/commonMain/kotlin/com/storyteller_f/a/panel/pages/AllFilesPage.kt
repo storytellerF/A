@@ -24,6 +24,7 @@ import com.storyteller_f.a.client.compose_core.components.FileIcon
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.pagingItems
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.panel.LocalPanelNav
 import com.storyteller_f.a.panel.Res
 import com.storyteller_f.a.panel.all_files
@@ -63,7 +64,9 @@ fun AllFilesPageInternal(viewModel: AllFilesViewModel) {
                             val size = HumanReadable.fileSize(info.size)
                             val dim = info.dimension?.let { "${it.width}x${it.height}" }.orEmpty()
                             ListItem(
-                                modifier = Modifier.clickable { panelNav.gotoFileDetail(info.id) },
+                                modifier =
+                                Modifier.clickable { panelNav.gotoFileDetail(info.id) }
+                                    .appiumSemantics(text = name, onClick = { panelNav.gotoFileDetail(info.id) }),
                                 leadingContent = { FileIcon(info) },
                                 headlineContent = { Text(name) },
                                 overlineContent = { Text(type) },

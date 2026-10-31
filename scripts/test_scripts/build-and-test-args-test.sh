@@ -41,7 +41,7 @@ argument_log="$test_directory/gradle-arguments.log"
 )
 
 expected_arguments=$(printf '%s\n' \
-  'COUNT=10' \
+  'COUNT=12' \
   'app:composeApp:desktopTest' \
   '--tests' \
   'com.example.FirstTest' \
@@ -51,7 +51,9 @@ expected_arguments=$(printf '%s\n' \
   'com.example.ThirdTest' \
   '--tests' \
   'com.example.*Test' \
-  '--console=plain')
+  '--console=plain' \
+  '-Pserver.flavor=dev' \
+  '-Pserver.buildType=debug')
 actual_arguments=$(sed -n '1,$p' "$argument_log")
 
 if [ "$actual_arguments" != "$expected_arguments" ]; then
@@ -129,7 +131,13 @@ do
   fi
 done
 
-expected_appium_call=":app:androidAppium:appiumTest :app:desktopAppium:appiumTest :app:wasmAppium:appiumTest :panel:androidAppium:appiumTest :panel:desktopAppium:appiumTest :panel:wasmAppium:appiumTest :app:cliE2e:e2eTest :panel:cliE2e:e2eTest --continue --console=plain"
+expected_appium_call=":app:androidAppium:appiumTest :app:desktopAppium:appiumTest :app:wasmAppium:appiumTest :panel:androidAppium:appiumTest :panel:desktopAppium:appiumTest :panel:wasmAppium:appiumTest :app:cliE2e:e2eTest :panel:cliE2e:e2eTest --continue --console=plain -Pserver.flavor=dev -Pserver.buildType=debug"
+expected_detekt_call="detekt --console=plain -Pserver.flavor=dev -Pserver.buildType=debug"
+actual_detekt_call=$(sed -n '1p' "$test_directory/e2e-gradle-tasks.log")
+[ "$actual_detekt_call" = "$expected_detekt_call" ] || {
+  echo "Detekt must check without auto-correct or a worker limit"
+  exit 1
+}
 actual_appium_call=$(sed -n '2p' "$test_directory/e2e-gradle-tasks.log")
 [ "$actual_appium_call" = "$expected_appium_call" ] || {
   echo "All E2E targets must share one Gradle invocation with --continue"
@@ -159,7 +167,7 @@ for appium_task in \
 do
   expected_filtered_call="${expected_filtered_call}${appium_task} --tests com.example.*Test "
 done
-expected_filtered_call="${expected_filtered_call}--continue --console=plain"
+expected_filtered_call="${expected_filtered_call}--continue --console=plain -Pserver.flavor=dev -Pserver.buildType=debug"
 [ "$filtered_appium_call" = "$expected_filtered_call" ] || {
   echo "Test filters must follow every E2E target"
   exit 1

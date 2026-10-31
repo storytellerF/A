@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.client.compose_core.components
 
+import io.github.aakira.napier.Napier
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import uk.co.caprica.vlcj.media.VideoOrientation
@@ -16,7 +17,7 @@ import uk.co.caprica.vlcj.player.embedded.videosurface.callback.format.RV32Buffe
 import java.nio.ByteBuffer
 
 /** Callback surfaces expose pixels without creating an AWT component. */
-internal class VlcVideoPlayer : DesktopVideoPlayer {
+internal class VlcMediaPlayer(private val autoPlay: Boolean) : DesktopVideoPlayer {
     private val factory =
         run {
             NativeDiscovery().discover()
@@ -31,6 +32,7 @@ internal class VlcVideoPlayer : DesktopVideoPlayer {
         }
 
     override fun open(url: String, frame: (DesktopVideoFrame) -> Unit, playback: (DesktopPlayback) -> Unit) {
+        Napier.i("Opening desktop media")
         val format =
             object : BufferFormatCallback {
                 override fun getBufferFormat(width: Int, height: Int): BufferFormat = RV32BufferFormat(width, height)
@@ -58,6 +60,7 @@ internal class VlcVideoPlayer : DesktopVideoPlayer {
                     playback(DesktopPlayback.MediaReady)
                 }
                 override fun playing(mediaPlayer: MediaPlayer) {
+                    Napier.i("Desktop media playback started")
                     playback(DesktopPlayback.Playing)
                 }
                 override fun paused(mediaPlayer: MediaPlayer) {
@@ -74,7 +77,8 @@ internal class VlcVideoPlayer : DesktopVideoPlayer {
                 }
             },
         )
-        check(player.media().play(url)) { "VLC could not open the requested video" }
+        val opened = if (autoPlay) player.media().play(url) else player.media().prepare(url)
+        check(opened) { "VLC could not open the requested media" }
     }
 
     override fun aspectRatio(): Float? {

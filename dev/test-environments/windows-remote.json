@@ -25,7 +25,8 @@
       ],
       "services": [
         "appium.server.url",
-        "appium.ws.url"
+        "appium.ws.url",
+        "appium.filesystem.url"
       ]
     }
   },

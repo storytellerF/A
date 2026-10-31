@@ -87,6 +87,7 @@ import com.storyteller_f.a.client.compose_core.components.BaseSheet
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.request
 import com.storyteller_f.a.client.compose_core.components.safeArea
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.createTitle
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.captureFailure
@@ -167,10 +168,15 @@ fun CommonComposePage(onCheck: () -> Unit, content: @Composable () -> Unit) {
     Scaffold(topBar = {
         TopAppBar({
         }, actions = {
-            IconButton(onClick = {
-                onCheck()
-            }) {
-                Icon(Icons.Filled.Check, contentDescription = null)
+            IconButton(
+                onClick = onCheck,
+                modifier =
+                Modifier.appiumSemantics(
+                    description = "submit",
+                    onClick = onCheck,
+                ),
+            ) {
+                Icon(Icons.Filled.Check, contentDescription = "submit")
             }
         })
     }) { paddingValues ->
@@ -726,9 +732,7 @@ fun ComposeMenuItem(icon: ImageVector, title: String, onClick: () -> Unit) {
         modifier =
         Modifier.fillMaxWidth()
             .background(MaterialTheme.colorScheme.primaryContainer, shape).clip(shape)
-            .clickable {
-                onClick()
-            }.padding(12.dp),
+            .clickable(onClick = onClick).appiumSemantics(text = title, onClick = onClick).padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Icon(icon, title)

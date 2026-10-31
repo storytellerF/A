@@ -39,12 +39,15 @@ import com.storyteller_f.shared.obj.CustomOffer
 import com.storyteller_f.shared.obj.RoomFrame
 import com.storyteller_f.shared.obj.UpdateRoomBody
 import com.storyteller_f.shared.type.JoinStatusSearch
+import com.storyteller_f.shared.type.MemberStatus
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.request.get
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,6 +104,14 @@ class RoomTest {
                         ).getOrThrow()
                     val info = getRoomInfo(room.id).getOrThrow()
                     assertTrue(!info.isJoined)
+                    val members = workerBackend.database.container
+                    val member = requireNotNull(members.getMember(room.id, it.uid).getOrThrow())
+                    assertEquals(MemberStatus.INVITED, member.status)
+                    assertEquals(null, member.joinedTime)
+                    assertNotNull(member.invitedTime)
+                    val creator = requireNotNull(members.getMember(room.id, sender.uid).getOrThrow())
+                    assertEquals(MemberStatus.JOINED, creator.status)
+                    assertNotNull(creator.joinedTime)
                     assertFails {
                         createTopic(ObjectType.ROOM, room.id, "Notification reply").getOrThrow()
                     }
@@ -438,8 +449,8 @@ private suspend fun TestMate.runRtcCalls(
     val answeredPairs = MutableStateFlow(emptySet<Set<PrimaryKey>>())
     val expectedPairs = users.size * (users.size - 1) / 2
     coroutineScope {
-        users.forEach { tuple ->
-            launch {
+        users.map { tuple ->
+            async {
                 loginSession(tuple, { frame, _, session ->
                     list.add(frame)
                     if (frame is RoomFrame.RespondAnswer && frame.roomId == roomId) {
@@ -455,7 +466,7 @@ private suspend fun TestMate.runRtcCalls(
                     withTimeout(30.seconds) { answeredPairs.first { it.size == expectedPairs } }
                 }
             }
-        }
+        }.awaitAll()
     }
     return list
 }

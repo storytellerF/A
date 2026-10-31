@@ -30,6 +30,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.storyteller_f.a.client.compose_core.Res
 import com.storyteller_f.a.client.compose_core.close
 import com.storyteller_f.a.client.compose_core.error.DialogError
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.result.CustomResult
 import com.storyteller_f.result.FailureDetails
 import com.storyteller_f.result.mapError
@@ -218,10 +219,12 @@ private fun GlobalDialogContent(message: GlobalDialogState, scrollState: ScrollS
             is GlobalDialogState.Error -> {
                 ExceptionView(message.throwable, modifier = Modifier.weight(1f).verticalScroll(scrollState))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-                    Button({
-                        onDismissRequest()
-                    }) {
-                        Text(stringResource(Res.string.close))
+                    val label = stringResource(Res.string.close)
+                    Button(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.appiumSemantics(text = label, onClick = onDismissRequest),
+                    ) {
+                        Text(label)
                     }
                 }
             }

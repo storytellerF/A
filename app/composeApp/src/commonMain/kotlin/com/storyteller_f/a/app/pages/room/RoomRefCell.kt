@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.storyteller_f.a.app.LocalAppNavFactory
 import com.storyteller_f.a.app.LocalRefCellHandlerProvider
 import com.storyteller_f.a.client.compose_core.components.RefCellStateView
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.LoadingHandler
 import com.storyteller_f.shared.model.RoomInfo
 import com.storyteller_f.shared.type.PrimaryKey
@@ -40,6 +41,12 @@ fun RoomRefCell(roomAid: String, onClick: ((RoomInfo) -> Unit)? = null) {
 private fun RoomRefCellInternal(handler: LoadingHandler<RoomInfo>, onClick: ((RoomInfo) -> Unit)? = null) {
     val roomInfo by handler.data.collectAsState()
     val appNavFactory = LocalAppNavFactory.current
+    val openRoom = {
+        roomInfo?.let {
+            onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false)
+        }
+        Unit
+    }
     val shape = RoundedCornerShape(10.dp)
     RefCellStateView(
         handler,
@@ -49,11 +56,12 @@ private fun RoomRefCellInternal(handler: LoadingHandler<RoomInfo>, onClick: ((Ro
             .height(65.dp)
             .background(MaterialTheme.colorScheme.secondaryContainer, shape)
             .clip(shape)
-            .clickable {
-                roomInfo?.let {
-                    onClick?.invoke(it) ?: appNavFactory.newAppNav().gotoRoom(it.id, false)
-                }
-            }
+            .clickable(onClick = openRoom)
+            .appiumSemantics(
+                description = roomInfo?.let { "${it.name}, room reference ${it.id}" },
+                text = roomInfo?.name,
+                onClick = openRoom,
+            )
             .padding(10.dp),
     ) {
         UnboundedRoomCell(it)

@@ -40,6 +40,7 @@ import com.storyteller_f.a.client.compose_core.components.RoomIcon
 import com.storyteller_f.a.client.compose_core.components.StateView
 import com.storyteller_f.a.client.compose_core.components.emitEvent
 import com.storyteller_f.a.client.compose_core.components.pagingItems
+import com.storyteller_f.a.client.compose_core.utils.appiumSemantics
 import com.storyteller_f.a.client.core.updateUserStatus
 import com.storyteller_f.a.panel.LocalPanelGlobalDialog
 import com.storyteller_f.a.panel.LocalPanelNav
@@ -391,28 +392,28 @@ private fun UserBasicInfoSection(uid: PrimaryKey) {
                 add("commentCount" to overview.commentCount.toString())
                 add("childAccountCount" to overview.childAccountCount.toString())
             }
+        val newStatus = if (overview.userInfo.status == UserStatus.NORMAL) UserStatus.READ_ONLY else UserStatus.NORMAL
+        val updateStatus = {
+            scope.launch {
+                dialogController.useResult {
+                    context.request { updateUserStatus(uid, UpdateUserStatusBody(newStatus)) }
+                }.onSuccess {
+                    dialogController.emitEvent(OnUserStatusUpdated(uid, newStatus))
+                }
+            }
+            Unit
+        }
+        val action = if (newStatus == UserStatus.READ_ONLY) "Set to ReadOnly" else "Set to Normal"
         Column {
             InfoTable(items, Modifier.padding(16.dp).weight(1f))
-            Button(onClick = {
-                val newStatus =
-                    if (overview.userInfo.status == UserStatus.NORMAL) {
-                        UserStatus.READ_ONLY
-                    } else {
-                        UserStatus.NORMAL
-                    }
-                scope.launch {
-                    dialogController.useResult {
-                        context.request {
-                            updateUserStatus(
-                                uid,
-                                UpdateUserStatusBody(newStatus),
-                            )
-                        }
-                    }.onSuccess {
-                        dialogController.emitEvent(OnUserStatusUpdated(uid, newStatus))
-                    }
-                }
-            }, modifier = Modifier.padding(16.dp)) {
+            Button(
+                onClick = updateStatus,
+                modifier =
+                Modifier.padding(16.dp).appiumSemantics(
+                    text = action,
+                    onClick = updateStatus,
+                ),
+            ) {
                 Text(
                     if (overview.userInfo.status == UserStatus.NORMAL) {
                         "Set to ReadOnly"

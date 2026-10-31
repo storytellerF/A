@@ -47,11 +47,23 @@ internal class AppiumTestReport(
         }
     }
 
-    fun captureDriver(driver: WebDriver) {
-        collect("Page source") { directory.resolve("page-source.xml").writeText(requireNotNull(driver.pageSource)) }
-        collect("Screenshot") {
+    fun captureSnapshot(driver: WebDriver, name: String) {
+        collect("Snapshot $name") {
+            val output = createTestArtifactDirectory(directory.resolve("snapshots"), name)
+            captureDriver(driver, output, labelPrefix = "Snapshot $name")
+        }
+    }
+
+    fun captureDriver(driver: WebDriver, outputDirectory: File = directory, labelPrefix: String = "") {
+        require(outputDirectory.toPath().normalize().startsWith(directory.toPath().normalize()))
+        val prefix = labelPrefix.takeIf(String::isNotBlank)?.let { "$it " }.orEmpty()
+        collect("${prefix}Page source") {
+            val source = requireNotNull(driver.pageSource) { "Appium returned no page source" }
+            outputDirectory.resolve("page-source.xml").writeText(source)
+        }
+        collect("${prefix}Screenshot") {
             val screenshot = driver as TakesScreenshot
-            directory.resolve("screenshot.png").writeBytes(screenshot.getScreenshotAs(OutputType.BYTES))
+            outputDirectory.resolve("screenshot.png").writeBytes(screenshot.getScreenshotAs(OutputType.BYTES))
         }
     }
 

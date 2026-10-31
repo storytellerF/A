@@ -106,6 +106,7 @@ import com.storyteller_f.shared.model.TitleSearchType
 import com.storyteller_f.shared.type.JoinStatusSearch
 import com.storyteller_f.shared.type.ObjectType
 import com.storyteller_f.shared.type.PrimaryKey
+import com.storyteller_f.shared.type.UserStatus
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 
@@ -212,7 +213,7 @@ private fun CustomSearchBarInternal(
                 SearchContent(searchScope, text)
             }
         }
-    val canCreate = showSelfIcon && LocalUserInfo.current != null
+    val canCreate = showSelfIcon && LocalUserInfo.current?.status == UserStatus.NORMAL
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
         isBackEnabled = active,
@@ -227,9 +228,9 @@ private fun CustomSearchBarInternal(
             }
         },
     ) {
-        val desktop = maxWidth >= 600.dp
         val inputField: @Composable () -> Unit = {
             SearchBarDefaults.InputField(
+                modifier = Modifier.searchQuerySemantics(query, updateQuery, updateSearch, onActiveChange),
                 query = query,
                 onQueryChange = updateQuery,
                 onSearch = updateSearch,
@@ -242,7 +243,7 @@ private fun CustomSearchBarInternal(
                 placeholder = { SearchPlaceholder(scope) },
             )
         }
-        if (desktop) {
+        if (maxWidth >= 600.dp) {
             DesktopSearchLayout(title, active, inputField, {
                 if (canCreate && title != null) {
                     IconButton(onClick = onClickCreate) {
@@ -266,11 +267,27 @@ private fun CustomSearchBarInternal(
     }
 }
 
+private fun Modifier.searchQuerySemantics(
+    query: String,
+    updateQuery: (String) -> Unit,
+    updateSearch: (String) -> Unit,
+    onActiveChange: (Boolean) -> Unit,
+) = appiumSemantics(
+    description = "search query",
+    input = true,
+    inputValue = query,
+    onInputValueChange = updateQuery,
+    onClick = { onActiveChange(true) },
+    onInputSubmit = { updateSearch(query) },
+)
+
 @Composable
 private fun SelfIcon(onClickCreate: () -> Unit) {
     val myInfo = LocalUserInfo.current
     val userOverviewViewModel = getUserOverviewViewModel()
-    SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = onClickCreate)
+    SelfUserIconWithDialog(myInfo, overviewHandler = userOverviewViewModel.handler, onClickCreate = {
+        if (myInfo?.status == UserStatus.NORMAL) onClickCreate()
+    })
 }
 
 @Composable

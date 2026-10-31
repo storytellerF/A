@@ -10,11 +10,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import com.jakewharton.mosaic.layout.onKeyEvent
 import com.jakewharton.mosaic.modifier.Modifier
-import com.jakewharton.mosaic.runMosaicBlocking
+import com.jakewharton.mosaic.runMosaic
 import com.jakewharton.mosaic.text.SpanStyle
 import com.jakewharton.mosaic.text.buildAnnotatedString
 import com.jakewharton.mosaic.text.withStyle
@@ -114,8 +113,8 @@ fun sysLogError(s: String, t: Throwable? = null) {
 
 sealed interface Screen {
     data object Main : Screen
-    data object PromptRegister : Screen
-    data object PromptLogin : Screen
+    data class PromptRegister(val pem: String = "") : Screen
+    data class PromptLogin(val pem: String = "") : Screen
     data class TopicList(val topics: List<TopicData>) : Screen
     data class TopicDetail(val topic: TopicData) : Screen
     data class TopicAddComment(val topic: TopicData) : Screen
@@ -133,6 +132,29 @@ sealed interface Screen {
     data class SubscriptionList(val subscriptions: List<UserSubscriptionItem>) : Screen
 }
 
+private sealed interface PemEntry {
+    data class Pending(val pem: String) : PemEntry
+    data class Complete(val pem: String) : PemEntry
+}
+
+private fun appendPemLine(previous: String, line: String): PemEntry =
+    when {
+        previous.isEmpty() && !line.startsWith("-----BEGIN ") -> PemEntry.Complete(line)
+        line.startsWith("-----END ") -> PemEntry.Complete(previous + line + "\n")
+        else -> PemEntry.Pending(previous + line + "\n")
+    }
+
+// Mosaic 0.18's legacy key adapter accepts ASCII only. Code points keep reaction input usable.
+// https://github.com/JakeWharton/mosaic/blob/0.18.0/mosaic-runtime/src/commonMain/kotlin/com/jakewharton/mosaic/compat.kt
+private fun decodeEmojiInput(line: String): String? {
+    if (!line.startsWith("U+", ignoreCase = true)) return line
+    val points =
+        line.trim().split(Regex("\\s+"))
+            .map { it.removePrefix("U+").removePrefix("u+").toIntOrNull(16) }
+    if (points.any { it == null || !Character.isValidCodePoint(it) || it in 0xD800..0xDFFF }) return null
+    return points.joinToString("") { String(Character.toChars(requireNotNull(it))) }
+}
+
 @Suppress("CyclomaticComplexMethod", "LongMethod")
 suspend fun handleInput(
     line: String,
@@ -145,9 +167,9 @@ suspend fun handleInput(
     when (screen) {
         is Screen.Main -> {
             when (line) {
-                "1" -> setScreen(Screen.PromptRegister)
+                "1" -> setScreen(Screen.PromptRegister())
 
-                "2" -> setScreen(Screen.PromptLogin)
+                "2" -> setScreen(Screen.PromptLogin())
 
                 "3" -> {
                     sysLog("Fetching Recommended Topics...")
@@ -206,7 +228,16 @@ suspend fun handleInput(
         }
 
         is Screen.PromptRegister -> {
-            var pk = line
+            val key =
+                when (val entry = appendPemLine(screen.pem, line)) {
+                    is PemEntry.Pending -> {
+                        setScreen(screen.copy(pem = entry.pem))
+                        return
+                    }
+
+                    is PemEntry.Complete -> entry.pem
+                }
+            var pk = key
             if (pk.isEmpty()) {
                 val algo = getAlgo(AlgoType.P256)
                 pk = algo.generatePemKeyPair().getOrNull()?.first.orEmpty()
@@ -231,11 +262,20 @@ suspend fun handleInput(
         }
 
         is Screen.PromptLogin -> {
+            val key =
+                when (val entry = appendPemLine(screen.pem, line)) {
+                    is PemEntry.Pending -> {
+                        setScreen(screen.copy(pem = entry.pem))
+                        return
+                    }
+
+                    is PemEntry.Complete -> entry.pem
+                }
             try {
                 val algo = getAlgo(AlgoType.P256)
-                val derPriKey = algo.getDerPrivateKey(line).getOrThrow()
-                val derPubKey = algo.getDerPublicKeyFromPrivateKey(line).getOrThrow()
-                val authKey = AuthKey.P256(line, derPriKey, derPubKey)
+                val derPriKey = algo.getDerPrivateKey(key).getOrThrow()
+                val derPubKey = algo.getDerPublicKeyFromPrivateKey(key).getOrThrow()
+                val authKey = AuthKey.P256(key, derPriKey, derPubKey)
                 val user = sessionManager.userSignIn(authKey, passHolder)
                 sysLog("Logged in as: ${user.id} - ${user.nickname}")
                 setScreen(Screen.Main)
@@ -309,7 +349,13 @@ suspend fun handleInput(
                 setScreen(Screen.TopicDetail(screen.topic))
             } else {
                 sysLog("Adding Reaction...")
-                sessionManager.addReaction(screen.topic.id, line).fold(
+                val emoji = decodeEmojiInput(line)
+                if (emoji == null) {
+                    sysLog("Invalid Unicode code points")
+                    setScreen(Screen.TopicDetail(screen.topic))
+                    return
+                }
+                sessionManager.addReaction(screen.topic.id, emoji).fold(
                     onSuccess = { sysLog("Reaction added successfully") },
                     onFailure = { sysLogError("Failed to add reaction", it.cause) },
                 )
@@ -553,7 +599,7 @@ suspend fun handleInput(
                 try {
                     sessionManager.webSocketClient.useWebSocket {
                         sendMessage(parentTarget, screen.room.isPrivate, line, keyData.orEmpty())
-                    }
+                    }.getOrThrow()
                     sysLog("Message Sent")
                 } catch (cancellation: kotlin.coroutines.cancellation.CancellationException) {
                     throw cancellation
@@ -572,14 +618,17 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit
     var screen by remember { mutableStateOf<Screen>(Screen.Main) }
     var inputBuffer by remember { mutableStateOf("") }
     val submitChannel = remember { Channel<String>(Channel.UNLIMITED) }
-    val currentScreen by rememberUpdatedState(screen)
 
     LaunchedEffect(Unit) {
+        var currentScreen: Screen = Screen.Main
         for (line in submitChannel) {
             handleInput(
                 line = line,
                 screen = currentScreen,
-                setScreen = { screen = it },
+                setScreen = { next ->
+                    currentScreen = next
+                    screen = next
+                },
                 sessionManager = sessionManager,
                 passHolder = passHolder,
                 onExit = onExit,
@@ -671,7 +720,7 @@ fun App(sessionManager: UserSessionManager, passHolder: SimplePassHolder, onExit
             is Screen.TopicAddReaction -> {
                 Text("=== Add Reaction ===")
                 Text("Topic: ${s.topic.id}")
-                Text("Type your emoji and hit Enter.")
+                Text("Type Unicode code points (for example U+1F44D) and hit Enter.")
                 Text("Hit enter with empty input to go back.")
                 Text("Emoji: ")
             }
@@ -846,7 +895,7 @@ fun main() {
             )
 
         sessionManager.onBackgroundTask {
-            runMosaicBlocking {
+            runMosaic {
                 App(sessionManager, passHolder) { kotlin.system.exitProcess(0) }
             }
         }

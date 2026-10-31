@@ -202,7 +202,6 @@ private fun parseObjectBlock(jsonContent: String): ContentBlock =
             id = generateBlockId(),
             name = obj.name,
             url = obj.url,
-            contentType = obj.contentType,
             cover = obj.cover,
             title = obj.title,
             isPlaylist = obj.isPlayList,

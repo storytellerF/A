@@ -24,3 +24,17 @@ test('resize converts logical dimensions using guest window DPI', () => {
   resizeWindow({...native, resize: (...args) => mutations.push(args)}, 10, 'main', 800, 600);
   assert.deepEqual(mutations, [['main', 1200, 900]]);
 });
+
+test('native dialog on another application thread remains an owned foreground window', () => {
+  const dialogNative = {
+    ...native,
+    describe: handle => ({
+      processId: handle === 'foreign' ? 99 : 10,
+      threadId: handle === 'dialog' ? 8 : 7,
+      visible: handle !== 'hidden',
+    }),
+    foreground: () => 'dialog',
+  };
+  assert.deepEqual(inspectWindows(dialogNative, 10, 'main', ['main', 'dialog', 'foreign', 'hidden']),
+    {ownedHandles: ['main', 'dialog'], foregroundHandle: 'dialog'});
+});

@@ -20,4 +20,6 @@ expect fun Modifier.appiumSemantics(
     inputValue: String? = null,
     onInputValueChange: ((String) -> Unit)? = null,
     onClick: (() -> Unit)? = null,
+    onInputSubmit: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
 ): Modifier

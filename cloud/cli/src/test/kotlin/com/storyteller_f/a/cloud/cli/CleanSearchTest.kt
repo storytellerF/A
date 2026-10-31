@@ -51,6 +51,8 @@ private class CleaningBackend(rpc: LuceneRpc) : Backend {
 private class PopulatedIndexes : LuceneRpc {
     val remaining = MutableStateFlow(setOf("topic", "user", "room", "community", "member", "file"))
     override suspend fun health() = "ok"
+    override suspend fun replace(index: String, query: RpcLuceneQuery, documents: List<RpcLuceneDocument>): Unit =
+        error("Unexpected replacement")
     override suspend fun clean(index: String) {
         remaining.update { it - index }
     }

@@ -5,7 +5,7 @@ function inspectWindows(native, processId, mainHandle, handles) {
   if (main.processId !== processId) throw Error('Main window does not belong to the test process');
   const owned = handles.filter(handle => {
     const window = native.describe(handle);
-    return window.processId === processId && window.threadId === main.threadId && window.visible;
+    return window.processId === processId && window.visible;
   });
   const foreground = native.foreground();
   return {ownedHandles: owned, foregroundHandle: owned.includes(foreground) ? foreground : null};

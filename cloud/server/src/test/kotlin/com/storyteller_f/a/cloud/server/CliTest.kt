@@ -12,9 +12,12 @@ import com.storyteller_f.a.client.core.AuthKey
 import com.storyteller_f.a.client.core.createTopic
 import com.storyteller_f.a.client.core.getAllPrivateRooms
 import com.storyteller_f.a.client.core.getAllPublicRooms
+import com.storyteller_f.a.client.core.getAllTitles
+import com.storyteller_f.a.client.core.getAllTopics
 import com.storyteller_f.a.client.core.getUserInfo
 import com.storyteller_f.a.client.core.overview
 import com.storyteller_f.a.cloud.cli.applyPreset
+import com.storyteller_f.a.cloud.worker.WorkerBackend
 import com.storyteller_f.a.cloud.worker.doAcgTask
 import com.storyteller_f.result.getOrThrow
 import com.storyteller_f.shared.getAlgo
@@ -22,6 +25,7 @@ import com.storyteller_f.shared.model.AlgoType
 import com.storyteller_f.shared.model.PassType
 import com.storyteller_f.shared.model.TaskRecordType
 import com.storyteller_f.shared.model.TitleType
+import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.WorkerTask
 import com.storyteller_f.shared.obj.PresetCommunity
 import com.storyteller_f.shared.obj.PresetFile
@@ -36,6 +40,7 @@ import com.storyteller_f.shared.utils.now
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -256,36 +261,32 @@ class CliTest {
 
     @Suppress("LongMethod")
     @Test
-    fun `overview reflects CLI topic and title presets`() =
+    fun `CLI topic preset persists content and author`() =
         test {
-            ensureSystemUser(this)
-
-            val presetDir = preparePresetDir("topic-title")
-            val keysDir = File(presetDir, "keys").apply { mkdirs() }
-            val userAid = "cli_preset_user"
-            val communityAid = "cli_preset_community"
-
-            val userKeys = generateP256KeyMaterial()
-            val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) }
-
-            withCliBackend { backend ->
-                backend.database.init()
-
+            withCliContentPreset("topic") { backend, presetDir ->
                 backend.applyPreset(
                     PresetValue(
-                        type = "user",
-                        userData =
+                        type = "topic",
+                        topicData =
                         listOf(
-                            PresetUser(
-                                name = "Preset User",
-                                aid = userAid,
-                                privateKey = userKeyPath.relativeTo(presetDir).path,
-                            ),
+                            PresetTopic(content = "preset topic content", author = "cli_preset_user"),
                         ),
                     ),
                     presetDir,
                 )
+            }
+            attachPanelSession {
+                val topic = getAllTopics(PaginationQuery()).getOrThrow().data.single()
+                assertEquals("preset topic content", assertIs<TopicContent.Plain>(topic.content).plain)
+                assertEquals("cli_preset_user", topic.authorInfo?.aid)
+                assertEquals(1, overview().getOrThrow().topicCount)
+            }
+        }
 
+    @Test
+    fun `CLI title preset keeps receiver scope description`() =
+        test {
+            withCliContentPreset("title") { backend, presetDir ->
                 backend.applyPreset(
                     PresetValue(
                         type = "community",
@@ -293,39 +294,24 @@ class CliTest {
                         listOf(
                             PresetCommunity(
                                 name = "Preset Community",
-                                id = communityAid,
-                                admin = userAid,
+                                id = "cli_preset_community",
+                                admin = "cli_preset_user",
                                 users = emptyList(),
                             ),
                         ),
                     ),
                     presetDir,
                 )
-
-                backend.applyPreset(
-                    PresetValue(
-                        type = "topic",
-                        topicData =
-                        listOf(
-                            PresetTopic(
-                                content = "preset topic content",
-                                author = userAid,
-                            ),
-                        ),
-                    ),
-                    presetDir,
-                )
-
                 backend.applyPreset(
                     PresetValue(
                         type = "title",
                         titleData =
                         listOf(
                             PresetTitle(
-                                creator = userAid,
-                                uid = userAid,
+                                creator = "cli_preset_user",
+                                uid = "cli_preset_user",
                                 name = "Preset Title",
-                                scope = communityAid,
+                                scope = "cli_preset_community",
                                 scopeType = ObjectType.COMMUNITY,
                                 type = TitleType.REGULAR,
                                 description = "preset title description",
@@ -335,10 +321,19 @@ class CliTest {
                     presetDir,
                 )
             }
-
             attachPanelSession {
-                val panelOverview = overview().getOrThrow()
-                assertTrue(panelOverview.topicCount >= 2)
+                val title = getAllTitles(PaginationQuery()).getOrThrow().data.single()
+                assertEquals("Preset Title", title.name)
+                assertEquals(TitleType.REGULAR, title.type)
+                assertEquals("cli_preset_user", title.creatorInfo.aid)
+                assertEquals("cli_preset_user", title.receiverInfo.aid)
+                assertEquals(ObjectType.COMMUNITY, title.scopeType)
+                assertEquals("cli_preset_community", title.communityInfo?.aid)
+                assertEquals(
+                    "preset title description",
+                    assertIs<TopicContent.Plain>(title.descriptionTopicInfo.content).plain,
+                )
+                assertEquals(1, overview().getOrThrow().topicCount)
             }
         }
 
@@ -514,5 +509,36 @@ class CliTest {
                 assertEquals(configs, backend.database.workerTask.getWorkerTasks().getOrThrow())
             }
         }
+    }
+}
+
+private suspend fun TestMate.withCliContentPreset(testName: String, block: suspend (WorkerBackend, File) -> Unit) {
+    ensureSystemUser(this)
+    val presetDir = preparePresetDir(testName)
+    val keysDir = File(presetDir, "keys").apply { mkdirs() }
+    val userAid = "cli_preset_user"
+
+    val userKeys = generateP256KeyMaterial()
+    val userKeyPath = File(keysDir, "user.pem").apply { writeText(userKeys.privatePem) }
+
+    withCliBackend { backend ->
+        backend.database.init()
+
+        backend.applyPreset(
+            PresetValue(
+                type = "user",
+                userData =
+                listOf(
+                    PresetUser(
+                        name = "Preset User",
+                        aid = userAid,
+                        privateKey = userKeyPath.relativeTo(presetDir).path,
+                    ),
+                ),
+            ),
+            presetDir,
+        )
+
+        block(backend, presetDir)
     }
 }

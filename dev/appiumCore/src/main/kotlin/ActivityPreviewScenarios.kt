@@ -39,37 +39,86 @@ private data class ActivityScenario(
     val pinnedTopic: String?,
 )
 
-fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityPreviewByHelper(privateRoom: Boolean = false) =
-    runAppiumBlockingTest {
-        platformHelper.runTest(
-            testName = testName,
-            target = targetHelper,
-            setup = { ports ->
-                val data =
-                    if (privateRoom) {
-                        preparePrivateActivityScenario { targetHelper.createAuthenticatedSession(ports) }
-                    } else {
-                        prepareActivityScenario { targetHelper.createAuthenticatedSession(ports) }
-                    }
-                AppiumTestSetup(data)
-            },
-        ) { scope, data ->
-            try {
-                scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
-                scope.driver.dismissDialog()
-                scenarioReadAndSendActivity(scope.driver, data)
-            } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
-                throw cancelled
-            } catch (failure: IllegalStateException) {
-                scope.driver.saveSnapshot("activity-failed")
-                throw failure
-            } finally {
-                data.viewer.sessionManager.client.close()
-            }
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityReadByHelper(privateRoom: Boolean = false) =
+    runActivityScenario(privateRoom, scenario = ::scenarioReadActivity)
+
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivitySendByHelper(privateRoom: Boolean = false) =
+    runActivityScenario(privateRoom, scenario = ::scenarioSendActivity)
+
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityNavigationByHelper() =
+    runActivityScenario { driver, data ->
+        driver.clickByText("Rooms")
+        scenarioRevisitActivityRoom(driver, data)
+    }
+
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityLayoutByHelper() =
+    runActivityScenario { driver, data ->
+        driver.clickByText("Rooms")
+        scenarioResizeActivityRooms(driver, data, activityCompactWidth(driver))
+    }
+
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityContextByHelper() =
+    runActivityScenario(includeContext = true) { driver, data ->
+        if (driver is AndroidAppTestDriver) {
+            driver.withWideViewport { scenarioOpenActivityContext(driver, data) }
+        } else {
+            driver.resizeActivityViewport(1600, 1000)
+            scenarioOpenActivityContext(driver, data)
         }
     }
 
-private suspend fun prepareActivityScenario(createSession: suspend () -> AuthenticatedSession): ActivityScenario {
+fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.testActivityDraftByHelper() =
+    runActivityScenario { driver, data ->
+        driver.clickByText("Rooms")
+        driver.clickByTextContaining(data.roomName)
+        driver.assertVisibleByDescription("Send")
+        val draft = "activity-draft-${System.currentTimeMillis()}"
+        driver.inputText(draft)
+        listOf(activityCompactWidth(driver) to 800, 900 to 800, 1600 to 500, 1600 to 1000).forEach { (width, height) ->
+            driver.resizeActivityViewport(width, height)
+            if (driver is WasmAppTestDriver) driver.assertInputText(draft) else driver.assertVisibleByText(draft)
+            driver.assertVisibleByDescription("Send")
+            driver.saveSnapshot("activity-draft-$width-$height")
+        }
+    }
+
+private fun AppiumTestBase<AppAppiumHelper, PlatformAppiumHelper>.runActivityScenario(
+    privateRoom: Boolean = false,
+    includeContext: Boolean = false,
+    scenario: suspend (AppTestDriver, ActivityScenario) -> Unit,
+) = runAppiumBlockingTest {
+    platformHelper.runTest(
+        testName = testName,
+        target = targetHelper,
+        setup = { ports ->
+            val data =
+                if (privateRoom) {
+                    preparePrivateActivityScenario { targetHelper.createAuthenticatedSession(ports) }
+                } else {
+                    prepareActivityScenario(includeContext) { targetHelper.createAuthenticatedSession(ports) }
+                }
+            AppiumTestSetup(data)
+        },
+    ) { scope, data ->
+        try {
+            scenarioSignIn(scope.driver, data.viewer.session.pemPrivateKey)
+            scope.driver.dismissDialog()
+            scenario(scope.driver, data)
+        } catch (cancelled: kotlin.coroutines.cancellation.CancellationException) {
+            throw cancelled
+        } catch (failure: IllegalStateException) {
+            scope.driver.saveSnapshot("activity-failed")
+            throw failure
+        } finally {
+            data.viewer.sessionManager.client.close()
+        }
+    }
+}
+
+private suspend fun prepareActivityScenario(
+    includeContext: Boolean = false,
+    createSession: suspend () -> AuthenticatedSession,
+): ActivityScenario {
     val owner = createSession()
     try {
         val viewer = createSession()
@@ -87,14 +136,17 @@ private suspend fun prepareActivityScenario(createSession: suspend () -> Authent
                     .getOrThrow().id
             viewer.sessionManager.joinCommunity(communityId).getOrThrow()
             viewer.sessionManager.joinRoom(roomId).getOrThrow()
-            val pinnedTopic = "activity-pinned-$suffix"
-            val topicId =
-                owner.sessionManager.createTopic(
-                    ObjectType.COMMUNITY,
-                    communityId,
-                    pinnedTopic,
-                ).getOrThrow().id
-            owner.sessionManager.pinTopic(topicId).getOrThrow()
+            val pinnedTopic =
+                if (includeContext) {
+                    val content = "activity-pinned-$suffix"
+                    val topicId =
+                        owner.sessionManager.createTopic(ObjectType.COMMUNITY, communityId, content)
+                            .getOrThrow().id
+                    owner.sessionManager.pinTopic(topicId).getOrThrow()
+                    content
+                } else {
+                    null
+                }
             val messages = (1..3).map { "activity-message-$suffix-$it" }
             sendActivityMessages(owner, roomId, messages)
             val scenario = ActivityScenario(viewer, roomId, roomName, messages.last(), pinnedTopic)
@@ -108,23 +160,13 @@ private suspend fun prepareActivityScenario(createSession: suspend () -> Authent
     }
 }
 
-private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: ActivityScenario) {
-    // Native Chrome on Windows requires 504px and Firefox requires 500px; both use bottom navigation.
-    val compactWidth = if (driver is WasmAppTestDriver) 504 else 480
+private fun activityCompactWidth(driver: AppTestDriver): Int = if (driver is WasmAppTestDriver) 504 else 480
+
+private suspend fun scenarioReadActivity(driver: AppTestDriver, data: ActivityScenario) {
     driver.clickByText("Rooms")
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertVisibleByText("3")
     driver.assertActivityUnreadIndicator(true)
-    scenarioResizeActivityRooms(driver, data, compactWidth)
-    val showContext =
-        when (driver) {
-            is DesktopAppTestDriver, is WasmAppTestDriver -> true
-            is AndroidAppTestDriver -> driver.isWideViewport()
-            else -> false
-        }
-    if (data.pinnedTopic != null && showContext) {
-        scenarioOpenActivityContext(driver, data)
-    }
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     driver.assertVisibleByText(data.latestMessage)
@@ -134,23 +176,14 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.assertVisibleByTextContaining(data.latestMessage)
     driver.assertNotVisibleByText("3")
     driver.assertActivityUnreadIndicator(false)
+}
+
+private suspend fun scenarioSendActivity(driver: AppTestDriver, data: ActivityScenario) {
+    driver.clickByText("Rooms")
     driver.clickByTextContaining(data.roomName)
     driver.assertVisibleByDescription("Send")
     val sentMessage = "activity-sent-${System.currentTimeMillis()}"
     driver.inputText(sentMessage)
-    if (driver is DesktopAppTestDriver || driver is WasmAppTestDriver) {
-        listOf(compactWidth to 800, 900 to 800, 1600 to 500, 1600 to 1000).forEach { (width, height) ->
-            driver.resizeActivityViewport(width, height)
-            if (driver is WasmAppTestDriver) {
-                driver.assertInputText(sentMessage)
-            } else {
-                driver.assertVisibleByText(sentMessage)
-            }
-            driver.assertVisibleByDescription("Send")
-            driver.saveSnapshot("activity-draft-$width-$height")
-        }
-    }
-    driver.assertVisibleByDescription("Send")
     driver.clickByDescription("Send")
     driver.assertVisibleByText(sentMessage)
     waitUntilRoomRead(data, sentMessage)
@@ -158,8 +191,7 @@ private suspend fun scenarioReadAndSendActivity(driver: AppTestDriver, data: Act
     driver.navigateBack()
     driver.assertVisibleByTextContaining(sentMessage)
     driver.assertActivityUnreadIndicator(false)
-    scenarioRevisitActivityRoom(driver, data.roomName, sentMessage)
-    driver.saveSnapshot("activity-after-read-send")
+    driver.saveSnapshot("activity-after-send")
 }
 
 private suspend fun waitUntilRoomRead(data: ActivityScenario, expectedMessage: String) {
@@ -333,13 +365,15 @@ private suspend fun scenarioResizeActivityRooms(driver: AppTestDriver, data: Act
     }
 }
 
-private suspend fun scenarioRevisitActivityRoom(driver: AppTestDriver, roomName: String, latestMessage: String) {
+private suspend fun scenarioRevisitActivityRoom(driver: AppTestDriver, data: ActivityScenario) {
     repeat(3) {
-        driver.clickByTextContaining(roomName)
+        driver.clickByTextContaining(data.roomName)
         driver.assertVisibleByDescription("Send")
-        driver.assertVisibleByText(latestMessage)
+        driver.assertVisibleByText(data.latestMessage)
+        waitUntilRoomRead(data, data.latestMessage)
+        driver.dismissKeyboard()
         driver.navigateBack()
-        driver.assertVisibleByTextContaining(latestMessage)
+        driver.assertVisibleByTextContaining(data.latestMessage)
         driver.assertActivityUnreadIndicator(false)
     }
 }

@@ -53,8 +53,8 @@ import io.ktor.client.engine.HttpClientEngineConfig
 import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.server.config.MapApplicationConfig
-import io.ktor.server.testing.ApplicationTestBuilder
-import io.ktor.server.testing.testApplication
+import io.ktor.server.testing.ClientProvider
+import io.ktor.server.testing.TestApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -87,11 +87,11 @@ private typealias TestRoomReceiver = suspend (
 private val NOOP_ON_RECEIVE: TestRoomReceiver = { _, _, _ -> }
 
 @OptIn(ExperimentalUuidApi::class)
-class TestMate(val applicationTestBuilder: ApplicationTestBuilder, val workerBackend: WorkerBackend) {
+class TestMate(private val clients: ClientProvider, val workerBackend: WorkerBackend) {
     fun createClient(
         block: HttpClientConfig<out HttpClientEngineConfig>.() -> Unit = {
         },
-    ): HttpClient = applicationTestBuilder.createClient(block)
+    ): HttpClient = clients.createClient(block)
 }
 
 @OptIn(ExperimentalUuidApi::class)
@@ -143,42 +143,34 @@ private suspend fun startTestContainerTest(
     }
 }
 
-private fun doTest(reportDirectory: File, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
-    testApplication {
-        environment {
-            config =
-                MapApplicationConfig().apply {
-                    env.forEach {
-                        put(it.key, it.value)
-                    }
-                }
-        }
-        application {
-            module()
-        }
-        externalServices {
-            hosts("ws://localhost") {
-                wsModule()
+private suspend fun doTest(reportDirectory: File, env: Map<String, String>, block: suspend TestMate.() -> Unit) {
+    val application =
+        TestApplication {
+            environment {
+                config = MapApplicationConfig().apply { env.forEach { put(it.key, it.value) } }
+            }
+            application { module() }
+            externalServices {
+                hosts("ws://localhost") { wsModule() }
             }
         }
+    useTestHost(application) { host ->
+        val backend = buildBackendFromEnv(readEnv(env)) as WorkerBackend
+        val testMate = TestMate(host, backend)
         val port = env["port"]?.toIntOrNull()
-
-        val backend = buildBackendFromEnv(readEnv(env))
-        val workerBackend = backend as WorkerBackend
-        val testMate = TestMate(this@testApplication, workerBackend)
-        if (port != null) {
+        if (port == null) {
+            testMate.block()
+        } else {
             coroutineScope {
                 val task = CompletableDeferred<Unit>()
-                val job =
-                    launch(Dispatchers.IO) {
-                        receiveExplainResult(task, port, reportDirectory)
-                    }
-                task.await()
-                testMate.block()
-                job.cancel()
+                val job = launch(Dispatchers.IO) { receiveExplainResult(task, port, reportDirectory) }
+                try {
+                    task.await()
+                    testMate.block()
+                } finally {
+                    job.cancel()
+                }
             }
-        } else {
-            testMate.block()
         }
     }
 }

@@ -70,6 +70,27 @@ internal class LuceneRpcImpl(private val base: Path) : LuceneRpc {
             IndexWriter(this, IndexWriterConfig(analyzer)).use { it.addDocuments(documents.map(::toDocument)) }
             Unit
         }
+    override suspend fun replace(index: String, query: RpcLuceneQuery, documents: List<RpcLuceneDocument>) =
+        useIndex(index) { replaceDocuments(query, documents) }
+
+    private fun FSDirectory.replaceDocuments(query: RpcLuceneQuery, documents: List<RpcLuceneDocument>) {
+        val replacements = documents.map(::toDocument)
+        val selection = buildQuery(query)
+        IndexWriter(this, IndexWriterConfig(analyzer)).use { writer ->
+            try {
+                writer.deleteDocuments(selection)
+                writer.addDocuments(replacements)
+                writer.commit()
+            } catch (failure: Throwable) {
+                try {
+                    writer.rollback()
+                } catch (cleanup: Throwable) {
+                    failure.addSuppressed(cleanup)
+                }
+                throw failure
+            }
+        }
+    }
     override suspend fun clean(index: String) =
         useIndex(index) {
             IndexWriter(this, IndexWriterConfig(analyzer)).use { it.deleteDocuments(MatchAllDocsQuery.INSTANCE) }

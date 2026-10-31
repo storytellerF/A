@@ -4,6 +4,7 @@
 
 package com.storyteller_f.a.dev.appium
 
+import com.storyteller_f.a.test.BackendFixture
 import com.storyteller_f.a.test.useBackendFixture
 
 /** Starts the backend topology shared by desktop and browser Appium tests. */
@@ -16,14 +17,31 @@ internal suspend fun runAppiumTestEnvironment(
         report.directory.resolve("logs"),
         environment = { mapOf("SIGNIN_ALLOWED_ORIGINS" to allowedOrigins) },
     ) { backend ->
-        block(
-            AppiumPorts(server = backend.serverPort, ws = backend.wsPort, expireUserSessions = {
-                val result = backend.services.redis.execInContainer("redis-cli", "EVAL", EXPIRE_USER_SESSIONS, "0")
-                check(result.exitCode == 0) { "Test session expiry failed" }
-            }),
-        )
+        block(createAppiumPorts(backend))
     }
 }
+
+/** SQL is confined to the isolated fixture; business setup belongs to each caller. */
+internal fun createAppiumPorts(backend: BackendFixture): AppiumPorts =
+    AppiumPorts(backend.serverPort, backend.wsPort, expireUserSessions = {
+        val result = backend.services.redis.execInContainer("redis-cli", "EVAL", EXPIRE_USER_SESSIONS, "0")
+        check(result.exitCode == 0) { "Test session expiry failed" }
+    }, queryFixtureDatabase = { statement ->
+        val postgres = backend.services.postgres
+        val result =
+            postgres.execInContainer(
+                "psql",
+                "-U",
+                postgres.username,
+                "-d",
+                postgres.databaseName,
+                "-At",
+                "-c",
+                statement,
+            )
+        check(result.exitCode == 0) { "Fixture database query failed" }
+        result.stdout.trim()
+    }, filesystemHttp = backend.services.filesystemHttpPort)
 
 // Move the isolated fixture's stored deadline into the past; retain the Cookie and Redis key.
 private const val EXPIRE_USER_SESSIONS = """

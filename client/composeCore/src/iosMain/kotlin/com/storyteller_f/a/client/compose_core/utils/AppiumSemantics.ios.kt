@@ -16,4 +16,6 @@ actual fun Modifier.appiumSemantics(
     inputValue: String?,
     onInputValueChange: ((String) -> Unit)?,
     onClick: (() -> Unit)?,
+    onInputSubmit: (() -> Unit)?,
+    onLongClick: (() -> Unit)?,
 ): Modifier = this
