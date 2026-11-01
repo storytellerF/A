@@ -1454,7 +1454,7 @@ The existing media-item contract has no loop option; ended playback can be repla
 
 ### Reproduce the isolated experiment
 
-Use JDK 21, Node 22+ and FFmpeg with VP9, H.264, Opus and AAC support. No server, account,
+Use JDK 21, Node 22+, Python 3.10+ and FFmpeg with VP9, H.264, Opus and AAC support. No server, account,
 VM or deployment is required. From the repository root, build the fixture application:
 
 ```bash
@@ -1473,23 +1473,18 @@ create synthetic media and run the contract tests:
 
 ```bash
 npm install --prefix build/wasm-media-research/browser --no-package-lock --ignore-scripts playwright@1.64.1 esbuild@0.28.2 selenium-webdriver@4.51.0 pngjs@7.0.0
+npm --prefix client/composeCore/wasm-media-host install --no-package-lock --ignore-scripts
 node client/composeCore/wasm-media-host/generate-fixtures.mjs
 node --test client/composeCore/wasm-media-host/*.test.mjs
-node client/composeCore/wasm-media-host/verify-browser.mjs
-node client/composeCore/wasm-media-host/verify-worker-regressions.mjs
-node client/composeCore/wasm-media-host/verify-rgba-failure.mjs
-node client/composeCore/wasm-media-host/verify-bitmap-ownership.mjs
+npm --prefix client/composeCore/wasm-media-host run test:browser
 node client/composeCore/wasm-media-host/benchmark-browser.mjs
-node client/composeCore/wasm-media-host/verify-compose.mjs
-node client/composeCore/wasm-media-host/verify-av-sync.mjs
 ```
 
 The Chromium checks use the installed Windows Chrome and Edge binaries with isolated
 headless profiles. `MEDIA_CHROME_BINARY` and `MEDIA_EDGE_BINARY` can override their
 installation paths. Firefox uses the installed Firefox and an existing geckodriver;
 set `MEDIA_GECKODRIVER` to its executable and run
-`node client/composeCore/wasm-media-host/verify-firefox.mjs` and
-`node client/composeCore/wasm-media-host/verify-compose-firefox.mjs`. The latter loads
+`npm --prefix client/composeCore/wasm-media-host run test:browser -- firefox compose-firefox`. The Compose suite loads
 the same compiled fixture after installing diagnostics on a static same-origin bootstrap.
 It checks changed/paused PNG pixels, native Skia uploads, the audio graph, menus, dialogs,
 source replacement and disposal; it does not substitute a DOM media player.
@@ -1554,6 +1549,106 @@ both graphs together can fail Gradle's implicit-dependency validation and makes 
 staging directory unsuitable as an immutable test target. Serve the copied distribution
 under `build/dist/wasmJs`, finish one build before the next, and never benchmark a
 staging directory that another task is rewriting.
+
+### Wasm media regression runner
+
+`npm --prefix client/composeCore/wasm-media-host run test:browser` runs the nine
+verify modules under Node's built-in `node:test` runner, serially, each in its
+own supervised worker process. No new test framework dependency is needed. Existing `*.test.mjs` unit contracts stay on their
+separate `npm test` entry point. Select suites with
+`npm --prefix client/composeCore/wasm-media-host run test:browser -- worker-regressions`.
+Multiple suite names are accepted, and selection retains all applicable matrix
+parameters. Unknown names fail before a run starts. Direct `node verify-*.mjs`
+commands are useful for debugging but bypass the process supervisor.
+
+| Suites | Independent cases / dependent contracts |
+| --- | --- |
+| browser / firefox | Each of five media types; Chromium also separates native baseline, unsupported codec and missing source |
+| worker-regressions | Network failure during open or pause; trailing skip accounting per copy/GPU path |
+| rgba-failure | Preview/playing crossed with rejected/throwing upload |
+| bitmap-ownership | Committed disposal, pending disposal/replacement, playing disposal |
+| compose / compose-firefox | AV, HD, FHD and audio per rendering path; playback/replacement/disposal stays continuous |
+| gpu-lifecycle | Resize, repeated remount, context loss, upload rejection, rotated GPU versus RGBA reference |
+| av-sync | Before/after seek stays continuous; copy/GPU crossed with 0/200ms output delay |
+
+Chrome and Edge run all Chromium suites; installed Firefox/geckodriver runs the two
+Selenium suites. Missing tools/codecs fail explicitly rather than silently claiming
+coverage. An independent child failure does not stop later cases or matrix batches.
+The runner adds no retries and retains the original 80ms sync threshold. Benchmarks
+and exploratory serving commands remain standalone; they are not regression cases.
+
+The site is scoped to its suite, browsers to browser cases, and pages to individual
+contracts. Finalizers close outstanding pages even after an assertion failure.
+Media state, screenshots and trace finalization each have an independent
+10-second budget. A stalled read or screenshot never consumes trace's budget.
+Native page, browser, WebDriver and site close attempts each have a separate
+5-second budget. Chromium fixtures own a Playwright BrowserServer and call its
+kill operation if graceful close fails. Firefox fixtures directly own geckodriver
+and its dedicated process tree; failed WebDriver quit force-terminates that tree.
+Ownership is registered before client/session setup, including failure paths.
+File writes use abort signals. These budgets do not change playback waits or the
+80ms synchronization assertions.
+
+The supervisor starts a separate Python process to own each worker and all its descendants.
+The supervised entry supports Windows and Linux; other operating systems fail explicitly.
+`PYTHON_COMMAND` can select the interpreter executable (default `python` on Windows,
+`python3` on Linux). Windows creates the Node root suspended, assigns it to a Job
+Object with kill-on-close and no breakaway, then resumes it. The Job handle stays
+with the owner after Node exits. Linux enables `PR_SET_CHILD_SUBREAPER` before
+launch: detached/orphaned descendants are adopted by that owner, including those
+in other process groups. `/proc` access and subreaper support are required.
+
+Root exit, test-flow completion, output-pipe closure and container release are
+separate acknowledgements. A token-bound append-only `container.jsonl` journal
+reports root and container state; readers ignore incomplete final records. The
+Node worker atomically writes `completed.json` after its awaited root case returns.
+A 300-second execution deadline and separate 5-second exit grace period cover both
+flow completion and early root exit. On expiry the owner terminates the entire
+Job, or kills and reaps successive adopted child generations on Linux. Only an
+empty container plus a confirmed root exit and bounded pipe closure permit the
+next module. The outer supervisor never equates an exited PID or `close` event
+with full release, and never targets an unrelated process.
+
+A failed release aborts the run, preserving output and `supervisor-error.json`
+with the owner/root PIDs. Control-pipe EOF or supervisor death asks the owner to
+clean up (a Windows parent-process handle or Linux parent-death signal detects
+the latter). Windows also kills remaining members on Job-handle closure. A Linux
+owner remains as the subreaper until unreleased descendants are gone. Ownership
+regression tests require OS process-control permission and cover detached children,
+root-first exit with inherited pipes, CPU stalls, and an unrelated sentinel.
+
+Explicit finally blocks and automatic teardown share one close attempt. Cleanup
+errors are deferred until the case outcome is known: retain the original thrown
+value when a case failed, save additional failures to `cleanup-errors.json`, and
+fail an otherwise successful case if resource release fails. WebDriver and site
+ownership follows the same rule, so a failed quit cannot prevent site cleanup.
+Playwright pages save trace ZIPs, screenshots and JSON state/error diagnostics before
+closure; Firefox failures save screenshots, page source and media state. Collection errors are
+reported as diagnostics without replacing the original assertion. Reports (including
+one JUnit XML per matrix batch) are first written to independent run/batch/suite
+folders under `build/test-results/wasmMediaBrowserTest`. Standalone verify commands
+also allocate a unique suite directory there. JSON metrics and named PNGs use the
+same raw suite directory; browser tools, fixtures and benchmark output remain under
+`build/wasm-media-research`.
+Only after all batch processes have closed does the runner copy the complete raw
+run to `build/reports/wasm-media/<run-id>`, publishing the directory after the copy
+finishes. Failed tests are collected too. Each snapshot includes `manifest.json`
+with batch and module exit codes, signals, startup errors and forced-termination
+reasons. Worker stdout/stderr and original partial JUnit remain under the raw
+batch's `workers/<suite>` directory. The completed batch `junit.xml` aggregates
+finished worker reports. Nonzero exits, exit signals, timeouts and incomplete reports
+contribute explicit lifecycle failures. Completed test cases remain in the aggregate
+alongside the lifecycle failure; unfinished XML remains as raw evidence. Interrupted runs remain in raw
+storage and are not published; previous snapshots remain separate and unchanged.
+The command prints both directories. `MEDIA_REPORT_DIR` is the runner's internal
+batch output boundary; it does not change fixture or tool locations.
+Traces are retained for successful cases too, so a continuous lifecycle can be inspected.
+Sync probes retain action traces and final PNGs but disable periodic trace
+screenshots/DOM snapshots to avoid adding a second capture stream to frame timing.
+Build the Compose fixture and generate media before running; keep its output immutable
+until all batches finish. These tests measure browser rendering/audio graphs, not
+physical speaker/display latency.
+
 
 ### Presentation profiling at an actual 1080p video size
 
