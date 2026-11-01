@@ -642,6 +642,86 @@ This alpha protocol has no legacy fallback. Recreate an existing alpha database 
 
 Linux server image tests also require the native libavif shared library and its codec dependencies; expose their directory through LD_LIBRARY_PATH when they are supplied in an isolated runtime rather than installed system-wide.
 
+### Shell tool regression tests
+
+Supported hosts are Windows and Linux. Requires Python 3.10+, Bash 4.4+
+(Git Bash on Windows), and
+[PyYAML](https://github.com/yaml/pyyaml). Install the test dependency in your Python
+environment before running:
+
+```sh
+python -m pip install -r scripts/test_scripts/shell_regression/requirements.txt
+python scripts/test_scripts/run-shell-tests.py
+python scripts/test_scripts/run-shell-tests.py --list
+python scripts/test_scripts/run-shell-tests.py --suite compose
+python scripts/test_scripts/run-shell-tests.py --suite infrastructure
+python scripts/test_scripts/run-shell-tests.py test_compose.ComposeTests.test_build_mode_comes_from_env
+```
+
+`sh scripts/test_scripts/run-shell-tests.sh` is the portable Shell entry; set
+`PYTHON_COMMAND` to an interpreter executable when needed. `SHELL_TEST_BASH` selects
+the Bash executable for Python subprocesses. The existing five `*-test.sh` entry
+points select their corresponding unittest modules and forward additional arguments.
+`build-and-test.sh --compose --plain` now runs the complete Shell regression suite
+after Detekt; it does not start real Docker, Android, or desktop UI sessions.
+
+Each parameter row is a separate unittest test ID, so a failed contract does not
+prevent unrelated cases from running. The migration covers these original groups:
+
+| Shell entry | unittest module | Contracts |
+| --- | --- | --- |
+| `build-and-test-args-test.sh` | `test_build_and_test` | Spaces/globs, rejected arguments, exact Detekt/E2E invocations, task filters and exit status, platform target selection |
+| `build-service-images-test.sh` | `test_images` | Four concurrent builds, local host build versus Docker build, completion and failure status |
+| `cli-entrypoint-test.sh` | `test_cli` | Readiness response, disabled preset initialization, file/stdout logging and failure status |
+| `compose-service-test.sh` | `test_compose` | Profiles, dependency health conditions, RPC env, certificates, Bunker env/networks, external paths, Docker build/start ordering, failure preventing deployment, deployment config contracts |
+| `run-linux-desktop-e2e-args-test.sh` | `test_desktop` | Task/global options, spaces/globs, success/failure cleanup, unrelated process preservation, rejected filters before launch |
+
+Every invocation creates a unique `build/test-results/shell-regression/run-*`
+directory containing `discovered.txt`, `junit.xml`, `junit.raw.json`, and per-case stdout/stderr files.
+JUnit records every discovered case independently, including failures and errors;
+the runner exits nonzero on failure. Fixture repositories, synthetic env files and
+fake commands are isolated per case and removed by unittest cleanup. Generated YAML
+and NUL-delimited command argv are parsed exactly inside these fixtures. No real
+`deploy/*.env` files are read or removed. Production Shell scripts are copied into
+the fixture (normalizing only fixture line endings), then executed as subprocesses;
+the tests do not reimplement their behavior in Python. Bash only transports exact
+argv; execution follows the script's shebang or its explicitly selected interpreter,
+including `sh` for the CLI entrypoint. Existing generated Compose patches in the
+working checkout are outside this suite's cleanup scope.
+
+The execution owner is `scripts/tool_scripts/process_container.py`, shared with the
+browser verification compatibility entry in `client/composeCore/wasm-media-host`.
+Windows assigns a suspended root to a kill-on-close Job before resuming it; Linux
+uses a dedicated subreaper that also adopts detached descendants. Completion requires
+an empty-container acknowledgement, root exit and owner exit. Execution deadlines
+(default 45 seconds) and cleanup deadlines are separate. Output goes directly to
+files, so inherited pipe handles cannot delay timeout delivery. Timeout or caller
+interruption requests cleanup of the whole owned container before the fixture is
+removed. Each invocation registers its own process lease before launch. A lease
+moves from not-started to owned, and becomes released only after the complete
+acknowledgement; exception types do not determine whether deletion is safe. Fixture
+cleanup requires every registered lease to be safe, so a later successful command
+cannot override an earlier unconfirmed release. An interruption remains the primary
+exception when cleanup also fails, with that cleanup failure retained as its cause.
+Process termination and control-pipe closure share one cleanup boundary. All cleanup
+operations are attempted before propagating an outcome; multiple failures are retained
+in `ProcessCleanupError.errors` and the exception chain. A cleanup-only failure fails
+the command even after process release has been confirmed. Real disconnected-pipe
+regressions cover close/flush failures together with interruption, I/O errors and
+timeouts; a pipe-close error never changes the independently confirmed lease state.
+
+The infrastructure regressions exercise live/exited roots, detached descendants,
+unrelated-process preservation, interpreter modes, invalid XML characters, and
+interruption/I/O failure combined with failed cleanup. Legacy Shell entries and the
+bootstrap have LF checkout rules in `.gitattributes`. Their regressions execute the
+original working-tree files with `--list`, check their original bytes and compare
+all discovered IDs; they do not run normalized fixture copies of those entry points.
+
+JUnit serialization escapes XML 1.0 forbidden characters in all diagnostic fields;
+raw stdout/stderr and lossless `junit.raw.json` retain the original diagnostics.
+The original browser-container lifecycle suite remains runnable with
+`node --test client/composeCore/wasm-media-host/verification-reports.test.mjs`.
+
 ### Deployment and RPC lifecycle verification
 
 Application backend environment overrides are generated only for enabled cli/server/worker/ws services. Container server and WebSocket listeners use port 80; published host ports remain configurable. Filesystem public URLs come from the flavor file and the same Compose-resolved value is passed to filesystem and applications. Bunker credentials and domain-prefixed settings use the final variable names in deploy/bunker.env.example, injected only into BunkerWeb through raw env_file (Compose 2.30+). Existing external files using BUNKER_* placeholders must be rewritten using the example; they are not automatically migrated or overwritten.

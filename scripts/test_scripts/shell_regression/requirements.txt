@@ -1,0 +1,2 @@
+# YAML assertions use the canonical yaml/pyyaml package.
+PyYAML==6.0.3
