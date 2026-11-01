@@ -15,15 +15,32 @@ import kotlin.js.toJsString
 private external interface BrowserProtectedStorage : JsAny {
     fun read(key: JsString): Promise<JsString?>
     fun write(key: JsString, value: JsString): Promise<JsAny?>
+    fun close(): Promise<JsAny?>
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
 private external interface BrowserProtectedStorageFactory : JsAny {
-    fun create(master: JsAny): BrowserProtectedStorage
+    fun create(master: JsAny, databaseName: JsString): BrowserProtectedStorage
 }
 
 @OptIn(ExperimentalWasmJsInterop::class)
-private val protectedStorage = createProtectedStorageFactory().create(createMasterKeyFactory())
+private val protectedStorage = BrowserProtectedValueStore()
+
+/** Owns one IndexedDB connection; database names scope isolated browser fixtures. */
+@OptIn(ExperimentalWasmJsInterop::class)
+internal class BrowserProtectedValueStore(databaseName: String = "a-protected-accounts") {
+    private val bridge = createProtectedStorageFactory().create(createMasterKeyFactory(), databaseName.toJsString())
+
+    internal suspend fun read(key: String): String? = bridge.read(key.toJsString()).await()?.toString()
+
+    internal suspend fun write(key: String, value: String) {
+        bridge.write(key.toJsString(), value.toJsString()).await()
+    }
+
+    internal suspend fun close() {
+        bridge.close().await()
+    }
+}
 
 /** A read/write transaction ensures simultaneous tabs keep the same non-extractable master key. */
 @OptIn(ExperimentalWasmJsInterop::class)
@@ -50,12 +67,12 @@ private fun createMasterKeyFactory(): JsAny =
 @OptIn(ExperimentalWasmJsInterop::class)
 private fun createProtectedStorageFactory(): BrowserProtectedStorageFactory =
     js(
-        """({create(master) {
+        """({create(master, databaseName) {
         let opening;
         const open = () => {
             if (!globalThis.isSecureContext || !globalThis.crypto?.subtle) throw new Error('Secure context required');
             return opening ??= new Promise((resolve, reject) => {
-                const request = indexedDB.open('a-protected-accounts', 1);
+                const request = indexedDB.open(databaseName, 1);
                 request.onupgradeneeded = () => request.result.createObjectStore('entries');
                 request.onsuccess = () => resolve(request.result);
                 request.onerror = () => reject(new Error('Protected storage unavailable'));
@@ -69,6 +86,10 @@ private fun createProtectedStorageFactory(): BrowserProtectedStorageFactory =
             tx.onabort = () => reject(new Error('Protected read failed'));
         });
         return {
+            async close() {
+                if (opening) (await opening).close();
+                opening = undefined;
+            },
             async read(key) {
                 const db = await open();
                 const record = await load(db, 'value:' + key);
@@ -97,12 +118,11 @@ private fun createProtectedStorageFactory(): BrowserProtectedStorageFactory =
     )
 
 @OptIn(ExperimentalWasmJsInterop::class)
-internal actual suspend fun readProtectedValue(key: String): String? =
-    protectedStorage.read(key.toJsString()).await()?.toString()
+internal actual suspend fun readProtectedValue(key: String): String? = protectedStorage.read(key)
 
 @OptIn(ExperimentalWasmJsInterop::class)
 internal actual suspend fun writeProtectedValue(key: String, value: String) {
-    protectedStorage.write(key.toJsString(), value.toJsString()).await()
+    protectedStorage.write(key, value)
 }
 
 internal actual suspend fun readSigninCookies(key: String): String? = null

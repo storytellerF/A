@@ -628,3 +628,7 @@
 
 - Filter `tasks.names` before obtaining individual `tasks.named` providers for aggregate dependencies.
   Keep excluded variants unrealized; see DEVELOPMENT.md for the AGP Compose Preview constraint.
+
+- Browser protected-storage regressions must call the compiled Wasm production store. Use the isolated browser runner for per-case origin storage isolation; never extract JavaScript from Kotlin source strings.
+- Karma Edge launches on Windows must disable compatibility-shim relaunch so the launcher can own and terminate the browser. Reject missing, skipped or duplicate cases in isolated browser contract runs.
+- Wasm browser-test helpers should pass arguments through typed external interfaces; parameters used only inside js string literals trigger Detekt UnusedParameter findings.
