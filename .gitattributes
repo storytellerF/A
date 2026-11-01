@@ -2,3 +2,7 @@
 *.mmdb filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *Screenshot*.png filter=lfs diff=lfs merge=lfs -text
+
+# Shell regression entry points must execute unchanged on POSIX hosts.
+scripts/test_scripts/*-test.sh text eol=lf
+scripts/test_scripts/run-shell-tests.sh text eol=lf

@@ -208,8 +208,8 @@ if ! runGradle detekt; then
 fi
 
 if [ "$RUN_COMPOSE" = true ]; then
-    echo "Running compose service script tests..."
-    ./scripts/test_scripts/compose-service-test.sh
+    echo "Running Shell regression tests..."
+    sh ./scripts/test_scripts/run-shell-tests.sh
 fi
 
 # Running android Tests

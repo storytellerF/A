@@ -646,3 +646,11 @@
 - Verification completion requires an empty owned Job/subreaper container, confirmed root exit and bounded pipe closure. Keep the container owner alive across root exit; never infer descendant release from PID exit or process-group kill. Test detached descendants and root-first exits with inherited pipes.
 
 - Verification JUnit must record abnormal worker exits as lifecycle failures even when reporter output is complete; retain completed test cases alongside the process failure.
+
+- Shell tool regressions use `python scripts/test_scripts/run-shell-tests.py`; keep each independent contract/parameter row discoverable and reportable. Execute real scripts in per-case fixture repositories, parse argv/YAML precisely, and never write or glob-clean the working checkout's deployment env files. See DEVELOPMENT.md for dependencies and report paths.
+
+- Shell regression argv transport must preserve the production shebang/explicit interpreter. Share `scripts/tool_scripts/process_container.py` with browser verification; require empty-container and owner-exit acknowledgement before fixture removal, and sanitize XML only at the report serialization boundary while retaining raw diagnostics.
+
+- Track fixture release with a per-command process lease registered before launch, not by catching selected exception types. Require all leases to be released before deletion, including when caller failure and cleanup failure occur together. Verify Shell compatibility entries as original bytes/executables and keep their LF rules in `.gitattributes`.
+
+- Finalize process termination and control-pipe closure under one exception-priority boundary. Attempt all cleanup steps, preserve the original caller failure, retain every cleanup error, and test real disconnected buffered pipes rather than only BytesIO stubs.
