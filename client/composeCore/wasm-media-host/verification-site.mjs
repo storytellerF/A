@@ -127,9 +127,9 @@ document.querySelector('#play').onclick=()=>host.play();
   const origin = `http://127.0.0.1:${server.address().port}`;
   return {
     origin,
-    close: () => {
+    close: () => new Promise((done, reject) => {
       server.closeAllConnections();
-      server.close();
-    },
+      server.close((error) => error ? reject(error) : done());
+    }),
   };
 }

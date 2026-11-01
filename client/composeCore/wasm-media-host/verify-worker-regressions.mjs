@@ -1,4 +1,6 @@
 /* This is a private project. All rights reserved. */
+import { runCase, launchBrowser, ownSite } from "./verification-runner.mjs";
+import { getReportDirectory } from "./verification-reports.mjs";
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -80,11 +82,15 @@ async function verifyTrailingSkips(browser, origin, path) {
         after: { ...host.metrics },
         frames,
         afterFrames: mediaTest.decoded.length,
-        diagnosticSkips: mediaTest.videoSkips.reduce((sum, s) => sum + s.count, 0),
+        diagnosticSkips: mediaTest.videoSkips.reduce(
+          (sum, s) => sum + s.count,
+          0,
+        ),
       };
     });
     const skipped =
-      result.after.skippedBeforeConversion - result.before.skippedBeforeConversion;
+      result.after.skippedBeforeConversion -
+      result.before.skippedBeforeConversion;
     assert.equal(result.path, path);
     if (path === "gpu-texture") assert.equal(result.before.copiedBytes, 0);
     else assert.ok(result.before.copiedBytes > 0);
@@ -104,31 +110,44 @@ async function verifyTrailingSkips(browser, origin, path) {
   }
 }
 
-const site = await startSite();
-const results = [];
-try {
-  for (const [name, executablePath] of Object.entries(chromiumBinaries)) {
-    const browser = await chromium.launch({ executablePath, headless: true });
-    try {
-      for (const phase of ["open", "pause"])
-        results.push({
-          browser: name,
-          ...(await verifyNetworkFailure(browser, site.origin, phase)),
+await runCase("verify-worker-regressions", async () => {
+  const site = ownSite(await startSite());
+  const results = [];
+  try {
+    for (const [name, executablePath] of Object.entries(chromiumBinaries)) {
+      await runCase(`browser ${name}`, async () => {
+        const browser = await launchBrowser(chromium, {
+          executablePath,
+          headless: true,
         });
-      for (const path of ["rgba-copy", "gpu-texture"])
-        results.push({
-          browser: name,
-          ...(await verifyTrailingSkips(browser, site.origin, path)),
-        });
-    } finally {
-      await browser.close();
+        try {
+          for (const phase of ["open", "pause"]) {
+            await runCase(`verifyNetworkFailure ${phase}`, async () => {
+              results.push({
+                browser: name,
+                ...(await verifyNetworkFailure(browser, site.origin, phase)),
+              });
+            });
+          }
+          for (const path of ["rgba-copy", "gpu-texture"]) {
+            await runCase(`verifyTrailingSkips ${path}`, async () => {
+              results.push({
+                browser: name,
+                ...(await verifyTrailingSkips(browser, site.origin, path)),
+              });
+            });
+          }
+        } finally {
+          await browser.close();
+        }
+      });
     }
+    await writeFile(
+      resolve(await getReportDirectory(), "worker-regressions.json"),
+      JSON.stringify(results, null, 2),
+    );
+    console.info(JSON.stringify(results, null, 2));
+  } finally {
+    await site.close();
   }
-  await writeFile(
-    resolve(work, "worker-regressions.json"),
-    JSON.stringify(results, null, 2),
-  );
-  console.info(JSON.stringify(results, null, 2));
-} finally {
-  site.close();
-}
+});

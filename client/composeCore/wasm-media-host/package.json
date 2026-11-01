@@ -15,6 +15,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "test": "node --test *.test.mjs"
+    "test": "node --test *.test.mjs",
+    "test:browser": "node run-browser-tests.mjs"
   }
 }

@@ -632,3 +632,17 @@
 - Browser protected-storage regressions must call the compiled Wasm production store. Use the isolated browser runner for per-case origin storage isolation; never extract JavaScript from Kotlin source strings.
 - Karma Edge launches on Windows must disable compatibility-shim relaunch so the launcher can own and terminate the browser. Reject missing, skipped or duplicate cases in isolated browser contract runs.
 - Wasm browser-test helpers should pass arguments through typed external interfaces; parameters used only inside js string literals trigger Detekt UnusedParameter findings.
+
+- Wasm media verify suites use node:test; preserve independent child-case reporting and dependent playback/recovery flows. Run the browser matrix through wasm-media-host npm test:browser; keep benchmarks standalone.
+
+- Wasm media reports write to isolated raw run/batch/suite directories first; collect completed runs into immutable build/reports/wasm-media snapshots only after all child processes close. Never write live reports into a shared collected directory.
+
+- Wasm verification fixtures must bound diagnostics and native close operations separately. Defer cleanup errors until the case outcome is known; preserve original failures, record cleanup errors separately, and fail cleanup-only errors. Register every acquired site/driver/page/browser before subsequent setup can fail.
+
+- Browser verification must own native termination capabilities, not just race close promises against timers. Use the supervised suite entry for owned-container fallback, preserve independent trace-finalization budgets, and verify forced cleanup with active child processes while preserving unrelated processes.
+
+- Every browser verify module must await its root runCase. The worker completion notification marks the end of that awaited flow; do not replace it with unawaited top-level test registrations.
+
+- Verification completion requires an empty owned Job/subreaper container, confirmed root exit and bounded pipe closure. Keep the container owner alive across root exit; never infer descendant release from PID exit or process-group kill. Test detached descendants and root-first exits with inherited pipes.
+
+- Verification JUnit must record abnormal worker exits as lifecycle failures even when reporter output is complete; retain completed test cases alongside the process failure.
