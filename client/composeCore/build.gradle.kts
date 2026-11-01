@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.serialization)
     id("noto-wasm-font")
+    id("wasm-browser-test-interop")
 }
 
 val buildIosTarget = project.findProperty("target.ios") == "true"
@@ -41,13 +42,6 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         binaries.executable()
-        browser {
-            testTask {
-                useKarma {
-                    useChromeHeadless()
-                }
-            }
-        }
     }
 
     @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -169,6 +163,9 @@ kotlin {
                 implementation(npm("mermaid-ffi-wasm", libs.versions.mermaidFfi.get()))
             }
         }
+        wasmJsTest.dependencies {
+            implementation(libs.kotlinx.coroutines.test)
+        }
         // jvm 与 android 共享 compose-pdf 的 PdfView actual（wasm 上无对应库）。
         val jvmAndroidMain =
             create("jvmAndroidMain") {
@@ -227,4 +224,8 @@ tasks.register<Test>("macosProtectedStoreTest") {
     useJUnit()
     filter { includeTestsMatching("*.MacProtectedStoreTest") }
     maxParallelForks = 1
+}
+
+tasks.named("wasmJsBrowserTest") {
+    inputs.dir(layout.projectDirectory.dir("karma.config.d"))
 }

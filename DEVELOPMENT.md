@@ -749,10 +749,26 @@ AES-GCM keys use IndexedDB. Record names are authenticated as additional data. T
 key bytes, but scripts executing in that origin can still request decryption; it does not provide the
 HttpOnly boundary of the login Cookie. HTTPS or localhost is required for WebCrypto.
 
-Run the browser storage boundary regression with
-`python scripts/test_scripts/test-browser-protected-storage.py --browser <Chromium-or-Edge-executable>`.
-It uses an isolated headless profile under build/, checking durable reads, namespacing, key export
-rejection and authenticated ciphertext modification. Client host tests also cover protected history restoration
+Run the compiled Wasm storage boundary regression with
+`python scripts/test_scripts/test-browser-protected-storage.py --browser <Chrome-or-Edge-executable>`.
+The runner invokes `:client:composeCore:wasmJsBrowserTest` separately for each contract, with
+`--rerun` and a test filter, so Karma launches a fresh disposable browser profile and isolated
+origin storage for every case. Use `--test <method-name>` to run one contract. It never extracts
+Kotlin source strings. The tests call the same compiled `BrowserProtectedValueStore` used by
+`readProtectedValue`/`writeProtectedValue`, use unique databases, close connections and delete
+their databases even on failure. Persistence closes and reconstructs the connection before reading.
+Independent cases cover empty reads, account isolation, ciphertext storage, non-extractable keys,
+tamper rejection and authenticated record names. Inspection helpers only inspect or corrupt raw
+browser records; they do not duplicate encryption/decryption. Per-case Gradle logs, JUnit XML
+and HTML reports remain under `client/composeCore/build/test-results/browserProtectedStorage/<browser>/<case>/`.
+The ordinary `:client:composeCore:wasmJsBrowserTest` task runs the same tests together in a
+Karma browser, with separate databases per test; use the Python runner for per-case origin isolation.
+Both commands require JDK 21 and a Chrome-compatible browser; direct Gradle invocation uses
+`CHROME_BIN` and must pass `-Pserver.flavor=dev -Pserver.buildType=debug`.
+The module's Karma Edge launcher disables the Windows compatibility shim relaunch so Karma
+retains process ownership, and allocates a dynamic DevTools port. The runner requires exactly
+one executed, successful JUnit case per invocation; missing, skipped or duplicate cases fail validation.
+Client host tests also cover protected history restoration
 and preservation of saved state on failed/unverifiable writes. Existing history tests use an isolated
 protected namespace and `app.protected.storage.dir` under the module build directory, avoiding real
 account storage and Java Preferences.
