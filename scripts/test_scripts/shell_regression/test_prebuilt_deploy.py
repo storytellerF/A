@@ -110,8 +110,10 @@ class TransferTests(unittest.TestCase):
             path = root / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("fixture\n")
+        (root / "connection.conf").write_text("# Synthetic private connection profile\n")
         return root, Namespace(env=root / "stage.env", ssh="fixture", project="fixture-stage",
-                               remote_env="/private/stage.env", remote_dir="/opt/stage/releases")
+                               remote_env="/private/stage.env", remote_dir="/opt/stage/releases",
+                               ssh_config=root / "connection.conf")
 
     @staticmethod
     def output(command, **kwargs):
@@ -146,6 +148,15 @@ class TransferTests(unittest.TestCase):
                 self.assertEqual(archive.getmember("scripts/service_scripts/compose-service.sh").mode, 0o755)
             self.assertIn("sha256sum -c SHA256SUMS", remote.call_args.args[1][2])
             self.assertTrue(any(call.args[0][0] == "scp" for call in commands.call_args_list))
+            transfer = next(call.args[0] for call in commands.call_args_list if call.args[0][0] == "scp")
+            self.assertEqual(transfer[1:3], ["-F", str(args.ssh_config.resolve())])
+
+    def test_ssh_uses_same_private_connection_profile_as_scp(self):
+        with tempfile.TemporaryDirectory(dir=deploy.ROOT / "build") as directory:
+            _, args = self.fixture(directory)
+            with patch.object(deploy, "run") as command:
+                deploy.ssh(args, ["echo", "ready"])
+            self.assertEqual(command.call_args.args[0][:3], ["ssh", "-F", str(args.ssh_config.resolve())])
 
     def test_build_failure_prevents_image_transfer_and_remote_start(self):
         import subprocess

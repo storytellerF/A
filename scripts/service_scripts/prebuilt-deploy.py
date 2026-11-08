@@ -146,6 +146,8 @@ def apply_verified(args):
 
 
 def safe_remote(args):
+    if getattr(args, "ssh_config", None) and not args.ssh_config.is_file():
+        raise ValueError("SSH configuration file does not exist")
     if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.@-]*", args.ssh):
         raise ValueError("--ssh must be an SSH config alias or user@host")
     for value in (args.remote_dir, args.remote_env):
@@ -155,8 +157,13 @@ def safe_remote(args):
         raise ValueError("Runtime environment must be outside the release directory")
 
 
+def ssh_config_options(args):
+    config = getattr(args, "ssh_config", None)
+    return ["-F", str(config.resolve())] if config else []
+
+
 def ssh(args, command, **kwargs):
-    return run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=15",
+    return run(["ssh", *ssh_config_options(args), "-o", "BatchMode=yes", "-o", "ConnectTimeout=15",
                 "-o", "ServerAliveInterval=15", "-o", "ServerAliveCountMax=3",
                 args.ssh, shlex.join([str(x) for x in command])], **kwargs)
 
@@ -229,7 +236,7 @@ def deploy(args):
     hashes.write_text("".join(f"{digest(output / name)}  {name}\n"
                              for name in ("images.tar", "runtime.tar", "manifest.json")), encoding="ascii")
     ssh(args, ["mkdir", "-p", remote])
-    run(["scp", "-o", "BatchMode=yes", *[str(output / name) for name in
+    run(["scp", *ssh_config_options(args), "-o", "BatchMode=yes", *[str(output / name) for name in
          ("images.tar", "runtime.tar", "manifest.json", "SHA256SUMS")], f"{args.ssh}:{remote}/"])
     print("Verifying and loading remote release", flush=True)
     ssh(args, ["sh", "-c", f"cd {shlex.quote(remote)} && sha256sum -c SHA256SUMS && "
@@ -244,6 +251,7 @@ def main():
     parser.add_argument("--apply", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--check-env", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--ssh", help="SSH config alias or user@host")
+    parser.add_argument("--ssh-config", type=Path, help="Optional private OpenSSH configuration file")
     parser.add_argument("--env", required=True, type=Path)
     parser.add_argument("--remote-env", help="Existing isolated stage env on target")
     parser.add_argument("--remote-dir", help="Release parent on target")

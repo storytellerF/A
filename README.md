@@ -181,6 +181,10 @@ Initialized LiteRT LLM client with CPU backend
 
 目标服务器无法编译应用时，可使用 Bash、Python 3.11+ 和本地 Linux/amd64 Docker 后端构建镜像。远端需要 Python 3.11+、Bash、Docker、Compose，以及可免密登录、执行 Docker 并设置隔离挂载目录所有权的部署用户。
 
+Use optional `--ssh-config /path/to/private/connection.conf` to select a separate
+OpenSSH configuration, including jump hosts, for both SSH and SCP. The connection
+profile stays local and is never included in the runtime bundle.
+
 ```bash
 ./scripts/service_scripts/deploy-prebuilt-to-remote.sh \
   --ssh <ssh-alias> --env /path/to/local-stage.env \
