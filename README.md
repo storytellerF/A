@@ -169,7 +169,7 @@ Initialized LiteRT LLM client with CPU backend
 
 容器健康后，在 `http://localhost:8080` 打开用户应用，在 `http://localhost:8081` 打开面板。省略 `app` 可跳过两个 Wasm 构建及服务。
 
-`compose-service.sh` 和 `start-service-in-docker.sh` 都接受环境名称（`alpha` 或 `alpha.env`）或文件路径（`~/deploy/alpha.env`）。名称先解析为 `~/deploy/<name>.env`，再尝试 `deploy/<name>.env`。以 `deploy/sample.env` 为参考，必须设置 `BUILD_TYPE`，`COMPOSE_FILE_LIST` 选择栈中服务。Server、Worker、WebSocket server 和 CLI 镜像共用根 `Dockerfile` 的 JDK 21 builder，分别打包为 `server`、`worker`、`ws` 和 `cli` target。
+`compose-service.sh` 使用命名选项：`--env <name-or-path>`，以及可选的 `--prebuild true|false` 和 `--command "compose arguments"`，例如 `./scripts/service_scripts/compose-service.sh --env sample --command config`。`start-service-in-docker.sh` 保留两个参数的接口：环境名称或文件路径，以及可选的 `--no-build`。名称先解析为 `~/deploy/<name>.env`，再尝试 `deploy/<name>.env`。以 `deploy/sample.env` 为参考，必须设置 `BUILD_TYPE`，`COMPOSE_FILE_LIST` 选择栈中服务。Server、Worker、WebSocket server 和 CLI 镜像共用根 `Dockerfile` 的 JDK 21 builder，分别打包为 `server`、`worker`、`ws` 和 `cli` target。
 
 `COMPOSE_FILE_LIST` 包含 `bunker` 时，将 `deploy/bunker.env.example` 复制到项目之外的 `~/deploy/bunker.env`，替换示例域名和凭据。在所选应用 env 文件设置 `BUNKER_ENV_FILE=/home/<user>/deploy/bunker.env` 可改用其他路径；相对路径相对于该 env 文件解析，shell 覆盖优先。此文件只通过 `env_file` 注入 BunkerWeb 容器，不参与 Compose 插值，也不覆盖 flavor 配置。要求 Docker Compose 2.30+ 的 raw env-file 格式，按字面保留凭据而不插值。它使用最终 BunkerWeb 名称，如 `SERVER_NAME`、`ADMIN_USERNAME`、`ADMIN_PASSWORD` 和 `api.example.com_REVERSE_PROXY_HOST`，而非旧 `BUNKER_*` 变量。
 
@@ -195,6 +195,19 @@ Initialized LiteRT LLM client with CPU backend
 仅支持隔离 stage：不包含 BunkerWeb、共享网络、生产卷、数据复制或入口切换。发布端口仅绑定回环地址，由 Docker 分配；在远端运行 `docker compose -f <release>/runtime.json ps` 查看端口，通过 SSH 转发浏览器所需服务。项目名必须以 `-stage` 结尾；命名卷在该项目内持久保存，需要空数据库时选择新项目名。发行版挂载目录互相隔离且初始为空。PostgreSQL 17 直接挂载实际数据目录，避免数据落入匿名卷。
 
 命令等待容器就绪；浏览器登录、文件传输、WebSocket 和完整 Wasm 读取仍需另行验收。失败时保留发行版和容器供排障，日志可能包含敏感信息，应私下检查。本机归档位于 `build/prebuilt-deploy`，远端发行版位于 `--remote-dir`；脚本不自动回退、删除卷、迁移生产数据或切换流量。
+
+### 脚本参数
+
+参数超过两个的脚本使用命名选项，旧位置参数会在构建、设备操作或通知执行前被拒绝。
+
+```bash
+./scripts/android_scripts/create-avd.sh --name example --system-image 'system-images;android-36;google_apis;x86_64' --device pixel
+./scripts/android_scripts/open-deep-link.sh --scheme dev-debug --host localhost --path /room/100
+./scripts/build_scripts/build-app-on-ci.sh --flavor sample --url api.example.com --target desktop-deb
+./scripts/tool_scripts/show-notification.sh --title 'Build complete' --message 'Artifacts are ready' --success true
+```
+
+这些接口可通过 `--help` 查看用法。只有一两个参数的脚本保留已有接口；转发给 Gradle 或应用 CLI 的参数保留对应工具的语法。
 
 ## 许可证
 

@@ -22,6 +22,7 @@ EXTERNAL = {"pg": "postgres:17", "adminer": "adminer:latest",
             "pg-exporter": "quay.io/prometheuscommunity/postgres-exporter:latest",
             "signin-redis": "redis:7.4-alpine"}
 RUNTIME_FILES = ["scripts/service_scripts/service-env.sh",
+                 "scripts/tool_scripts/named-options.sh",
                  "scripts/service_scripts/compose-service.sh",
                  "scripts/service_scripts/prebuilt-deploy.py",
                  "deploy/docker-compose/app-wasm.nginx.conf"] + [
@@ -83,7 +84,7 @@ def render_runtime(env_path, project, manifest):
     env = read_env(env_path)
     validate_stage(env, project)
     raw = capture(["bash", ROOT / "scripts/service_scripts/compose-service.sh",
-                   env_path, "false", "config --format json"],
+                   "--env", env_path, "--command", "config --format json"],
                   cwd=ROOT, env=os.environ | {"BUILD_ON": "docker"})
     model = json.loads(raw[raw.index("{"):])
     if set(model["services"]) != set(TARGETS) | set(EXTERNAL):
@@ -160,6 +161,12 @@ def ssh(args, command, **kwargs):
                 args.ssh, shlex.join([str(x) for x in command])], **kwargs)
 
 
+def verify_checkout(commit):
+    if (capture(["git", "status", "--porcelain"], cwd=ROOT)
+            or capture(["git", "rev-parse", "HEAD"], cwd=ROOT) != commit):
+        raise ValueError("Checkout changed during build; no release will be transferred")
+
+
 def deploy(args):
     safe_remote(args)
     env = read_env(args.env)
@@ -179,6 +186,7 @@ def deploy(args):
     output.mkdir(parents=True, mode=0o700)
     manifest = {"commit": commit, "project": args.project, "images": {}, "files": {}}
     for service, target in TARGETS.items():
+        verify_checkout(commit)
         ref = f"a-{service}:{release}"
         print(f"Building {service} ({commit[:12]})", flush=True)
         command = ["docker", "build", "--platform", "linux/amd64", "--target", target,
@@ -201,6 +209,7 @@ def deploy(args):
         manifest["images"][service] = {"ref": ref, "source": source, "id": capture([
             "docker", "image", "inspect", "--format", "{{.Id}}", ref])}
     images = output / "images.tar"
+    verify_checkout(commit)
     # Stream stdout: works with local engines and SSH-backed Docker CLI implementations.
     with images.open("wb") as stream:
         run(["docker", "save", *[r["ref"] for r in manifest["images"].values()]], stdout=stream)
@@ -212,7 +221,8 @@ def deploy(args):
             manifest["files"][relative] = hashlib.sha256(data).hexdigest()
             info = tarfile.TarInfo(relative)
             info.size = len(data)
-            info.mode = 0o755 if relative.endswith(".sh") else 0o644
+            tracked = capture(["git", "ls-files", "--stage", "--", relative], cwd=ROOT)
+            info.mode = int(tracked.split()[0], 8) & 0o777
             archive.addfile(info, io.BytesIO(data))
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     hashes = output / "SHA256SUMS"

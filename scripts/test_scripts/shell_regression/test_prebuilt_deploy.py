@@ -119,6 +119,8 @@ class TransferTests(unittest.TestCase):
             return ""
         if command[:2] == ["git", "rev-parse"]:
             return "a" * 40
+        if command[:2] == ["git", "ls-files"]:
+            return "100755 " + "a" * 40 + " 0\tfixture"
         return "sha256:fixture"
 
     def test_export_contains_all_images_and_verified_runtime_only(self):
