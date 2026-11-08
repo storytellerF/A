@@ -1,8 +1,4 @@
-<a id="development"></a>
-
 # 开发指南
-
-<a id="build-verification"></a>
 
 ## 构建验证
 
@@ -25,8 +21,6 @@
 Panel 改动使用对应的 `:panel:composeApp` 任务，JVM 后端模块使用 `:module:compileKotlin`。修改共享模型或协议类型时，纳入受影响的下游使用者。Wasm `compileKotlinWasmJs` 只检查源码编译，不链接生产可执行文件；运行时和浏览器行为仍需相关浏览器测试。需要 Android APK 时，选择受影响的 `assembleDebug` 任务。只有上述产物检查需要时，才运行生产链接、release 打包或完整根 assemble。
 
 Windows 上，如果编译或构建、Detekt、截图及宿主 UI 运行共用 Android 运行时 JAR，就必须顺序执行。始终显式传入所需 server flavor 和 build type。
-
-<a id="scenario-specific-api-projections"></a>
 
 ## 按场景划分的 API 投影
 
@@ -53,8 +47,6 @@ Windows 上，如果编译或构建、Detekt、截图及宿主 UI 运行共用 A
 
 已有测试保留断言，但改为构造和读取对应投影，不再使用 extension 字段。验证 `TopicProjectionTest`、`EventTest`、`ActivityPreviewHostTest`，以及受影响的服务端 Topic、Community、Title、User、Quota 和 RoomActivity 集成测试。构建和测试使用 JDK 21，显式传入 `-Pserver.flavor=dev -Pserver.buildType=debug`；assembly、Windows Detekt 和截图运行应串行执行。
 
-<a id="adaptive-home-ui"></a>
-
 ## 自适应 Home UI
 
 Home 是独立根目的地；进入社区、房间、主题或用户时，正常压入返回历史。旧的根列表／详情元数据和列表面板替换测试已移除，因为原导航约定不再适用。Home、Community 和 User 各自保留一个页面级 pager，在侧栏和底部导航之间共用。Room 和 Topic 详情内容使用居中的阅读栏，最大 900dp。
@@ -63,8 +55,6 @@ Settings 和创建表单使用 AdaptiveFormLayout，最大 1200dp；扣除内容
 
 将 `./gradlew :app:composeApp:jvmTest :app:composeApp:adaptiveUiTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain` 作为一行执行。`adaptiveUiTest` 只运行无需运行时的 Home 布局夹具，与常规宿主套件分开，不需要后端或设备。它检查缩放时的区域、搜索和滚动保留、上下文可见性，以及结果宽度和短窗口滚动。
 展示快照使用 `./gradlew validateDebugScreenshotTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`。快照夹具必须独立于应用运行时 CompositionLocal。
-
-<a id="room-activity-and-home-context-data"></a>
 
 ## 房间活动与 Home 上下文数据
 
@@ -88,8 +78,6 @@ Settings 和创建表单使用 AdaptiveFormLayout，最大 1200dp；扣除内容
 
 使用常规 dev/debug 属性，在配置的 Docker 兼容后端上执行 `:cloud:server:test --tests com.storyteller_f.a.cloud.server.RoomActivityTest`。PostgreSQL 加已有 filesystem 和 Lucene RPC 容器，覆盖房间页面活动排序、超出已加载页的总数、直接消息计数和已读标记、双向游标、只读房间、删除、私有消息线上与客户端内容、成员关系丢失、置顶范围和请求限制。
 
-<a id="activity-preview-integration"></a>
-
 ## 活动预览集成
 
 已加入房间列表、已加入房间搜索、社区房间列表和社区房间搜索，在已有 `data` 和分页信息旁返回 `activities` 投影。它只覆盖同一页中符合条件的已加入房间；匿名和未加入行没有私有活动投影。管理员列表保留兼容的空默认值。客户端请求封装在交付页面之前，通过已有私有主题边界解密活动。`RoomListPreviewHost` 直接接收这些页面，不再发起其他请求，并跨页保留临时预览。刷新替换投影；本地 Room 存储仍只持久化 `RoomInfo`，不保存解密活动。房间事件和生命周期恢复刷新已有 pager，保留滚动管理者。房间元数据和活动来自同一次列表请求，包括搜索和社区调用方。导航角标显示服务端完整未读消息总数，不对已加载行求和。旧的未读房间数保持原含义。
@@ -105,8 +93,6 @@ Activity Appium 测试使用隔离的合成账户和真实后端、WebSocket 通
 桌面和浏览器执行器显式暴露布局与草稿用例。Android 独立宽上下文用例临时设为 1920×1080、160 dpi，即使失败也恢复原始尺寸和密度覆盖。Android 整次调用必须持有租约。桌面视口变化使用已验证的原生窗口及 DPI 换算。桌面键盘测试需要可交互且未锁定的桌面。浏览器用例按 Chrome、Edge、Firefox 顺序运行；不同平台的执行不属于独立业务约定。
 
 使用 `:app:androidAppium:appiumTest`、`:app:desktopAppium:appiumTest` 或 `:app:wasmAppium:appiumTest` 运行受影响用例，传入 `--tests '*activity*'`、`--tests '*room draft*'`、`--tests '*private room*'` 和常规 dev/debug 属性。操作桌面前先完成产物准备；UI 执行期间不重建共享运行时 JAR。保留独立的房间发布和刷新用例。
-
-<a id="test-contract-coverage-tracked-by-issue-100"></a>
 
 ### issue #100 跟踪的测试约定覆盖
 
@@ -191,13 +177,9 @@ Selenium Manager 先发现本地已安装浏览器，再解析匹配驱动。没
 
 Wasm SQLite 取消会等待待完成的 worker 响应。新连接或 statement 无法交付给已取消调用方时，关闭它们。Rollback、commit、savepoint release 的准备和执行必须不可取消地完成：Room 池清理在回收 permit 前执行 rollback，若 rollback 被取消，可能卡住唯一连接，让之后详情页面永久加载。普通 statement 仍响应取消，不重放业务操作。`:client:room:wasmJsBrowserTest` 覆盖响应等待、未交付分配清理和取消期间的终结处理；重复真实浏览器导航覆盖完整 Room/worker 边界。
 
-<a id="temporary-dependency-pins"></a>
-
 ## 临时固定的依赖版本
 
 在[上游 issue #756](https://github.com/pgjdbc/r2dbc-postgresql/issues/756)（1.1.3 的 DNS UDP socket 未释放）解决之前，PostgreSQL R2DBC 固定为 `1.1.2.RELEASE`。Dependabot 专门忽略 `org.postgresql:r2dbc-postgresql`，分组版本更新也不例外。验证上游修复后，更新版本目录，并移除 `.github/dependabot.yml` 中对应的 `ignore` 条目。配置进入仓库默认分支后，忽略规则才生效。
-
-<a id="post-quantum-cryptography"></a>
 
 ## 后量子密码
 
@@ -205,15 +187,11 @@ JVM 和 Android 通过 `BC` 提供方，共用 ML-DSA-65 与 ML-KEM-768 的 JCA 
 
 运行 `./gradlew :shared:jvmTest :shared:testAndroidHostTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`，执行共享 JVM/Android 兼容测试。测试双向比较 JCA 实现与旧轻量 API，并验证由 Wasm 固定使用的 `@noble/post-quantum` 0.6.1 生成的固定合成向量。Gradle 安装 Wasm 依赖后，可用 `node shared/ml-crypto/generate-compatibility-vectors.mjs build/wasm` 重新生成向量；生成器使用固定合成 seed 和确定性签名。Android 宿主测试通过 Robolectric 运行。设备验证需连接 Android 设备并持有其租约，再运行 `./gradlew :shared:connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.storyteller_f.shared.PostQuantumCompatibilityTest -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`。设备 source set 复用 headless 兼容测试及固定向量。
 
-<a id="backend-test-images"></a>
-
 ## 后端测试镜像
 
 每个后端服务应用 `test-docker-image`。`buildTestDockerImage` 依赖 Sync 任务 `copyTestDockerDistribution`，后者准备本模块 `build/test-docker-context`。上下文只含自身 distTar 输出、权威根 Dockerfile 的副本，以及必要的暂存和 CLI 辅助脚本。镜像构建前完成准备，其他模块不得修改该上下文。镜像任务没有全局 build-service permit，可以并发。集成和 E2E 任务依赖各自需要的镜像，普通 assembly 不依赖。测试选择 `BUILDER_STAGE=prebuilt-builder`，只解压分发包，不挂载共享 Gradle 缓存。根 Dockerfile 部署默认使用 `source-builder`；源码仍在 Docker 内编译，并对共享可写缓存加锁。Testcontainers 只负责启动镜像。
 
 使用操作者配置的 Docker 兼容后端运行 Gradle。所需测试镜像由 Gradle 通过 PATH 上的 Docker CLI 构建；宿主测试也必须能访问 Docker API 和公开服务端口。外部环境执行器可以透明提供这些连接。提供方安装、网络实现、私有 profile 和生命周期命令保留在仓库之外。其他运行进行中，不重启共享后端。构建上下文必须继续通过 `.dockerignore` 排除机密。
-
-<a id="wasm-nginx-configuration"></a>
 
 ## Wasm Nginx 配置
 
@@ -221,13 +199,9 @@ Compose 将 `deploy/docker-compose/app-wasm.nginx.conf` 只读挂载到两个 Wa
 
 Docker 构建用 SHA256 内容前缀重命名各 Wasm 入口脚本，并更新 index 引用。另一份内容摘要通过 `configureWebResources` 为 Compose 资源 URL 加版本，使翻译字符串与生成字节偏移同步。HTML 和可变资源 URL 必须接受缓存验证（`Cache-Control: no-cache`），否则浏览器可能跨部署保留旧入口脚本，加载与新 HTTP 探测不同的客户端。升级验收时，核对浏览器实际加载的 Wasm 文件名与部署镜像。
 
-<a id="adminer-reverse-proxy"></a>
-
 ## Adminer 反向代理
 
 Bunker Adminer 站点使用正则 location `~ ^/`，而非普通 `/`。Bunker 会给普通根 location 添加 `X-Forwarded-Prefix: /`，导致 Adminer 创建 `Path=//` 的会话 Cookie，无法在 `/` 登录。正则路由保留请求 URI，不添加此前缀。检查部署时，必须通过 HTTPS 域名实际登录 PostgreSQL，不能只检查登录页响应，同时确认会话 Cookie 为 `Path=/`。
-
-<a id="independent-filesystem-and-lucene-services"></a>
 
 ## 独立 filesystem 与 Lucene 服务
 
@@ -271,8 +245,6 @@ Lucene 配置：
 
 协议提取后，客户端与服务端必须一起重建：RPC 接口现使用独立的 `com.storyteller_f.services.*.api` 命名空间。
 
-<a id="service-log-collection"></a>
-
 ## 服务日志收集
 
 - Logback XML 使用权威导入形式：XML 声明和 `<!DOCTYPE configuration>`，随后是完整限定的 `<import class="..." />`。Appender、filter、rolling policy 和 encoder 引用导入后的短类名；每个 encoder 声明 `class="PatternLayoutEncoder"`。
@@ -281,8 +253,6 @@ Lucene 配置：
 - Compose 将 server、worker、ws、cli、filesystem 和 lucene 的 `LOG_PATH` 覆盖为 `/home/app/logs/<service>`。六个服务共用 `service-logs` volume；Promtail 将其只读挂载到 `/var/log/A`，收集各服务目录，包括轮转 `.log`。
 - 设置 `LOG_PATH` 时，即使关闭预设初始化，CLI 入口也将启动和就绪记录写入 `cli.log`。通过 `bash scripts/test_scripts/cli-entrypoint-test.sh` 验证。
 - 运行时镜像创建归应用用户所有的日志目录，容器日志不再依赖宿主 `LOG_PATH` bind mount。应用服务和 Promtail 需一起重建以应用 volume 和路径变化；已有宿主日志不自动迁移。
-
-<a id="windows-avif-native-library"></a>
 
 ## Windows AVIF 原生库
 
@@ -293,8 +263,6 @@ $env:AVIF_LIBRARY_PATH = 'C:\tools\msys64\ucrt64\bin'
 ```
 
 Windows 的 `loadAvif()` 将此值用作 `jna.library.path`，缺失或为空时报告配置错误。没有固定安装目录或 vcpkg 自动检测。DLL 命名及依赖安装由调用方负责。
-
-<a id="desktop-appium-on-windows-and-linux"></a>
 
 ### Windows 与 Linux 桌面 Appium
 
@@ -322,8 +290,6 @@ bash scripts/test_scripts/run-linux-desktop-e2e.sh -Pserver.flavor=dev -Pserver.
 无人值守测试不要使用断开的用户 Xwayland 会话：Java 和 X11 窗口仍存活时，显示可能报告 0×0。已诊断失败中，多次线程转储发现 UI 线程处于 Skiko `swapBuffers`，ATK 等待 UI 分派；随后 AT-SPI 不再暴露应用。使用执行器管理的显示可消除此依赖，而非掩盖元素缺失。诊断中独立的渲染和 vsync 控制见 [Skiko 渲染属性](https://github.com/JetBrains/skiko/blob/master/skiko/src/jvmMain/kotlin/org/jetbrains/skiko/SkikoProperties.kt)。
 
 Appium 选择器统一使用英文。桌面 JVM 设为 en/US，浏览器 E2E 变体设置 en-US 偏好。Android 13+ 夹具在清除数据前保存原应用 locale，临时设为 en-US，清理后恢复原覆盖，不改变系统语言。Linux 模态关闭通过专用 `linux: dismissDialog` 驱动命令发送 Escape。Windows 桌面导航发送原生 Escape，以保留模态优先级；Linux 通过 Appium 使用应用带标签的返回操作。Linux 驱动低层 back 命令仍为 Alt+Left。旧 Android 设备须已使用英文系统 locale。浏览器生命周期场景使用隔离且原地保留的 profile 重启浏览器，要求 HttpOnly Cookie 和加密 IndexedDB 记录经进程终止后仍保留。
-
-<a id="wasm-browser-unit-tests"></a>
 
 ### Wasm 浏览器单元测试
 
@@ -356,27 +322,19 @@ Wasm 根和嵌套页面栈使用 `client/composeCore` 的 `BindBrowserNavigation
 
 Appium 执行器将目标和平台辅助对象传给强类型 `AppiumTestBase` 构造函数。共享测试流程扩展该基类，从中获取两个辅助对象和 JUnit 测试名；具体测试方法只提供场景选项，例如 `privateRoom = true`。Wasm 专属扩展要求接收者类型为 `WasmAppiumHelper`。
 
-<a id="e2e-navigation-and-readiness"></a>
-
 ### E2E 导航与就绪
 
 房间行原生无障碍将房间名描述和消息预览描述合并。标签保留在名称 Text 上，使原生读取者仍可获得预览和未读数。会话撤销和 socket 重连场景在启动应用前准备社区和房间。Home 挂载后，缓存 pager 不必观察另一客户端的准备写入；这些场景测试会话生命周期，不是跨客户端列表刷新。活动读写场景同时等待服务端预期最新消息和零未读；仅有乐观 UI 回显不能证明持久化或已读标记完成。
 
 Panel 抽屉将账户操作放在可滚动导航列表下方，在紧凑窗口仍可见。清除认证时关闭模态抽屉，避免覆盖登录页。
 
-<a id="local-android-test-initialization"></a>
-
 ### 本地 Android 测试初始化
 
 宿主测试基类必须为抽象类。访问 ICU 或 Compose 资源的 Android 宿主测试通过 Robolectric 运行；资源测试初始化 Compose AndroidContextProvider。AsciiDoc 预览测试位于 headlessTest，在 Android 宿主、JVM 和 Wasm 上运行；Javet parser 测试及 npm 夹具位于 jvmAndroidTest，因为其原生 Java API 不支持 Wasm。Gradle 通过 npm ci 准备夹具依赖（npm 必须位于 PATH），缺少依赖则测试失败。Robolectric 在宿主运行时 classpath 解析 Javet JVM loader，Android 生产仍使用 Android loader。
 
-<a id="android-appium-fixture-lifecycle"></a>
-
 ### Android Appium 夹具生命周期
 
 Android 辅助方法在创建后端容器、重新绑定 `adb reverse` 之前清理前一测试应用；在录像和日志导出、会话关闭之后，后端拆除之前，强制停止应用。`noReset` 会在会话关闭后保留应用进程；下一夹具替换 reverse 目标时，这些进程不能继续请求旧宿主端口。设备连接目标不在当前 reverse 配置中时，ADB 会致命退出（见[上游守卫](https://android.googlesource.com/platform/packages/modules/adb/%2B/HEAD/adb.cpp)）。这是夹具归属问题，与环境传输不同。不要绕过守卫、添加连接重试或放宽测试超时。
-
-<a id="file-upload-integrity"></a>
 
 ### 文件上传完整性
 
@@ -391,8 +349,6 @@ MinIO 通过带 CRC32C 和 FULL_OBJECT checksum 的缓冲流上传源对象，�
 此 alpha 协议没有旧格式回退。新客户端与服务端一起使用前，按更新 schema 重建已有 alpha 数据库，并清除旧可恢复上传状态。不得用虚假 checksum 填充旧行。实现不会重置任何运行中的数据库。MinIO checksum 集成测试使用 RELEASE.2025-07-23T15-54-02Z；registry 拒绝匿名拉取时，可导入已验证的上游缓存镜像。Cloud server 集成测试保持 PostgreSQL、filesystem RPC 和 Lucene RPC 拓扑；MinIO 测试在 `backend/minio` 单独运行。
 
 Linux 服务端图片测试还需要 libavif 原生共享库及 codec 依赖。若通过隔离运行时提供、而非全系统安装，则通过 LD_LIBRARY_PATH 暴露其目录。
-
-<a id="shell-tool-regression-tests"></a>
 
 ### Shell 工具回归测试
 
@@ -427,8 +383,6 @@ python scripts/test_scripts/run-shell-tests.py test_compose.ComposeTests.test_bu
 
 JUnit 序列化在全部诊断字段转义 XML 1.0 禁止字符；原始 stdout/stderr 和无损 `junit.raw.json` 保留原诊断。原有浏览器容器生命周期套件仍可通过 `node --test client/composeCore/wasm-media-host/verification-reports.test.mjs` 运行。
 
-<a id="deployment-and-rpc-lifecycle-verification"></a>
-
 ### 部署与 RPC 生命周期验证
 
 应用后端环境覆盖只为启用的 cli/server/worker/ws 生成。容器 Server 和 WebSocket 监听 80，发布宿主端口仍可配置。Filesystem public URL 来自 flavor 文件，同一 Compose 解析值传给 filesystem 和应用。Bunker 凭据与域名前缀设置使用 deploy/bunker.env.example 的最终变量名，仅通过 raw env_file（Compose 2.30+）注入 BunkerWeb。已有使用 BUNKER_* 占位符的外部文件必须按示例重写，不自动迁移或覆盖。
@@ -436,8 +390,6 @@ JUnit 序列化在全部诊断字段转义 XML 1.0 禁止字符；原始 stdout/
 运行 scripts/test_scripts/compose-service-test.sh 验证生成配置回归。部署前使用不含机密的夹具环境文件验证真实 Compose 组合。MinIO 运行时镜像安装 curl，并为 UID 1000 初始化 /data，使新 named volume 可用。文件搜索同时索引原始分词名称和不存储的小写完整名称字段；查询搜索两者，响应保留原名。Filesystem RPC 上传状态属于一个 WebSocket 连接；会话完成时等待调用停止，再清理未完成上传。断开回归关闭一个真实 RPC WebSocket，验证其临时文件消失，而不影响另一连接。
 
 Worker 使用固定摘要的 Fedora 44 基础镜像，从官方 [Adoptium RPM 仓库](https://adoptium.net/installation/linux/#centosrhelfedora-instructions) 安装 Temurin 21 JRE，以支持链接 glibc 的 LiteRT JNI 库。Fedora 签名仓库提供 libavif、Vulkan loader、libstdc++、Noto CJK/mono 字体和 HarfBuzz core/subset（要求 13.0.0 或更新版本）。无需从源码构建原生库。共享 Docker build stage 仍使用 JDK 21 Alpine；Worker 软件包安装和用户创建保持 Fedora 专用。
-
-<a id="rpc-adapter-recovery"></a>
 
 ### RPC 适配层恢复
 
@@ -448,8 +400,6 @@ Loopback 恢复测试保留同一适配层，在同一端口重启真实 CIO RPC
 环境选择共用于 scripts/service_scripts/service-env.sh。它解析名称或文件路径，不把 dotenv 当作 shell 代码 source，导出 APP_ENV_FILE 供全部应用 env_file 使用，并从所选文件解析 BUNKER_ENV_FILE，相对路径以该文件目录为准。通过 compose-service-test.sh 和真实 Docker Compose config 验证明路径（含空格）、相对 Bunker 路径及名称回退。全新 Docker Wasm 构建拒绝锁文件、而增量宿主构建接受时，先比较生成 package.json，再考虑改锁。旧间接 npm 项可能留在生成的应用 manifest；依赖变化后重新生成 manifest，并在实际部署平台验证严格锁存储。
 
 部署浏览器检查必须完整读取 Wasm 响应，并操作实际渲染和认证功能。App 和 panel Permissions-Policy 必须在 COOP/COEP 之外允许 cross-origin-isolated=(self)。媒体 CORS 属于 BunkerWeb：启用 USE_CORS 并配置 app/panel origin 允许列表，使 OPTIONS 返回 204，而不是进入对象 handler 并触发 bad-behavior 封禁。仅刷新配置、复用已有 Docker 构建产物时，使用 scripts/service_scripts/start-service-in-docker.sh <environment> --no-build；默认命令仍在 Docker 内构建产物。Panel 登录使用所选签名算法，必要时使用其加密密钥。Wasm 需提供显式 ViewModel initializer，默认 factory 无法构造登录 ViewModel。PanelInputHost 接收协调和工作调度器，管理输入状态直到父生命周期结束。
-
-<a id="redis-sign-in-authentication"></a>
 
 ### Redis 登录认证
 
@@ -470,8 +420,6 @@ WS 在每条业务消息前、空闲时每五秒重新检查 Redis；检查不�
 恢复的账户地址和公开 X-Account-Id 断言，避免共享浏览器 Cookie 静默改变已有页面身份。升级时向网关 CORS allowed headers 加入 X-Account-Id。该断言从不作为认证，只发给 API origin。WS 在 URL 携带公开预期账户 ID，并在注册订阅前验证。
 
 显式登录通过 get-data 获取服务端新生成的 UUID challenge，不接受客户端时间戳作为认证 challenge。开始重新认证会使当前角色会话失效；每个 get-data 都要求 X-Requested-With: A-client，防止普通浏览器导航签发待完成 Cookie、覆盖已有登录。旧登录签名不能利用调用方选择的时间戳创建另一会话。普通 401 challenge 不会仅因预期账户 ID 不再匹配，就使另一标签页的有效会话失效。
-
-<a id="protected-client-account-history"></a>
 
 ### 受保护的客户端账户历史
 
@@ -519,8 +467,6 @@ Detekt 2.0.0-alpha.6 类型解析有两项相关上游限制。扁平化 KMP 源
 
 Dockerfile 基础镜像和 build frontend 保留可读版本 tag，并固定 manifest digest。升级时，通过 `docker buildx imagetools inspect <image>:<version>` 解析各上游 manifest，再显式更新摘要。临时 registry 连接失败先重试几次，再进一步调查。
 
-<a id="cross-platform-rtc"></a>
-
 ## 跨平台 RTC
 
 共享 `RtcCallHost` 独立于 Compose 管理通话状态。每个远端用户有独立 peer job 和带缓冲的信令队列。远端 SDP 就绪前，ICE 进入队列；某 peer 离开不能清除其他 peer 状态。原生回调携带 peer 身份，迟到回调不能修改替换后的 peer。资源获取与关闭在取消期间仍保留管理责任。页面管理通话生命周期。共享 WebSocket 分派器将接收方 channel 取消转换为交付失败，同时保留自身取消，避免一个连接断开停止其他房间协商循环。
@@ -537,8 +483,6 @@ Ktor 3.6.0 仍调用已移除的 `js.core.JsPrimitives` 转换 ABI。仅 Wasm �
 
 静态客户端 Nginx 对 Wasm、JavaScript、CSS 和 SVG 响应压缩。部署后，以 `Accept-Encoding: gzip` 请求入口 Wasm 资源，验证 `Content-Encoding`/`Vary`，并将解压字节与镜像比较。HTML 缓存验证保持开启。仅配置发布需重建静态容器，以重新挂载被替换的 bind-mounted 配置文件，再重新加载代理上游解析。
 
-<a id="worker-model-resolution"></a>
-
 ### Worker 模型解析
 
 KoogClientFactory 对直接提供方只接受目录中的精确 ID：OpenAI、Anthropic、Google、Ollama、Bedrock、DeepSeek、Mistral AI 和 DashScope。元数据来自 Koog，不手工添加别名或回退限制。默认值引用 SDK 常量。Google、DeepSeek、Mistral AI 和 DashScope 模块以 1.3.0-beta 发布，与稳定 Koog 1.3.0 模块配套。
@@ -552,8 +496,6 @@ Google 将 GoogleModels 与原生 GoogleLLMClient、GoogleClientSettings 配套�
 GoogleLlmExecutionTest 和 OfficialProviderExecutionTest 在临时 loopback HTTP 夹具上测试原生路由、认证、提示词、请求 schema 和响应解码。BedrockFactoryExecutionTest 通过 KoogClientFactory 创建客户端，只替换网络传输，验证 signed/bearer Converse。合成 JVM 凭据验证 API-key 优先级、region 签名、endpoint 路由和 schema 转换。检查 SDK provider 验证默认和显式 region 传递；两种认证模式下，关闭服务必须关闭真实默认凭据缓存及其 HTTP engine。测试恢复 JVM properties，并串行访问这些属性。HTTP 夹具使用真实 IO 调度器和唯一端口，无需真实云账户或模型调用。
 
 运行 `./gradlew :cloud:worker:test -Pserver.flavor=dev -Pserver.buildType=debug --console=plain`。
-
-<a id="appium-artifact-reports"></a>
 
 ### Appium 产物报告
 
@@ -569,8 +511,6 @@ Appium 收集生命周期测试使用 `./gradlew :dev:appiumCore:test -Pserver.f
 
 Filesystem 和 Lucene 服务各自打包 Logback provider 和配置，均输出控制台和滚动文件日志。服务事件直接使用 SLF4J；INFO 到 stdout，WARN/ERROR 到 stderr，全部启用级别写滚动文件，与 server/worker 一致。Promtail 从共享 volume `/var/log/A/<service>/*.log` 读取，附对应 `job` label 并推到 Loki。`LOG_PATH` 控制目录；未设置时，独立运行使用 `build/logs/filesystem`、`build/logs/lucene`。运行时镜像创建非 root 服务用户所有的 `/home/app/logs/<service>`，Compose 将已有 `service-logs` volume 挂载供 Promtail。Appium 在关闭容器前导出控制台及完整 filesystem/Lucene 文件日志目录。两处都必须出现服务专用启动消息，仅 SLF4J provider 警告不能证明收集成功。Loki 可查询 `{job=~"server|worker|ws|cli|filesystem|lucene"}` 获取后端日志，或使用 `{job="filesystem"} |= "Filesystem service starting"` 和 `{job="lucene"} |= "Lucene service starting"` 验证独立服务。确认返回记录包含对应 `/var/log/A/<service>/` 文件名；容器 stdout 不能单独验证共享 volume、Promtail 和 Loki 整条链。
 
-<a id="shared-testcontainers-fixtures"></a>
-
 ### 共享 Testcontainers 夹具
 
 `dev/testInfrastructure` 管理服务端集成、Appium 和 CLI E2E 的测试拓扑。`useBaseServiceFixture` 创建隔离网络、PostgreSQL、Redis、filesystem 和 Lucene 服务。`hostEnvironment` 包含映射后的宿主端点，`containerEnvironment` 包含 Docker 网络别名。完整 `useBackendFixture` 添加预设初始化、WebSocket、HTTP server 和 worker。每次调用独立管理容器和数据，不启用容器复用或共享数据库。Ktor test-host 配置和业务断言留在服务端测试；Appium 保留设备转发、浏览器 origin 和会话过期操作；CLI E2E 保留进程驱动和断言。
@@ -580,8 +520,6 @@ Filesystem 和 Lucene 服务各自打包 Logback provider 和配置，均输出�
 阻塞 Testcontainers 启动在 Dispatchers.IO 执行。取消等待当前原生启动调用返回，再通过非挂起 Java IO 清理释放已注册资源。管理作用域在 Dispatchers.IO，Kotlin use 保留原始失败，将 close 错误作为 suppressed exception。清理在删除容器前导出控制台和应用日志归档，包括 Testcontainers 内部就绪失败。收集或移除错误后仍继续清理，并附加到原始失败；没有原始失败时报告清理错误。Appium 和 CLI 服务日志使用原始用例的 `logs`；服务端集成容器日志使用 `logs/containers`，SQL explain 使用 `explain`。夹具清理先导出文件，再写结果元数据，因此任务级报告无需活动容器或设备。完整后端容器使用 Testcontainers 默认单次启动尝试。收集错误记录为 *.error.txt。
 
 通过 Docker 包装器运行 `:dev:testInfrastructure:test :dev:appiumCore:test :cloud:server:test`，传入 `-Pserver.flavor=dev -Pserver.buildType=debug`。基础设施测试包含真实 Redis 就绪失败，验证启动清理后日志仍保留。完整后端通过 `:app:cliE2e:e2eTest :panel:cliE2e:e2eTest` 及已有 Appium 套件验证。
-
-<a id="configured-desktop-test-environments"></a>
 
 ## 已配置的桌面测试环境
 
@@ -602,13 +540,11 @@ Filesystem 和 Lucene 服务各自打包 Logback provider 和配置，均输出�
 
 在已交互登录的 Windows 会话使用 Appium 3.2.2 和 DesktopDriver 2.8.0。为 `dev/appium-windows-plugin` 准备预构建依赖，通过 Appium 本地插件安装，并用 `--use-plugins desktop-windows` 启用。其 native 依赖固定在 package-lock.json。标准远程窗口枚举和切换仍由 DesktopDriver 提供；扩展负责进程归属检查（包括应用独立线程上的原生对话框）、逻辑像素原生缩放和完整物理像素截图。原生调用后恢复 Appium 线程 DPI 上下文，将调整后窗口保持在 monitor work area，无法容纳的尺寸直接拒绝。经过验证的 inspect/resize 请求注册会话进程后，截图使用 DWM 可见边界，排除不可见缩放边框；拒绝复用 handle，读取像素前验证会话应用在前台。其他 Appium driver 保留标准截图行为。这样可避开 Tao 在 150% 缩放下的逻辑像素 UIA 边界问题，两条路径都不调用宿主 User32/JNA。本地桌面运行也需要该扩展。完整套件将窗口调整到最大 1600×1000 逻辑像素，monitor work area 必须容纳；验收使用 1920×1080、100% 缩放桌面。原生截图和缩放也在 150% 缩放单独验证。
 
-macOS 桌面 E2E 要求具备资质的渲染器，见 [Skiko 调查](#macos-e2e-pause-and-skiko-investigation)。保留集成使用 Appium 3、`appium-mac2-driver@4.5.0` 和兼容完整 Xcode（Sonoma 14.8 使用 Xcode 16.2）。选择 Xcode developer directory、接受许可证并完成首次启动。构建 WebDriverAgentMac，在专用已登录测试账户授予 runner 和 Xcode Helper 无障碍权限。通过验收的目标使用 `APPIUM_DESKTOP_PLATFORM=Mac` 与正常 `APPIUM_DESKTOP_SERVER_URL`。执行器将 JDK 预编译 native launcher 打成临时 ad-hoc 签名应用 bundle 供 Launch Services 使用；采用 Mac2 原生 predicate/class 定位，等待点击目标可见、启用且边界稳定。由于 element click 可能成功却未聚焦 Compose 编辑器，应使用原生指针点击；可用时点击不被子元素遮挡的文字容器区域。使用原生按键与窗口调整：JVM 输入先聚焦原生编辑器，通过标准 Appium keys 一次发送完整值，再严格读回验证；逐字符 modifier 事件可能超过现有输入超时。清理时移除 bundle。应用和测试需要预构建 macOS JDK 21 及匹配 native runtime 库。Intel macOS 还需要匹配 SQLite JNI：官方 SQLite bundled 2.7.0 JVM 构件包含 macOS ARM64，没有 x64。应在宿主或指定构建环境，用该版本 JNI 源码（AndroidX 提交 `190a3431c064ca5e90e451b3443714ae684b8127`）、SQLite 3.50.1 和上游编译参数准备 x64 resource JAR，并将 `natives/osx_x64/libsqliteJni.dylib` 加入应用 runtime classpath。UI 测试前验证真实查询，不替代为其他平台二进制，也不在工作 VM 静默编译。Appium endpoint 就绪不能证明 UI 自动化可用；套件前先验证真实 session、source、截图和点击。
+macOS 桌面 E2E 要求具备资质的渲染器，见 [Skiko 调查](#macos-e2e-暂停与-skiko-调查)。保留集成使用 Appium 3、`appium-mac2-driver@4.5.0` 和兼容完整 Xcode（Sonoma 14.8 使用 Xcode 16.2）。选择 Xcode developer directory、接受许可证并完成首次启动。构建 WebDriverAgentMac，在专用已登录测试账户授予 runner 和 Xcode Helper 无障碍权限。通过验收的目标使用 `APPIUM_DESKTOP_PLATFORM=Mac` 与正常 `APPIUM_DESKTOP_SERVER_URL`。执行器将 JDK 预编译 native launcher 打成临时 ad-hoc 签名应用 bundle 供 Launch Services 使用；采用 Mac2 原生 predicate/class 定位，等待点击目标可见、启用且边界稳定。由于 element click 可能成功却未聚焦 Compose 编辑器，应使用原生指针点击；可用时点击不被子元素遮挡的文字容器区域。使用原生按键与窗口调整：JVM 输入先聚焦原生编辑器，通过标准 Appium keys 一次发送完整值，再严格读回验证；逐字符 modifier 事件可能超过现有输入超时。清理时移除 bundle。应用和测试需要预构建 macOS JDK 21 及匹配 native runtime 库。Intel macOS 还需要匹配 SQLite JNI：官方 SQLite bundled 2.7.0 JVM 构件包含 macOS ARM64，没有 x64。应在宿主或指定构建环境，用该版本 JNI 源码（AndroidX 提交 `190a3431c064ca5e90e451b3443714ae684b8127`）、SQLite 3.50.1 和上游编译参数准备 x64 resource JAR，并将 `natives/osx_x64/libsqliteJni.dylib` 加入应用 runtime classpath。UI 测试前验证真实查询，不替代为其他平台二进制，也不在工作 VM 静默编译。Appium endpoint 就绪不能证明 UI 自动化可用；套件前先验证真实 session、source、截图和点击。
 
 Windows/Linux 宿主驱动合格 Mac 目标时，测试辅助方法输出标准加引号 JVM 参数文件。外部环境提供方暂存宿主构建产物，转换声明路径和服务角色，将目标 JDK 预编译 native launcher 打成 ad-hoc 签名 bundle，并将 app path 和 bundle identity 传给 Mac2。本地 Mac 宿主仍直接打包 bundle。提供方必须收集日志、删除私有输入及 bundle，并在传输错误时失败。原始参数文件不是 app bundle，不能直接传给 Mac2。
 
 macOS、Xcode 或 Runner 变化后，检查当前 WebDriverAgentRunner 与 Xcode Helper 的无障碍权限，再重启 test agent。保留的已启用权限项可能指向过时应用身份。套件前验证真实 `macos: adjustWindow` API 和原生窗口尺寸；仅 session 成功或指针拖拽缩放不能证明该 API 合格。先准备测试环境的应用网络权限，再判断被阻塞点击是否为渲染失败。
-
-<a id="native-desktop-windows-webview-and-video"></a>
 
 ### 原生桌面窗口、WebView 与视频
 
@@ -622,15 +558,11 @@ macOS、Xcode 或 Runner 变化后，检查当前 WebDriverAgentRunner 与 Xcode
 
 工作 VM 使用宿主构建产物运行应用和测试。客体编译，包括 native 依赖安装 hook，必须有用户明确要求；VM/Appium 设置或测试请求本身不授权编译。不要增加客体编译回退或为构建扩大 VM 资源。传输失败让测试失败，不改为在宿主启动应用。
 
-<a id="macos-e2e-pause-and-skiko-investigation"></a>
-
 ## macOS E2E 暂停与 Skiko 调查
 
 状态：2026-10-25，加速 Intel macOS 15.8.1 渲染器通过验收后，已移除硬编码的 macOS 桌面 E2E 暂停。上游 Skiko 0.150.1 与未修改的 Nucleus Tao 2.5.18、3.0.0-dev-202610230652，可见地渲染账户、登录、注册和私钥编辑器导航、合成文字输入，以及从 800 x 600 到 900 x 700 的窗口缩放，与原生无障碍状态一致。未使用已停用的 Skiko 类替换或帧率上限。2026-10-25 一次全新完整验收通过全部 18 个原始桌面 E2E 用例（15 个 app、3 个 panel），零失败、零跳过，执行器成功退出。原断言和超时不变；原生 WKWebView HTML 与窗口缩放通过真实截图核对。本结果与历史软件上传器实验分开。
 
 只有验证上游 Skiko 修复能解决观察到的软件渲染停顿，或环境具有让 Skiko 使用硬件渲染器的有效 GPU 加速后，才运行 macOS 桌面 E2E。WHPX 加速虚拟 CPU，本身不提供客体 GPU 加速。显示设备、可见桌面或选择 OpenGL 选项，都不足以证明硬件渲染可用。
-
-<a id="observed-failure-and-evidence"></a>
 
 ### 观察到的失败与证据
 
@@ -639,8 +571,6 @@ macOS、Xcode 或 Runner 变化后，检查当前 WebDriverAgentRunner 与 Xcode
 重复栈显示 AWT 事件线程耗时位于 `ComponentColorModel.getRGBComponent`、`OpaqueCopyAnyToArgb` 和 `OGLGeneralBlit`，调用来自 `SoftwareContextHandler.flush`。无障碍查询中，AppKit 通过 `CAccessibility.invokeAndWait` 等待 AWT，因此原生查询和实体按键输入可能排在软件帧上传之后。诊断查询样本约耗时 4–28 秒，不是受控跨平台基准测试。
 
 [上游 0.150.1 上传器](https://github.com/JetBrains/skiko/blob/v0.150.1/skiko/src/awtMain/kotlin/org/jetbrains/skiko/context/SoftwareContextHandler.kt) 将完整 native bitmap 读到 byte array，创建 byte raster 和使用 `ComponentColorModel` 的 `BufferedImage`，再通过 Java2D 绘制。原生 bitmap 为 premultiplied，image 构造函数却将 raster 描述为非 premultiplied。观察到的转换路径表明应调查图像表示和 alpha 处理，而非延长测试超时。
-
-<a id="removed-experimental-patch"></a>
 
 ### 已移除的实验补丁
 
@@ -651,8 +581,6 @@ macOS、Xcode 或 Runner 变化后，检查当前 WebDriverAgentRunner 与 Xcode
 另一实验在 Skiko 已有 `FrameLimiter` 中插入可选周期上限。已移除 JVM 属性为 `desktop.software.maxFps`：未设置或零时保留上游周期，1–240 选择最小周期，但不加速本已更慢的上游调度。测试环境选 10 FPS。这是环境适配，不是通用性能修复：它降低动画平滑度，且 hook 修改共享 limiter，没有在结构上限制于软件渲染。因此不能将其作为所谓 software-only 设置恢复。
 
 运行时类替换、Gradle 约定、共享 limiter hook、替换源码、补丁专用测试和 Skiko 专用测试依赖均已移除。两个桌面应用重新解析上游 Skiko 构件。操作者归档中的实验 transformed JAR 仅是历史诊断，不得暂存用于新验收。Appium 默认 capability 和 launcher 选项也应移除过时 JVM 属性，因为项目中已无实现。
-
-<a id="historical-validation-and-limits"></a>
 
 ### 历史验证及限制
 
@@ -666,16 +594,12 @@ macOS、Xcode 或 Runner 变化后，检查当前 WebDriverAgentRunner 与 Xcode
 
 WebView AppKit run-loop 适配层是独立依赖修复，与 Skiko 分开，后来在前述 ComposeNativeWebview/Tao 迁移中移除。尚未为这些发现提交上游 Issue 或 PR。迁移本身不能使 macOS 渲染器获得验收资格。
 
-<a id="qualification-and-regression-procedure"></a>
-
 ### 资格验收与回归流程
 
 1. 记录已修复的上游 Skiko 版本及相关变更，或提供 VM 实际使用硬件 Metal/OpenGL、而非软件实现的证据。不恢复本地类替换或帧率限制，核对可见导航、文字编辑、对话框和缩放与无障碍状态一致。仅库加载或首帧不足。
 2. 平台可用性独立于提供方机制。维护外部渲染器资格，合格运行时变化时更新状态，不引入无条件绕过标志。
 3. 在宿主或指定构建机编译应用、测试和必要 native 依赖，再暂存包含预期上游 Skiko 构件的全新 classpath。私有连接 profile 和环境编排留在项目之外。未经明确授权，不回退 TCG，也不在工作 VM 编译。
 4. 先验证真实 Appium 会话、查询、输入与值读回、原生 WebView 生命周期和截图，再从干净报告根运行全部 18 个桌面 E2E，保留已有预算和断言。新验收结果与历史实验报告分开记录。
-
-<a id="typed-operation-results"></a>
 
 ## 带类型的操作结果
 
@@ -688,8 +612,6 @@ WebView AppKit run-loop 适配层是独立依赖修复，与 Skiko 分开，后�
 `cloud/runtime` 管理 CustomResult endpoint 绑定，复用 endpoint4k 参数解码与 HTTP 方法绑定。服务端路由应导入 `com.storyteller_f.a.cloud.server.common.invoke`，不使用依赖中基于 Kotlin Result 的调用。错误容器和平台密钥编码不改变外部 API 约定。
 
 结果、加密边界和请求错误测试覆盖 null 成功、错误转换、诊断 cause、普通失败、取消，以及业务 401 与会话认证失败的区别。已有宿主和集成测试直接使用 CustomResult，业务断言仍适用。
-
-<a id="pdf-font-sources-and-variable-font-instancing"></a>
 
 ## PDF 字体来源与可变字体实例化
 
@@ -722,8 +644,6 @@ Linux 可安装 `font-noto-all`、`font-noto-cjk`（Alpine），或 `fonts-noto-
 验证回归守卫时，在隔离变异中固定全部默认值，只覆盖排序第一轴 opsz。Optical-size 用例必须仍通过，而固定 opsz 字重用例应失败，因为两次渲染都用了默认字重。在可丢弃 worktree 运行变异，最终测试、构建和静态检查前恢复正确源码。取消测试通过公共 table callback 暂停真实 `hb_subset_or_fail`，取消所属 Job，再释放回调，验证转换完成、handle 逆序释放及交付被取消。同步 C 回调使用隔离的阻塞协程桥接；测试期限和 native 工作运行于真实调度器，失败清理始终释放 gate 并 join worker。
 可选外部验证覆盖留在源码和资源树之外。保留内置原件和许可证，在内存生成静态集成输入，不提交派生字体。合成元数据夹具覆盖发现、集合 index、无效及无关字体，不附字体程序。测试还覆盖静态优先、P2 延迟 IO、混合家族、轴、native 失败、取消、逆序清理、并发缓存发布、渲染、双语提取、嵌入、等宽 advance、CFF2 降级和版本门槛，以及逐文档归属。诊断 PDF/PNG 位于 `cloud/openpdf/build/test-output/fonts`。显式更新已有服务端快照参考前，先审查预期视觉差异，不自动接受比较结果。
 
-<a id="pdf-snapshot-layout-and-content-coverage"></a>
-
 ## PDF 快照布局与内容覆盖
 
 OpenPDF 快照使用 A4、48 point 左右边距、双语快照标题、来源面板（发布者与发布时间、捕获者与捕获时间）、带间距正文与各级标题，以及标识内容页的页脚。顶部时间戳用空格分隔日期和时间，例如 `2026-01-02 12:30:45 UTC+00:00`，省略小数秒并明确标注 UTC。`PdfGenerationSpec` 从主题创建时间和 `shared.utils.now()` 接收 UTC 日历值；宿主默认时区不得改变显示时钟值。签名页为发布时间使用相同可读 UTC formatter，保留原时间含义，不替换为签名时钟。签名流程仍插入独立签名页；页脚编号指内容页，不是签名后的物理位置。
@@ -749,15 +669,11 @@ OpenPDF 快照使用 A4、48 point 左右边距、双语快照标题、来源面
 
 这些是渲染器限制，与静态或可变字体转换无关。需要保留富内容时检查导出 PDF。生成成功不能证明与主题 UI 内容一致，也不能修改断言来接受内容静默缺失。
 
-<a id="wasm-media-composition-experiment"></a>
-
 ## Wasm 媒体组合实验
 
 实验性 Wasm 媒体路径使用 `client/composeCore` 中独立于 UI 的 `wasm-media-host` npm 包。专用 Worker 管理 Mediabunny input、网络读取、demux、decoder iterator 和 offscreen canvas。主线程 Host 管理播放协调、不可变快照、Web Audio graph 及媒体时钟。Compose 适配层只管理展示状态、Skia bitmap 和接管的 texture Image，创建延迟启动的 Host，在组合提交后的 DisposableEffect 中启动 Worker。顶层 `@JsModule` factory 导入 npm default export；必须同时保留验证使用的具名 JavaScript factory。实验不改变 Android 和桌面 actual。
 
 Mediabunny 固定为 **1.62.1**，采用 MPL-2.0，来自[官方包](https://github.com/Vanilagy/mediabunny/blob/main/package.json)。`client/composeCore/wasm-media-host/NOTICE` 标明未修改包及准确源码归档；分发 bundle 时保留上游声明及源码可获得性。Wasm Yarn lock 记录包完整性。Codec 可用性通过实际每条输入 track 的 `canDecode()` 检查；[容器支持不保证浏览器 codec 支持](https://mediabunny.dev/guide/supported-formats-and-codecs)。本实现要求 HTTPS 或 localhost、module Worker、压缩 track 所需 WebCodecs、声音所需 Web Audio，以及跨源媒体读取的 CORS 权限。使用有限、可 seek 媒体；直播流和与浏览器原生控件完全一致不在实验范围内。不声称选择硬件解码器。
-
-<a id="gpu-texture-path-and-the-local-skiko-boundary"></a>
 
 ### GPU texture 路径与本地 Skiko 边界
 
@@ -785,15 +701,11 @@ Skiko 0.156.1 暴露 `Canvas.recordingContext`，但是否可用取决于 canvas
 
 已实现的默认路径明确为 8-bit sRGB `rgba-copy`：解码 sample 绘制到 Worker `OffscreenCanvas`，`getImageData` 读取 RGBA，transferable buffer 到达适配层，`installPixelsFromArrayBuffer` 复制进 Skiko linear memory，不可变 bitmap 通过 `asComposeImageBitmap` 不转换地封装，再由普通 Compose `Image` 绘制。替换或释放时关闭旧 bitmap。避免 `Image.toComposeImageBitmap`，它会再构造 Bitmap。短暂像素交接不可取消地完成，因为 Skiko 在等待 runtime Promise 前分配；适配层随后检查管理者，立即关闭取消后才生成的 bitmap。Offscreen canvas 从不插入 DOM。字幕、裁剪、按钮和对话框属于同一 Compose scene。30fps 时，仅原始像素负载就达到 720p 的 110.6 MB/s、1080p 的 248.8 MB/s，尚未计入 Skiko 复制和 GPU 上传。这是字节量计算，不是实测硬件保证。
 
-<a id="playback-ownership"></a>
-
 ### 播放资源管理
 
 媒体时间戳单位为秒。音频 sample 经一个 gain node 转为已调度 `AudioBufferSourceNode`。AudioContext render time 驱动音频调度和饥饿检查。视频、显示进度和结束检测跟随 `getOutputTimestamp()` 映射到 monotonic performance clock 的值，受 render progress 上限约束，并在同一播放 generation 内保持单调。有效 output timestamp 出现前，使用报告的 base/output latency 估计，缺失 latency 按零计。静音视频直接使用 monotonic performance clock。AudioContext 创建和恢复在用户操作内启动，使自动播放限制保持可见。调度初始提前 80ms。Host 将提前调度声音限制在约 500ms、最多 64 node，保留一帧待处理视频，以及 Mediabunny 1.62.1 的四 sample 解码预取。剩余已渲染声音低于 40ms 时暂停 render clock；已调度达到 300ms、受限 node 队列填满或 audio iterator 结束后恢复。缓冲期间，已排队输出和对应视频可继续消耗，但受已暂停 render progress 限制。迟到视频帧根据 output clock 丢弃。指标描述 Host 分派时间戳和 Worker readback，不代表扬声器或显示延迟，也不保证硬件加速。
 
 暂停和 seek 停止并断开全部已调度 audio node，在请求位置替换 decoder Worker。Generation 检查拒绝迟到元数据、sample 和 resume 完成。播放意图可跨越被取代 seek 保留，但 pause、end、error 和移除会清除。替换源创建新 Host；移除时终止 Worker、清除待读取和计时器、关闭 AudioContext。Worker termination 负责取消网络读取和 native decoder 资源；audio Worker 内复制的 sample 也显式关闭。适配层在替换和移除时释放 Skia bitmap。隐藏页面暂停播放，返回后必须显式点击 Play。现有 media-item 约定无 loop 选项，结束后可重播。
-
-<a id="shared-player-presentation"></a>
 
 ### 共享播放器展示
 
@@ -812,8 +724,6 @@ Windows 使用标准 flavor/build-type 属性运行 `:app:desktopAppium:windowsM
 隔离实验显式启用测试专用 semantics bridge。浏览器按名称定位传输控件，在已定位 slider 边界内 seek，因此布局变化无需改固定坐标。生产播放器页面除非测试模式显式启用，否则保持 bridge 关闭。
 
 `player-expansion` 浏览器套件在 Chrome、Edge、Firefox 上，对 RGBA 与 GPU 两条路径检查展开和折叠保留 engine、worker 和 audio context。使用已有浏览器测试前提，通过 `node client/composeCore/wasm-media-host/run-browser-tests.mjs player-expansion` 运行。
-
-<a id="reproduce-the-isolated-experiment"></a>
 
 ### 复现隔离实验
 
@@ -855,8 +765,6 @@ Texture 验证在运行 `verify-compose.mjs`、`verify-compose-firefox.mjs` 或 
 
 Wasm 开发和生产分发必须分开 Gradle 调用。Kotlin 2.4.21 通过同一 npm package 的 `kotlin` 目录暂存两者，一起请求可能触发 Gradle 隐式依赖验证失败，也让暂存目录不再适合作为不可变测试目标。提供 `build/dist/wasmJs` 下复制后的分发，一次构建完成再开始下一次，绝不 benchmark 正被其他任务重写的暂存目录。
 
-<a id="wasm-media-regression-runner"></a>
-
 ### Wasm 媒体回归执行器
 
 `npm --prefix client/composeCore/wasm-media-host run test:browser` 使用 Node 内置 `node:test`，顺序运行九个 verify 模块，每个模块在独立受监督 worker 进程中执行，无需新测试框架依赖。已有 `*.test.mjs` 单元约定保留独立 `npm test` 入口。通过 `npm --prefix client/composeCore/wasm-media-host run test:browser -- worker-regressions` 选择套件，支持多个名称，并保留全部适用矩阵参数。未知名称在运行开始前失败。直接 `node verify-*.mjs` 便于调试，但绕过进程监督器。
@@ -885,8 +793,6 @@ Root 退出、测试流程完成、输出 pipe 关闭和容器释放分别确认
 报告（包括每矩阵批次一个 JUnit XML）先写入 `build/test-results/wasmMediaBrowserTest` 下独立 run/batch/suite。独立 verify 命令也在此分配唯一 suite 目录。JSON 指标和具名 PNG 使用同一原始 suite 目录；浏览器工具、夹具和 benchmark 输出仍在 `build/wasm-media-research`。所有 batch 进程关闭后，执行器才将完整原始 run 复制到 `build/reports/wasm-media/<run-id>`，复制完成后发布目录，失败测试也收集。各快照包含 `manifest.json`，记录 batch 和 module 退出码、信号、启动错误与强制终止原因。Worker stdout/stderr 和原始部分 JUnit 留在原始 batch `workers/<suite>`；已完成 batch 的 `junit.xml` 聚合完成的 worker 报告。非零退出、退出信号、超时和不完整报告都形成显式生命周期失败；已完成用例与生命周期失败同时保留，未完成 XML 留作原始证据。中断运行只留原始存储，不发布；先前快照独立且不变。命令输出两个目录。`MEDIA_REPORT_DIR` 是内部 batch 输出边界，不改变夹具或工具位置。
 成功用例也保留 trace，方便查看连续生命周期。同步探针保留 action trace 和最终 PNG，但关闭周期 trace 截图及 DOM snapshot，避免第二条捕获流影响帧时序。运行前构建 Compose 夹具并生成媒体，保持输出不可变直到全部 batch 完成。测试衡量浏览器渲染和 audio graph，不是实体扬声器或显示延迟。
 
-<a id="presentation-profiling-at-an-actual-1080p-video-size"></a>
-
 ### 按实际 1080p 视频尺寸分析呈现
 
 `generate-benchmark-fixtures.mjs` 生成 14 秒、30 和 60fps 的 720p/1080p H.264/AAC 输入，包含编码的 16-bit 帧编号和彩色校准边缘。`benchmark-fullhd.mjs` 以 `display=1080p` 提供 release 夹具，断言 DPR 1、1952x1360 canvas，并在实际 1920x1080 边界检查四个视频边缘。它交错比较 RGBA、legacy GPU 同步和 guarded GPU import。专用 Worker 从两行捕获条带解码 ID，关闭每个捕获帧，报告唯一媒体帧、跳过 ID 和呈现间隔。Canvas capture 仍只是浏览器输出观察器，不是实体显示探针。使用 `MEDIA_BENCH_NO_CAPTURE=1` 获取配套 CPU-only 样本；CDP 主线程任务时长不包含 Worker observer，不能将其解释为进程或解码器总 CPU。30fps 输入形成上限，测试余量应使用 60fps。
@@ -898,8 +804,6 @@ Root 退出、测试流程完成、输出 pipe 关闭和容器释放分别确认
 同时报告导入帧和观察到的唯一媒体 ID，并给出三轮范围。即使每个导入 texture 都由真实 GL draw 采样，后者仍可能较低：canvas capture/readback 是另一条 pipeline，不能证明实体呈现丢帧。当前 draw tracer 证明视频 texture 被采样，不证明最终屏幕呈现或完整 offscreen-layer 来源链。30fps 的小幅观察差异不能证明导入饱和。60fps 时按每秒和每导入帧报告主线程时间，因为路径处理帧数可能不同；两种指标都不包含完整 Worker、解码器或 GPU 成本。保留原同步策略供消融，不应仅因移除 flush/reset 就声称提速。
 
 Draw tracer 规范化 nullish framebuffer 参数：此 runtime 可能将 native handle 零映射为 undefined 默认 framebuffer，WebGL 将其视为 null。开启 tracing 时，前六次 video draw 还查询真实 draw framebuffer，验证 tracker。最终计时运行没有这些诊断查询。
-
-<a id="headed-web-presentation-diagnosis-on-windows"></a>
 
 ### Windows 有窗口 Web 呈现诊断
 
@@ -929,8 +833,6 @@ RGBA bitmap-install 错误通过 MediaHost rendering-failure 操作报告，终�
 
 RGBA 帧在发布时从导入协程转交给稳定 bitmap 管理者。管理者保留已提交帧和最新待提交帧，commit 后退役旧帧，释放时显式关闭全部余留帧。归属不依赖每 bitmap 的 DisposableEffect 到达 commit。向已释放管理者的迟到发布立即关闭，取消导入仍释放未转交数据。Bitmap-ownership 浏览器检查统计 native install/finalizer，并延迟 GC 清理回调，防止 GC 掩盖遗漏关闭。覆盖已提交释放、commit 前发布后移除或换源，以及播放中替换和释放。在生产夹具使用 MEDIA_COMPOSE_BUILD=production 执行。
 
-<a id="offline-e2e-application-coverage"></a>
-
 ## 离线 E2E 应用覆盖率
 
 向 `scripts/test_scripts/build-and-test.sh --e2e --plain` 添加 `--coverage`，或向显式 Appium/CLI E2E Gradle 任务传入 `-Pe2e.coverage=true -Pserver.flavor=dev -Pserver.buildType=debug`。关闭覆盖率时，普通分发和 release 应用不包含 control receiver、collector 或重写字节码。整个命令包括安装，都必须获取并续租 Android 设备租约。桌面仍需可交互、未锁定会话。Windows 桌面进程 PATH 不应包含 MSYS 图形 DLL 目录，混用其 EGL 与 Nucleus 内置 ANGLE 可导致启动崩溃。带覆盖率的 Windows launcher 使用 manifest classpath JAR，在不超出 cmd.exe 命令长度限制的同时保留依赖顺序。
@@ -942,8 +844,6 @@ JVM 应用分发、桌面 classpath 和后端测试镜像使用 Kover 0.9.11 离
 Wasm 覆盖率还需要宿主 Rust 工具链和 Cargo。固定的 `dev/wasmCoverage` 工具验证并重写 webpack 输出标明的准确 Kotlin development Wasm binary，添加不改变栈的 boolean global probe，不重新编号 function、import 或 type。分母只包含映射到已链接 executable operator 的仓库 Kotlin 源行。超出物理源文件的 compiler anchor（含空 EOF 行）保持 unmapped。被 dead-code elimination 删除、未映射、第三方和 JavaScript 代码不在分母内。Collector 观察 window 实例；Worker 实例需要独立收集通道。这是映射行覆盖率，不提供 source branch 指标，单独导出 LCOV 和 HTML，不与 Kover 合并。测试服务只在带覆盖率分发注入 collector；每个 document 和 module 实例都必须确认快照。显式边界快照确认后抑制多余 unload beacon，新实例或未确认实例仍用 beacon fallback，传输不完整仍报错。Chrome、Edge、Firefox 保留顺序、隔离 profile 矩阵。
 
 每用例导出到原始 `build/test-results/<task>/artifacts/.../coverage`。根 `e2eCoverageReport` finalizer 只读取已完成文件，生成 `build/reports/e2eCoverage/index.html`，链接 JVM 汇总、各 JVM/Android 变体及 Wasm 报告；Android 与 JVM 字节码变体绝不合并成一个百分比。原始字节码身份与源指纹避免用已变源代码报告旧二进制。数据缺失、空或不完整会让报告任务失败，并在索引留下明确错误。普通单元 Kover 报告独立保留，不将其百分比加到 E2E 百分比。报告与所选 E2E 任务同次调用，以保留 runner 选择；独立报告任务读取所有 runner 产物目录，并拒绝混合构建。
-
-<a id="unit-and-e2e-union"></a>
 
 ### 单元与 E2E 并集
 
@@ -960,8 +860,6 @@ Wasm 覆盖率还需要宿主 Rust 工具链和 Cargo。固定的 `dev/wasmCover
 平台受保护会话历史测试仍在 `app/composeApp/src/headlessTest/kotlin/platform_storage`，`platformStorageTest` source set 供 JVM 与 Android 设备共用。Android 宿主 Robolectric 排除此目录，因为 AndroidKeyStore 需要真实 OS provider。全部会话、签名和加密断言保留。设备初始化基类提供真实 instrumentation context，不安装模拟 keystore，也不改生产存储。
 
 PDF 宿主测试使用 1 GiB worker 堆，容纳八个并发冷启动全尺寸 CJK 字体实例；并发、native 清理检查和字体断言不变。
-
-<a id="release-warning-diagnostics"></a>
 
 ## Release 警告诊断
 
@@ -993,8 +891,6 @@ Media3 进度无障碍事件可使 UiAutomator 一直非 idle，直到控件自�
 
 Android 视频通过 AndroidView 使用页面管理的 Media3 PlayerView。导航和 PiP 转换可能重建 Surface、短暂黑屏；接受此瞬态，不引入 activity-root overlay 或手动 viewport 归属。最终 release 时 view 分离 MediaController。播放状态和命令仍在 MediaPlayerService。PiP 验收继续在进入前、小窗稳定后、恢复后及第二次进入验证解码 RGB 帧，持续黑屏仍失败。已移除 root-surface 实现的历史验收，不能证明此页面管理实现已验收。复现和上游归属见 [issue #117](https://github.com/storytellerF/A/issues/117)。
 
-<a id="wasm-startup-font-choice"></a>
-
 ### Wasm 启动字体选择
 
 App 与 panel 共用 client/composeCore/local-font-access 的 native HTML font gate。它使用浏览器系统 CSS 字体，让选择和权限说明在 Compose fallback 下载前可读。只移除 Noto SC 应用字体，保留 Material Symbols 图标字体。Compose 1.12.2 按需从 Google Fonts 下载缺字 Noto subset。
@@ -1004,8 +900,6 @@ Origin 本地 `a.preferSystemFonts` 偏好为缺失、`false` 或 `true`。支�
 已有业务 E2E 在清除存储后、加载 Wasm 前，于静态同源 bootstrap 设置 `a.preferSystemFonts=false`。这是正常产品偏好，不是测试模式绕过。浏览器导航和独立 semantics 测试使用同样准备。字体 gate 场景故意从空偏好开始，覆盖三个浏览器；Chromium grant/deny 夹具控制真实权限，使用真实已安装字体。Granted 路径要求生产偏好列表中的已安装 CJK 字体，例如 Windows Microsoft YaHei 或 Linux Noto Sans CJK SC。Firefox 验证不支持路径。选择器通过已有显式测试 locale 保持英文。Gate 状态管理者通过 `:client:composeCore:testFontGateRuntime` 测试；app/panel FontGateTest 包含真实 gate 启动、持久化、pending/denied/granted 和撤销场景。`BrowserFontPreloadTest` 调用生产 Wasm decoder/preloader，拒绝空或无效字节。使用 `:client:composeCore:wasmJsBrowserTest --tests "*BrowserFontPreloadTest*"` 和正常 flavor/build-type 运行；直接 Gradle 浏览器运行要求 `CHROME_BIN`。
 
 常规 `assemble` 与 Wasm Appium 开发分发分开 Gradle 调用。Kotlin development 和 production CompileSync 共用生成 npm package 目录；同一图同时请求两种 Webpack 模式会触发 Gradle 隐式依赖验证。启动浏览器套件前完成全部运行时编译。
-
-<a id="community-topic-fonts"></a>
 
 ### 社区主题字体
 
@@ -1040,8 +934,6 @@ Android native 字体加载和无效文件拒绝在设备执行 `:app:composeApp
 使用正常 flavor/build-type 属性运行 `:app:composeApp:jvmTest --tests 'fonts.*'`、`:app:composeApp:adaptiveUiTest --tests 'device_based.Community*'` 和 `:app:composeApp:wasmJsBrowserTest --tests '*CommunityFontBrowserTest*'`。Store 测试改用连续观察及显式 resume，取代已停用 load/retry 和 cache-eviction 约定。JVM 覆盖共享构造、idle replay 释放、跳过中间快照、generation 更新、账户 client 关闭、server/旧 SQLite 集合隔离、完成顺序、磁盘缓存重建和修复、显式重试、Range、取消及真实 SQLite record identity。
 浏览器覆盖真实 OPFS 二进制存储、重建 store、server/revision 隔离、retention、跨 store 和 worker 的 Web Locks、取消 extraction-worker 清理，以及真实 ZIP/font 解码。测试专用 worker entry 对真实 OPFS stream 加诊断，在成功 native write 后暂停，仅取消才释放。浏览器测试断言真实 abort 完成后才删除未发布输出，复用生产 worker 协议及 Kotlin 清理边界。第二测试 entry 观察仍 pending 的真实 native write Promise，再在同一 Worker microtask 阶段调用未改的生产取消 handler，验证取消后 native settlement、先关 writer 再删除，以及保留源归档，避免依赖 page-to-worker 往返抢在 native IO 完成前到达。页面发起取消另有覆盖。Pending 守卫拒绝已完成 write，Node 负例覆盖立即及 microtask 完成。生产入口不导入任何测试探针。
 Worker 协议、归档验证和 writer 取消测试先运行 `npm --prefix app/composeApp/file-worker install --ignore-scripts --package-lock=false`，再运行 `npm --prefix app/composeApp/file-worker test`。Native ZIP 后端要求浏览器支持 `DecompressionStream("deflate-raw")`，验收包括 Chrome、Edge、Firefox。共享 Karma 配置识别 Edge `CHROME_BIN`，阻止 Windows 兼容层重启，使 Karma 管理真实浏览器并在退出后清理隔离 profile；否则 launcher 在重启浏览器仍活动时重试，可能删除活动 OPFS 数据。通过 `FIREFOX_BIN` 和 `-Pkotlin.js.browser.karma.browsers=firefox-headless` 添加 Firefox，保持共享 loader 配置完整。UI 测试验证 glyph metric、无效字体默认值，以及加载期间草稿和光标保留。
-
-<a id="font-preset-download-filters"></a>
 
 ### 字体预设下载过滤
 

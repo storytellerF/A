@@ -1,8 +1,4 @@
-<a id="project-development-rules"></a>
-
 # 项目开发规则
-
-<a id="global-principles"></a>
 
 ## 全局原则
 
@@ -25,8 +21,6 @@
 - 编辑文件时保留已有换行格式。
 - 添加依赖时，从 GitHub 或上游仓库核实正确 group 和 artifact。找不到依赖时，不通过降版本解决。
 
-<a id="module-responsibilities"></a>
-
 ## 模块职责
 
 - **api**：定义 REST API 端点、query/path 模型和管理接口 `AdminApi`（`/admin/*`）。
@@ -45,8 +39,6 @@
 - **cloud/***：集成后端功能的核心服务模块。
 - **bot/***：机器人模块。
 
-<a id="code-style-and-practices"></a>
-
 ## 代码风格与实践
 
 - **Kotlin**：公共 API 不暴露可变集合。优先使用 `data class`、`sealed interface`/`sealed class`，以及 `suspend` + `CustomResult<T, ScenarioError>`。函数采用动词加宾语命名。
@@ -57,8 +49,6 @@
 - **日志**：通过 `serviceCatching` 为外部网络请求记录诊断，避免热路径噪声日志。
 - **测试**：尽可能编写测试。客户端非 UI 测试放在 `src/headlessTest/kotlin`。Compose 测试遵循 https://kotlinlang.org/docs/multiplatform/compose-test.html 。端到端测试使用 `scripts/test_scripts/build-and-test.sh --e2e`，运行 Appium runner 模块明确的 `appiumTest` 任务和 CLI E2E 任务，无需 Gradle 属性。
 
-<a id="static-checks"></a>
-
 ## 静态检查
 
 - 修改代码后，通过范围明确的 Gradle 任务编译受影响模块和平台源码集。修改共享或协议类型时，包含下游使用方；任务选择见 DEVELOPMENT.md 的构建验证部分。
@@ -68,8 +58,6 @@
 - 编译检查后，运行 `./gradlew detekt --console=plain` 检查静态代码风格。
   - Windows 通过 Git Bash 运行。
 - Detekt 限制正式代码函数名最多 50 字符。测试源码集（`src/test` 和 `src/*Test`）不受函数名长度上限约束，以便完整描述行为。保留单独配置的命名风格检查，正式代码函数名保持简洁。
-
-<a id="tests"></a>
 
 ## 测试
 
@@ -95,8 +83,6 @@
 - Gradle 管理测试镜像构建：`distTar` -> `copyTestDockerDistribution` -> `buildTestDockerImage`，使用根 Dockerfile。Testcontainers 只启动生成镜像。镜像任务放在共享 convention 插件，使用已配置 Docker 兼容后端，而非独立测试 Dockerfile。
 - 不重新引入已删除 H2 服务或 Docker target；`r2dbc-h2` 只支持文件和内存协议，不能提供此处要求的远程数据库拓扑。
 
-<a id="additional-ai-collaboration-rules"></a>
-
 ## 其他 AI 协作规则
 
 - 通过 `scripts/service_scripts/start-service-in-docker.sh` 部署，在 Docker 内编译部署产物，不在宿主编译。
@@ -107,8 +93,6 @@
 - 保持现有测试兼容。必须更新测试时，解释迁移原因和步骤。
 - 将编码或扫描项目时学到的规则知识保存到本文件。
 - Android KMP 设备测试覆盖共享 Compose 测试时必须包含 `commonTest`，在 `src/androidDeviceTest/AndroidManifest.xml` 声明仅供测试的宿主 Activity。UI 测试保持设备唤醒，释放租约前恢复临时电源设置。
-
-<a id="troubleshooting-quick-reference"></a>
 
 ## 排障速查
 

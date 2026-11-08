@@ -6,8 +6,6 @@
 
 [下载最新 alpha 构建](https://nightly.link/storytellerF/A/workflows/alpha/alpha?preview)
 
-<a id="home-on-larger-screens"></a>
-
 ## 大屏首页
 
 首页将世界、社区和房间保留为本地分区。在较大窗口中，世界采用宽度受限的单一阅读流，包含已加入社区预览；社区显示更多列；房间展示更多已有元数据。社区与成员搜索结果的列数根据可用内容区域调整，不受输入框影响。
@@ -18,39 +16,27 @@
 
 已加入房间的行显示最新消息预览、作者和时间，以及精确未读消息数。房间导航徽标显示所有已加入房间的未读消息总数。宽屏世界的上下文区域提供数量受限的未读房间与已加入社区置顶话题预览，各自独立刷新，并有加载和错误状态。不可用私信显示中性的不可用标签；预览仅保留在内存中，不保存为明文。
 
-<a id="browser-file-uploads"></a>
-
 ## 浏览器文件上传
 
 在 File Explorer 中选择 Upload 并选择文件。大文件上传支持暂停、继续和中止。浏览器进度表示服务器已确认的分块。尚未完成时保持页面打开：重新加载会释放浏览器对所选源文件的访问。已完成上传记录在重载后保留。
-
-<a id="file-previews-and-downloads"></a>
 
 ## 文件预览与下载
 
 在 File Explorer 打开已上传文件，或打开话题附件，可在独立页面查看。图片、音频、视频和 PDF 支持预览。使用 Download，通过设备保存对话框或浏览器下载管理器保存副本。其他文件类型也可在同一页面下载。Uploaded 列表只显示已完成上传。
 
-<a id="storage-and-search-availability"></a>
-
 ## 存储与搜索可用性
 
 文件系统或 Lucene 服务重启后，后续请求自动重连。被中断请求仍报告失败；失败操作和部分上传不会自动重放。
-
-<a id="pdf-snapshots"></a>
 
 ## PDF 快照
 
 PDF 生成使用服务器或桌面系统已安装字体，应用不内置 PDF 字体文件。中文安装 Noto Serif SC/CJK SC，代码安装受支持等宽字体。静态 Regular/Bold 字体优先，缺失字重由 TrueType 或 CFF2 可变字体补充。生成 PDF 会嵌入所选字体，读者无需安装。
 
-快照使用 A4 阅读布局，包含来源面板、有间距的标题和段落，以及带页码的内容页。签名快照保留独立签名页。发布和捕获时间，以及签名页发布时间戳，都以可读日期时间格式明确显示 `UTC+00:00`。导出当前接受纯文本话题；不保留图片、行内公式和 HTML，图表或公式代码块仍保留为源码。列表、表格和引用链接的格式存在限制；将快照用作完整归档前，先查看 [PDF 内容覆盖](DEVELOPMENT.md#pdf-snapshot-layout-and-content-coverage)。部署选项见 [PDF 字体配置](DEVELOPMENT.md#pdf-font-sources-and-variable-font-instancing)。
-
-<a id="worker-configuration"></a>
+快照使用 A4 阅读布局，包含来源面板、有间距的标题和段落，以及带页码的内容页。签名快照保留独立签名页。发布和捕获时间，以及签名页发布时间戳，都以可读日期时间格式明确显示 `UTC+00:00`。导出当前接受纯文本话题；不保留图片、行内公式和 HTML，图表或公式代码块仍保留为源码。列表、表格和引用链接的格式存在限制；将快照用作完整归档前，先查看 [PDF 内容覆盖](DEVELOPMENT.md#pdf-快照布局与内容覆盖)。部署选项见 [PDF 字体配置](DEVELOPMENT.md#pdf-字体来源与可变字体实例化)。
 
 ## Worker 配置
 
 Worker 任务设置按任务类型保存。任务没有持久化配置时不会运行。CLI `add` 命令接受 `taskConfig` 预设，其中 `taskConfigData` 条目包含 `type`、`isEnabled`、`fetchSize` 和 `waitDurationMillis`，见 `deploy/dev-data/7_preset_task_config.json`。管理员可从 Panel 的 **Worker task configurations** 页面编辑相同值。Worker 每轮迭代前重新加载设置，启用、禁用或调整任务无需重启。
-
-<a id="topic-moderation"></a>
 
 ### 话题审核
 
@@ -82,8 +68,6 @@ DeepSeek、Mistral AI 和 DashScope 使用 `apiKey`，可通过 `baseUrl` 指定
 LiteRT-LM 预构建 Linux x86_64 库要求 AVX。宿主无法运行所选提供方时，禁用持久化 `TOPIC_MODERATION` 任务配置；此时不审核话题内容，也不会自动将有害话题作者标记为 `READ_ONLY`。
 
 审核覆盖社区、用户空间和属于社区的公开房间中的话题与评论。加密私密房间和通知房间话题不在审核范围。辱骂性脏话、威胁、血腥暴力、色情、仇恨、自残、剥削或鼓吹违法活动等有害内容，会使作者账户被标记为 `READ_ONLY`。
-
-<a id="configure-windows-gpu-dlls-for-litert-lm"></a>
 
 ### 为 LiteRT-LM 配置 Windows GPU DLL
 
@@ -146,11 +130,7 @@ Initialized LiteRT LLM client with CPU backend
 
 缺少 `libLiteRtTopKWebGpuSampler.dll` 的警告涉及 LiteRT-LM 可选 WebGPU sampler。版本 `0.16.1` 的 JVM artifact 不附带该 DLL，而使用内置 C sampler；此警告本身不表示主模型已从 GPU 回退。以上后端初始化消息才是判断依据。
 
-<a id="build-and-run"></a>
-
 ## 构建与运行
-
-<a id="requirements"></a>
 
 ### 环境要求
 
@@ -160,8 +140,6 @@ Initialized LiteRT LLM client with CPU backend
 - 本地服务栈需要支持 Compose 的 Docker。
 - 桌面窗口使用 Nucleus Tao。AsciiDoc 预览使用系统 WebView 引擎：Windows 为 WebView2，macOS 为 WKWebView，Linux 为 WebKitGTK。
 - 桌面音视频播放需要 VLC，并使用其原生帧回调。
-
-<a id="build-commands"></a>
 
 ### 构建命令
 
@@ -178,8 +156,6 @@ Initialized LiteRT LLM client with CPU backend
 # Build the Desktop app
 ./gradlew :app:desktopApp:packageDistributionForCurrentOS -Pserver.flavor=sample -Pserver.buildType=prod
 ```
-
-<a id="compose-stack-with-wasm-apps"></a>
 
 ### 包含 Wasm 应用的 Compose 栈
 
@@ -201,13 +177,9 @@ Initialized LiteRT LLM client with CPU backend
 
 `PRESET_PATH=/home/<user>/data` 将宿主预设目录绑定挂载到 Server 和 CLI 的 `/app/deploy/preset_data`。CLI 从中读取编号 JSON 预设及引用的本地文件。仅在有意初始化数据时启用 `CLI_INIT_ENABLE=true`，完成后禁用。
 
-<a id="license"></a>
-
 ## 许可证
 
 这是私有项目，保留所有权利。
-
-<a id="login-sessions"></a>
 
 ### 登录会话
 
@@ -223,19 +195,15 @@ HTTP 和 WebSocket 认证使用由 Redis 支持的 HttpOnly 会话 Cookie。连�
 
 快照 PDF 签名接受所选环境文件中的 `SNAPSHOT_KEYSTORE_BASE64`（已有 PKCS#12 文件的单行 Base64）和 `SNAPSHOT_KEYSTORE_PASS`。服务器在内存验证和使用密钥，无需挂载 keystore。Base64 是编码而非加密：保护环境文件，不得提交或记录内容。`SNAPSHOT_KEYSTORE_BASE64` 优先于旧 `SNAPSHOT_KEYSTORE_PATH`；数据格式错误、密码错误或缺失会使启动失败，不回退，也不生成替代密钥。迁移时，通过 `base64 -w 0 < existing.p12` 编码已有文件，私下将输出保存到环境文件，保留密码，并移除 `SNAPSHOT_KEYSTORE_PATH`。两种来源都未配置时，禁用快照签名。
 
-<a id="room-calls"></a>
-
 ## 房间通话
 
 Android、桌面和浏览器客户端共用房间通话页。打开房间通话操作，选择 **Join with video** 或 **Join with audio**，并允许请求的权限。参与者显示在可滚动自适应网格中，分别显示连接、相机和静音状态。控件支持麦克风静音、隐藏视频、切换受支持摄像头或离开。关闭通话页即结束通话。浏览器通话要求 HTTPS 及相机、麦克风权限。CLI 不提供音视频通话。
 
 iOS 适配器和权限已包含，构建和设备验收需要 macOS/Xcode。
 
-桌面端到端测试使用平台专用 Appium 驱动。macOS 测试要求合格硬件渲染器，或对已观察到的 Skiko 软件渲染停顿有经过验证的修复。加速的 Intel macOS 15.8.1 目标已通过渲染器资格验证，可恢复桌面 E2E。资格证据和当前验收结果见[开发指南](DEVELOPMENT.md#macos-e2e-pause-and-skiko-investigation)。
+桌面端到端测试使用平台专用 Appium 驱动。macOS 测试要求合格硬件渲染器，或对已观察到的 Skiko 软件渲染停顿有经过验证的修复。加速的 Intel macOS 15.8.1 目标已通过渲染器资格验证，可恢复桌面 E2E。资格证据和当前验收结果见[开发指南](DEVELOPMENT.md#macos-e2e-暂停与-skiko-调查)。
 
 远程桌面 E2E 在目标环境运行应用，Gradle 测试、后端夹具和编译留在宿主。Windows 和 Linux 环境配置共享同一 JVM artifact/service 约定及项目自身桌面依赖要求，连接信息属于操作者。在工作虚拟机内编译需要用户明确请求；仅配置 VM/Appium 或请求测试并不允许在其中编译。
-
-<a id="experimental-web-media-playback"></a>
 
 ## 实验性 Web 媒体播放
 
