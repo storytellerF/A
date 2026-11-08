@@ -65,10 +65,37 @@ class StageConfigTests(unittest.TestCase):
             self.assertNotIn("build", service)
             self.assertNotIn("networks", service)
             self.assertEqual(service["pull_policy"], "never")
-            self.assertEqual(service["image"], manifest["images"][name]["ref"])
+            image_name = "app-wasm" if name == "stage-api" else name
+            self.assertEqual(service["image"], manifest["images"][image_name]["ref"])
             self.assertEqual(service["ports"][0]["host_ip"], "127.0.0.1")
             self.assertEqual(service["ports"][0]["published"], "0")
         self.assertEqual(result["services"]["pg"]["volumes"][0]["target"], "/var/lib/postgresql/data")
+        for name in ("server", "ws"):
+            self.assertEqual(result["services"][name]["environment"]["SIGNIN_ALLOWED_ORIGINS"],
+                             "http://127.0.0.1:8080,http://localhost:8080,http://127.0.0.1:8081,http://localhost:8081")
+            self.assertEqual(result["services"][name]["environment"]["BUILD_TYPE"], "dev")
+        gateway = result["services"]["stage-api"]
+        self.assertEqual(gateway["healthcheck"]["test"][1], "wget -q -O /dev/null http://127.0.0.1/ping")
+        self.assertTrue(gateway["volumes"][0]["read_only"])
+
+    def test_proxy_template_whitelists_only_configured_loopback_origins(self):
+        config = deploy.stage_proxy_config({"APP_WASM_PORT": "18080", "PANEL_WASM_PORT": "18081"})
+        self.assertIn('default "";', config)
+        for host in ("127.0.0.1", "localhost"):
+            for port in (18080, 18081):
+                self.assertIn(f'"http://{host}:{port}" $http_origin;', config)
+        self.assertNotIn("__APP_PORT__", config)
+        self.assertNotIn('Allow-Origin "*"', config)
+        self.assertIn("proxy_request_buffering off;", config)
+        self.assertIn("resolver 127.0.0.11 valid=5s ipv6=off;", config)
+
+    def test_proxy_rejects_same_browser_ports(self):
+        with self.assertRaisesRegex(ValueError, "distinct"):
+            deploy.browser_ports({"APP_WASM_PORT": "18080", "PANEL_WASM_PORT": "18080"})
+
+    def test_proxy_rejects_invalid_browser_port(self):
+        with self.assertRaises(ValueError):
+            deploy.browser_ports({"APP_WASM_PORT": "18080;invalid"})
 
     def test_rejects_unexpected_runtime_service(self):
         with patch.object(deploy, "read_env", return_value=stage_env()), patch.object(

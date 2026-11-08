@@ -181,9 +181,7 @@ Initialized LiteRT LLM client with CPU backend
 
 目标服务器无法编译应用时，可使用 Bash、Python 3.11+ 和本地 Linux/amd64 Docker 后端构建镜像。远端需要 Python 3.11+、Bash、Docker、Compose，以及可免密登录、执行 Docker 并设置隔离挂载目录所有权的部署用户。
 
-Use optional `--ssh-config /path/to/private/connection.conf` to select a separate
-OpenSSH configuration, including jump hosts, for both SSH and SCP. The connection
-profile stays local and is never included in the runtime bundle.
+可通过 `--ssh-config /path/to/private/connection.conf` 为 SSH 和 SCP 指定独立的 OpenSSH 配置，包括跳板连接。连接配置只保存在本机，不进入运行文件包。
 
 ```bash
 ./scripts/service_scripts/deploy-prebuilt-to-remote.sh \
@@ -196,7 +194,7 @@ profile stays local and is never included in the runtime bundle.
 
 先审查并提交改动，再运行部署。脚本在 Docker 内构建八个业务镜像，保存 PostgreSQL 17、Redis、Adminer 和 PostgreSQL exporter 四个依赖镜像，按发行版本标记。它传输带 SHA256 校验的镜像归档和明确允许的运行文件，不传输仓库或环境文件。清单记录提交、镜像 ID 和运行文件哈希，远端校验镜像 ID 后才启动；生成的 Compose 配置移除全部构建定义并禁用拉取镜像。
 
-仅支持隔离 stage：不包含 BunkerWeb、共享网络、生产卷、数据复制或入口切换。发布端口仅绑定回环地址，由 Docker 分配；在远端运行 `docker compose -f <release>/runtime.json ps` 查看端口，通过 SSH 转发浏览器所需服务。项目名必须以 `-stage` 结尾；命名卷在该项目内持久保存，需要空数据库时选择新项目名。发行版挂载目录互相隔离且初始为空。PostgreSQL 17 直接挂载实际数据目录，避免数据落入匿名卷。
+仅支持隔离 stage：不包含 BunkerWeb、共享网络、生产卷、数据复制或入口切换。发布端口仅绑定回环地址，由 Docker 分配；在远端运行 `docker compose -f <release>/runtime.json ps` 查看端口。轻量 `stage-api` 网关复用 Wasm Nginx 镜像，仅允许 `APP_WASM_PORT` 和 `PANEL_WASM_PORT` 指定的 `localhost`、`127.0.0.1` 来源携带凭据跨域访问。将本机 `SERVER_URL` 对应端口转发到 `stage-api`，不要直接转发到 `server`；WebSocket 和 filesystem 端口分别转发到各自服务。stage 从相同浏览器端口生成后端登录来源白名单，并为回环 HTTP 使用开发 Cookie，不改变生产来源策略。前端构建 URL 必须与浏览器的本机转发端口一致。项目名必须以 `-stage` 结尾；命名卷在该项目内持久保存，需要空数据库时选择新项目名。发行版挂载目录互相隔离且初始为空。PostgreSQL 17 直接挂载实际数据目录，避免数据落入匿名卷。
 
 命令等待容器就绪；浏览器登录、文件传输、WebSocket 和完整 Wasm 读取仍需另行验收。失败时保留发行版和容器供排障，日志可能包含敏感信息，应私下检查。本机归档位于 `build/prebuilt-deploy`，远端发行版位于 `--remote-dir`；脚本不自动回退、删除卷、迁移生产数据或切换流量。
 

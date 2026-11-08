@@ -25,6 +25,7 @@ RUNTIME_FILES = ["scripts/service_scripts/service-env.sh",
                  "scripts/tool_scripts/named-options.sh",
                  "scripts/service_scripts/compose-service.sh",
                  "scripts/service_scripts/prebuilt-deploy.py",
+                 "deploy/docker-compose/stage-api.nginx.conf.template",
                  "deploy/docker-compose/app-wasm.nginx.conf"] + [
     f"deploy/docker-compose/docker-compose{suffix}.yml"
     for suffix in ("", ".pg", ".server", ".worker", ".cli", ".filesystem", ".lucene", ".app")]
@@ -78,6 +79,26 @@ def validate_stage(env, project):
     for key, value in env.items():
         if key.endswith("URL") and not re.match(r"^(https?|wss?)://(127\.0\.0\.1|localhost|ws)(:|/|$)", value):
             raise ValueError(f"Stage {key} must use a local/test origin")
+    browser_ports(env)
+
+
+def browser_ports(env):
+    ports = tuple(int(env.get(key, default)) for key, default in
+                  (("APP_WASM_PORT", "8080"), ("PANEL_WASM_PORT", "8081")))
+    if any(port < 1 or port > 65535 for port in ports) or ports[0] == ports[1]:
+        raise ValueError("Stage browser ports must be distinct numbers between 1 and 65535")
+    return ports
+
+
+def stage_origins(env):
+    return [f"http://{host}:{port}" for port in browser_ports(env)
+            for host in ("127.0.0.1", "localhost")]
+
+
+def stage_proxy_config(env):
+    app_port, panel_port = browser_ports(env)
+    template = (ROOT / "deploy/docker-compose/stage-api.nginx.conf.template").read_text(encoding="utf-8")
+    return template.replace("__APP_PORT__", str(app_port)).replace("__PANEL_PORT__", str(panel_port))
 
 
 def render_runtime(env_path, project, manifest):
@@ -100,6 +121,9 @@ def render_runtime(env_path, project, manifest):
         service.pop("networks", None)
         service["image"] = manifest["images"][name]["ref"]
         service["pull_policy"] = "never"
+        if name in ("server", "ws"):
+            service.setdefault("environment", {}).update(
+                SIGNIN_ALLOWED_ORIGINS=",".join(stage_origins(env)), BUILD_TYPE="dev")
         for port in service.get("ports", []):
             # Let Docker allocate unused loopback ports, independent of production listeners.
             port["host_ip"] = "127.0.0.1"
@@ -112,6 +136,16 @@ def render_runtime(env_path, project, manifest):
         if name == "pg":
             # PostgreSQL 17 otherwise creates an anonymous data volume below this mount.
             service["volumes"][0]["target"] = "/var/lib/postgresql/data"
+    # Production delegates CORS to its ingress. Stage has no shared ingress and
+    # needs the same contract, restricted to the operator's loopback browser ports.
+    model["services"]["stage-api"] = {
+        "image": manifest["images"]["app-wasm"]["ref"], "pull_policy": "never",
+        "restart": "unless-stopped", "depends_on": {"server": {"condition": "service_started"}},
+        "ports": [{"target": 80, "published": "0", "host_ip": "127.0.0.1", "protocol": "tcp"}],
+        "volumes": [{"type": "bind", "source": str(ROOT / "stage-api.nginx.conf"),
+                     "target": "/etc/nginx/conf.d/default.conf", "read_only": True}],
+        "healthcheck": {"test": ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ping"],
+                        "interval": "5s", "timeout": "3s", "retries": 24}}
     return model
 
 
@@ -131,6 +165,7 @@ def apply_verified(args):
         if actual != record["id"]:
             raise ValueError("Imported image ID mismatch")
     model = render_runtime(args.env, args.project, manifest)
+    (ROOT / "stage-api.nginx.conf").write_text(stage_proxy_config(read_env(args.env)), encoding="utf-8")
     config = ROOT / "runtime.json"
     config.write_text(json.dumps(model), encoding="utf-8")
     config.chmod(0o600)
@@ -192,7 +227,8 @@ def deploy(args):
         input=source, text=True)
     output = ROOT / "build/prebuilt-deploy" / release
     output.mkdir(parents=True, mode=0o700)
-    manifest = {"commit": commit, "project": args.project, "images": {}, "files": {}}
+    manifest = {"commit": commit, "runtime_commit": commit,
+                "project": args.project, "images": {}, "files": {}}
     for service, target in TARGETS.items():
         verify_checkout(commit)
         ref = f"a-{service}:{release}"
