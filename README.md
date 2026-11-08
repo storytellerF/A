@@ -177,6 +177,25 @@ Initialized LiteRT LLM client with CPU backend
 
 `PRESET_PATH=/home/<user>/data` 将宿主预设目录绑定挂载到 Server 和 CLI 的 `/app/deploy/preset_data`。CLI 从中读取编号 JSON 预设及引用的本地文件。仅在有意初始化数据时启用 `CLI_INIT_ENABLE=true`，完成后禁用。
 
+### 本地构建并通过 SSH 部署隔离验证环境
+
+目标服务器无法编译应用时，可使用 Bash、Python 3.11+ 和本地 Linux/amd64 Docker 后端构建镜像。远端需要 Python 3.11+、Bash、Docker、Compose，以及可免密登录、执行 Docker 并设置隔离挂载目录所有权的部署用户。
+
+```bash
+./scripts/service_scripts/deploy-prebuilt-to-remote.sh \
+  --ssh <ssh-alias> --env /path/to/local-stage.env \
+  --remote-env /path/to/remote-stage.env --remote-dir /opt/a-stage/releases \
+  --project example-stage --mode stage
+```
+
+以 `deploy/sample.env` 为字段参考，在本机和远端分别创建精简的 stage 环境文件，放在发行包之外。设置 `DEPLOYMENT_MODE=stage`、`COMPOSE_FILE_LIST=pg,server,worker,cli,filesystem,lucene,app`、`INIT_ENABLE=false`、`CLI_INIT_ENABLE=false`、`DATABASE_URI=r2dbc:postgresql://pg:5432/stage` 和 `DATABASE_DB=stage`。使用新测试数据库及会话凭据、本机测试 URL、空预置目录，并填写必需的 flavor 和 build type。不要复制生产 env；脚本会拒绝提供商凭据、公网端点及不支持的设置。两端需选择相同 profile；本机配置仅提供构建参数，运行配置独立读取远端文件。
+
+先审查并提交改动，再运行部署。脚本在 Docker 内构建八个业务镜像，保存 PostgreSQL 17、Redis、Adminer 和 PostgreSQL exporter 四个依赖镜像，按发行版本标记。它传输带 SHA256 校验的镜像归档和明确允许的运行文件，不传输仓库或环境文件。清单记录提交、镜像 ID 和运行文件哈希，远端校验镜像 ID 后才启动；生成的 Compose 配置移除全部构建定义并禁用拉取镜像。
+
+仅支持隔离 stage：不包含 BunkerWeb、共享网络、生产卷、数据复制或入口切换。发布端口仅绑定回环地址，由 Docker 分配；在远端运行 `docker compose -f <release>/runtime.json ps` 查看端口，通过 SSH 转发浏览器所需服务。项目名必须以 `-stage` 结尾；命名卷在该项目内持久保存，需要空数据库时选择新项目名。发行版挂载目录互相隔离且初始为空。PostgreSQL 17 直接挂载实际数据目录，避免数据落入匿名卷。
+
+命令等待容器就绪；浏览器登录、文件传输、WebSocket 和完整 Wasm 读取仍需另行验收。失败时保留发行版和容器供排障，日志可能包含敏感信息，应私下检查。本机归档位于 `build/prebuilt-deploy`，远端发行版位于 `--remote-dir`；脚本不自动回退、删除卷、迁移生产数据或切换流量。
+
 ## 许可证
 
 这是私有项目，保留所有权利。

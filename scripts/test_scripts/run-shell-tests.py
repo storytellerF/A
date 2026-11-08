@@ -16,7 +16,7 @@ from reporting import write_junit
 
 SUITES = {"build-and-test": "test_build_and_test", "images": "test_images",
           "cli": "test_cli", "compose": "test_compose", "desktop": "test_desktop",
-          "infrastructure": "test_infrastructure"}
+          "infrastructure": "test_infrastructure", "prebuilt-deploy": "test_prebuilt_deploy"}
 
 
 def flatten(suite):
