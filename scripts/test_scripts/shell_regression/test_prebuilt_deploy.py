@@ -149,14 +149,14 @@ class TransferTests(unittest.TestCase):
             self.assertIn("sha256sum -c SHA256SUMS", remote.call_args.args[1][2])
             self.assertTrue(any(call.args[0][0] == "scp" for call in commands.call_args_list))
             transfer = next(call.args[0] for call in commands.call_args_list if call.args[0][0] == "scp")
-            self.assertEqual(transfer[1:3], ["-F", str(args.ssh_config.resolve())])
+            self.assertEqual(transfer[1:3], ["-F", args.ssh_config.resolve().as_posix()])
 
     def test_ssh_uses_same_private_connection_profile_as_scp(self):
         with tempfile.TemporaryDirectory(dir=deploy.ROOT / "build") as directory:
             _, args = self.fixture(directory)
             with patch.object(deploy, "run") as command:
                 deploy.ssh(args, ["echo", "ready"])
-            self.assertEqual(command.call_args.args[0][:3], ["ssh", "-F", str(args.ssh_config.resolve())])
+            self.assertEqual(command.call_args.args[0][:3], ["ssh", "-F", args.ssh_config.resolve().as_posix()])
 
     def test_build_failure_prevents_image_transfer_and_remote_start(self):
         import subprocess

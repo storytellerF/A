@@ -159,7 +159,8 @@ def safe_remote(args):
 
 def ssh_config_options(args):
     config = getattr(args, "ssh_config", None)
-    return ["-F", str(config.resolve())] if config else []
+    # Forward slashes also survive OpenSSH's shell-quoted ProxyJump command on Windows.
+    return ["-F", config.resolve().as_posix()] if config else []
 
 
 def ssh(args, command, **kwargs):
@@ -236,7 +237,7 @@ def deploy(args):
     hashes.write_text("".join(f"{digest(output / name)}  {name}\n"
                              for name in ("images.tar", "runtime.tar", "manifest.json")), encoding="ascii")
     ssh(args, ["mkdir", "-p", remote])
-    run(["scp", *ssh_config_options(args), "-o", "BatchMode=yes", *[str(output / name) for name in
+    run(["scp", *ssh_config_options(args), "-o", "BatchMode=yes", *[(output / name).as_posix() for name in
          ("images.tar", "runtime.tar", "manifest.json", "SHA256SUMS")], f"{args.ssh}:{remote}/"])
     print("Verifying and loading remote release", flush=True)
     ssh(args, ["sh", "-c", f"cd {shlex.quote(remote)} && sha256sum -c SHA256SUMS && "
