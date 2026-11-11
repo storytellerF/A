@@ -72,6 +72,8 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.rememberNavigationEventDispatcherOwner
 import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
@@ -231,11 +233,17 @@ private fun PanelNavigationDrawer(
             content = content,
         )
     } else {
+        val contentDispatcher = rememberNavigationEventDispatcherOwner(enabled = !drawerState.isOpen)
         ModalNavigationDrawer(
             drawerState = drawerState,
             drawerContent = { drawerContent(false) },
-            content = content,
+            content = {
+                CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides contentDispatcher) {
+                    content()
+                }
+            },
         )
+        PanelDrawerBackHandler(drawerState)
     }
 }
 
