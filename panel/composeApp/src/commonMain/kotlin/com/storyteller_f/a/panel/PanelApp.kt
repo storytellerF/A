@@ -6,8 +6,8 @@
 
 package com.storyteller_f.a.panel
 
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -62,6 +62,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -244,7 +245,7 @@ private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
     val account by LocalPanelUiViewModel.current.instance.collectAsState()
     BoxWithConstraints(
         modifier =
-        Modifier.fillMaxSize().signinActivity(
+        Modifier.fillMaxSize().clipToBounds().signinActivity(
             account.sessionManager,
             panel = true,
         ),
@@ -266,13 +267,13 @@ private fun mainPanelPage(backStack: NavBackStack<NavKey>, nav: PanelNav) {
             ),
             sceneStrategies = listOf(listDetailSceneStrategy),
             transitionSpec = {
-                slideInHorizontally { it } togetherWith slideOutHorizontally { -it }
+                slideInVertically { it } togetherWith slideOutVertically { -it }
             },
             popTransitionSpec = {
-                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+                slideInVertically { -it } togetherWith slideOutVertically { it }
             },
             predictivePopTransitionSpec = {
-                slideInHorizontally { -it } togetherWith slideOutHorizontally { it }
+                slideInVertically { -it } togetherWith slideOutVertically { it }
             },
             entryProvider = rootEntryProvider(nav),
         )
