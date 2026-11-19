@@ -9,25 +9,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.storyteller_f.alphaheart.client.compose_core.Res
@@ -42,12 +43,32 @@ import com.storyteller_f.alphaheart.client.compose_core.media_pause
 import com.storyteller_f.alphaheart.client.compose_core.media_play
 import com.storyteller_f.alphaheart.client.compose_core.media_playback_error
 import com.storyteller_f.alphaheart.client.compose_core.media_position
+import com.storyteller_f.alphaheart.client.compose_core.media_replay
 import com.storyteller_f.alphaheart.client.compose_core.media_retry
 import com.storyteller_f.alphaheart.client.compose_core.media_unmute
 import com.storyteller_f.alphaheart.client.compose_core.media_volume
+import com.storyteller_f.alphaheart.client.compose_core.preview
 import com.storyteller_f.alphaheart.client.compose_core.utils.appiumSemantics
+import com.storyteller_f.alphaheart.client.compose_core.utils.readingColorScheme
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import com.storyteller_f.alphaheart.client.compose_core.components.ReadingDialog as Dialog
+import com.storyteller_f.alphaheart.client.compose_core.components.ReadingIcon as Icon
+
+internal val LocalMediaPreviewAction = staticCompositionLocalOf<(() -> Unit)?> { null }
+private val LocalMediaDownloadEnabled = staticCompositionLocalOf { true }
+private val LocalMediaHeadingVisible = staticCompositionLocalOf { true }
+
+/** Avoids a duplicate download entry when the surrounding file page already provides that action. */
+@Composable
+fun MediaMenuScope(showDownload: Boolean = true, showHeading: Boolean = true, content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalMediaDownloadEnabled provides showDownload,
+        LocalMediaHeadingVisible provides showHeading,
+        content = content,
+    )
+}
 
 /** Times are seconds; volume is normalized to 0..1. Unknown duration disables seeking. */
 internal data class MediaControlState(
@@ -62,6 +83,9 @@ internal data class MediaControlState(
     val volume: Float = 1f,
     val muted: Boolean = false,
     val title: String? = null,
+    val durationKnown: Boolean = true,
+    val showTime: Boolean = false,
+    val ended: Boolean = false,
 )
 
 internal data class MediaControlActions(
@@ -79,6 +103,12 @@ internal fun formatMediaTime(seconds: Double): String {
     return if (total >= 3600) "${total / 3600}:$minutes:$remainder" else "${total / 60}:$remainder"
 }
 
+/** Embedded video reserves its picture ratio independently of the heading and transport controls. */
+sealed interface MediaSurfaceLayout {
+    data object Bounded : MediaSurfaceLayout
+    data class EmbeddedVideo(val aspectRatio: Float = 16f / 9f) : MediaSurfaceLayout
+}
+
 /** Owns presentation only; the caller retains the playback engine across expansion. */
 @Composable
 internal fun MediaPlayerSurface(
@@ -90,25 +120,56 @@ internal fun MediaPlayerSurface(
     controlsVisible: Boolean = true,
     sourceUrl: String? = null,
     artwork: String? = null,
+    layout: MediaSurfaceLayout = MediaSurfaceLayout.Bounded,
     menuContent: @Composable (() -> Unit) -> Unit = {},
     content: @Composable BoxScope.() -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var embeddedSize by remember { mutableStateOf(IntSize.Zero) }
+    var playbackRequested by remember(sourceUrl, title) { mutableStateOf(false) }
+    fun recordPlayback(action: () -> Unit): () -> Unit =
+        {
+            playbackRequested = true
+            action()
+        }
+    val surfaceActions =
+        actions.copy(
+            togglePlayback = recordPlayback(actions.togglePlayback),
+            retry = actions.retry?.let(::recordPlayback),
+        )
+    val showTime = state.showTime || playbackRequested || state.playing || state.ended || state.position > 0
+    val surfaceState = state.copy(showTime = showTime)
+    val density = LocalDensity.current
     if (expanded) {
         Dialog(
             onDismissRequest = { expanded = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            MediaSurfaceContent(
-                state.title ?: title, state, actions, Modifier.fillMaxSize(), video, controlsVisible, true,
-                { expanded = false }, sourceUrl, artwork, menuContent, content,
-            )
+            Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                MediaSurfaceContent(
+                    state.title ?: title, surfaceState, surfaceActions,
+                    if (video) Modifier.widthIn(max = 900.dp).fillMaxWidth() else Modifier.fillMaxSize(),
+                    video, controlsVisible, true,
+                    { expanded = false }, sourceUrl, artwork, layout, menuContent, content,
+                )
+            }
         }
-        Box(modifier.background(Color.Black, RoundedCornerShape(16.dp)))
+        Box(
+            modifier.size(
+                with(density) { embeddedSize.width.toDp() },
+                with(density) { embeddedSize.height.toDp() },
+            ).background(Color.Black, RoundedCornerShape(16.dp)),
+        )
     } else {
-        MediaSurfaceContent(state.title ?: title, state, actions, modifier, video, controlsVisible, false, {
-            expanded = true
-        }, sourceUrl, artwork, menuContent, content)
+        MediaSurfaceContent(
+            state.title ?: title, surfaceState, surfaceActions,
+            modifier.onSizeChanged {
+                embeddedSize = it
+            },
+            video, controlsVisible, false, {
+                expanded = true
+            }, sourceUrl, artwork, layout, menuContent, content,
+        )
     }
 }
 
@@ -124,38 +185,60 @@ private fun MediaSurfaceContent(
     toggleExpanded: () -> Unit,
     sourceUrl: String?,
     artwork: String?,
+    layout: MediaSurfaceLayout,
     menuContent: @Composable (() -> Unit) -> Unit,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFFBFCBFF))) {
-        Box(modifier.clip(RoundedCornerShape(if (expanded) 0.dp else 16.dp)).background(Color(0xFF101218))) {
-            if (video) {
-                content()
-            } else {
-                MediaAudioArtwork(title, artwork)
+    if (!video && !expanded && artwork == null) {
+        CompactAudioSurface(title, state, actions, modifier, controlsVisible, toggleExpanded, sourceUrl, menuContent)
+        return
+    }
+    val showEmbeddedHeading = controlsVisible && LocalMediaHeadingVisible.current
+    val showHeading = expanded || showEmbeddedHeading
+    val pictureRatio =
+        if (video) {
+            if (expanded) 16f / 9f else (layout as? MediaSurfaceLayout.EmbeddedVideo)?.aspectRatio
+        } else {
+            null
+        }
+    Column(
+        modifier.testTag("media-player-shell")
+            .then(
+                if (expanded) {
+                    Modifier.clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceContainer)
+                        .padding(20.dp)
+                } else {
+                    Modifier
+                },
+            ),
+    ) {
+        if (showHeading) MediaSurfaceHeader(title, expanded, toggleExpanded, sourceUrl, menuContent)
+        if (expanded) Spacer(Modifier.height(18.dp))
+        Column(
+            Modifier.fillMaxWidth()
+                .then(if (pictureRatio != null) Modifier else Modifier.weight(1f))
+                .testTag("media-player-frame"),
+        ) {
+            MaterialTheme(colorScheme = readingColorScheme(darkTheme = true)) {
+                val stageModifier =
+                    if (pictureRatio != null) {
+                        Modifier.fillMaxWidth().aspectRatio(pictureRatio)
+                    } else {
+                        Modifier.fillMaxWidth().weight(1f)
+                    }
+                Box(
+                    stageModifier.clip(
+                        RoundedCornerShape(10.dp),
+                    ).background(Color(0xFF14241A)).testTag("media-player-stage"),
+                ) {
+                    if (video) content() else MediaAudioArtwork(title, artwork, !expanded && !controlsVisible)
+                }
             }
             if (controlsVisible) {
-                MediaStatus(state, actions.retry, Modifier.align(Alignment.Center).padding(bottom = 72.dp))
-                if (sourceUrl != null) {
-                    Box(Modifier.align(Alignment.TopEnd).padding(4.dp)) {
-                        MediaOptions(sourceUrl, menuContent)
+                Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+                    MediaTransport(state, actions, expanded, toggleExpanded) {
+                        if (!showHeading && sourceUrl != null) MediaOptions(sourceUrl, menuContent)
                     }
-                }
-                Column(
-                    Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xE6101218))))
-                        .padding(start = 12.dp, end = 12.dp, top = 20.dp, bottom = 4.dp),
-                ) {
-                    if (video) {
-                        Text(
-                            title,
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    MediaTransport(state, actions, expanded, toggleExpanded)
                 }
             }
         }
@@ -163,7 +246,105 @@ private fun MediaSurfaceContent(
 }
 
 @Composable
-private fun MediaAudioArtwork(title: String, artwork: String?) {
+private fun MediaSurfaceHeader(
+    title: String,
+    expanded: Boolean,
+    collapse: () -> Unit,
+    sourceUrl: String?,
+    menuContent: @Composable (() -> Unit) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth()
+            .then(if (expanded) Modifier else Modifier.padding(bottom = 8.dp))
+            .testTag("media-player-heading"),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            title,
+            Modifier.weight(1f),
+            fontSize = if (expanded) 17.sp else 14.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (sourceUrl != null) MediaOptions(sourceUrl, menuContent)
+        if (expanded) {
+            MediaIcon(
+                actionIcon(ActionGlyph.X),
+                stringResource(Res.string.media_exit_fullscreen),
+                true,
+                action = collapse,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CompactAudioSurface(
+    title: String,
+    state: MediaControlState,
+    actions: MediaControlActions,
+    modifier: Modifier,
+    controlsVisible: Boolean,
+    toggleExpanded: () -> Unit,
+    sourceUrl: String?,
+    menuContent: @Composable (() -> Unit) -> Unit,
+) {
+    Column(modifier.widthIn(max = 740.dp).fillMaxWidth()) {
+        if (LocalMediaHeadingVisible.current) {
+            MediaSurfaceHeader(title, false, toggleExpanded, sourceUrl.takeIf { controlsVisible }, menuContent)
+        }
+        if (controlsVisible) {
+            MediaTransport(state, actions, false, toggleExpanded) {
+                if (!LocalMediaHeadingVisible.current && sourceUrl != null) MediaOptions(sourceUrl, menuContent)
+            }
+        }
+    }
+}
+
+@Composable
+private fun MediaPosition(
+    state: MediaControlState,
+    actions: MediaControlActions,
+    modifier: Modifier,
+    enabled: Boolean,
+) {
+    var seekDraft by remember { mutableStateOf<Float?>(null) }
+    val duration = state.duration.takeIf { it.isFinite() && it > 0 } ?: 0.0
+    val position = state.position.takeIf { it.isFinite() }?.coerceAtLeast(0.0) ?: 0.0
+    val label = stringResource(Res.string.media_position)
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        MediaSlider(
+            value = seekDraft ?: position.coerceAtMost(duration).toFloat(),
+            onValueChange = { seekDraft = it },
+            onValueChangeFinished = {
+                seekDraft?.let { actions.seek(it.toDouble()) }
+                seekDraft = null
+            },
+            enabled = enabled && state.showTime && duration > 0,
+            valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
+            modifier =
+            Modifier.weight(1f).height(32.dp)
+                .appiumSemantics(testTag = "media-position", description = label)
+                .semantics { contentDescription = label },
+        )
+        val durationLabel = if (state.durationKnown && duration > 0) formatMediaTime(duration) else "--:--"
+        val progress = "${formatMediaTime(seekDraft?.toDouble() ?: position)} / $durationLabel"
+        if (state.showTime && !state.failed && (!state.loading || position > 0)) {
+            Text(
+                progress,
+                Modifier.appiumSemantics(text = progress),
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MediaAudioArtwork(title: String, artwork: String?, showTitle: Boolean) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val artworkSize = if (maxHeight > 400.dp) 160.dp else 64.dp
         Column(
@@ -177,37 +358,14 @@ private fun MediaAudioArtwork(title: String, artwork: String?) {
                 if (artwork != null) {
                     AsyncImage(artwork, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
                 } else {
-                    Icon(Icons.Default.MusicNote, null, Modifier.size(32.dp), tint = Color(0xFFBFCBFF))
+                    Icon(Icons.Default.MusicNote, null, Modifier.size(32.dp), tint = Color(0xFF8FC4A5))
                 }
             }
-            Spacer(Modifier.height(12.dp))
-            Text(title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-@Composable
-private fun MediaStatus(state: MediaControlState, retry: (() -> Unit)?, modifier: Modifier) {
-    val loadingLabel = stringResource(Res.string.media_loading)
-    when {
-        state.failed ->
-            Column(modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    stringResource(Res.string.media_playback_error),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                if (retry != null) TextButton(onClick = retry) { Text(stringResource(Res.string.media_retry)) }
+            if (showTitle) {
+                Spacer(Modifier.height(12.dp))
+                Text(title, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-
-        state.loading ->
-            CircularProgressIndicator(
-                modifier.size(32.dp).semantics {
-                    contentDescription = loadingLabel
-                },
-                color = Color.White,
-                strokeWidth = 2.dp,
-            )
+        }
     }
 }
 
@@ -217,48 +375,59 @@ private fun MediaTransport(
     actions: MediaControlActions,
     expanded: Boolean,
     toggleExpanded: () -> Unit,
+    endActions: @Composable () -> Unit,
 ) {
-    var seekDraft by remember { mutableStateOf<Float?>(null) }
-    val duration = state.duration.takeIf { it.isFinite() && it > 0 } ?: 0.0
-    val position = state.position.takeIf { it.isFinite() }?.coerceIn(0.0, duration) ?: 0.0
-    val enabled = state.enabled && !state.failed
-    val positionLabel = stringResource(Res.string.media_position)
-    MediaSlider(
-        value = seekDraft ?: position.toFloat(),
-        onValueChange = { seekDraft = it },
-        onValueChangeFinished = {
-            seekDraft?.let { actions.seek(it.toDouble()) }
-            seekDraft = null
-        },
-        valueRange = 0f..duration.toFloat().coerceAtLeast(1f),
-        enabled = enabled && duration > 0,
-        modifier =
-        Modifier.fillMaxWidth().height(28.dp)
-            .appiumSemantics(testTag = "media-position", description = positionLabel)
-            .semantics { contentDescription = positionLabel },
-    )
+    val enabled = state.enabled && !state.failed && !state.loading
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        MediaIcon(
-            if (state.playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-            stringResource(if (state.playing) Res.string.media_pause else Res.string.media_play),
-            enabled,
-            actions.togglePlayback,
-        )
-        val progress = "${formatMediaTime(seekDraft?.toDouble() ?: position)} / ${formatMediaTime(duration)}"
-        Text(
-            progress,
-            Modifier.weight(1f).appiumSemantics(text = progress),
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
-            maxLines = 1,
-        )
+        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            MediaPlaybackButton(state, actions, enabled)
+        }
+        MediaPosition(state, actions, Modifier.weight(1f), enabled)
         MediaVolume(state, actions, enabled && state.volumeEnabled)
-        MediaIcon(
-            if (expanded) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-            stringResource(if (expanded) Res.string.media_exit_fullscreen else Res.string.media_fullscreen),
-            state.expansionEnabled,
-            toggleExpanded,
-        )
+        if (!expanded) {
+            MediaIcon(
+                actionIcon(ActionGlyph.MAXIMIZE_2),
+                stringResource(Res.string.media_fullscreen),
+                state.expansionEnabled,
+                action = toggleExpanded,
+            )
+        }
+        endActions()
+    }
+}
+
+@Composable
+private fun MediaPlaybackButton(state: MediaControlState, actions: MediaControlActions, enabled: Boolean) {
+    when {
+        state.failed -> {
+            val retry = actions.retry
+            val label = stringResource(if (retry != null) Res.string.media_retry else Res.string.media_playback_error)
+            MediaIcon(actionIcon(ActionGlyph.ROTATE_CW), label, retry != null) { retry?.invoke() }
+        }
+
+        state.loading -> {
+            val label = stringResource(Res.string.media_loading)
+            CircularProgressIndicator(
+                Modifier.size(18.dp).semantics { contentDescription = label },
+                strokeWidth = 2.dp,
+            )
+        }
+
+        else -> {
+            val glyph =
+                when {
+                    state.ended -> ActionGlyph.ROTATE_CW
+                    state.playing -> ActionGlyph.PAUSE
+                    else -> ActionGlyph.PLAY
+                }
+            val label =
+                when {
+                    state.ended -> Res.string.media_replay
+                    state.playing -> Res.string.media_pause
+                    else -> Res.string.media_play
+                }
+            MediaIcon(actionIcon(glyph), stringResource(label), enabled, accent = true, action = actions.togglePlayback)
+        }
     }
 }
 
@@ -270,9 +439,9 @@ private fun MediaVolume(state: MediaControlState, actions: MediaControlActions, 
         if (state.muted ||
             state.volume == 0f
         ) {
-            Icons.AutoMirrored.Filled.VolumeOff
+            actionIcon(ActionGlyph.VOLUME_X)
         } else {
-            Icons.AutoMirrored.Filled.VolumeUp
+            actionIcon(ActionGlyph.VOLUME_2)
         }
     Box {
         MediaIcon(icon, label, enabled) { expanded = !expanded }
@@ -303,34 +472,67 @@ private fun MediaVolume(state: MediaControlState, actions: MediaControlActions, 
 }
 
 @Composable
-private fun MediaIcon(icon: ImageVector, label: String, enabled: Boolean, action: () -> Unit) {
+private fun MediaIcon(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean,
+    accent: Boolean = false,
+    action: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val containerColor = if (accent) scheme.primary else Color.Transparent
+    val tint = if (accent && enabled) scheme.onPrimary else scheme.onSurface
     IconButton(
         onClick = action,
         enabled = enabled,
         modifier = Modifier.appiumSemantics(text = label, onClick = if (enabled) action else null),
+        colors = IconButtonDefaults.iconButtonColors(containerColor = containerColor),
     ) {
-        Icon(icon, label, tint = if (enabled) Color.White else Color.White.copy(alpha = 0.38f))
+        Icon(icon, label, Modifier.size(17.dp), tint = tint.copy(alpha = if (enabled) 1f else 0.38f))
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MediaOptions(sourceUrl: String, content: @Composable (() -> Unit) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
-    val uriHandler = LocalUriHandler.current
+    val downloadResource = LocalResourceDownloadAction.current
+    val downloadFile = LocalResourceDownloadFile.current
     val clipboard = LocalClipboard.current
     val toast = LocalToaster.current
     val scope = rememberCoroutineScope()
-    MediaIcon(Icons.Default.MoreVert, stringResource(Res.string.media_options), true) { expanded = true }
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        DropdownMenuItem(text = { Text(stringResource(Res.string.media_download)) }, onClick = {
-            expanded = false
-            uriHandler.openUri(sourceUrl)
-        }, leadingIcon = { Icon(Icons.Default.Download, null) })
-        DropdownMenuItem(text = { Text(stringResource(Res.string.copy)) }, onClick = {
-            expanded = false
-            scope.launch { clipboard.copyText(sourceUrl, toast) }
-        }, leadingIcon = { Icon(Icons.Default.ContentCopy, null) })
-        content { expanded = false }
+    val openPreview = LocalMediaPreviewAction.current
+    val showDownload = LocalMediaDownloadEnabled.current
+    MediaIcon(actionIcon(ActionGlyph.ELLIPSIS), stringResource(Res.string.media_options), true) { expanded = true }
+    if (expanded) {
+        BasicAlertDialog(onDismissRequest = { expanded = false }) {
+            ReadingActionMenuSurface(
+                onDismiss = { expanded = false },
+                heading = { Text(stringResource(Res.string.media_options), fontSize = 17.sp) },
+            ) {
+                IconActionMenu {
+                    if (openPreview != null) {
+                        ButtonNav(actionIcon(ActionGlyph.EXTERNAL_LINK), stringResource(Res.string.preview)) {
+                            expanded = false
+                            openPreview()
+                        }
+                    }
+                    if (showDownload) {
+                        ButtonNav(navigationIcon(NavigationGlyph.DOWNLOAD), stringResource(Res.string.media_download)) {
+                            expanded = false
+                            downloadResource(mediaDownloadRequest(sourceUrl, downloadFile))
+                        }
+                    }
+                    ButtonNav(actionIcon(ActionGlyph.COPY), stringResource(Res.string.copy)) {
+                        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+                            clipboard.copyText(sourceUrl, toast)
+                            expanded = false
+                        }
+                    }
+                    content { expanded = false }
+                }
+            }
+        }
     }
 }
 
@@ -346,10 +548,10 @@ private fun MediaSlider(
 ) {
     Slider(
         value = value,
+        valueRange = valueRange,
         onValueChange = onValueChange,
         modifier = modifier,
         enabled = enabled,
-        valueRange = valueRange,
         onValueChangeFinished = onValueChangeFinished,
         thumb = {
             Box(

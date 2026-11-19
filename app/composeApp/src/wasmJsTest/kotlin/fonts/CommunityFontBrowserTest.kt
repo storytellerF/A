@@ -40,6 +40,7 @@ import org.jetbrains.skiko.wasm.onWasmReady
 import kotlin.coroutines.resume
 import kotlin.js.toJsString
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -53,6 +54,12 @@ import kotlin.uuid.Uuid
 
 class CommunityFontBrowserTest {
     private val fontFixture = CommunityFontFixture()
+
+    @BeforeTest
+    fun awaitTextBackend() =
+        runTest {
+            suspendCancellableCoroutine { continuation -> onWasmReady { continuation.resume(Unit) } }
+        }
 
     @AfterTest
     fun cleanFontFiles() = runTest { fontFixture.close() }

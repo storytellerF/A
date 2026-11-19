@@ -10,6 +10,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,10 +37,12 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.dp
 import com.storyteller_f.alphaheart.app.LocalAppNavFactory
 import com.storyteller_f.alphaheart.app.LocalGlobalDialog
+import com.storyteller_f.alphaheart.app.LocalUserInfo
 import com.storyteller_f.alphaheart.app.Res
 import com.storyteller_f.alphaheart.app.add_reaction
 import com.storyteller_f.alphaheart.app.components.AppTopicContentView
 import com.storyteller_f.alphaheart.app.components.InteractionRow
+import com.storyteller_f.alphaheart.app.components.TopicActionsPresentation
 import com.storyteller_f.alphaheart.app.invalid_content
 import com.storyteller_f.alphaheart.app.is_pinned
 import com.storyteller_f.alphaheart.app.pages.user.UserCell
@@ -48,8 +51,10 @@ import com.storyteller_f.alphaheart.app.pin
 import com.storyteller_f.alphaheart.app.topic_menu
 import com.storyteller_f.alphaheart.app.ui.MaterialSymbolsOutlined
 import com.storyteller_f.alphaheart.app.unpin
+import com.storyteller_f.alphaheart.client.compose_core.components.ActionGlyph
 import com.storyteller_f.alphaheart.client.compose_core.components.CustomIcon
 import com.storyteller_f.alphaheart.client.compose_core.components.IconRes
+import com.storyteller_f.alphaheart.client.compose_core.components.actionIcon
 import com.storyteller_f.result.onSuccess
 import com.storyteller_f.shared.model.TopicContent
 import com.storyteller_f.shared.model.TopicDetail
@@ -60,10 +65,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopicCell(info: TopicDetail?) {
+fun TopicCell(info: TopicDetail?, presentation: TopicActionsPresentation = TopicActionsPresentation.FEED) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    TopicCellInternal(info, supportPin = false) {
+    TopicCellInternal(info, supportPin = false, presentation = presentation) {
         showBottomSheet = true
     }
     info?.let {
@@ -90,10 +95,14 @@ fun UserTopicCell(info: TopicDetail?) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RoomTopicCell(info: TopicDetail?, showAvatar: Boolean = true) {
+fun RoomTopicCell(
+    info: TopicDetail?,
+    showAvatar: Boolean = true,
+    presentation: TopicActionsPresentation = TopicActionsPresentation.CHAT_LIST,
+) {
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    RoomTopicCellInternal(info, showAvatar) {
+    RoomTopicCellInternal(info, showAvatar, presentation = presentation) {
         showBottomSheet = true
     }
     info?.let {
@@ -119,14 +128,21 @@ class TopicPreviewProvider : PreviewParameterProvider<TopicDetail> {
 fun TopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicDetail?,
     supportPin: Boolean = false,
+    presentation: TopicActionsPresentation = TopicActionsPresentation.FEED,
     startAddReaction: () -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
     val authorInfo = topicInfo.authorInfo
     CommonTopicCellInternal(topicInfo, supportPin) {
-        UserCell(authorInfo)
-        TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
+        Row(verticalAlignment = Alignment.Top) {
+            Box(Modifier.weight(1f)) { UserCell(authorInfo) }
+            TopicRelativeTime(
+                topicInfo.createdTime,
+                Modifier.padding(top = 8.dp, end = if (topicInfo.isPin) 32.dp else 8.dp),
+            )
+        }
+        TopicContentAndInteraction(topicInfo, startAddReaction, topicId, presentation)
     }
 }
 
@@ -141,22 +157,41 @@ fun UserTopicCellInternal(
     topicInfo ?: return
     val topicId = topicInfo.id
     CommonTopicCellInternal(topicInfo, supportPin) {
+        TopicRelativeTime(
+            topicInfo.createdTime,
+            Modifier.align(Alignment.End).padding(top = 8.dp, end = if (topicInfo.isPin) 32.dp else 8.dp),
+        )
         TopicContentAndInteraction(topicInfo, startAddReaction, topicId)
     }
 }
 
 @Composable
-private fun TopicContentAndInteraction(topicInfo: TopicDetail, startAddReaction: () -> Unit, topicId: PrimaryKey) {
+private fun TopicContentAndInteraction(
+    topicInfo: TopicDetail,
+    startAddReaction: () -> Unit,
+    topicId: PrimaryKey,
+    presentation: TopicActionsPresentation = TopicActionsPresentation.FEED,
+) {
     val appNavFactory = LocalAppNavFactory.current
     Column(
         Modifier.padding(horizontal = 8.dp).padding(bottom = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         AppTopicContentView(topicInfo, true)
-        InteractionRow(topicInfo, startAddReaction) {
+        InteractionRow(topicInfo, startAddReaction, presentation = presentation) {
             appNavFactory.newAppNav().gotoTopic(topicId)
         }
-        SubTopics(topicInfo)
+        if (topicInfo.subTopics.isNotEmpty()) {
+            androidx.compose.foundation.layout.Spacer(
+                Modifier.size(if (presentation == TopicActionsPresentation.FEED) 12.dp else 8.dp),
+            )
+            if (presentation == TopicActionsPresentation.FEED) {
+                TopicReplyPreviews(topicInfo.subTopics) { reply ->
+                    UserIconWithDialog(reply.authorInfo, size = 24.dp)
+                }
+            } else {
+                SubTopics(topicInfo)
+            }
+        }
     }
 }
 
@@ -166,7 +201,7 @@ private fun TopicContentAndInteraction(topicInfo: TopicDetail, startAddReaction:
 fun CommonTopicCellInternal(
     @PreviewParameter(TopicPreviewProvider::class) topicInfo: TopicDetail?,
     supportPin: Boolean = false,
-    block: @Composable () -> Unit = {},
+    block: @Composable ColumnScope.() -> Unit = {},
 ) {
     topicInfo ?: return
     val topicId = topicInfo.id
@@ -201,40 +236,56 @@ fun CommonTopicCellInternal(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RoomTopicCellInternal(topicInfo: TopicDetail?, showAvatar: Boolean, startAddReaction: () -> Unit) {
+fun RoomTopicCellInternal(
+    topicInfo: TopicDetail?,
+    showAvatar: Boolean,
+    presentation: TopicActionsPresentation = TopicActionsPresentation.CHAT_LIST,
+    startAddReaction: () -> Unit,
+) {
     topicInfo ?: return
     val authorInfo = topicInfo.authorInfo
+    val ownMessage = topicInfo.author == LocalUserInfo.current?.id
     val topicId = topicInfo.id
     val appNavFactory = LocalAppNavFactory.current
     var expanded by remember { mutableStateOf(false) }
     Box {
-        Column(
+        RoomMessageLayout(
+            ownMessage = ownMessage,
+            actionsTopPadding = 0.dp,
             modifier =
-            Modifier.clip(RoundedCornerShape(8.dp)).combinedClickable(onLongClick = {
-                expanded = true
-            }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
-                appNavFactory.newAppNav().gotoTopic(topicId)
-            }.padding(8.dp),
-        ) {
-            if (showAvatar) {
-                UserCell(authorInfo)
-            }
-            Column(
-                Modifier.fillMaxWidth().padding(start = 48.dp, end = 8.dp)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(8.dp))
-                    .padding(horizontal = 12.dp).padding(top = 8.dp, bottom = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                AppTopicContentView(topicInfo, true)
-                if (topicInfo.reactionCount > 0) {
-                    InteractionRow(topicInfo, startAddReaction) {
+            Modifier.fillMaxWidth().padding(8.dp)
+                .combinedClickable(onLongClick = {
+                    expanded = true
+                }, onLongClickLabel = stringResource(Res.string.topic_menu)) {
+                    appNavFactory.newAppNav().gotoTopic(topicId)
+                },
+            senderName = authorInfo?.nickname,
+            showIdentity = showAvatar,
+            sentAt = topicInfo.createdTime.takeIf { showAvatar },
+            avatar = {
+                if (showAvatar && !ownMessage) {
+                    UserIconWithDialog(authorInfo, size = 34.dp)
+                }
+            },
+            actions = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InteractionRow(
+                        topicInfo,
+                        alignEnd = ownMessage,
+                        presentation = presentation,
+                        startAddReaction = startAddReaction,
+                    ) {
                         appNavFactory.newAppNav().gotoTopic(topicId)
                     }
+                    if (topicInfo.subTopics.isNotEmpty()) {
+                        TopicReplyPreviews(topicInfo.subTopics, chat = true) { reply ->
+                            UserIconWithDialog(reply.authorInfo, size = 24.dp)
+                        }
+                    }
                 }
-                if (topicInfo.commentCount > 0) {
-                    SubTopics(topicInfo)
-                }
-            }
+            },
+        ) {
+            AppTopicContentView(topicInfo, true)
         }
         RoomTopicDropdownMenu(expanded, startAddReaction) {
             expanded = false
@@ -321,7 +372,7 @@ fun RoomTopicDropdownMenu(expanded: Boolean, startAddReaction: () -> Unit, onDis
         DropdownMenuItem(
             leadingIcon = {
                 Box(modifier = Modifier.size(20.dp)) {
-                    CustomIcon(IconRes.Font(MaterialSymbolsOutlined.AddReaction))
+                    CustomIcon(IconRes.Vector(actionIcon(ActionGlyph.SMILE)), 17.dp)
                 }
             },
             text = { Text(stringResource(Res.string.add_reaction)) },

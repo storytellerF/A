@@ -13,7 +13,7 @@
 - Detekt 只在配置的 `api` 和 `shared.model` 协议／模型范围及 `client/core` 请求边界允许公共库实体和公共 data class；在 `config/detekt/detekt.yml` 中严格限制这些例外范围。
 - 新 Kotlin 源文件必须以 Detekt 配置的私有项目许可证头开头。
 - 覆盖率：按需生成 Kover 报告。
-- 环境与机密：`app/composeApp` 和 `panel/composeApp` 通过 BuildKonfig 注入 `deploy/{flavor}.env` 的值。`app/androidApp` 读取相同 env 文件配置深链接。`app/androidApp` 和 `panel/androidApp` 使用 flavor/buildType 配置 application ID 和构建类型。始终传入 `-Pserver.flavor` 和 `-Pserver.buildType`。
+- 环境与机密：`app/composeApp` 和 `panel/composeApp` 通过 BuildKonfig 注入 `deploy/{flavor}.env` 的值。`app/androidApp` 读取相同 env 文件配置深链接。`app/androidApp` 和 `panel/androidApp` 使用 flavor/buildType 配置 application ID 和构建类型。客户端构建与测试始终传入 `-Pserver.flavor` 和 `-Pserver.buildType`。这两个属性仅选择 App/Panel 的 BuildKonfig 和 Android 变体；服务端通过 `backend/core/Env.kt` 的 `readEnv()`／`System.getenv()` 读取容器环境变量，不向后端构建入口传入这两个客户端属性。
 - 提交信息：以中文或英文动词开头，包含模块或范围，例如 `client/core: add getAllUsers request`。
 - 不使用中文方法名。
 - 产品名称为 Alpha Heart，产品包名前缀为 `com.storyteller_f.alphaheart`；重命名时同步维护 ServiceLoader 文件名、启动类、资源包、平台标识和测试工具中的类路径。
@@ -135,6 +135,10 @@
 - 快照 PKCS#12 Base64 属于机密配置。迁移时保留已有密钥字节，验证所提供凭据，不回退文件、不生成替代密钥，解码后的 Base64 密钥材料仅保留在内存。
 - 加密测试使用合成向量或生成密钥，保持自包含。外部 preset 目录缺失不能让测试静默通过。旧 CryptoJvm ECIES/CBC 与共享 P256 加密的密文格式不同，除非存在明确兼容约定，否则分别验证。
 - 自适应首页在侧栏与底部导航之间使用同一分区 pager。共享列表和搜索结果按自身内容约束测量，缩放时保留已挂载阅读状态。Home 上下文不放入共享列表。运行 `:app:composeApp:adaptiveUiTest` 检查隔离布局和状态夹具；常规宿主测试继续排除依赖设备的 UI 测试。
+- 文件分区和附件选择器的无障碍 `ScrollBy` 可能在页间停止。仅在 pager 空闲时归整当前页；手势抢占归整时保留收集器，生命周期取消仍传播。用完整页面边界验证，不只断言条目可见。
+- 固定比例的裁剪在旋转后仍保持输出方向；使用统一缩放约束到变换后的图像边界，不按轴分别截断尺寸。房间图标更新省略名称表示不改名，既有 icon=0 重置须写入 SQL NULL；创建和显式空名称仍严格校验。社区图标和海报重置分别发送对应字段，验证清空一项不影响另一项；不改变共享媒体 ID 校验对其他业务的语义。
+- 阅读正文表格的表头和单元格必须保留完整文字。通过上游表格公开样式启用多行，保留原有横向滚动、行列语义和内联内容；用真实 TextLayoutResult 检查省略与溢出，不只断言语义树包含全文。
+- 可滚动弹窗由外层持有滚动；加载与错误分支不能再嵌入需要有限高度的全屏滚动容器。配额上传进度按打开时已持久化分块计算快照，保留短末块和去重，不用初始化为零的数据库字段冒充实时进度。
 - Windows 上，共用 Android runtime JAR 的 assemble、Detekt 和截图／宿主 UI 验证顺序运行。另一构建运行时，R8 和 preview renderer 可能持有这些文件。
 - 房间活动是 API 投影，不是 RoomInfo schema 扩展。分组未读分页前过滤已加入成员关系；活动游标应用到每房间最大消息 ID，而非单条消息行。保留未读房间数与未读消息数的含义和已有私密话题解密。数据约定和集成检查见 DEVELOPMENT.md。
 - 活动预览保持临时且按会话键隔离。房间列表和搜索在同一页返回活动，不额外添加 viewport/batch 拉取，也不持久化解密预览。保留本地 RoomInfo 缓存，成功置顶或已读修改经事件总线传递。未读消息总数来自后端完整已加入房间聚合，不能由客户端已加载页面求和。
@@ -206,6 +210,7 @@
 - 快照时间戳渲染独立于宿主默认时区；PdfGenerationSpec 携带 UTC calendar 值，明确标注显示的 UTC offset。
 - MultilineExpressionWrapping 启用时保持 FunctionSignature.functionBodyExpressionWrapping=multiline，让两条规则对多行函数体保持一致。
 - Wasm 媒体实验区分 Host 帧分发、实际 Compose 渲染和物理声音／显示输出。合成夹具和会话指标保留在 build 下；不从 snapshot API 文档推断共享 Skiko GPU context，不以 DOM media/canvas overlay 取代复制路径。归属和验证见 DEVELOPMENT.md。
+- 网页话题内嵌音频只在播放或重试点击时打开媒体。异步读取前在点击回调中请求 Web Audio 激活，列表项离开组合时释放解码资源。浏览器回归覆盖滚动零请求、一次点击播放和加载取消，见 DEVELOPMENT.md。
 - 本地 Wasm npm 模块实现文件作为 npm-install 任务输入，变化时刷新 Yarn 复制的 file dependency；仅 package.json 不足。验证已安装模块和打包 Worker，而不只编译 Kotlin。
 - 隔离 worktree 的截图参考 PNG 是 Git LFS 指针时，验证前恢复原始 LFS 对象。不得重新生成 golden 来掩盖参考内容缺失。
 - Skiko 源码和 API 调查应匹配 Wasm 实际解析版本（含导入的 npm runtime 元数据），不能使用 Gradle 缓存里最先找到的任意版本。
@@ -274,7 +279,7 @@
 - Mac2 文本输入用原生 typeText 传入完整字符串，验证精确多行值。key-chord API 只用于快捷键；逐字符 XCTest 按键可能在可见文本已完整后仍超过传输超时。
 - AppKit 同时在文件对话框和 Touch Bar 暴露 Save/Cancel。原生 picker 操作限定到 save-panel 无障碍标识及其按钮，再验证面板关闭。
 - 清理前收集原生 fatal-error 对话框。只关闭本次测试启动新建的 reporter，并重新检查进程身份；存在无法解释的旧对话框时拒绝处理。
-- 浏览器 PDF preview 管理者在释放时中止待请求并撤销 Blob URL。在应用跨源隔离条件下验证真实文档字节和渲染页面。
+- 浏览器 PDF 预览以真实页面栅格与文字层完成作为就绪条件，不以原生插件标志或 iframe 加载成功代替。释放时取消请求、渲染和解析 Worker；在跨源隔离条件下验证实际消费字节与页面内容。ResizeObserver 引发的几何更新通过帧调度执行，不过滤循环通知错误。
 - ZoomImage 主线程检查绑定到实际桌面窗口 UI 线程。默认 Swing 检查不认识原生 Tao 事件循环；保留拒绝 worker 线程访问。
 
 - 浏览器对象读取需要 GET/HEAD CORS 预检和可读的缺失对象响应；mutation 预检仍拒绝，RPC 路由不属于此公开读取边界。
@@ -331,3 +336,69 @@
 - 原生媒体验收在展开和返回过程中检查解码帧和推进的播放位置。Android 对话框 surface 通过截图检查帧，因为 SurfaceView 可能不在 UIA 中。Selenium 截图矩形通过 Point 和 Dimension 构造，避免 height/width 参数顺序问题。用户主动桌面重试必须替换并释放失败原生播放器，不自动重放。
 - Windows Tao 原生启动崩溃先检查已加载 EGL/GLES 来源，再考虑改渲染。应用运行 PATH 排除无关工具链 DLL 目录，Appium 内容窗口选择排除 Tao 消息分发窗口。
 - UI 剪贴板操作使用 `Clipboard.copyText`，提供本地化结果反馈并隔离失败。`setText` 失败保持可观察，在浏览器边界规范化 Wasm `JsException`，取消继续传播，不反馈也不自动重试。
+
+- 从容阅读界面中，顶栏占满可用宽度，阅读流和输入区各自约束宽度。缓存刷新进度和错误气泡叠加在对应数据区边界，不能通过插入或移除状态行移动点击目标。页面搜索使用可序列化导航项，选择器原地搜索。
+
+- 浏览器多实例共享 SQLite 按数据库事务协调 Web Locks；日志模式使用 TRUNCATE。每个 Worker 的完整命令按序执行，事务 finalizer 完成前不释放所有权，不限制标签页、不复制临时数据库、不自动重放写入。本地 SQLite npm 源变化必须使安装、webpack 和浏览器测试缓存失效，验证真实安装的 Worker 内容。
+
+- Web 弹窗验收同时比较画面与可访问性节点；主画面恢复不代表底层语义 owner 已恢复。保持 Compose 依赖族对齐，使用已发布修复，不关闭可访问性或重载来规避旧弹窗节点。房间草稿只在匹配的持久化消息确认后完成，不能以固定延时或本地 socket 写入完成代替。
+
+- Kotlin/Wasm 的顶层 `@JsModule` 外部函数绑定须与包的默认导出匹配。直接调用具名导出的 JavaScript 探针不能代替正式 Kotlin 互操作边界测试。
+
+- 上传的所属对象以类型和 ID 贯穿上传、分块、历史、暂停、恢复、删除与保留源文件；任务键还须包含路径摘要。保留旧个人上传历史命名，完整 MIME 类型不得截成主类型。
+
+- 管理端实体状态更新后，按目标 ID 与类型刷新对应日志分页，保留详情和其他对象缓存；离开日志页时，保留的视图模型仍需处理成功事件。
+
+- 话题列表摘要的复制与翻译使用 `TopicContent.Extracted.origin` 中的完整原文，不能把显示摘要当原文，也不能仅因列表使用摘要模型就拒绝已有操作。
+
+- 核对交互设计时检查最终样式完整优先级及真实静止、悬停、焦点状态。图标操作菜单默认透明，交互填色与现有选中图标含义分开验证；不能从局部 CSS 声明推断默认画面。
+- Markdown 的解析状态独立于宽度约束。缩放时验证嵌入控件仍挂载，并检查媒体位置和展开状态；SVG 解码成功还须验证文字像素。富文本本地发布回传只作确认，不能覆盖较新的输入。
+
+- WebSocket 接收通道的取消与调用方 job 取消分开判断；调用方取消保持传播，当前有效连接意外关闭需发布可重试错误。字体类型问题先追踪服务端内容识别与存储值，不仅检查客户端声明；Tika 的 OpenType/TrueType MIME 与注册 font/* 类型须兼容。
+
+- 社区字体只局部设置正文／代码字体，展示继承应用解析器与已加载字形回退；用 Latin-only 与 CJK 合成字体检查缺字，而不只验证字体加载成功。正文校验允许完整 CRLF，校验不改写输入；不扩大其他控制字符范围。发布的 LF 与 csa/object 规范化属于既有存储约定，不能把草稿无损等同于入库字节不变。
+
+- 发布清理保留通用代码围栏的分隔符与语言（包括 Mermaid、math 和无语言代码），不能将其退化为普通正文；保持已有 LF、csa/object 与 AsciiDoc 规范化约定。
+
+- 收藏变更后通过现有 Pager/RemoteMediator 刷新收藏集合，不能只更新对象上的 favoriteId。个人菜单重开时刷新已完成或已缓存的概览；Lazy StateFlow 尚未订阅时，成功完成状态也代表已有缓存。缓存请求尚在进行时，等待其结束后再刷新，保留初次错误。
+- 订阅投影保持原记录顺序、重复记录和缺失话题的空关联。内容读取前逐个核实有效话题权限，无权或查询失败仍使请求失败。最新回复保留各父项原有的置顶顺序和条数，只合并富化查询，不省略回复或放宽超时。
+
+- 客户端解密 TopicDetail 时同时解密第一层 TopicReplyPreview；单次批处理使用同一 uid/pass 快照，保留作者、顺序及各回复自身的媒体 root tuple。不修改线格式、密文布局或原始缓存投影。
+
+- 话题列表在同一分页来源短暂清空时保留阅读状态，状态放在条件式内容分支之外；刷新通过事务一次替换具名话题集合，并保留默认详情、别名及无关列表。使用真实 SQLite、乱序 ID 和不透明分页 token 验证深层重试后的条目与偏移。
+
+- 面板从父话题的子话题列表进入详情时，保留父详情导航项及其可保存分页状态；目录选择仍替换当前详情。浏览器返回验收同时核对父对象、所选分区和列表位置。
+
+- 个人收藏、订阅、回应、评论、账号设置和个人文件根路由通过现有 UserHost 门控；访客阶段不能构造个人请求 ViewModel 或读取个人集合缓存。显式登出仅在服务端成功且本地会话清理后重置到 Home 和登录页；浏览器仍可能恢复旧历史项，路由门控必须独立生效，保留公共对象和偏好设置的访客读取能力。
+
+
+- 用户注册、面板创建、子账号创建和资料修改成功后，同步已提交用户的搜索投影；索引失败保留已完成数据库操作的结果并记录诊断，调用方取消继续传播。Lucene 用户文档按账号 ID 使用通用 replace 替换，避免旧名称和重复文档；AID 仍遵守仅首次设置约定。
+
+
+- 私密房间每次发送前获取完整分页的当前收件人公钥，不能将页面初次加载的列表用于后续加密。获取期间保留 pending operation 与原 WebSocket 连接身份，提交前再次核对；失败保留草稿，不回退缓存公钥或自动重放。
+
+
+- 录音会话按录音面板作用域持有，启动失败或取消时释放已分配会话并恢复空闲，迟到完成不能覆盖新的录音。Wasm 的 DOMException 在录音平台边界转换为可报告异常，不把缺少 JS stack 的原始异常保留为 cause；停止或关闭面板释放采集。
+
+- 浏览器录音输出内存 WAV 并沿现有上传边界提交，不依赖 Node 临时文件系统。Kodio JVM 0.2.0 的 Java 22 发布产物通过固定源包重编译为 JVM 21，保留官方原生资源；不得提高项目 JDK 或用字节码重写隐藏兼容问题。
+
+- Exposed 的 BaseTable 不自动生成主键；upsert 的首次插入必须显式提供 id。账户一对一的双因素记录使用 uid 作为表内 id，冲突更新保留原 id，并通过真实 PostgreSQL 验证首次配置和后续更新。
+
+- 浏览器录音 track 可能不提供 sampleRate；Kodio Web 同版本固定源包补丁将缺失或非正值回退为请求格式。用真实 Firefox 合成采集与持久化 WAV 验证，不修改浏览器 getSettings 或放宽媒体断言。
+
+- 浏览器 RTC 媒体验收分别观察远端视频呈现帧与入站音频 RTP 包、字节计数持续增长；连接状态和静音标签不能单独证明媒体传输。统计观察仅保留计数，不输出候选地址或 SDP。
+
+- 浏览器下载的账户撤销验收通过正式 signOutAll 发布会话失效，保持真实响应到应用消费前，确认原生 AbortSignal 触发后再释放迟到响应，并验证没有下载 anchor 或部分文件。私人文件页撤销后直接显示登录页；公开话题仍可显示匿名头像菜单。
+
+- 管理详情分页保留整页边界。浏览器无障碍滚动可能将可见控件居中而产生半页偏移；使用 ReadingHorizontalPager 同步整页位置和原生语义偏移，验证小幅滚动、连续翻页、边界、原有拖动和复制，不停用手势。
+
+- 浏览器 UI 数据库夹具显式拥有分页作用域。清理时先在 NonCancellable 中取消并等待分页及查询作用域，再关闭 Room；同步 close 的 CloseBarrier 会忙等，不能在后台 worker 操作尚未结束时调用。保留完整业务断言与原时间预算。
+- 固定上游源码重编译的 Compose 模块需在 commonMain 显式声明源码直接使用的 ui-util 等依赖；平台编译通过不能替代公共 metadata 编译检查。
+
+- 跨 Docker 存储传输镜像时，经典 config ID 与 containerd manifest ID 不可直接比较；校验有效配置、平台及有序 RootFS 层摘要。增量部署使用固定版本 docker-pussh 和固定摘要 Unregistry，目标存储切换必须由操作者单独处理，不自动修改运行中的 Docker。
+
+- Compose 核心库与插件共用版本目录 `compose-core`；Material3、Android 测试工具及 Adaptive／Lifecycle 按各自发布系列维护。升级后实际启动 Nucleus Tao 桌面入口，并对齐 Wasm Skiko 源码与原生 runtime；仅编译通过不能证明兼容。
+
+- Mermaid FFI 升级需验证无效输入可捕获且后续有效 SVG 仍可渲染；Wasm 的 JsException 在平台边界转换为安全 Kotlin 异常，不保留不安全的 JavaScript cause。
+
+- Wasm 镜像的公开静态资源在打包边界固定目录 0755、文件 0644，避免复制构建缓存中的 0600 入口；验证 Nginx worker 能读取全部资源和实际 HTTP 入口。
